@@ -1,6 +1,7 @@
 // Dennis-Auftritte: echte Videoclips aus clips/clips.json, sonst gezeichneter Platzhalter mit Brummelstimme.
 import { dennisPortrait } from './gesicht.js';
-import { brummeln, rumms } from './audio.js';
+import { brummeln, rumms, stimmeAbspielen } from './audio.js';
+import { satzId } from './texte.js';
 
 // Alle Clip-Arten. Reihenfolge = Reihenfolge im Dennis-Archiv.
 export const KATEGORIEN = {
@@ -29,6 +30,7 @@ export const KATEGORIEN = {
 };
 
 let clips = {};
+let stimme = { aktiv: false, saetze: {} };
 let video = null;
 const ARCHIV_KEY = 'dennis-archiv-v1';
 
@@ -39,6 +41,10 @@ export async function ladeClips() {
   } catch {
     clips = {};
   }
+  try {
+    const r = await fetch(`stimme/stimme.json?v=${Date.now()}`, { cache: 'no-store' });
+    if (r.ok) stimme = { aktiv: false, saetze: {}, ...(await r.json()) };
+  } catch { /* ohne Aufnahmen: Brummelstimme */ }
   video = document.createElement('video');
   video.playsInline = true;
   video.setAttribute('playsinline', '');
@@ -121,9 +127,11 @@ export function auftritt({ schluessel, text, stufe = 'mittel', stimmung = 'sauer
     let timer = null;
     let mundTimer = null;
     let tippTimer = null;
+    let sprecher = null;
     function schliessen() {
       if (aus) return;
       aus = true;
+      if (sprecher) sprecher.stopp();
       clearTimeout(timer);
       clearInterval(mundTimer);
       clearInterval(tippTimer);
@@ -179,18 +187,43 @@ export function auftritt({ schluessel, text, stufe = 'mittel', stimmung = 'sauer
       }
     } else {
       medien.innerHTML = dennisPortrait(stimmung) + '<div class="platzhalter-schild">Platzhalter, echter Clip folgt</div>';
-      const silben = Math.max(4, Math.round(anzeigeText.length / 5));
-      const dauer = brummeln(silben, stufe === 'voll' ? 1 : stufe === 'mittel' ? 0.4 : 0);
       const mund = medien.querySelector('.mund');
-      let auf = false;
-      mundTimer = setInterval(() => {
-        auf = !auf;
-        if (mund) {
-          mund.style.transformOrigin = '100px 96px';
-          mund.style.transform = auf ? 'scaleY(1.35)' : 'scaleY(0.8)';
-        }
-      }, 110);
-      setTimeout(() => { clearInterval(mundTimer); if (mund) mund.style.transform = ''; }, (dauer || 1) * 1000);
+      if (mund) mund.style.transformOrigin = '100px 98px';
+      const datei = stimme.aktiv ? stimme.saetze[satzId(anzeigeText)] : null;
+      const automatischZu = stufe === 'leicht' || stufe === 'lob' || stufe === 'info';
+      const brummelnStatt = () => {
+        const silben = Math.max(4, Math.round(anzeigeText.length / 5));
+        const dauer = brummeln(silben, stufe === 'voll' ? 1 : stufe === 'mittel' ? 0.4 : 0);
+        let auf = false;
+        mundTimer = setInterval(() => {
+          auf = !auf;
+          if (mund) mund.style.transform = auf ? 'scaleY(1.35)' : 'scaleY(0.8)';
+        }, 110);
+        setTimeout(() => { clearInterval(mundTimer); if (mund) mund.style.transform = ''; }, (dauer || 1) * 1000);
+        if (automatischZu) timer = setTimeout(schliessen, Math.max(2600, anzeigeText.length * 55 + 1200));
+      };
+      if (datei) {
+        // Aufgenommene Stimme, der Mund folgt der Lautstärke
+        stimmeAbspielen(`stimme/${datei}`).then((s) => {
+          if (aus) { if (s) s.stopp(); return; }
+          if (!s) { brummelnStatt(); return; }
+          sprecher = s;
+          const bewegen = () => {
+            if (aus || sprecher !== s) return;
+            const p = Math.min(1, s.pegel() * 6);
+            if (mund) mund.style.transform = `scaleY(${0.7 + p * 1.1})`;
+            requestAnimationFrame(bewegen);
+          };
+          requestAnimationFrame(bewegen);
+          s.fertig.then(() => {
+            if (sprecher === s) sprecher = null;
+            if (mund) mund.style.transform = '';
+            if (automatischZu && !aus) timer = setTimeout(schliessen, 700);
+          });
+        });
+      } else {
+        brummelnStatt();
+      }
       // Text eintippen
       let i = 0;
       tippTimer = setInterval(() => {
@@ -198,9 +231,6 @@ export function auftritt({ schluessel, text, stufe = 'mittel', stimmung = 'sauer
         blase.textContent = anzeigeText.slice(0, i);
         if (i >= anzeigeText.length) clearInterval(tippTimer);
       }, 28);
-      if (stufe === 'leicht' || stufe === 'lob' || stufe === 'info') {
-        timer = setTimeout(schliessen, Math.max(2600, anzeigeText.length * 55 + 1200));
-      }
     }
     el.classList.remove('versteckt');
   });

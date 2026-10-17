@@ -4,15 +4,26 @@
   "ermahnung": [
     {
       "datei": "ermahnung-1.mp4"
+    },
+    {
+      "datei": "ermahnung-2.mp4"
     }
   ],
-  "sauer": [],
+  "sauer": [
+    {
+      "datei": "sauer-1.mp4"
+    }
+  ],
   "ausraster": [
     {
       "datei": "ausraster-1.mp4"
     }
   ],
-  "lob": [],
+  "lob": [
+    {
+      "datei": "lob-1.mp4"
+    }
+  ],
   "fehler_brille": [],
   "fehler_handschuhe": [],
   "fehler_gasflasche": [],
@@ -28,5 +39,12 @@
   "ende_mittel": [],
   "ende_schlecht": [],
   "rausgeflogen": [],
-  "zwischendurch": []
+  "zwischendurch": [
+    {
+      "datei": "zwischendurch-1.mp4"
+    },
+    {
+      "datei": "zwischendurch-2.mp4"
+    }
+  ]
 }

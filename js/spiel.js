@@ -5,6 +5,7 @@ import { auftritt, hatClip } from './clips.js';
 import { pfadSpiel, schlackeSpiel } from './minispiele.js';
 import { blip, kratzen, jingle, klonk } from './audio.js';
 import * as ui from './ui.js';
+import { DENNIS } from './texte.js';
 
 const zufallAus = (liste) => liste[Math.floor(Math.random() * liste.length)];
 
@@ -12,61 +13,61 @@ const zufallAus = (liste) => liste[Math.floor(Math.random() * liste.length)];
 const FEHLER = {
   brille: {
     stufe: 'mittel', wut: 20, clip: 'fehler_brille', name: 'Ohne Schutzbrille geflext',
-    texte: ['Ohne Brille an die Flex?! Willst du blind werden? Brille auf, aber zack!', 'Wo ist deine Brille? Ein Funke im Auge und du kannst Feierabend machen. Für immer.'],
+    texte: DENNIS.fehler.brille,
   },
   handschuhe: {
     stufe: 'leicht', wut: 8, clip: 'fehler_handschuhe', name: 'Ohne Handschuhe gearbeitet',
-    texte: ['Handschuhe! Die Dinger liegen da nicht zur Deko.', 'Mit nackten Fingern? Die brauchst du noch.'],
+    texte: DENNIS.fehler.handschuhe,
   },
   schweissenHandschuhe: {
     stufe: 'mittel', wut: 15, clip: 'fehler_handschuhe', name: 'Ohne Handschuhe geschweißt',
-    texte: ['Ohne Handschuhe schweißen?! Das gibt Verbrennungen bis zum Ellenbogen! Handschuhe an!'],
+    texte: DENNIS.fehler.schweissenHandschuhe,
   },
   gasflasche: {
     stufe: 'voll', wut: 45, clip: 'fehler_gasflasche', name: 'Ungespülte Gasflasche aufgeschnitten',
-    texte: ['STOPP! STOPP! STOPP! Die Flasche ist nicht gespült! Da ist noch Gas drin! Willst du die ganze Halle in die Luft jagen?!', 'BIST DU WAHNSINNIG?! Ungespülte Gasflasche und dann die Flex dran?! Raus mit dem Ding und erst SPÜLEN!'],
+    texte: DENNIS.fehler.gasflasche,
   },
   helm: {
     stufe: 'voll', wut: 40, clip: 'fehler_helm', name: 'Ohne Schweißhelm geschweißt',
-    texte: ['OHNE HELM?! Du guckst direkt in den Lichtbogen! Morgen früh denkst du, jemand hat dir Sand in die Augen gekippt! HELM RUNTER!', 'HALT! Helm! Verblitzte Augen sind kein Spaß, das tut tagelang weh!'],
+    texte: DENNIS.fehler.helm,
   },
   masse: {
     stufe: 'leicht', wut: 8, clip: 'fehler_masse', name: 'Masseklemme vergessen',
-    texte: ['Da passiert nix? Logisch. Ohne Masse kein Lichtbogen. Klemme dran!', 'Masseklemme. MASSE. Steht sogar an der Wand.'],
+    texte: DENNIS.fehler.masse,
   },
   strom: {
     stufe: 'leicht', wut: 10, clip: 'fehler_strom', name: 'Stromstärke falsch eingestellt',
-    texte: [],
+    texte: DENNIS.fehler.stromHoch,
   },
   naht: {
     stufe: 'leicht', wut: 8, clip: 'fehler_naht', name: 'Schlechte Schweißnaht',
-    texte: ['Was ist das denn? Das sieht aus wie Taubenkacke. Gleichmäßig, nicht hektisch!', 'Die Naht hält vielleicht bis zur Tür. Ruhiger führen!'],
+    texte: DENNIS.fehler.naht,
   },
   schnitt: {
     stufe: 'leicht', wut: 6, clip: 'fehler_schnitt', name: 'Schiefer Schnitt',
-    texte: ['Schief wie ein Kuhschwanz. Die Tür musst du jetzt passend schleifen.', 'Gerade heißt gerade. Nicht so ungefähr.'],
+    texte: DENNIS.fehler.schnitt,
   },
   schlacke: {
     stufe: 'leicht', wut: 6, clip: 'fehler_schlacke', name: 'Schlacke nicht entfernt',
-    texte: ['Und die Schlacke? Soll ich die wegklopfen? Hammer nehmen!'],
+    texte: DENNIS.fehler.schlacke,
   },
   schlackeBrille: {
     stufe: 'mittel', wut: 15, clip: 'fehler_brille', name: 'Schlacke ohne Brille geklopft',
-    texte: ['Schlacke klopfen ohne Brille? Die Splitter fliegen dir direkt ins Auge! Brille auf!'],
+    texte: DENNIS.fehler.schlackeBrille,
   },
   kaffee: {
     stufe: 'mittel', wut: 20, clip: 'fehler_kaffee', name: 'An Dennis’ Kaffee gegangen',
-    texte: ['FINGER WEG VON MEINEM KAFFEE! Steht CHEF drauf. Kannst du lesen?', 'Hast du gerade aus MEINER Tasse getrunken?!'],
+    texte: DENNIS.fehler.kaffee,
   },
   nerven: {
     stufe: 'leicht', wut: 6, clip: 'fehler_nerven', name: 'Dennis zu oft gefragt',
-    texte: ['Guck auf deinen Zettel! Ich sag das nicht nochmal.', 'Schon wieder du? Steht alles auf dem Zettel.'],
+    texte: DENNIS.fehler.nerven,
   },
 };
 const STUFEN_CLIP = { leicht: 'ermahnung', mittel: 'sauer', voll: 'ausraster' };
 const STUFEN_STIMMUNG = { leicht: 'skeptisch', mittel: 'sauer', voll: 'wut' };
 
-const LOB = ['Jo. Passt.', 'Sauber. Geht doch.', 'Na also. Da kann man nicht meckern.', 'Hätte ich nicht besser gemacht. Fast.'];
+const LOB = DENNIS.lob;
 
 const NAEHTE = {
   scharniere: { name: 'Scharniere und Griffe', form: 'zwei', text: 'Zwei kurze Nähte. Gleichmäßig von links nach rechts ziehen, zwischendurch absetzen.' },
@@ -274,7 +275,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
     z.schnittQ = e.qualitaet;
     aktualisieren();
     if (e.qualitaet < 55) await fehler('schnitt');
-    else if (e.qualitaet >= 88) await lob('Sauberer Schnitt. Respekt.');
+    else if (e.qualitaet >= 88) await lob(DENNIS.lobSchnitt);
   }
 
   async function stromEinstellen() {
@@ -313,9 +314,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
     if (teil === 'beine') await steuerung.zuStation('schweiss');
     if (e.strom !== 'ok' && !z.stromGemeldet) {
       z.stromGemeldet = true;
-      const text = e.strom === 'hoch'
-        ? `${z.strom} Ampere?! Für 'ne 2,5er Elektrode? Du brennst ja Löcher rein! Runter mit dem Strom, so um die 80.`
-        : `${z.strom} Ampere? Damit klebt die Elektrode doch dauernd fest. Mehr Strom, so um die 80!`;
+      const text = zufallAus(e.strom === 'hoch' ? DENNIS.fehler.stromHoch : DENNIS.fehler.stromNiedrig);
       await fehler('strom', text);
     } else if (e.qualitaet < 50) {
       await fehler('naht');
@@ -350,22 +349,23 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
   }
 
   function naechsterTipp() {
-    if (!z.ventilAuf) return 'Erst mal das Restgas ablassen. Ventil an der Flasche aufdrehen, die steht am Waschplatz.';
-    if (!z.gespuelt) return 'Jetzt die Flasche mit Wasser spülen. Schlauch hängt an der Wand. Ohne Spülen fasst die keiner an!';
-    if (z.ort === 'wasch') return 'Flasche rüber auf die Werkbank.';
-    if (!z.angezeichnet) return 'Mit dem Speckstein die Tür anzeichnen. Liegt auf der Werkbank.';
-    if (!z.geschnitten) return z.ppe.brille && z.ppe.handschuhe ? 'Jetzt mit der Flex die Tür ausschneiden. Sauber auf der Linie!' : 'Tür ausschneiden. Aber vorher Brille und Handschuhe aus dem Regal, klar?';
-    if (z.ort !== 'schweiss') return 'Ab zum Schweißplatz mit dem Ding.';
-    if (!z.stromGesetzt) return 'Schweißgerät einstellen. 2,5er Elektrode, also so 70 bis 100 Ampere.';
+    const t = DENNIS.tipp;
+    if (!z.ventilAuf) return t.ventil;
+    if (!z.gespuelt) return t.spuelen;
+    if (z.ort === 'wasch') return t.werkbank;
+    if (!z.angezeichnet) return t.anzeichnen;
+    if (!z.geschnitten) return z.ppe.brille && z.ppe.handschuhe ? t.schneiden : t.schneidenAusruestung;
+    if (z.ort !== 'schweiss') return t.schweissplatz;
+    if (!z.stromGesetzt) return t.strom;
     if (!alleNaehte()) {
-      const fehlt = [];
-      if (!z.masse) fehlt.push('Masse dran');
-      if (!z.ppe.helm) fehlt.push('Helm auf');
-      return fehlt.length ? `Jetzt wird geschweißt. Aber erst: ${fehlt.join(' und ')}!` : 'Scharniere, Beine und Rohr anschweißen. Ruhige Hand!';
+      if (!z.masse && !z.ppe.helm) return t.schweissenMasseHelm;
+      if (!z.masse) return t.schweissenMasse;
+      if (!z.ppe.helm) return t.schweissenHelm;
+      return t.schweissen;
     }
-    if (!z.schlackeWeg) return 'Schlacke abklopfen. Hammer liegt auf dem Tisch. Brille auf!';
-    if (!z.lackiert) return 'Jetzt noch schwarz lackieren. Ofenlack, nicht irgendwas!';
-    return 'Fertig? Dann gib her, ich guck mir das an.';
+    if (!z.schlackeWeg) return t.schlacke;
+    if (!z.lackiert) return t.lackieren;
+    return t.fertig;
   }
 
   async function dennisFragen() {
@@ -377,7 +377,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
 
   async function abgeben() {
     if (!alleNaehte()) {
-      await auftritt({ schluessel: ['tipp'], text: 'Das ist doch noch kein Ofen. Mach erst fertig!', stufe: 'info', stimmung: 'skeptisch' });
+      await auftritt({ schluessel: ['tipp'], text: DENNIS.nichtFertig, stufe: 'info', stimmung: 'skeptisch' });
       return;
     }
     if (!z.schlackeWeg) {
@@ -385,7 +385,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
       return;
     }
     if (!z.lackiert) {
-      await auftritt({ schluessel: ['tipp'], text: 'Und lackieren? So rostet der dir doch weg. Ofenlack drauf, dann reden wir.', stufe: 'info', stimmung: 'skeptisch' });
+      await auftritt({ schluessel: ['tipp'], text: DENNIS.nichtLackiert, stufe: 'info', stimmung: 'skeptisch' });
       return;
     }
     await ende();
@@ -514,7 +514,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
     await dennisKommt(1.6);
     await auftritt({
       schluessel: ['begruessung'],
-      text: 'Moin! Heute baust du einen Ofen aus der alten Gasflasche da drüben. Was zu tun ist, steht auf deinem Zettel. Und halt dich an meine Regeln an der Wand. Wenn du Mist baust, merk ich das. Ich merk alles.',
+      text: DENNIS.begruessung,
       stufe: 'mittel',
       stimmung: 'ruhig',
     });
@@ -538,11 +538,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
     aktualisieren();
     const { n, qualitaet } = note();
     const kat = n <= 2 ? 'ende_gut' : n <= 4 ? 'ende_mittel' : 'ende_schlecht';
-    const texte = {
-      ende_gut: 'Hm. Zeig mal her. ... Ja. Das ist ein Ofen. Ein richtig guter sogar. Den stell ich mir in die Werkstatt.',
-      ende_mittel: 'Na ja. Brennt bestimmt. Irgendwie. Nächstes Mal sauberer, dann wird das was.',
-      ende_schlecht: 'Was soll das sein? Ein Ofen? Das ist eine Gefahr für die Allgemeinheit. Nochmal von vorne!',
-    };
+    const texte = { ende_gut: DENNIS.ende.gut, ende_mittel: DENNIS.ende.mittel, ende_schlecht: DENNIS.ende.schlecht };
     const stimmung = n <= 2 ? 'froh' : n <= 4 ? 'skeptisch' : 'sauer';
     dennis.stimmung(stimmung);
     await dennisKommt(1.6);
@@ -567,7 +563,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
   async function rausgeflogen() {
     z.vorbei = true;
     dennis.stimmung('wut');
-    await auftritt({ schluessel: ['rausgeflogen', 'ausraster'], text: 'DAS REICHT! RAUS! Raus aus meiner Werkstatt! Komm wieder, wenn du gelernt hast, wie man sich benimmt!', stufe: 'voll', stimmung: 'wut' });
+    await auftritt({ schluessel: ['rausgeflogen', 'ausraster'], text: DENNIS.rausgeflogen, stufe: 'voll', stimmung: 'wut' });
     jingle(false);
     const wahl = await ui.infoDialog('Rausgeflogen!', `<p>Dennis ist der Kragen geplatzt.</p>
       <ul class="fehler-liste">${z.fehler.map((f) => `<li>${f}</li>`).join('')}</ul>
