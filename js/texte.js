@@ -2,7 +2,9 @@
 // Die Schlüssel sind die IDs für die Sprachaufnahmen in stimme/stimme.json – beim Umformulieren beibehalten.
 
 export const DENNIS = {
-  begruessung: 'Moin! Heute baust du einen Ofen aus der alten Gasflasche da drüben. Was zu tun ist, steht auf deinem Zettel. Und halt dich an meine Regeln an der Wand. Wenn du Mist baust, merk ich das. Ich merk alles.',
+  begruessung: 'Moin! Heute baust du einen Ofen aus der alten Gasflasche da drüben. Was zu tun ist, steht auf deinem Zettel. Und halt dich an meine Regeln an der Wand ...',
+  klo: 'Ähm ... Moment. Geht gleich weiter. Ich muss mal ganz dringend!',
+  zurueck: 'So. Wo war ich? Ach ja: Wenn du Mist baust, merk ich das. Ich merk alles.',
 
   fehler: {
     brille: [
@@ -52,11 +54,45 @@ export const DENNIS = {
       'FINGER WEG VON MEINEM KAFFEE! Steht CHEF drauf. Kannst du lesen?',
       'Hast du gerade aus MEINER Tasse getrunken?!',
     ],
+    kiwi: [
+      'MEINE KIWIS! Die sind abgezählt! Finger weg!',
+      'Schon wieder eine Kiwi?! Kauf dir deine eigenen!',
+    ],
+    brotdose: [
+      'Ist das MEINE Brotdose?! Da ist mein Mittagessen drin! Leg die sofort zurück!',
+    ],
     nerven: [
       'Guck auf deinen Zettel! Ich sag das nicht nochmal.',
       'Schon wieder du? Steht alles auf dem Zettel.',
     ],
   },
+
+  kaffee: {
+    danke: 'Oh. Für mich? ... Danke. Du darfst bleiben.',
+    nochmal: 'Noch einer? Na gut. Aber dann ist Schluss.',
+    genug: 'Willst du mich vergiften? Ich hab genug Kaffee, ich zitter schon!',
+    nichtsInDerHand: 'Und wo ist der Kaffee?',
+  },
+  kiwi: {
+    erste: 'Klar, nimm dir eine. Vitamine!',
+    zweite: 'Noch eine? ... Na gut. Aber die sind abgezählt.',
+    leer: 'Alle weg?! Das waren meine Kiwis für die ganze Woche!',
+  },
+  baustellenfeeling: 'Was los??',
+  tomate: '*mampf* ... Mittagspause. Tomate muss sein.',
+  licht: 'Hallo?! Wer hat das Licht ausgemacht? Ich seh nix!',
+  musikAus: 'Ey! Das war mein Lied!',
+  huefte: {
+    start: 'Aaah! Meine Hüfte! Hinten links! Ich muss mich kurz hinlegen ...',
+    jammern: [
+      'Aua ... hinten links ... Kann mir mal einer helfen?',
+      'Hallo?! Ich lieg hier immer noch!',
+      'Meine Hüfte! Hilf mir doch mal hoch!',
+      'Das ist das Wetter. Immer hinten links. Hilf mir mal!',
+    ],
+    danke: 'Danke. ... Und erzähl das keinem.',
+  },
+  fegen: 'Na guck. Ordnung ist das halbe Schweißen.',
 
   lob: [
     'Jo. Passt.',

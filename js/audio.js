@@ -286,3 +286,113 @@ export async function stimmeAbspielen(url) {
     stopp() { try { quelle.stop(); } catch { /* schon zu Ende */ } },
   };
 }
+
+// Techno aus der Box: 128 BPM, Kick, Offbeat-Hihat, Clap, Bass. Wird live erzeugt.
+let techno = null;
+export function technoAn() {
+  if (!ctx || techno) return;
+  const spb = 60 / 128;
+  const bus = ctx.createGain();
+  bus.gain.value = 0.5;
+  bus.connect(master);
+  const start = ctx.currentTime + 0.05;
+  let naechste = start;
+  let schritt = 0;
+  const bassNoten = [55, 55, 65.41, 55, 55, 73.42, 55, 49];
+  function kick(t) {
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.frequency.setValueAtTime(150, t);
+    o.frequency.exponentialRampToValueAtTime(45, t + 0.12);
+    huelle(g, t, 0.002, 0.02, 0.25, 1);
+    o.connect(g).connect(bus);
+    o.start(t);
+    o.stop(t + 0.32);
+  }
+  function rauschen(t, typ, freq, lautst, lang) {
+    const q = rauschQuelle();
+    const f = ctx.createBiquadFilter();
+    f.type = typ;
+    f.frequency.value = freq;
+    const g = ctx.createGain();
+    huelle(g, t, 0.001, 0.005, lang, lautst);
+    q.connect(f).connect(g).connect(bus);
+    q.start(t);
+    q.stop(t + lang + 0.05);
+  }
+  function bass(t, freq) {
+    const o = ctx.createOscillator();
+    o.type = 'sawtooth';
+    o.frequency.value = freq;
+    const f = ctx.createBiquadFilter();
+    f.type = 'lowpass';
+    f.Q.value = 6;
+    f.frequency.setValueAtTime(900, t);
+    f.frequency.exponentialRampToValueAtTime(180, t + spb / 4);
+    const g = ctx.createGain();
+    huelle(g, t, 0.005, spb / 8, spb / 8, 0.28);
+    o.connect(f).connect(g).connect(bus);
+    o.start(t);
+    o.stop(t + spb / 4 + 0.05);
+  }
+  const iv = setInterval(() => {
+    while (naechste < ctx.currentTime + 0.2) {
+      const s = schritt % 16;
+      if (s % 4 === 0) kick(naechste);
+      if (s % 4 === 2) rauschen(naechste, 'highpass', 7000, 0.22, 0.05);
+      if (s === 4 || s === 12) rauschen(naechste, 'bandpass', 1500, 0.45, 0.12);
+      if (s % 2 === 1) bass(naechste, bassNoten[(schritt >> 1) % 8]);
+      naechste += spb / 4;
+      schritt++;
+    }
+  }, 40);
+  techno = { iv, bus, start, spb };
+}
+export function technoAus() {
+  if (!techno) return;
+  clearInterval(techno.iv);
+  const j = ctx.currentTime;
+  techno.bus.gain.setValueAtTime(techno.bus.gain.value, j);
+  techno.bus.gain.exponentialRampToValueAtTime(0.0001, j + 0.3);
+  techno = null;
+}
+// Aktuelle Position im Takt (1.0 = ein Schlag) oder null, wenn aus
+export function technoBeat() {
+  if (!techno) return null;
+  return Math.max(0, (ctx.currentTime - techno.start) / techno.spb);
+}
+
+export function klospuelung() {
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  const q = rauschQuelle();
+  const f = ctx.createBiquadFilter();
+  f.type = 'lowpass';
+  f.frequency.setValueAtTime(2500, t);
+  f.frequency.exponentialRampToValueAtTime(300, t + 2.5);
+  const g = ctx.createGain();
+  huelle(g, t, 0.15, 1.2, 1.4, 0.35);
+  q.connect(f).connect(g).connect(master);
+  q.start(t);
+  q.stop(t + 3);
+}
+
+export function mampfen() {
+  if (!ctx) return;
+  for (let i = 0; i < 4; i++) {
+    const t = ctx.currentTime + i * 0.22;
+    const q = rauschQuelle();
+    const f = ctx.createBiquadFilter();
+    f.type = 'bandpass';
+    f.frequency.value = 900 + Math.random() * 600;
+    const g = ctx.createGain();
+    huelle(g, t, 0.01, 0.04, 0.08, 0.3);
+    q.connect(f).connect(g).connect(master);
+    q.start(t);
+    q.stop(t + 0.2);
+  }
+}
+
+export function klick() {
+  blip(1500, 0.03, 0.15);
+}

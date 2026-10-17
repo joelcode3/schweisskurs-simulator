@@ -19,26 +19,56 @@ export function baueDennis(scene) {
   scene.add(wurzel);
   const zufall = (() => { let s = 7; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; })();
 
-  // Beine: schwarze Arbeitshose, Arbeitsschuhe
+  // Körper-Gruppe (für Hinlegen und Tanzen), darin Becken, Beine mit Knien, Oberkörper
+  const koerper = new THREE.Group();
+  wurzel.add(koerper);
+  // Becken mit Gürtel verbindet Beine und Oberkörper
+  const becken = teil(new THREE.CapsuleGeometry(0.12, 0.1, 6, 12), HOSE);
+  becken.rotation.z = Math.PI / 2;
+  becken.scale.set(1, 1, 0.75);
+  becken.position.y = 0.9;
+  koerper.add(becken);
+  const guertel = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.035, 20, 1, true), toon(0x1a1a1a));
+  guertel.scale.set(1, 1, 0.78);
+  guertel.position.y = 0.95;
+  koerper.add(guertel);
+  koerper.add(setze(quader(0.045, 0.035, 0.012, 0x9aa0a6, { umriss: false }), 0, 0.95, 0.158));
+
+  // Beine: Oberschenkel, Knie, Unterschenkel, Arbeitsschuh
   const beine = [];
+  const knie = [];
   for (const x of [-0.1, 0.1]) {
     const huefte = new THREE.Group();
-    huefte.position.set(x, 0.9, 0);
-    huefte.add(setze(teil(new THREE.CapsuleGeometry(0.074, 0.64, 4, 10), HOSE), 0, -0.42, 0));
+    huefte.position.set(x, 0.88, 0);
+    huefte.add(setze(teil(new THREE.CapsuleGeometry(0.078, 0.3, 4, 10), HOSE), 0, -0.2, 0));
     // Beintasche außen
-    huefte.add(setze(quader(0.02, 0.12, 0.09, 0x34363c, { umriss: 0.003 }), x > 0 ? 0.072 : -0.072, -0.32, 0));
+    huefte.add(setze(quader(0.02, 0.12, 0.09, 0x34363c, { umriss: 0.003 }), x > 0 ? 0.074 : -0.074, -0.22, 0));
+    const k = new THREE.Group();
+    k.position.y = -0.42;
+    k.add(kugel(0.072, HOSE, { umriss: 0.004 }, 10));
+    k.add(setze(teil(new THREE.CapsuleGeometry(0.068, 0.28, 4, 10), HOSE), 0, -0.2, 0));
     // Arbeitsschuh mit Sohle und runder Kappe
-    huefte.add(setze(quader(0.12, 0.08, 0.22, 0x4a4038), 0, -0.84, 0.03));
-    huefte.add(setze(kugel(0.06, 0x4a4038, {}, 12), 0, -0.85, 0.13));
-    huefte.add(setze(quader(0.135, 0.025, 0.3, 0x2a2622, { umriss: 0.004 }), 0, -0.895, 0.06));
-    wurzel.add(huefte);
+    const schuh = new THREE.Group();
+    schuh.position.y = -0.42;
+    schuh.add(setze(quader(0.12, 0.08, 0.22, 0x4a4038), 0, 0, 0.03));
+    schuh.add(setze(kugel(0.06, 0x4a4038, {}, 12), 0, -0.01, 0.13));
+    schuh.add(setze(quader(0.135, 0.025, 0.3, 0x2a2622, { umriss: 0.004 }), 0, -0.055, 0.06));
+    k.add(schuh);
+    huefte.add(k);
+    koerper.add(huefte);
     beine.push(huefte);
+    knie.push(k);
   }
 
   // Oberkörper: schwarze Arbeitsjacke mit Reflexstreifen, graue Kapuze
   const rumpf = new THREE.Group();
   rumpf.position.y = 0.9;
-  wurzel.add(rumpf);
+  koerper.add(rumpf);
+  // Schultern füllen (keine Lücke unter dem Hals)
+  const schultern = teil(new THREE.SphereGeometry(0.2, 16, 10), JACKE);
+  schultern.scale.set(1.35, 0.5, 0.78);
+  schultern.position.y = 0.72;
+  rumpf.add(schultern);
   const jacke = teil(new THREE.CapsuleGeometry(0.2, 0.42, 6, 14), JACKE);
   jacke.position.y = 0.38;
   jacke.scale.set(1, 1, 0.74);
@@ -57,11 +87,6 @@ export function baueDennis(scene) {
     rumpf.add(setze(quader(0.09, 0.08, 0.02, JACKE, { umriss: 0.004 }), 0.06 * seite, 0.8, 0.1, -0.25, 0.5 * seite, 0.35 * seite));
   }
   rumpf.add(setze(quader(0.07, 0.07, 0.02, HOODIE, { umriss: 0.003 }), 0, 0.76, 0.135, -0.15, 0, 0));
-  // Kordeln vom Hoodie mit Metallenden
-  for (const x of [-0.03, 0.03]) {
-    rumpf.add(setze(zylinder(0.006, 0.006, 0.17, 0xc9ccd0, { umriss: false }, 6), x, 0.66, 0.158));
-    rumpf.add(setze(zylinder(0.008, 0.008, 0.025, 0x9aa0a6, { umriss: false }, 6), x, 0.565, 0.158));
-  }
   // Reißverschluss-Zipper und Brusttasche
   rumpf.add(setze(quader(0.02, 0.035, 0.01, 0x8a8f96, { umriss: false }), 0, 0.72, 0.158));
   rumpf.add(setze(quader(0.1, 0.09, 0.015, 0x2b2d31, { umriss: 0.003 }), -0.085, 0.58, 0.148, 0, -0.25, 0));
@@ -134,34 +159,46 @@ export function baueDennis(scene) {
   }
   for (const seite of [-1, 1]) {
     const x = 0.1 * seite;
-    rumpf.add(band([[x, 0.52, -0.16], [x, 0.72, -0.13], [x * 1.05, 0.81, -0.03], [x * 1.08, 0.77, 0.09], [x * 1.12, 0.62, 0.152], [x * 1.15, 0.42, 0.16]], 0.024));
+    rumpf.add(band([[x, 0.52, -0.17], [x, 0.74, -0.15], [x * 1.05, 0.835, -0.03], [x * 1.08, 0.8, 0.1], [x * 1.12, 0.66, 0.158], [x * 1.15, 0.42, 0.165]], 0.026));
     rumpf.add(setze(quader(0.045, 0.03, 0.012, 0x111111, { umriss: false }), x * 1.15, 0.41, 0.168));
   }
   rumpf.add(setze(quader(0.2, 0.014, 0.008, 0x1d3f86, { umriss: 0.003 }), 0, 0.52, 0.166));
   rumpf.add(setze(quader(0.035, 0.026, 0.012, 0x111111, { umriss: false }), 0, 0.52, 0.17));
 
-  // Arme
+  // Arme mit Ellbogen und Händen mit Fingern
   function arm(seite) {
     const schulter = new THREE.Group();
     schulter.position.set(0.27 * seite, 0.7, 0);
-    schulter.add(setze(teil(new THREE.CapsuleGeometry(0.06, 0.42, 4, 10), JACKE), 0, -0.25, 0));
-    const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.062, 0.02, 12, 1, true), reflexMat);
+    schulter.add(kugel(0.068, JACKE, { umriss: 0.004 }, 10));
+    schulter.add(setze(teil(new THREE.CapsuleGeometry(0.062, 0.2, 4, 10), JACKE), 0, -0.13, 0));
+    const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.064, 0.064, 0.02, 12, 1, true), reflexMat);
     ring.position.y = -0.12;
     schulter.add(ring);
+    const ellbogen = new THREE.Group();
+    ellbogen.position.y = -0.26;
+    ellbogen.add(kugel(0.058, JACKE, { umriss: 0.004 }, 10));
+    ellbogen.add(setze(teil(new THREE.CapsuleGeometry(0.056, 0.18, 4, 10), JACKE), 0, -0.12, 0));
     const hand = new THREE.Group();
-    const faust = kugel(0.055, HAUT, {}, 12);
-    faust.scale.set(0.85, 1.15, 1);
-    hand.add(faust);
-    const daumen = teil(new THREE.CapsuleGeometry(0.016, 0.04, 4, 8), HAUT);
-    daumen.position.set(-0.035 * seite, 0.01, 0.03);
-    daumen.rotation.z = 0.5 * seite;
-    hand.add(daumen);
     // Ärmelbündchen
-    hand.add(setze(zylinder(0.064, 0.064, 0.03, 0x1a1b1e, { umriss: 0.003 }, 12), 0, 0.06, 0));
-    hand.position.y = -0.52;
-    schulter.add(hand);
+    hand.add(setze(zylinder(0.06, 0.06, 0.03, 0x1a1b1e, { umriss: 0.003 }, 12), 0, 0.045, 0));
+    const handflaeche = teil(new THREE.CapsuleGeometry(0.038, 0.03, 4, 10), HAUT);
+    handflaeche.scale.set(1.15, 1, 0.65);
+    hand.add(handflaeche);
+    for (let f = 0; f < 4; f++) {
+      const finger = teil(new THREE.CapsuleGeometry(0.0115, 0.035, 4, 6), HAUT, { umriss: 0.002 });
+      finger.position.set((-0.027 + f * 0.018) * seite, -0.05 + Math.abs(f - 1.5) * 0.005, 0.006);
+      finger.rotation.x = 0.25;
+      hand.add(finger);
+    }
+    const daumen = teil(new THREE.CapsuleGeometry(0.013, 0.03, 4, 8), HAUT, { umriss: 0.002 });
+    daumen.position.set(0.038 * seite, -0.01, 0.022);
+    daumen.rotation.set(0.4, 0, -0.6 * seite);
+    hand.add(daumen);
+    hand.position.y = -0.27;
+    ellbogen.add(hand);
+    schulter.add(ellbogen);
     rumpf.add(schulter);
-    return { schulter, hand };
+    return { schulter, ellbogen, hand };
   }
   const links = arm(-1);
   const rechts = arm(1);
@@ -172,8 +209,22 @@ export function baueDennis(scene) {
   const becher = new THREE.Group();
   becher.add(zylinder(0.045, 0.04, 0.1, 0xf4f0e6, {}, 14));
   becher.add(setze(teil(new THREE.TorusGeometry(0.026, 0.008, 6, 12), 0xf4f0e6), 0.05, 0, 0));
-  becher.position.set(0, -0.56, 0.08);
-  rechts.schulter.add(becher);
+  becher.position.set(0, -0.3, 0.07);
+  rechts.ellbogen.add(becher);
+
+  // Brotdose mit Tomate (für die Mittagspause), liegt sonst auf der Getränkekiste
+  const dose = new THREE.Group();
+  dose.add(teil(new THREE.BoxGeometry(0.2, 0.07, 0.14), 0, { material: toon(0xf0f4f6, { transparent: true, opacity: 0.6 }), umriss: 0.004 }));
+  dose.add(setze(quader(0.11, 0.025, 0.1, 0x8a5a2e, { umriss: 0.002 }), -0.035, -0.01, 0));
+  dose.position.set(0.02, -0.33, 0.12);
+  dose.rotation.set(1.2, 0, 0);
+  dose.visible = false;
+  links.ellbogen.add(dose);
+  const tomate = kugel(0.035, 0xd8352a, { umriss: 0.003 }, 12);
+  tomate.add(setze(quader(0.02, 0.008, 0.02, 0x2f7d4f, { umriss: false }), 0, 0.035, 0));
+  tomate.position.set(0, -0.32, 0.06);
+  tomate.visible = false;
+  rechts.ellbogen.add(tomate);
 
   // Kopf: schmal, Schnauzer, goldene Pilotenbrille, Locken
   const kopf = new THREE.Group();
@@ -297,11 +348,15 @@ export function baueDennis(scene) {
   let zielAufloesen = null;
   let tempo = 1.3;
   let stimmung = 'ruhig';
+  let modus = 'normal'; // normal | tanzen | liegen
+  let takt = null; // Funktion -> Beat-Position (Zahl) oder null
   let zeit = Math.random() * 10;
   let schluckTimer = 4;
   let schluck = 0;
   let schrittPhase = 0;
   let blinzeln = 2 + Math.random() * 3;
+  let liegenAnteil = 0;
+  let essen = false;
   const hautFarbe = new THREE.Color(HAUT);
   const zielFarbe = new THREE.Color(HAUT);
 
@@ -311,10 +366,12 @@ export function baueDennis(scene) {
     while (d < -Math.PI) d += Math.PI * 2;
     return d;
   }
+  const naeher = (ist, soll, k) => ist + (soll - ist) * k;
 
   const api = {
     wurzel,
     get position() { return wurzel.position; },
+    get modus() { return modus; },
     kopfPosition() {
       const v = new THREE.Vector3();
       kopf.getWorldPosition(v);
@@ -326,6 +383,13 @@ export function baueDennis(scene) {
       stimmung = s;
       zielFarbe.setHex(s === 'wut' ? HAUT_WUT : s === 'sauer' ? 0xe8907a : HAUT);
     },
+    // normal | tanzen | liegen; beimTanzen: Funktion, die die aktuelle Beat-Position liefert
+    setzeModus(m, beat) {
+      modus = m;
+      if (beat !== undefined) takt = beat;
+    },
+    sichtbar(an) { wurzel.visible = an; },
+    mittagspause(an) { dose.visible = an; tomate.visible = an; essen = an; },
     gehZu(x, z, schnell = 1.3) {
       tempo = schnell;
       ziel = new THREE.Vector3(x, 0, z);
@@ -349,14 +413,16 @@ export function baueDennis(scene) {
     },
     update(dt) {
       zeit += dt;
+      const k = Math.min(1, dt * 8);
       // Blinzeln
       blinzeln -= dt;
       const zu = blinzeln < 0.12 && blinzeln > 0;
       for (const a of augen) a.scale.y = zu ? 0.15 : 1;
       if (blinzeln <= 0) blinzeln = 2.5 + Math.random() * 4;
-      // Laufen
+
+      // Laufen (nicht im Liegen)
       let laeuft = false;
-      if (ziel) {
+      if (ziel && modus !== 'liegen') {
         const d = new THREE.Vector3().subVectors(ziel, wurzel.position);
         d.y = 0;
         const dist = d.length();
@@ -374,22 +440,54 @@ export function baueDennis(scene) {
           wurzel.rotation.y += winkelDiff(soll, wurzel.rotation.y) * Math.min(1, dt * 10);
         }
       }
+
+      // Hinlegen: Körper kippt auf den Rücken, Kopf Richtung -z
+      liegenAnteil = naeher(liegenAnteil, modus === 'liegen' ? 1 : 0, Math.min(1, dt * 3));
+      koerper.rotation.x = -Math.PI / 2 * liegenAnteil;
+      koerper.position.set(0, 0.16 * liegenAnteil, 0.9 * liegenAnteil);
+
+      const beat = modus === 'tanzen' && takt ? takt() : null;
+      const tanzt = beat !== null && !laeuft && modus === 'tanzen';
+
+      // Beine
       if (laeuft) {
         schrittPhase += dt * tempo * 6.5;
         const s = Math.sin(schrittPhase);
         beine[0].rotation.x = s * 0.55;
         beine[1].rotation.x = -s * 0.55;
+        knie[0].rotation.x = Math.max(0, -s) * 0.7;
+        knie[1].rotation.x = Math.max(0, s) * 0.7;
         rumpf.position.y = 0.9 + Math.abs(Math.cos(schrittPhase)) * 0.04;
+      } else if (modus === 'liegen') {
+        // linkes Knie angewinkelt, Hand an der Hüfte
+        beine[0].rotation.x = naeher(beine[0].rotation.x, -0.9, k);
+        knie[0].rotation.x = naeher(knie[0].rotation.x, 1.5, k);
+        beine[1].rotation.x = naeher(beine[1].rotation.x, -0.15, k);
+        knie[1].rotation.x = naeher(knie[1].rotation.x, 0.25, k);
+        rumpf.position.y = 0.9 + Math.sin(zeit * 6) * 0.004;
+      } else if (tanzt) {
+        const p = (beat % 1);
+        const auf = Math.pow(Math.abs(Math.cos(p * Math.PI)), 3);
+        const seite = Math.floor(beat) % 2 ? 1 : -1;
+        beine[0].rotation.x = -0.2 - (seite < 0 ? 0.3 : 0) * auf;
+        beine[1].rotation.x = -0.2 - (seite > 0 ? 0.3 : 0) * auf;
+        knie[0].rotation.x = 0.35 + (seite < 0 ? 0.4 : 0) * auf;
+        knie[1].rotation.x = 0.35 + (seite > 0 ? 0.4 : 0) * auf;
+        rumpf.position.y = 0.86 + auf * 0.05;
+        rumpf.rotation.z = seite * 0.08 * auf;
       } else {
-        beine[0].rotation.x *= 0.8;
-        beine[1].rotation.x *= 0.8;
+        for (let i = 0; i < 2; i++) {
+          beine[i].rotation.x = naeher(beine[i].rotation.x, 0, k);
+          knie[i].rotation.x = naeher(knie[i].rotation.x, 0.04, k);
+        }
         rumpf.position.y = 0.9 + Math.sin(zeit * 1.8) * 0.006;
+        rumpf.rotation.z = naeher(rumpf.rotation.z, 0, k);
       }
 
       // Kopf zum Blickziel drehen
       let kopfSoll = 0;
       let kopfNick = 0;
-      if (blickZiel) {
+      if (blickZiel && modus !== 'liegen') {
         const kp = api.kopfPosition();
         const dx = blickZiel.x - wurzel.position.x;
         const dz = blickZiel.z - wurzel.position.z;
@@ -400,23 +498,52 @@ export function baueDennis(scene) {
         if (!laeuft && Math.abs(rel) > 1.0) wurzel.rotation.y += Math.sign(rel) * Math.min(Math.abs(rel) - 1.0, dt * 2.5);
         const horiz = Math.hypot(dx, dz);
         kopfNick = THREE.MathUtils.clamp(-Math.atan2(blickZiel.y - kp.y, horiz), -0.4, 0.4);
+      } else if (modus === 'liegen') {
+        kopfSoll = Math.sin(zeit * 0.7) * 0.5;
+        kopfNick = -0.5;
       }
+      if (tanzt) kopfNick += Math.pow(Math.abs(Math.cos((beat % 1) * Math.PI)), 3) * 0.3 - 0.1;
       kopf.rotation.y += (kopfSoll - kopf.rotation.y) * Math.min(1, dt * 6);
-      kopf.rotation.x += (kopfNick - kopf.rotation.x) * Math.min(1, dt * 6);
+      kopf.rotation.x += (kopfNick - kopf.rotation.x) * Math.min(1, dt * (tanzt ? 20 : 6));
 
       // Arme und Kaffee
       const wuetend = stimmung === 'wut';
-      becher.visible = !wuetend;
-      if (wuetend) {
+      becher.visible = !wuetend && !tanzt && !essen && modus !== 'liegen';
+      if (modus === 'liegen') {
+        links.schulter.rotation.set(-0.3, 0, -0.9);
+        links.ellbogen.rotation.set(-1.9, 0, 0);
+        rechts.schulter.rotation.set(-0.2 + Math.sin(zeit * 3) * 0.6, 0, 0.6);
+        rechts.ellbogen.rotation.set(-0.6, 0, 0);
+      } else if (essen) {
+        // Brotdose links vor dem Bauch, Tomate rechts zum Mund
+        const biss = Math.max(0, Math.sin(zeit * 2.2));
+        links.schulter.rotation.set(-0.5, 0, -0.1);
+        links.ellbogen.rotation.set(-1.2, 0, 0);
+        rechts.schulter.rotation.set(-0.5 - biss * 0.6, 0.2, 0.1);
+        rechts.ellbogen.rotation.set(-1.4 - biss * 0.6, 0, 0);
+      } else if (tanzt) {
+        const p = beat % 1;
+        const hoch = Math.floor(beat / 2) % 2 === 0;
+        const pump = Math.pow(Math.abs(Math.cos(p * Math.PI)), 2);
+        links.schulter.rotation.set(hoch ? -2.7 - pump * 0.3 : -0.8, 0, -0.3);
+        links.ellbogen.rotation.set(hoch ? -0.3 : -1.6 + pump * 0.4, 0, 0);
+        rechts.schulter.rotation.set(!hoch ? -2.7 - pump * 0.3 : -0.8, 0, 0.3);
+        rechts.ellbogen.rotation.set(!hoch ? -0.3 : -1.6 + pump * 0.4, 0, 0);
+      } else if (wuetend) {
         const z = Math.sin(zeit * 18) * 0.15;
         links.schulter.rotation.set(-2.4 + z, 0, -0.3);
         rechts.schulter.rotation.set(-2.4 - z, 0, 0.3);
+        links.ellbogen.rotation.set(-0.5, 0, 0);
+        rechts.ellbogen.rotation.set(-0.5, 0, 0);
       } else if (stimmung === 'sauer') {
         links.schulter.rotation.set(-0.3, 0, -0.35);
-        rechts.schulter.rotation.set(-1.3 + Math.sin(zeit * 9) * 0.35, 0, 0.25);
+        links.ellbogen.rotation.set(-0.9, 0, 0);
+        rechts.schulter.rotation.set(-1.0 + Math.sin(zeit * 9) * 0.35, 0, 0.25);
+        rechts.ellbogen.rotation.set(-0.7, 0, 0);
       } else {
         const schwing = laeuft ? Math.sin(schrittPhase) * 0.45 : 0;
         links.schulter.rotation.set(-schwing, 0, -0.12);
+        links.ellbogen.rotation.set(-0.15 - (laeuft ? 0.3 : 0), 0, 0);
         // Schluck Kaffee ab und zu
         schluckTimer -= dt;
         if (!laeuft && schluckTimer < 0) {
@@ -425,17 +552,21 @@ export function baueDennis(scene) {
         }
         schluck = Math.max(0, schluck - dt);
         const heben = schluck > 0 ? Math.sin((schluck / 2.2) * Math.PI) : 0;
-        rechts.schulter.rotation.set(-0.5 - heben * 1.9 + schwing, heben * 0.4, 0.12 - heben * 0.25);
+        rechts.schulter.rotation.set(-0.25 - heben * 0.9 + schwing, heben * 0.3, 0.12 - heben * 0.2);
+        rechts.ellbogen.rotation.set(-0.9 - heben * 1.3, 0, 0);
       }
 
       // Gesicht
-      const brauWinkel = { ruhig: 0, skeptisch: 0.25, sauer: 0.45, wut: 0.6, froh: -0.2 }[stimmung] ?? 0;
+      const leidet = modus === 'liegen';
+      const brauWinkel = leidet ? -0.35 : ({ ruhig: 0, skeptisch: 0.25, sauer: 0.45, wut: 0.6, froh: -0.2 }[stimmung] ?? 0);
       brauen[0].rotation.z = -brauWinkel;
       brauen[1].rotation.z = brauWinkel;
       brauen[0].position.y = brauen[1].position.y = 0.205 - Math.abs(brauWinkel) * 0.02 + (stimmung === 'froh' ? 0.01 : 0);
-      if (stimmung === 'skeptisch') brauen[1].position.y += 0.015;
-      const mundAuf = wuetend ? 0.03 + Math.abs(Math.sin(zeit * 14)) * 0.035 : stimmung === 'sauer' ? 0.02 + Math.abs(Math.sin(zeit * 10)) * 0.02 : 0.014;
-      mund.scale.set(stimmung === 'froh' ? 1.3 : 1, mundAuf / 0.014, 1);
+      if (stimmung === 'skeptisch' && !leidet) brauen[1].position.y += 0.015;
+      const mundAuf = essen ? 0.014 + Math.max(0, Math.sin(zeit * 9)) * 0.02 : leidet ? 0.02 + Math.abs(Math.sin(zeit * 5)) * 0.03
+        : tanzt ? 0.025
+          : wuetend ? 0.03 + Math.abs(Math.sin(zeit * 14)) * 0.035 : stimmung === 'sauer' ? 0.02 + Math.abs(Math.sin(zeit * 10)) * 0.02 : 0.014;
+      mund.scale.set(stimmung === 'froh' || tanzt ? 1.3 : 1, mundAuf / 0.014, 1);
       hautFarbe.lerp(zielFarbe, Math.min(1, dt * 4));
       for (const m of hautMats) m.color.copy(hautFarbe);
       kopf.position.x = wuetend ? Math.sin(zeit * 40) * 0.008 : 0;

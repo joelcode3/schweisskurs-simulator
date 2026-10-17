@@ -1,4 +1,7 @@
 {
-  "aktiv": false,
-  "saetze": {}
+  "aktiv": true,
+  "saetze": {
+    "baustellenfeeling": "baustellenfeeling.mp3",
+    "tomate": "tomate.mp3"
+  }
 }
