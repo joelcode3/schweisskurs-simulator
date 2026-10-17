@@ -18,8 +18,8 @@
   mit Holzgriff, langes Ofenrohr oben (statt Ventil), drei schräge Beine am Fußring, zwei seitliche Tragegriffe.
   Mit Beinen steht er vor dem Schweißtisch auf dem Boden.
 - Aussehen Dennis (nach Fotos): schlank, blond-rötliche Locken (oben/hinten voluminös), goldene Pilotenbrille,
-  Schnauzer, leichter Dreitagebart, schwarze Arbeitsjacke mit Reflexstreifen über grauem Hoodie, schwarze
-  Arbeitshose, **hässlicher blauer Rucksack** (ausdrücklich gewünscht). Keine roten Wangen, kein Gehörschutz, keine Mütze.
+  Schnauzer, leichter Dreitagebart, schwarze Arbeitsjacke mit Kragen und Reflexstreifen, darunter grauer Hoodie (nur Kordeln sichtbar), schwarze
+  Arbeitshose, **hässlicher blauer Rucksack** (ausdrücklich gewünscht). Keine roten Wangen, kein Gehörschutz, keine Mütze, kein grauer Ring am Hals.
 - Fehlerstufen: leicht (Ermahnung, Dennis guckt), mittel (kommt rüber, sauer), voll (rennt rüber, Ausraster).
 
 ## Dateien
