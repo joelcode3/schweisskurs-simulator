@@ -277,6 +277,7 @@ export async function stimmeAbspielen(url) {
   return {
     dauer: puffer.duration,
     fertig,
+    lautstaerke(v) { g.gain.setTargetAtTime(v, ctx.currentTime, 0.05); },
     pegel() {
       analyse.getByteTimeDomainData(daten);
       let summe = 0;

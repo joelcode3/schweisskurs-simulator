@@ -793,7 +793,9 @@ export function baueWelt(scene) {
   });
   const dreckMat = new THREE.MeshBasicMaterial({ map: dreckTex, transparent: true, depthWrite: false });
   const dreck = [];
+  let dreckMitte = null;
   function dreckHin(cx, cz, anzahl) {
+    dreckMitte = { x: cx, z: cz };
     for (let i = 0; i < anzahl; i++) {
       const d = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.6), dreckMat);
       d.rotation.set(-Math.PI / 2, 0, Math.random() * Math.PI);
@@ -869,7 +871,10 @@ export function baueWelt(scene) {
     kiwisZeigen(n) { kiwis.forEach((k, i) => { k.visible = i < n; }); },
     boxTakt(f) { boxBeat = f; },
     dreckHin,
-    dreckWeg() { for (const d of dreck) scene.remove(d); dreck.length = 0; },
+    dreckWeg() { for (const d of dreck) scene.remove(d); dreck.length = 0; dreckMitte = null; },
+    get dreckMitte() { return dreckMitte; },
+    besenSichtbar(an) { besen.visible = an; },
+    BESEN: { x: -4.35, z: 2.05 },
     get dreck() { return dreck.length; },
     KLO: { x: 1.4, z: 3.55 },
     update(dt) {

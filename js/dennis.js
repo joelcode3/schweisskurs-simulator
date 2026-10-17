@@ -226,6 +226,19 @@ export function baueDennis(scene) {
   tomate.visible = false;
   rechts.ellbogen.add(tomate);
 
+  // Besen zum Fegen (vor dem Körper, schwingt beim Fegen hin und her)
+  const besenInHand = new THREE.Group();
+  const besenDreh = new THREE.Group();
+  besenDreh.add(setze(zylinder(0.014, 0.014, 1.3, 0xb27a42, {}, 8), 0, 0, 0));
+  besenDreh.add(setze(quader(0.32, 0.06, 0.07, 0x7a4f2a), 0, -0.65, 0));
+  besenDreh.add(setze(quader(0.3, 0.07, 0.06, 0x2a2a2a, { umriss: false }), 0, -0.71, 0));
+  besenDreh.rotation.x = 0.45;
+  besenDreh.position.set(0, 0.0, 0.32);
+  besenInHand.add(besenDreh);
+  besenInHand.position.y = 0.4;
+  besenInHand.visible = false;
+  rumpf.add(besenInHand);
+
   // Kopf: schmal, Schnauzer, goldene Pilotenbrille, Locken
   const kopf = new THREE.Group();
   kopf.position.y = 0.98;
@@ -389,8 +402,11 @@ export function baueDennis(scene) {
       if (beat !== undefined) takt = beat;
     },
     sichtbar(an) { wurzel.visible = an; },
+    besen(an) { besenInHand.visible = an; },
     mittagspause(an) { dose.visible = an; tomate.visible = an; essen = an; },
+    // Löst mit true auf, wenn er ankommt, mit false, wenn ein neues Ziel dazwischenkommt
     gehZu(x, z, schnell = 1.3) {
+      if (zielAufloesen) zielAufloesen(false);
       tempo = schnell;
       ziel = new THREE.Vector3(x, 0, z);
       return new Promise((res) => { zielAufloesen = res; });
@@ -401,7 +417,7 @@ export function baueDennis(scene) {
       ziel = null;
       const r = zielAufloesen;
       zielAufloesen = null;
-      if (r) r();
+      if (r) r(true);
     },
     heim() {
       return api.gehZu(HEIM.x, HEIM.z, 1.2).then(() => {
@@ -430,7 +446,7 @@ export function baueDennis(scene) {
           ziel = null;
           const r = zielAufloesen;
           zielAufloesen = null;
-          if (r) r();
+          if (r) r(true);
         } else {
           laeuft = true;
           const schritt = Math.min(dist, tempo * dt);
@@ -508,12 +524,30 @@ export function baueDennis(scene) {
 
       // Arme und Kaffee
       const wuetend = stimmung === 'wut';
-      becher.visible = !wuetend && !tanzt && !essen && modus !== 'liegen';
+      becher.visible = !wuetend && !tanzt && !essen && !besenInHand.visible && modus !== 'liegen';
+      if (!besenInHand.visible) rumpf.rotation.y = 0;
       if (modus === 'liegen') {
         links.schulter.rotation.set(-0.3, 0, -0.9);
         links.ellbogen.rotation.set(-1.9, 0, 0);
         rechts.schulter.rotation.set(-0.2 + Math.sin(zeit * 3) * 0.6, 0, 0.6);
         rechts.ellbogen.rotation.set(-0.6, 0, 0);
+      } else if (modus === 'fegen') {
+        const schwung = Math.sin(zeit * 5);
+        besenDreh.rotation.z = schwung * 0.45;
+        besenDreh.position.x = schwung * 0.12;
+        rumpf.rotation.y = schwung * 0.15;
+        links.schulter.rotation.set(-0.8, 0, -0.1 + schwung * 0.2);
+        links.ellbogen.rotation.set(-0.5, 0, 0);
+        rechts.schulter.rotation.set(-0.6, 0, 0.1 + schwung * 0.2);
+        rechts.ellbogen.rotation.set(-0.7, 0, 0);
+      } else if (besenInHand.visible) {
+        besenDreh.rotation.z = 0;
+        besenDreh.position.x = 0;
+        rumpf.rotation.y = 0;
+        links.schulter.rotation.set(-0.7, 0, -0.1);
+        links.ellbogen.rotation.set(-0.5, 0, 0);
+        rechts.schulter.rotation.set(-0.5, 0, 0.1);
+        rechts.ellbogen.rotation.set(-0.7, 0, 0);
       } else if (essen) {
         // Brotdose links vor dem Bauch, Tomate rechts zum Mund
         const biss = Math.max(0, Math.sin(zeit * 2.2));

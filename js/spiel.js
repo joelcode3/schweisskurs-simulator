@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { STATIONEN, AUGENHOEHE } from './world.js';
 import { auftritt, hatClip, buehneBelegt } from './clips.js';
 import { pfadSpiel, schlackeSpiel } from './minispiele.js';
-import { blip, kratzen, jingle, klonk, technoAn, technoAus, technoBeat, klospuelung, mampfen, klick as schalterKlick } from './audio.js';
+import { blip, kratzen, jingle, klonk, technoAn, technoAus, technoBeat, klospuelung, mampfen, klick as schalterKlick, stimmeAbspielen } from './audio.js';
 import * as ui from './ui.js';
 import { DENNIS } from './texte.js';
 
@@ -127,6 +127,9 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
     huefte: 'nie',
     nebenDennis: 0,
     mittag: 'nie',
+    dennisFegt: false,
+    dennisHatGefegt: false,
+    dreckSeit: 0,
     baustelleZuletzt: -999,
     jammerTimer: 0,
     vorbei: false,
@@ -310,6 +313,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
     z.geschnitten = true;
     z.schnittQ = e.qualitaet;
     welt.dreckHin(0, -2.2, 5);
+    z.dreckSeit = sekundenSeitStart();
     aktualisieren();
     if (e.qualitaet < 55) await fehler('schnitt');
     else if (e.qualitaet >= 88) await lob(DENNIS.lobSchnitt);
@@ -348,6 +352,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
     z.naehte[teil] = e.qualitaet;
     z.schlackeWeg = false;
     welt.dreckHin(3.1, -2.1, 2);
+    z.dreckSeit = sekundenSeitStart();
     aktualisieren();
     if (teil === 'beine') await steuerung.zuStation('schweiss');
     if (e.strom !== 'ok' && !z.stromGemeldet) {
@@ -506,6 +511,60 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
     z.gefegt = true;
     ui.hinweis('Boden ist sauber.');
     if (!buehneBelegt()) auftritt({ schluessel: ['lob'], text: DENNIS.fegen, stufe: 'lob', stimmung: 'froh' });
+  }
+
+  // ---------- Dennis fegt selbst, wenn der Dreck zu lange liegt ----------
+  const warte = (ms) => new Promise((r) => setTimeout(r, ms));
+  async function dennisFegt() {
+    z.dennisFegt = true;
+    const abbruch = () => {
+      dennis.besen(false);
+      dennis.setzeModus('normal');
+      welt.besenSichtbar(true);
+      z.dennisFegt = false;
+    };
+    if (!(await dennis.gehZu(welt.BESEN.x, welt.BESEN.z, 1.3))) return abbruch();
+    welt.besenSichtbar(false);
+    dennis.besen(true);
+    const m = welt.dreckMitte;
+    if (!m) return abbruch();
+    if (!(await dennis.gehZu(m.x, m.z + 0.55, 1.2))) return abbruch();
+    dennis.wurzel.rotation.y = Math.PI;
+    dennis.setzeModus('fegen');
+    const ton = await ortsTon('stimme/muell.mp3');
+    await warte(5200);
+    if (ton) ton.stopp();
+    if (dennis.modus !== 'fegen') return abbruch();
+    welt.dreckWeg();
+    z.dennisHatGefegt = true;
+    dennis.setzeModus('normal');
+    if (!(await dennis.gehZu(welt.BESEN.x, welt.BESEN.z, 1.3))) return abbruch();
+    abbruch();
+    dennis.heim();
+  }
+
+  // ---------- Murmeln: Originaltöne, lauter je näher man ist ----------
+  const MURMELN = [1, 2, 3, 4, 5, 6, 7].map((n) => `stimme/murmeln-${n}.mp3`);
+  let murmelTon = null;
+  let naechstesMurmeln = 20;
+  let letzterMurmel = -1;
+  function lautstaerkeNachAbstand() {
+    const d = Math.hypot(kamera.position.x - dennis.position.x, kamera.position.z - dennis.position.z);
+    return Math.max(0, Math.min(1, (5.5 - d) / 4.5)) * 1.1;
+  }
+  async function ortsTon(url) {
+    const t = await stimmeAbspielen(url);
+    if (!t) return null;
+    t.lautstaerke(lautstaerkeNachAbstand());
+    murmelTon = t;
+    t.fertig.then(() => { if (murmelTon === t) murmelTon = null; });
+    return t;
+  }
+  async function murmeln() {
+    let n;
+    do { n = Math.floor(Math.random() * MURMELN.length); } while (n === letzterMurmel && MURMELN.length > 1);
+    letzterMurmel = n;
+    await ortsTon(MURMELN[n]);
   }
 
   async function mittagspause() {
@@ -679,7 +738,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
   function note() {
     const qs = [z.schnittQ ?? 0, ...Object.values(z.naehte).map((q) => q ?? 0)];
     const qualitaet = qs.reduce((a, b) => a + b, 0) / qs.length;
-    const punkte = qualitaet * 0.65 + (100 - z.wutMax) * 0.35 - z.fehler.length * 2 - (welt.dreck ? 4 : 0);
+    const punkte = qualitaet * 0.65 + (100 - z.wutMax) * 0.35 - z.fehler.length * 2 - (welt.dreck ? 4 : 0) - (z.dennisHatGefegt ? 2 : 0);
     const n = punkte >= 88 ? 1 : punkte >= 76 ? 2 : punkte >= 63 ? 3 : punkte >= 50 ? 4 : punkte >= 35 ? 5 : 6;
     return { n, qualitaet: Math.round(qualitaet), punkte: Math.round(punkte) };
   }
@@ -705,7 +764,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
         <li><span>Schnitt</span><b>${z.schnittQ} %</b></li>${naehte}
         <li><span>Verarbeitung gesamt</span><b>${qualitaet} %</b></li>
         <li><span>Höchste Dennis-Wut</span><b>${Math.round(z.wutMax)} %</b></li>
-        <li><span>Werkstatt</span><b>${welt.dreck ? 'dreckig' : 'gefegt'}</b></li>
+        <li><span>Werkstatt</span><b>${welt.dreck ? 'dreckig' : z.dennisHatGefegt ? 'Dennis musste fegen' : 'gefegt'}</b></li>
         <li><span>Zeit</span><b>${minuten} Min.</b></li>
       </ul>
       ${z.fehler.length ? `<p><b>Fehler (${z.fehler.length}):</b></p><ul class="fehler-liste">${z.fehler.map((f) => `<li>${f}</li>`).join('')}</ul>` : '<p><b>Kein einziger Fehler. Dennis ist sprachlos.</b></p>'}`,
@@ -751,7 +810,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
       beobachten();
       if (z.vorbei) return;
       // Tanzen, wenn die Box läuft und Dennis Zeit hat
-      const sollTanzen = z.musik && !z.beschaeftigt && dennis.istDaheim() && dennis.modus !== 'liegen';
+      const sollTanzen = z.musik && !z.beschaeftigt && !z.dennisFegt && dennis.istDaheim() && dennis.modus !== 'liegen';
       if (sollTanzen && dennis.modus === 'normal') dennis.setzeModus('tanzen', technoBeat);
       if (!sollTanzen && dennis.modus === 'tanzen') dennis.setzeModus('normal');
       // Licht aus: Dennis meckert nach kurzer Zeit
@@ -774,13 +833,24 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
         z.nebenDennis = 0;
         auftritt({ schluessel: ['baustellenfeeling'], text: DENNIS.baustellenfeeling, stufe: 'info', stimmung: 'froh' });
       }
+      // Dennis fegt selbst, wenn der Dreck über 45 s liegen bleibt
+      if (welt.dreck && !z.dennisFegt && sekundenSeitStart() - z.dreckSeit > 45 && !z.beschaeftigt && dennis.modus === 'normal' && dennis.istDaheim() && !buehneBelegt()) {
+        dennisFegt();
+      }
+      // Murmeln in der Nähe (nicht während Dennis spricht oder weg ist)
+      if (murmelTon) {
+        if (buehneBelegt() && !z.dennisFegt) { murmelTon.stopp(); murmelTon = null; } else murmelTon.lautstaerke(lautstaerkeNachAbstand());
+      } else if (sekundenSeitStart() > naechstesMurmeln && !z.beschaeftigt && !buehneBelegt() && dennis.wurzel.visible && lautstaerkeNachAbstand() > 0.15) {
+        naechstesMurmeln = sekundenSeitStart() + 15 + Math.random() * 20;
+        murmeln();
+      }
       // Mittagspause: Dennis kommt mit Brotdose rüber und isst eine Tomate (einmal pro Spiel)
-      if (z.mittag === 'nie' && sekundenSeitStart() > 140 && !z.beschaeftigt && dennis.modus === 'normal' && dennis.istDaheim() && !buehneBelegt() && Math.random() < dt * 0.03) {
+      if (z.mittag === 'nie' && sekundenSeitStart() > 140 && !z.beschaeftigt && !z.dennisFegt && dennis.modus === 'normal' && dennis.istDaheim() && !buehneBelegt() && Math.random() < dt * 0.03) {
         mittagspause();
       }
       // Hüfte: einmal pro Spiel legt sich Dennis hin und jammert, bis man ihm aufhilft
       const sekunden = (performance.now() - z.start) / 1000;
-      if (z.huefte === 'nie' && sekunden > 75 && !z.beschaeftigt && dennis.istDaheim() && !buehneBelegt() && Math.random() < dt * 0.04) {
+      if (z.huefte === 'nie' && sekunden > 75 && !z.beschaeftigt && !z.dennisFegt && dennis.istDaheim() && !buehneBelegt() && Math.random() < dt * 0.04) {
         z.huefte = 'liegt';
         z.jammerTimer = 14;
         dennis.setzeModus('liegen');
