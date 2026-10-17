@@ -1,0 +1,245 @@
+// Alle Geräusche werden live erzeugt (keine Audiodateien nötig).
+let ctx = null;
+let master = null;
+let rausch = null;
+
+export function audioStart() {
+  if (!ctx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    ctx = new AC();
+    master = ctx.createGain();
+    master.gain.value = 0.7;
+    master.connect(ctx.destination);
+    const len = ctx.sampleRate * 2;
+    rausch = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = rausch.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  }
+  if (ctx.state === 'suspended') ctx.resume();
+}
+
+function rauschQuelle() {
+  const q = ctx.createBufferSource();
+  q.buffer = rausch;
+  q.loop = true;
+  q.loopStart = Math.random();
+  return q;
+}
+
+function huelle(gain, t, a, h, r, wert = 1) {
+  gain.gain.setValueAtTime(0.0001, t);
+  gain.gain.exponentialRampToValueAtTime(wert, t + a);
+  gain.gain.setValueAtTime(wert, t + a + h);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + a + h + r);
+}
+
+export function blip(hoch = 880, lang = 0.08, lautst = 0.25) {
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = 'square';
+  o.frequency.setValueAtTime(hoch, t);
+  o.frequency.exponentialRampToValueAtTime(hoch * 1.5, t + lang);
+  huelle(g, t, 0.005, lang * 0.5, lang * 0.5, lautst);
+  o.connect(g).connect(master);
+  o.start(t);
+  o.stop(t + lang + 0.05);
+}
+
+export function klonk(lautst = 0.6) {
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  for (const [f, v] of [[620, 1], [1480, 0.5], [2650, 0.3]]) {
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'triangle';
+    o.frequency.value = f * (0.95 + Math.random() * 0.1);
+    huelle(g, t, 0.002, 0.01, 0.25, lautst * v);
+    o.connect(g).connect(master);
+    o.start(t);
+    o.stop(t + 0.35);
+  }
+  const q = rauschQuelle();
+  const f = ctx.createBiquadFilter();
+  f.type = 'highpass';
+  f.frequency.value = 2500;
+  const g = ctx.createGain();
+  huelle(g, t, 0.001, 0.01, 0.05, lautst * 0.6);
+  q.connect(f).connect(g).connect(master);
+  q.start(t);
+  q.stop(t + 0.1);
+}
+
+export function kratzen() {
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  for (let i = 0; i < 4; i++) {
+    const q = rauschQuelle();
+    const f = ctx.createBiquadFilter();
+    f.type = 'bandpass';
+    f.frequency.value = 3000 + Math.random() * 1500;
+    f.Q.value = 2;
+    const g = ctx.createGain();
+    huelle(g, t + i * 0.16, 0.02, 0.08, 0.04, 0.35);
+    q.connect(f).connect(g).connect(master);
+    q.start(t + i * 0.16);
+    q.stop(t + i * 0.16 + 0.2);
+  }
+}
+
+// Dauergeräusche: Flex, Schweißen, Gas, Wasser. Rückgabe: { stopp(), staerke(x) }
+export function dauer(art) {
+  if (!ctx) return { stopp() {}, staerke() {} };
+  const t = ctx.currentTime;
+  const aus = ctx.createGain();
+  aus.gain.setValueAtTime(0.0001, t);
+  aus.gain.exponentialRampToValueAtTime(1, t + 0.15);
+  aus.connect(master);
+  const knoten = [];
+  let staerkeGain = null;
+
+  if (art === 'flex') {
+    const o = ctx.createOscillator();
+    o.type = 'sawtooth';
+    o.frequency.value = 190;
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = 23;
+    const lfoG = ctx.createGain();
+    lfoG.gain.value = 6;
+    lfo.connect(lfoG).connect(o.frequency);
+    const og = ctx.createGain();
+    og.gain.value = 0.08;
+    o.connect(og).connect(aus);
+    const q = rauschQuelle();
+    const f = ctx.createBiquadFilter();
+    f.type = 'bandpass';
+    f.frequency.value = 4200;
+    f.Q.value = 0.8;
+    staerkeGain = ctx.createGain();
+    staerkeGain.gain.value = 0.05;
+    q.connect(f).connect(staerkeGain).connect(aus);
+    knoten.push(o, lfo, q);
+  } else if (art === 'schweissen') {
+    const q = rauschQuelle();
+    const f = ctx.createBiquadFilter();
+    f.type = 'highpass';
+    f.frequency.value = 1800;
+    const knister = ctx.createGain();
+    knister.gain.value = 0;
+    q.connect(f).connect(knister).connect(aus);
+    // zufälliges Knistern
+    const intervall = setInterval(() => {
+      if (!ctx) return;
+      const jetzt = ctx.currentTime;
+      knister.gain.cancelScheduledValues(jetzt);
+      knister.gain.setValueAtTime(0.05 + Math.random() * 0.35 * (staerkeGain ? staerkeGain.gain.value : 1), jetzt);
+      knister.gain.exponentialRampToValueAtTime(0.03, jetzt + 0.04);
+    }, 35);
+    staerkeGain = ctx.createGain();
+    staerkeGain.gain.value = 1;
+    const brumm = ctx.createOscillator();
+    brumm.type = 'square';
+    brumm.frequency.value = 100;
+    const bg = ctx.createGain();
+    bg.gain.value = 0.02;
+    brumm.connect(bg).connect(aus);
+    knoten.push(q, brumm);
+    knoten.intervall = intervall;
+  } else if (art === 'gas' || art === 'wasser') {
+    const q = rauschQuelle();
+    const f = ctx.createBiquadFilter();
+    f.type = art === 'gas' ? 'highpass' : 'lowpass';
+    f.frequency.value = art === 'gas' ? 3500 : 900;
+    const g = ctx.createGain();
+    g.gain.value = art === 'gas' ? 0.18 : 0.4;
+    q.connect(f).connect(g).connect(aus);
+    if (art === 'wasser') {
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 7;
+      const lg = ctx.createGain();
+      lg.gain.value = 300;
+      lfo.connect(lg).connect(f.frequency);
+      knoten.push(lfo);
+    }
+    knoten.push(q);
+  }
+  for (const k of knoten) k.start(t);
+  return {
+    staerke(x) {
+      if (art === 'flex' && staerkeGain) staerkeGain.gain.setTargetAtTime(0.05 + x * 0.25, ctx.currentTime, 0.05);
+      if (art === 'schweissen' && staerkeGain) staerkeGain.gain.value = x;
+    },
+    stopp() {
+      const j = ctx.currentTime;
+      aus.gain.cancelScheduledValues(j);
+      aus.gain.setValueAtTime(aus.gain.value, j);
+      aus.gain.exponentialRampToValueAtTime(0.0001, j + 0.12);
+      for (const k of knoten) k.stop(j + 0.15);
+      if (knoten.intervall) clearInterval(knoten.intervall);
+    },
+  };
+}
+
+// Platzhalter-Stimme für Dennis, solange keine echten Clips da sind: Brummeln in Silben.
+export function brummeln(silben = 8, wut = 0) {
+  if (!ctx) return 0;
+  let t = ctx.currentTime + 0.05;
+  const start = t;
+  for (let i = 0; i < silben; i++) {
+    const lang = 0.09 + Math.random() * 0.12;
+    const o = ctx.createOscillator();
+    o.type = 'sawtooth';
+    const grund = 105 + wut * 70 + Math.random() * 30;
+    o.frequency.setValueAtTime(grund, t);
+    o.frequency.linearRampToValueAtTime(grund * (0.85 + Math.random() * 0.3), t + lang);
+    const f1 = ctx.createBiquadFilter();
+    f1.type = 'bandpass';
+    f1.frequency.value = 500 + Math.random() * 500;
+    f1.Q.value = 4;
+    const f2 = ctx.createBiquadFilter();
+    f2.type = 'bandpass';
+    f2.frequency.value = 1100 + Math.random() * 900;
+    f2.Q.value = 5;
+    const g = ctx.createGain();
+    huelle(g, t, 0.015, lang * 0.6, lang * 0.4, 0.5 + wut * 0.4);
+    o.connect(f1).connect(g);
+    o.connect(f2).connect(g);
+    g.connect(master);
+    o.start(t);
+    o.stop(t + lang + 0.05);
+    t += lang + (Math.random() < 0.2 ? 0.12 : 0.03);
+  }
+  return t - start;
+}
+
+export function rumms() {
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = 'sine';
+  o.frequency.setValueAtTime(140, t);
+  o.frequency.exponentialRampToValueAtTime(40, t + 0.3);
+  huelle(g, t, 0.005, 0.05, 0.35, 0.9);
+  o.connect(g).connect(master);
+  o.start(t);
+  o.stop(t + 0.5);
+}
+
+export function jingle(gut = true) {
+  if (!ctx) return;
+  const noten = gut ? [523, 659, 784, 1046] : [392, 370, 349, 262];
+  noten.forEach((f, i) => {
+    const t = ctx.currentTime + i * 0.13;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'triangle';
+    o.frequency.value = f;
+    huelle(g, t, 0.01, 0.08, 0.2, 0.3);
+    o.connect(g).connect(master);
+    o.start(t);
+    o.stop(t + 0.4);
+  });
+}

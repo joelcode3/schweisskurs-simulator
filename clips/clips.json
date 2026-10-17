@@ -1,0 +1,32 @@
+{
+  "begruessung": [],
+  "tipp": [],
+  "ermahnung": [
+    {
+      "datei": "ermahnung-1.mp4"
+    }
+  ],
+  "sauer": [],
+  "ausraster": [
+    {
+      "datei": "ausraster-1.mp4"
+    }
+  ],
+  "lob": [],
+  "fehler_brille": [],
+  "fehler_handschuhe": [],
+  "fehler_gasflasche": [],
+  "fehler_helm": [],
+  "fehler_masse": [],
+  "fehler_strom": [],
+  "fehler_naht": [],
+  "fehler_schnitt": [],
+  "fehler_schlacke": [],
+  "fehler_kaffee": [],
+  "fehler_nerven": [],
+  "ende_gut": [],
+  "ende_mittel": [],
+  "ende_schlecht": [],
+  "rausgeflogen": [],
+  "zwischendurch": []
+}

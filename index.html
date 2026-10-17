@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#1b1d20">
+  <title>Schweißkurs mit Dennis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=20261017-2">
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three.module.min.js" } }
+  </script>
+</head>
+<body>
+  <canvas id="welt"></canvas>
+
+  <!-- HUD -->
+  <div id="hud" class="versteckt">
+    <section id="zettel" class="panel">
+      <button id="zettel-kopf" class="zettel-kopf" type="button">
+        <span>Auftrag: Ofen aus Gasflasche</span>
+        <svg viewBox="0 0 24 24" class="ico klein"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <ol id="aufgaben"></ol>
+    </section>
+
+    <section id="wut" class="panel">
+      <div class="wut-kopf">
+        <svg viewBox="0 0 40 40" class="dennis-mini" id="wut-gesicht"></svg>
+        <div>
+          <div class="wut-titel">Dennis-Wut</div>
+          <div class="wut-stufe" id="wut-stufe">entspannt</div>
+        </div>
+      </div>
+      <div class="wut-balken"><div id="wut-fuellung"></div></div>
+    </section>
+
+    <div id="ausruestung" class="panel"></div>
+
+    <div id="fadenkreuz"></div>
+    <div id="hover-name"></div>
+    <div id="hinweis"></div>
+
+    <nav id="stationen"></nav>
+  </div>
+
+  <!-- Aktionsmenü -->
+  <div id="aktionen" class="versteckt"></div>
+
+  <!-- Dialoge (Stromstärke, Halten-Aktionen, Ergebnis) -->
+  <div id="dialog" class="versteckt"></div>
+
+  <!-- Minispiele -->
+  <div id="minispiel" class="versteckt">
+    <canvas id="minispiel-canvas"></canvas>
+    <div id="minispiel-oben"></div>
+    <div id="minispiel-unten"></div>
+  </div>
+
+  <!-- Dennis-Auftritt -->
+  <div id="dennis-buehne" class="versteckt">
+    <div id="dennis-rahmen" class="comic-rahmen">
+      <div id="dennis-medien"></div>
+      <div id="dennis-text" class="sprechblase"></div>
+      <div id="dennis-name">DENNIS</div>
+    </div>
+    <button id="dennis-weiter" class="knopf klein" type="button">Weiter</button>
+  </div>
+
+  <!-- Startbildschirm -->
+  <div id="start" class="bildschirm">
+    <div class="start-karte">
+      <div class="warnstreifen"></div>
+      <h1>Schweißkurs<br><span>mit Dennis</span></h1>
+      <p class="unterzeile">Bau einen Ofen aus einer alten Gasflasche. Mach keinen Mist. Dennis guckt zu.</p>
+      <div class="start-knoepfe">
+        <button id="start-los" class="knopf gross" type="button">Kurs starten</button>
+        <label class="schalter">
+          <input type="checkbox" id="dennis-modus">
+          <span class="schalter-bahn"></span>
+          <span>Dennis-Modus <small>(doppelte Wut)</small></span>
+        </label>
+        <button id="start-archiv" class="knopf leise" type="button">Dennis-Archiv</button>
+      </div>
+      <div class="steuerung">
+        <div><b>Computer:</b> Maus ziehen = umschauen, WASD = gehen, Klick = benutzen</div>
+        <div><b>Handy:</b> Wischen = umschauen, Tippen = benutzen, unten Stationen wählen</div>
+      </div>
+      <div class="warnstreifen"></div>
+    </div>
+  </div>
+
+  <div id="hochkant">Handy quer halten, dann passt die Werkstatt besser aufs Bild.</div>
+
+  <script type="module" src="js/main.js?v=20261017-2"></script>
+</body>
+</html>
