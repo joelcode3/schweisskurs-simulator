@@ -49,7 +49,8 @@ export function baueWelt(scene) {
 
   // ---------- Licht ----------
   scene.background = new THREE.Color(0x2a2620);
-  scene.add(new THREE.HemisphereLight(0xfff2dc, 0x4a4238, 1.6));
+  const himmel = new THREE.HemisphereLight(0xfff2dc, 0x4a4238, 1.6);
+  scene.add(himmel);
   const sonne = new THREE.DirectionalLight(0xfff0d0, 2.2);
   sonne.position.set(-6, 7, 3);
   sonne.castShadow = true;
@@ -346,33 +347,49 @@ export function baueWelt(scene) {
   scene.add(fach);
   scene.add(setze(quader(0.42, 0.012, 1.2, 0xe8e2d0, { wirft: false }), -4.66, 1.272, -0.6));
 
-  // Schutzbrille: gelber Rahmen, große klare Scheibe, schwarzes Gummiband, aufrecht auf einem Ständer
+  // Schutzbrille: gebogene klare Scheibe mit Nasenausschnitt, gelber Rahmen oben, zwei Bügel
   const brille = new THREE.Group();
-  const scheibe = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.1, 0.1, 0.06, 20, 1, true, -0.9, 1.8),
-    toon(0xbfe6ff, { transparent: true, opacity: 0.55, side: THREE.DoubleSide }),
-  );
-  scheibe.rotation.y = Math.PI;
-  scheibe.position.z = 0.1;
-  brille.add(scheibe);
-  const rahmen = new THREE.Group();
-  for (const y of [0.03, -0.03]) {
-    const r = teil(new THREE.TorusGeometry(0.1, 0.007, 5, 20, 1.8), 0xf2c21c, { umriss: 0.003 });
-    r.rotation.set(Math.PI / 2, 0, -0.9 - Math.PI / 2 + Math.PI);
-    r.position.y = y;
-    rahmen.add(r);
+  const R = 0.09;
+  const umrissForm = new THREE.Shape();
+  umrissForm.moveTo(-0.075, 0.024);
+  umrissForm.quadraticCurveTo(0, 0.032, 0.075, 0.024);
+  umrissForm.quadraticCurveTo(0.088, 0.0, 0.07, -0.022);
+  umrissForm.quadraticCurveTo(0.04, -0.03, 0.016, -0.024);
+  umrissForm.quadraticCurveTo(0, -0.006, -0.016, -0.024);
+  umrissForm.quadraticCurveTo(-0.04, -0.03, -0.07, -0.022);
+  umrissForm.quadraticCurveTo(-0.088, 0.0, -0.075, 0.024);
+  const biegen = (x, y) => new THREE.Vector3(R * Math.sin(x / R), y, R * Math.cos(x / R) - R);
+  const scheibenGeo = new THREE.ShapeGeometry(umrissForm, 16);
+  const scheibenPos = scheibenGeo.attributes.position;
+  for (let i = 0; i < scheibenPos.count; i++) {
+    const v = biegen(scheibenPos.getX(i), scheibenPos.getY(i));
+    scheibenPos.setXYZ(i, v.x, v.y, v.z);
   }
-  rahmen.position.z = 0.1 - 0.1;
-  brille.add(rahmen);
-  brille.add(setze(quader(0.02, 0.05, 0.02, 0xf2c21c), 0, 0, 0.1 + 0.002));
-  const gummi = teil(new THREE.TorusGeometry(0.095, 0.006, 4, 24, Math.PI * 1.2), 0x1a1a1a, { umriss: false });
-  gummi.rotation.set(Math.PI / 2, 0, Math.PI + 0.9 - Math.PI * 0.1);
-  gummi.position.z = 0;
-  brille.add(gummi);
-  // Ständer
-  brille.add(setze(quader(0.08, 0.012, 0.06, 0x444444), 0, -0.05, 0.04));
-  setze(brille, -4.58, 1.36, -0.86, 0, Math.PI / 2 + 0.5, 0);
-  brille.scale.setScalar(1.7);
+  scheibenGeo.computeVertexNormals();
+  const scheibe = new THREE.Mesh(scheibenGeo, new THREE.MeshToonMaterial({ color: 0xcfeeff, transparent: true, opacity: 0.45, side: THREE.DoubleSide }));
+  brille.add(scheibe);
+  // Rahmen: Linie entlang des Umrisses (oben dick, unten dünn)
+  const rand = umrissForm.getPoints(40).map((p) => biegen(p.x, p.y));
+  const randKurve = new THREE.CatmullRomCurve3(rand, true);
+  brille.add(teil(new THREE.TubeGeometry(randKurve, 80, 0.0035, 5, true), 0xf2c21c, { umriss: false }));
+  const obenKurve = new THREE.CatmullRomCurve3([-0.078, -0.04, 0, 0.04, 0.078].map((x) => biegen(x, 0.024 + 0.008 * Math.cos(x * 20))));
+  brille.add(teil(new THREE.TubeGeometry(obenKurve, 30, 0.007, 6), 0xf2c21c, { umriss: 0.003 }));
+  // Bügel nach hinten, aufgeklappt
+  for (const seite of [-1, 1]) {
+    const ende = biegen(0.08 * seite, 0.015);
+    const buegel = teil(new THREE.BoxGeometry(0.007, 0.012, 0.13), 0xf2c21c, { umriss: 0.002 });
+    buegel.position.set(ende.x, ende.y - 0.004, ende.z - 0.065);
+    buegel.rotation.y = -0.08 * seite;
+    brille.add(buegel);
+    const spitze = teil(new THREE.BoxGeometry(0.007, 0.03, 0.012), 0x1a1a1a, { umriss: false });
+    spitze.position.set(ende.x - 0.006 * seite, ende.y - 0.016, ende.z - 0.128);
+    spitze.rotation.x = 0.4;
+    brille.add(spitze);
+  }
+  // Nasenauflage
+  brille.add(setze(quader(0.018, 0.01, 0.01, 0x8a8f96, { umriss: false }), 0, -0.012, -0.006));
+  setze(brille, -4.55, 1.335, -0.85, 0.12, Math.PI / 2 + 0.35, 0);
+  brille.scale.setScalar(1.6);
   scene.add(brille);
   merke(brille, 'brille', 'Schutzbrille', 'regal');
   objekte.brille = brille;
@@ -627,6 +644,175 @@ export function baueWelt(scene) {
   merke(tasse, 'kaffee', 'Dennis’ Kaffeetasse', null);
   objekte.tasse = tasse;
 
+  // Kaffeemaschine anklickbar machen
+  merke(maschine, 'kaffeemaschine', 'Kaffeemaschine', null);
+
+  // Kiwischale auf dem Kaffeetisch
+  const kiwiSchale = new THREE.Group();
+  kiwiSchale.add(teil(new THREE.SphereGeometry(0.09, 16, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), 0xe8e2d0, { mat: { side: THREE.DoubleSide }, umriss: 0.004 }));
+  const kiwis = [];
+  const kiwiMat = toon(0x7a5a2e);
+  for (const [x, y, z] of [[-0.035, 0.0, -0.02], [0.035, 0.0, 0.0], [0, 0.0, 0.04], [0.0, 0.045, 0.005], [-0.03, 0.04, -0.03]]) {
+    const k = teil(new THREE.SphereGeometry(0.032, 10, 8), 0, { material: kiwiMat, umriss: 0.003 });
+    k.scale.set(1, 0.85, 1.25);
+    k.position.set(x, y - 0.015, z);
+    kiwiSchale.add(k);
+    kiwis.push(k);
+  }
+  // eine halbe, aufgeschnittene Kiwi obendrauf
+  const halbe = new THREE.Group();
+  halbe.add(teil(new THREE.SphereGeometry(0.03, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), 0, { material: kiwiMat, umriss: 0.003 }));
+  const schnitt = leinwandTextur(64, 64, (g) => {
+    g.fillStyle = '#7fb83a'; g.beginPath(); g.arc(32, 32, 31, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#e9f2c4'; g.beginPath(); g.arc(32, 32, 10, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#1a1a1a';
+    for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; g.beginPath(); g.ellipse(32 + Math.cos(a) * 15, 32 + Math.sin(a) * 15, 2, 1, a, 0, Math.PI * 2); g.fill(); }
+  });
+  const flaeche = new THREE.Mesh(new THREE.CircleGeometry(0.03, 16), new THREE.MeshBasicMaterial({ map: schnitt }));
+  flaeche.rotation.x = -Math.PI / 2;
+  flaeche.position.y = 0.001;
+  halbe.add(flaeche);
+  halbe.rotation.set(-0.5, 0, 0.3);
+  halbe.position.set(0.04, 0.05, 0.03);
+  kiwiSchale.add(halbe);
+  kiwis.push(halbe);
+  setze(kiwiSchale, -4.3, 0.895, 3.35);
+  scene.add(kiwiSchale);
+  merke(kiwiSchale, 'kiwi', 'Dennis’ Kiwis', null);
+
+  // Getränkekiste mit Dennis' Brotdose
+  const kiste = new THREE.Group();
+  kiste.add(setze(quader(0.4, 0.3, 0.3, 0x2f6a3a), 0, 0.15, 0));
+  for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j += 2) kiste.add(setze(zylinder(0.03, 0.03, 0.1, 0x3a2412, {}, 8), i * 0.12, 0.33, j * 0.06));
+  setze(kiste, -4.62, 0, 2.55, 0, Math.PI / 2, 0);
+  scene.add(kiste);
+  hindernis(-4.85, -4.45, 2.3, 2.8);
+  const brotdose = new THREE.Group();
+  brotdose.add(teil(new THREE.BoxGeometry(0.2, 0.07, 0.14), 0, { material: toon(0xf0f4f6, { transparent: true, opacity: 0.6 }), umriss: 0.004 }));
+  brotdose.add(setze(quader(0.21, 0.015, 0.15, 0xc8352a, { umriss: 0.003 }), 0, 0.042, 0));
+  brotdose.add(setze(quader(0.11, 0.025, 0.1, 0x8a5a2e, { umriss: 0.002 }), -0.035, -0.01, 0));
+  brotdose.add(setze(kugel(0.03, 0xc0392b, { umriss: 0.002 }, 10), 0.06, -0.005, 0.02));
+  setze(brotdose, -4.62, 0.43, 2.55, 0, 0.4, 0);
+  scene.add(brotdose);
+  merke(brotdose, 'brotdose', 'Dennis’ Brotdose', null);
+  objekte.brotdose = brotdose;
+
+  // Große Soundbox (Standlautsprecher)
+  const box = new THREE.Group();
+  box.add(setze(quader(0.42, 1.05, 0.42, 0x151517), 0, 0.525, 0));
+  box.add(setze(quader(0.36, 0.98, 0.012, 0x232327, { umriss: false }), 0, 0.53, 0.212));
+  const membranen = [];
+  for (const [y, r] of [[0.28, 0.13], [0.6, 0.13], [0.86, 0.045]]) {
+    box.add(setze(zylinder(r + 0.015, r + 0.015, 0.02, 0x3a3a3e, { umriss: 0.003 }, 24), 0, y, 0.215, Math.PI / 2, 0, 0));
+    const m = teil(new THREE.ConeGeometry(r, 0.05, 24, 1, true), 0x2b2b2f, { mat: { side: THREE.DoubleSide }, umriss: false });
+    m.rotation.x = -Math.PI / 2;
+    m.position.set(0, y, 0.215);
+    box.add(m);
+    box.add(setze(zylinder(r * 0.3, r * 0.3, 0.02, 0x0e0e10, { umriss: false }, 16), 0, y, 0.205, Math.PI / 2, 0, 0));
+    membranen.push(m);
+  }
+  const ledMat = new THREE.MeshBasicMaterial({ color: 0x441010 });
+  const led = new THREE.Mesh(new THREE.CircleGeometry(0.012, 12), ledMat);
+  led.position.set(0.14, 0.98, 0.22);
+  box.add(led);
+  box.add(setze(quader(0.1, 0.02, 0.005, 0xc8352a, { umriss: false }), 0, 0.98, 0.22));
+  setze(box, -4.66, 0, 1.0, 0, Math.PI / 2, 0);
+  scene.add(box);
+  merke(box, 'box', 'Soundbox', null);
+  hindernis(-4.9, -4.42, 0.75, 1.25);
+  let boxBeat = null;
+  animiert.push(() => {
+    const b = boxBeat ? boxBeat() : null;
+    const puls = b === null ? 0 : Math.pow(1 - (b % 1), 4);
+    for (const m of membranen) m.scale.set(1, 1 + puls * 1.5, 1);
+    ledMat.color.setHex(b === null ? 0x441010 : 0xff3020);
+  });
+
+  // Besen an der Wand
+  const besen = new THREE.Group();
+  besen.add(setze(zylinder(0.014, 0.014, 1.3, FARBE.holz, {}, 8), 0, 0.75, 0));
+  besen.add(setze(quader(0.32, 0.06, 0.07, 0x7a4f2a), 0, 0.08, 0));
+  besen.add(setze(quader(0.3, 0.07, 0.06, 0x2a2a2a, { umriss: false }), 0, 0.02, 0));
+  setze(besen, -4.88, 0, 2.05, 0.18, Math.PI / 2, 0);
+  scene.add(besen);
+  merke(besen, 'besen', 'Besen', null);
+
+  // Lichtschalter neben der Tür
+  const schalter = new THREE.Group();
+  schalter.add(quader(0.08, 0.08, 0.02, 0xf4f0e6, { umriss: 0.003 }));
+  const wippe = quader(0.04, 0.04, 0.015, 0xe8e2d0, { umriss: 0.002 });
+  wippe.position.z = 0.012;
+  schalter.add(wippe);
+  setze(schalter, -0.85, 1.1, RAUM.zMax - 0.012, 0, Math.PI, 0);
+  scene.add(schalter);
+  merke(schalter, 'licht', 'Lichtschalter', null);
+
+  // Klotür vorne rechts
+  const klo = new THREE.Group();
+  klo.add(setze(quader(0.85, 2.05, 0.05, 0xd9d4c4), 0, 1.025, 0));
+  klo.add(setze(quader(0.95, 0.06, 0.07, 0x3b3b3b), 0, 2.08, 0));
+  klo.add(setze(zylinder(0.022, 0.022, 0.12, 0xc9c9c9, {}, 10), 0.3, 1.0, -0.05, Math.PI / 2, 0, 0));
+  const wcTex = leinwandTextur(128, 128, (g, b, h) => {
+    g.fillStyle = '#2f5fa8'; g.fillRect(0, 0, b, h);
+    g.fillStyle = '#fff'; g.font = 'bold 64px Arial'; g.textAlign = 'center'; g.fillText('WC', b / 2, 86);
+  });
+  const wcSchild = new THREE.Mesh(new THREE.PlaneGeometry(0.18, 0.18), new THREE.MeshBasicMaterial({ map: wcTex }));
+  wcSchild.position.set(0, 1.6, -0.03);
+  wcSchild.rotation.y = Math.PI;
+  klo.add(wcSchild);
+  setze(klo, 1.4, 0, RAUM.zMax - 0.03, 0, Math.PI, 0);
+  scene.add(klo);
+
+  // Poster mit Klebeband, leicht schräg, über der Kaffeeecke
+  const posterTex = new THREE.TextureLoader().load('assets/poster.jpg');
+  posterTex.colorSpace = THREE.SRGBColorSpace;
+  const poster = new THREE.Group();
+  poster.add(new THREE.Mesh(new THREE.PlaneGeometry(0.62, 1.1), new THREE.MeshBasicMaterial({ color: 0xf6f3ea })));
+  const foto = new THREE.Mesh(new THREE.PlaneGeometry(0.56, 1.0), new THREE.MeshBasicMaterial({ map: posterTex }));
+  foto.position.z = 0.002;
+  poster.add(foto);
+  const klebeMat = new THREE.MeshBasicMaterial({ color: 0xe9dcae, transparent: true, opacity: 0.85 });
+  for (const [x, y, r] of [[-0.29, 0.53, 0.7], [0.29, 0.53, -0.6], [-0.29, -0.53, -0.7], [0.29, -0.53, 0.65]]) {
+    const band = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.045), klebeMat);
+    band.position.set(x, y, 0.004);
+    band.rotation.z = r;
+    poster.add(band);
+  }
+  setze(poster, RAUM.xMin + 0.012, 1.85, 3.25, 0, Math.PI / 2, 0.06);
+  scene.add(poster);
+
+  // Dreck auf dem Boden (Schleifstaub, Funken) – wird mit dem Besen weggefegt
+  const dreckTex = leinwandTextur(128, 128, (g) => {
+    g.clearRect(0, 0, 128, 128);
+    const r = zufall(19);
+    for (let i = 0; i < 160; i++) {
+      g.fillStyle = `rgba(${40 + r() * 30},${32 + r() * 20},${25 + r() * 15},${0.3 + r() * 0.5})`;
+      const a = r() * Math.PI * 2, d = r() * 55;
+      g.fillRect(64 + Math.cos(a) * d, 64 + Math.sin(a) * d, 1 + r() * 4, 1 + r() * 4);
+    }
+  });
+  const dreckMat = new THREE.MeshBasicMaterial({ map: dreckTex, transparent: true, depthWrite: false });
+  const dreck = [];
+  function dreckHin(cx, cz, anzahl) {
+    for (let i = 0; i < anzahl; i++) {
+      const d = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.6), dreckMat);
+      d.rotation.set(-Math.PI / 2, 0, Math.random() * Math.PI);
+      d.position.set(cx + (Math.random() - 0.5) * 1.6, 0.004 + dreck.length * 0.0002, cz + (Math.random() - 0.5) * 0.8);
+      scene.add(d);
+      dreck.push(d);
+    }
+  }
+
+  // Licht an/aus
+  const lichtWerte = { himmel: himmel.intensity, sonne: sonne.intensity, fuell: fuell.intensity };
+  function licht(an) {
+    himmel.intensity = an ? lichtWerte.himmel : 0.12;
+    sonne.intensity = an ? lichtWerte.sonne : 0.35;
+    fuell.intensity = an ? lichtWerte.fuell : 0;
+    roehrenMat.color.setHex(an ? 0xfffbea : 0x3a3a38);
+    wippe.rotation.x = an ? 0 : 0.5;
+  }
+
   // ---------- Gasflasche ----------
   const flasche = baueFlasche();
   scene.add(flasche.gruppe);
@@ -679,6 +865,13 @@ export function baueWelt(scene) {
     zeigeStrom,
     setzeFlasche,
     klemmeMasse,
+    licht,
+    kiwisZeigen(n) { kiwis.forEach((k, i) => { k.visible = i < n; }); },
+    boxTakt(f) { boxBeat = f; },
+    dreckHin,
+    dreckWeg() { for (const d of dreck) scene.remove(d); dreck.length = 0; },
+    get dreck() { return dreck.length; },
+    KLO: { x: 1.4, z: 3.55 },
     update(dt) {
       for (const a of animiert) a(dt);
     },

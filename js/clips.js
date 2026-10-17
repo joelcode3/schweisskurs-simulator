@@ -22,6 +22,12 @@ export const KATEGORIEN = {
   fehler_schlacke:  'Schlacke nicht entfernt',
   fehler_kaffee:    'An seinen Kaffee gegangen',
   fehler_nerven:    'Ihn zu oft gefragt',
+  fehler_kiwi:      'Kiwis geplündert',
+  fehler_brotdose:  'In seine Brotdose gebissen',
+  klo:              'Muss mal ganz dringend',
+  huefte:           'Hüfte, hinten links',
+  licht:            'Licht aus',
+  musik:            'Musik aus beim Tanzen',
   ende_gut:         'Ende: Note 1 oder 2',
   ende_mittel:      'Ende: Note 3 oder 4',
   ende_schlecht:    'Ende: Note 5 oder 6',
@@ -30,6 +36,7 @@ export const KATEGORIEN = {
 };
 
 let clips = {};
+let laufend = null; // schliessen() des gerade gezeigten Auftritts
 let stimme = { aktiv: false, saetze: {} };
 let video = null;
 const ARCHIV_KEY = 'dennis-archiv-v1';
@@ -86,6 +93,10 @@ function waehle(schluessel) {
   return { kategorie: schluessel[0], clip: null };
 }
 
+export function buehneBelegt() {
+  return !document.getElementById('dennis-buehne').classList.contains('versteckt');
+}
+
 export function hatClip(kategorie) {
   return Array.isArray(clips[kategorie]) && clips[kategorie].length > 0;
 }
@@ -128,19 +139,25 @@ export function auftritt({ schluessel, text, stufe = 'mittel', stimmung = 'sauer
     let mundTimer = null;
     let tippTimer = null;
     let sprecher = null;
-    function schliessen() {
+    // ersetzt = ein neuer Auftritt übernimmt die Bühne: dann nichts ausblenden oder anhalten
+    function schliessen(ersetzt = false) {
       if (aus) return;
       aus = true;
       if (sprecher) sprecher.stopp();
       clearTimeout(timer);
       clearInterval(mundTimer);
       clearInterval(tippTimer);
-      if (video) { video.pause(); video.onended = null; }
-      el.classList.add('versteckt');
-      weiter.onclick = null;
+      if (!ersetzt) {
+        if (video) { video.pause(); video.onended = null; }
+        el.classList.add('versteckt');
+        weiter.onclick = null;
+        laufend = null;
+      }
       fertig();
     }
-    weiter.onclick = schliessen;
+    if (laufend) laufend(true);
+    laufend = schliessen;
+    weiter.onclick = () => schliessen();
     weiter.textContent = stufe === 'voll' ? 'Ja, Dennis ...' : 'Weiter';
 
     const anzeigeText = clip?.text || text || '';

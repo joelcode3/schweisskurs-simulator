@@ -18,8 +18,14 @@
   mit Holzgriff, langes Ofenrohr oben (statt Ventil), drei schräge Beine am Fußring, zwei seitliche Tragegriffe.
   Mit Beinen steht er vor dem Schweißtisch auf dem Boden.
 - Aussehen Dennis (nach Fotos): schlank, blond-rötliche Locken (oben/hinten voluminös), goldene Pilotenbrille,
-  Schnauzer, leichter Dreitagebart, schwarze Arbeitsjacke mit Kragen und Reflexstreifen, darunter grauer Hoodie (nur Kordeln sichtbar), schwarze
+  Schnauzer, leichter Dreitagebart, schwarze Arbeitsjacke mit Kragen und Reflexstreifen, darunter grauer Hoodie (keine Kordeln), schwarze
   Arbeitshose, **hässlicher blauer Rucksack** (ausdrücklich gewünscht). Keine roten Wangen, kein Gehörschutz, keine Mütze, kein grauer Ring am Hals.
+- Nebenbei-Interaktionen: Kaffee kochen und Dennis bringen (Wut sinkt, ab dem 3. meckert er), Kiwis (1. ok,
+  2. skeptisch, ab 3. sauer), Brotdose (abbeißen = Ausraster), große Soundbox (Techno, Dennis tanzt),
+  Lichtschalter (Dennis meckert), Besen (Dreck nach Schneiden/Schweißen, zählt in die Note),
+  Hüfte (Dennis legt sich einmal pro Spiel hin und jammert, bis man ihm aufhilft),
+  Einweisung mit Klo-Pause (WC-Tür vorne rechts). Poster (assets/poster.jpg) mit Klebeband über der Kaffeeecke.
+- Fokus: Desktop-Version (Betreiber-Wunsch), Handy-Ansicht erstmal zweitrangig.
 - Fehlerstufen: leicht (Ermahnung, Dennis guckt), mittel (kommt rüber, sauer), voll (rennt rüber, Ausraster).
 
 ## Dateien
@@ -54,5 +60,8 @@
 - KI-Stimmklon ist in dieser Umgebung nicht möglich (huggingface.co gesperrt). Stimmproben nie ins Repo (öffentlich).
 
 ## Offene Themen
+- Dinge aufheben, tragen, ablegen, anziehen, benutzen (Hand im Bild), Feuerlöscher benutzen.
+- Handy in die Hand nehmen -> Dennis beschwert sich (Betreiber hat Video).
+- Dennis kommt irgendwann mit Brotdose und isst eine Tomate (Betreiber hat Sounddatei).
 - Weitere Clips von Dennis (Begrüßung, Lob, Tipps, Ende, spezielle Fehler).
 - Weitere Projekte (Grill, Werkzeugwagen), weitere Fehler, ggf. MAG-Schweißen.

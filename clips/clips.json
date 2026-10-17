@@ -39,12 +39,14 @@
   "ende_mittel": [],
   "ende_schlecht": [],
   "rausgeflogen": [],
-  "zwischendurch": [
+  "fehler_brotdose": [
     {
       "datei": "zwischendurch-1.mp4"
     },
     {
       "datei": "zwischendurch-2.mp4"
     }
-  ]
+  ],
+  "fehler_kiwi": [],
+  "klo": []
 }
