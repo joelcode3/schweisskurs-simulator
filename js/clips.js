@@ -53,9 +53,21 @@ export function videoFreischalten() {
   const erster = Object.values(clips).find((l) => Array.isArray(l) && l.length);
   video.src = erster ? `clips/${erster[0].datei}` : 'data:video/mp4;base64,AAAAHGZ0eXBpc29tAAACAGlzb21pc28ybXA0MQAAAAhmcmVlAAAAAG1kYXQ=';
   const p = video.play();
-  if (p && p.catch) p.catch(() => {});
-  video.pause();
-  video.muted = false;
+  // Erst nach dem Start anhalten, sonst zählt das iPhone es nicht als Freigabe
+  const anhalten = () => { video.pause(); video.muted = false; };
+  if (p && p.then) p.then(anhalten, anhalten);
+  else anhalten();
+}
+
+// Knopf über dem Video, falls der Browser das Abspielen blockiert (z. B. iPhone im Stromsparmodus)
+function knopfUeberVideo(medien, text, beiTipp) {
+  medien.querySelector('.video-knopf')?.remove();
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = text === 'Ton an' ? 'video-knopf ecke' : 'video-knopf';
+  b.innerHTML = `<svg viewBox="0 0 24 24" class="ico"><path d="M7 5l12 7-12 7z"/></svg><span>${text}</span>`;
+  b.addEventListener('click', (e) => { e.stopPropagation(); b.remove(); beiTipp(); });
+  medien.appendChild(b);
 }
 
 function waehle(schluessel) {
@@ -141,12 +153,17 @@ export function auftritt({ schluessel, text, stufe = 'mittel', stimmung = 'sauer
       raster.className = 'raster';
       medien.appendChild(raster);
       blase.textContent = anzeigeText;
+      const mitTon = () => { video.muted = false; video.play().catch(() => {}); };
       const p = video.play();
       if (p && p.catch) {
         p.catch(() => {
-          // Autoplay mit Ton blockiert: stumm abspielen, Text zeigt den Inhalt
+          if (aus) return;
+          // Ton blockiert: stumm abspielen und Knopf für Ton anbieten
           video.muted = true;
-          video.play().catch(() => {});
+          video.play().then(
+            () => { if (!aus) knopfUeberVideo(medien, 'Ton an', () => { video.muted = false; }); },
+            () => { if (!aus) knopfUeberVideo(medien, 'Dennis abspielen', mitTon); },
+          );
         });
       }
       video.onended = () => {
