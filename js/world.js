@@ -334,32 +334,79 @@ export function baueWelt(scene) {
   setze(elPack, -4.55, 1.31, -0.25);
   scene.add(elPack);
 
-  // Schutzbrille
+  // Fach "Schutzausrüstung" im Regal: helles Brett, Schild, Brille und Handschuhe gut sichtbar
+  const fachSchild = leinwandTextur(320, 60, (g, b, h) => {
+    g.fillStyle = '#f2c21c'; g.fillRect(0, 0, b, h);
+    g.strokeStyle = '#111'; g.lineWidth = 4; g.strokeRect(2, 2, b - 4, h - 4);
+    g.fillStyle = '#111'; g.font = 'bold 30px Arial, sans-serif'; g.textAlign = 'center';
+    g.fillText('SCHUTZAUSRÜSTUNG', b / 2, 41, b - 20);
+  });
+  const fach = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.064), new THREE.MeshBasicMaterial({ map: fachSchild }));
+  setze(fach, -4.47, 1.205, -0.6, 0, Math.PI / 2, 0);
+  scene.add(fach);
+  scene.add(setze(quader(0.42, 0.012, 1.2, 0xe8e2d0, { wirft: false }), -4.66, 1.272, -0.6));
+
+  // Schutzbrille: gelber Rahmen, große klare Scheibe, schwarzes Gummiband, aufrecht auf einem Ständer
   const brille = new THREE.Group();
-  const glasMat = toon(0x9fd8ff, { transparent: true, opacity: 0.75 });
-  brille.add(setze(teil(new THREE.BoxGeometry(0.17, 0.06, 0.02), 0, { material: glasMat }), 0, 0.03, 0));
-  brille.add(setze(quader(0.18, 0.015, 0.025, 0x222222), 0, 0.065, 0));
-  brille.add(setze(quader(0.012, 0.012, 0.13, 0x222222), -0.085, 0.04, -0.065));
-  brille.add(setze(quader(0.012, 0.012, 0.13, 0x222222), 0.085, 0.04, -0.065));
-  setze(brille, -4.55, 1.27, -1.0, 0, Math.PI / 2, 0);
+  const scheibe = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.1, 0.1, 0.06, 20, 1, true, -0.9, 1.8),
+    toon(0xbfe6ff, { transparent: true, opacity: 0.55, side: THREE.DoubleSide }),
+  );
+  scheibe.rotation.y = Math.PI;
+  scheibe.position.z = 0.1;
+  brille.add(scheibe);
+  const rahmen = new THREE.Group();
+  for (const y of [0.03, -0.03]) {
+    const r = teil(new THREE.TorusGeometry(0.1, 0.007, 5, 20, 1.8), 0xf2c21c, { umriss: 0.003 });
+    r.rotation.set(Math.PI / 2, 0, -0.9 - Math.PI / 2 + Math.PI);
+    r.position.y = y;
+    rahmen.add(r);
+  }
+  rahmen.position.z = 0.1 - 0.1;
+  brille.add(rahmen);
+  brille.add(setze(quader(0.02, 0.05, 0.02, 0xf2c21c), 0, 0, 0.1 + 0.002));
+  const gummi = teil(new THREE.TorusGeometry(0.095, 0.006, 4, 24, Math.PI * 1.2), 0x1a1a1a, { umriss: false });
+  gummi.rotation.set(Math.PI / 2, 0, Math.PI + 0.9 - Math.PI * 0.1);
+  gummi.position.z = 0;
+  brille.add(gummi);
+  // Ständer
+  brille.add(setze(quader(0.08, 0.012, 0.06, 0x444444), 0, -0.05, 0.04));
+  setze(brille, -4.58, 1.36, -0.86, 0, Math.PI / 2 + 0.5, 0);
+  brille.scale.setScalar(1.7);
   scene.add(brille);
   merke(brille, 'brille', 'Schutzbrille', 'regal');
   objekte.brille = brille;
 
-  // Handschuhe
+  // Schweißerhandschuhe: lange braune Lederhandschuhe mit Stulpe, aufrecht nebeneinander
   const handschuhe = new THREE.Group();
-  for (const dz of [-0.07, 0.07]) {
+  function handschuh(seite) {
     const h = new THREE.Group();
-    h.add(setze(quader(0.1, 0.035, 0.16, FARBE.leder), 0, 0, 0));
-    h.add(setze(quader(0.12, 0.04, 0.1, 0xc38f52), 0, 0.002, -0.12));
-    h.add(setze(quader(0.03, 0.03, 0.06, FARBE.leder), 0.065, 0, 0.03, 0, 0.6, 0));
-    setze(h, 0, 0, dz, 0, 0, 0);
-    h.rotation.y = Math.PI / 2;
-    h.position.x = dz;
-    h.position.z = 0;
-    handschuhe.add(h);
+    const leder = 0xa8743d;
+    const stulpe = teil(new THREE.CylinderGeometry(0.055, 0.045, 0.14, 12), 0xc38f52, { umriss: 0.004 });
+    stulpe.position.y = 0.07;
+    h.add(stulpe);
+    const naht = teil(new THREE.TorusGeometry(0.047, 0.005, 4, 14), 0x6b4522, { umriss: false });
+    naht.rotation.x = Math.PI / 2;
+    naht.position.y = 0.14;
+    h.add(naht);
+    const handteil = teil(new THREE.CapsuleGeometry(0.045, 0.06, 4, 10), leder, { umriss: 0.004 });
+    handteil.scale.set(1.1, 1, 0.6);
+    handteil.position.y = 0.2;
+    h.add(handteil);
+    for (let f = 0; f < 4; f++) {
+      const finger = teil(new THREE.CapsuleGeometry(0.012, 0.045, 4, 6), leder, { umriss: 0.003 });
+      finger.position.set(-0.033 + f * 0.022, 0.285 - Math.abs(f - 1.5) * 0.008, 0);
+      h.add(finger);
+    }
+    const daumen = teil(new THREE.CapsuleGeometry(0.015, 0.04, 4, 6), leder, { umriss: 0.003 });
+    daumen.position.set(0.06 * seite, 0.21, 0);
+    daumen.rotation.z = -0.7 * seite;
+    h.add(daumen);
+    return h;
   }
-  setze(handschuhe, -4.6, 1.285, -0.6, 0, Math.PI / 2, 0);
+  handschuhe.add(setze(handschuh(-1), -0.075, 0, 0, 0, 0, 0.1));
+  handschuhe.add(setze(handschuh(1), 0.075, 0, 0, 0, 0, -0.1));
+  setze(handschuhe, -4.62, 1.28, -0.38, 0, Math.PI / 2, 0);
   scene.add(handschuhe);
   merke(handschuhe, 'handschuhe', 'Schweißerhandschuhe', 'regal');
   objekte.handschuhe = handschuhe;
@@ -477,12 +524,61 @@ export function baueWelt(scene) {
   merke(masse, 'masse', 'Masseklemme', 'schweiss');
   objekte.masse = masse;
 
-  // Schweißhelm
+  // Schweißhelm: gewölbte Schale, Sichtfenster mit Rahmen, Kopfband mit Drehrad, Flammen-Aufkleber.
+  // Hängt an einem Haken an der Wand neben dem Schweißtisch.
   const helm = new THREE.Group();
-  helm.add(setze(teil(new THREE.SphereGeometry(0.15, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), 0x2b2d31), 0, 0, 0, -Math.PI / 2, 0, 0));
-  helm.add(setze(quader(0.1, 0.05, 0.02, 0x2c6b3a, { mat: { emissive: 0x0b2a12 } }), 0, 0.02, 0.13));
-  setze(helm, 2.55, 0.97, -3.1, 0, 0.5, 0);
+  // Schale: vordere Hälfte eines gestreckten Ellipsoids, oben breiter, unten zum Kinn hin schmaler
+  const schaleGeo = new THREE.SphereGeometry(1, 24, 16, 0, Math.PI, 0, Math.PI);
+  const sp = schaleGeo.attributes.position;
+  for (let i = 0; i < sp.count; i++) {
+    const y = sp.getY(i);
+    const breite = y < 0 ? 1 + y * 0.25 : 1;
+    sp.setX(i, sp.getX(i) * breite);
+  }
+  schaleGeo.computeVertexNormals();
+  const schale = teil(schaleGeo, 0x26282c, { mat: { side: THREE.DoubleSide }, umriss: 0.004 });
+  schale.scale.set(0.115, 0.155, 0.13);
+  helm.add(schale);
+  // Kante rundherum
+  const kante = teil(new THREE.TorusGeometry(1, 0.06, 6, 30, Math.PI), 0x111214, { umriss: false });
+  kante.scale.set(0.115, 0.155, 0.115);
+  kante.rotation.z = -Math.PI / 2;
+  kante.rotation.y = Math.PI / 2;
+  helm.add(kante);
+  // Sichtfenster mit Rahmen
+  helm.add(setze(quader(0.12, 0.075, 0.03, 0x15161a, { umriss: 0.003 }), 0, 0.03, 0.12, -0.15, 0, 0));
+  helm.add(setze(quader(0.095, 0.05, 0.01, 0x2f6b3a, { mat: { emissive: 0x0c2a12 }, umriss: false }), 0, 0.03, 0.137, -0.15, 0, 0));
+  // Flammen-Aufkleber
+  const flammeTex = leinwandTextur(128, 128, (g) => {
+    g.clearRect(0, 0, 128, 128);
+    g.fillStyle = '#ff7a1a';
+    g.beginPath();
+    g.moveTo(20, 120); g.quadraticCurveTo(10, 60, 50, 30); g.quadraticCurveTo(45, 70, 70, 60);
+    g.quadraticCurveTo(80, 20, 110, 10); g.quadraticCurveTo(100, 70, 110, 120); g.closePath(); g.fill();
+    g.fillStyle = '#ffd23a';
+    g.beginPath();
+    g.moveTo(40, 120); g.quadraticCurveTo(40, 85, 60, 75); g.quadraticCurveTo(62, 95, 80, 85); g.quadraticCurveTo(90, 100, 90, 120); g.closePath(); g.fill();
+  });
+  for (const seite of [-1, 1]) {
+    const f = new THREE.Mesh(new THREE.PlaneGeometry(0.07, 0.07), new THREE.MeshBasicMaterial({ map: flammeTex, transparent: true, side: THREE.DoubleSide }));
+    f.position.set(0.085 * seite, -0.06, 0.08);
+    f.rotation.y = seite * 0.9;
+    helm.add(f);
+  }
+  // Kopfband innen mit Drehrad hinten
+  const kopfband = teil(new THREE.TorusGeometry(0.095, 0.008, 4, 24), 0x111111, { umriss: false });
+  kopfband.rotation.x = Math.PI / 2;
+  kopfband.position.set(0, 0.04, 0.01);
+  helm.add(kopfband);
+  helm.add(setze(zylinder(0.022, 0.022, 0.02, 0x111111, { umriss: 0.003 }, 12), 0, 0.04, -0.105, Math.PI / 2, 0, 0));
+  // Seitliche Drehgelenke
+  for (const seite of [-1, 1]) helm.add(setze(zylinder(0.018, 0.018, 0.015, 0x444444, { umriss: 0.003 }, 10), 0.105 * seite, 0.04, 0.02, 0, 0, Math.PI / 2));
+  setze(helm, 3.45, 1.4, -3.82, 0, 0, 0);
+  helm.scale.setScalar(1.25);
   scene.add(helm);
+  // Wandhaken
+  scene.add(setze(zylinder(0.01, 0.01, 0.12, 0x7a7a7a, {}, 8), 3.45, 1.57, -3.94, Math.PI / 2, 0, 0));
+  scene.add(setze(quader(0.06, 0.06, 0.01, 0x7a7a7a), 3.45, 1.57, -3.995));
   merke(helm, 'helm', 'Schweißhelm', 'schweiss');
   objekte.helm = helm;
 

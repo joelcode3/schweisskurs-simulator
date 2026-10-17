@@ -243,3 +243,46 @@ export function jingle(gut = true) {
     o.stop(t + 0.4);
   });
 }
+
+// Gesprochene Dennis-Sätze (Aufnahmen aus stimme/). Rückgabe: { fertig, pegel(), stopp() } oder null.
+const stimmPuffer = new Map();
+async function ladeStimme(url) {
+  if (!stimmPuffer.has(url)) {
+    stimmPuffer.set(url, fetch(url).then((r) => {
+      if (!r.ok) throw new Error(`${r.status}`);
+      return r.arrayBuffer();
+    }).then((d) => new Promise((ok, fehler) => ctx.decodeAudioData(d, ok, fehler))));
+  }
+  return stimmPuffer.get(url);
+}
+export async function stimmeAbspielen(url) {
+  if (!ctx) return null;
+  let puffer;
+  try {
+    puffer = await ladeStimme(url);
+  } catch {
+    stimmPuffer.delete(url);
+    return null;
+  }
+  const quelle = ctx.createBufferSource();
+  quelle.buffer = puffer;
+  const analyse = ctx.createAnalyser();
+  analyse.fftSize = 512;
+  const g = ctx.createGain();
+  g.gain.value = 1.1;
+  quelle.connect(analyse).connect(g).connect(master);
+  const daten = new Uint8Array(analyse.fftSize);
+  const fertig = new Promise((res) => { quelle.onended = res; });
+  quelle.start();
+  return {
+    dauer: puffer.duration,
+    fertig,
+    pegel() {
+      analyse.getByteTimeDomainData(daten);
+      let summe = 0;
+      for (const v of daten) summe += ((v - 128) / 128) ** 2;
+      return Math.sqrt(summe / daten.length);
+    },
+    stopp() { try { quelle.stop(); } catch { /* schon zu Ende */ } },
+  };
+}

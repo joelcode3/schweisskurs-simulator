@@ -1,0 +1,57 @@
+# Alle Sätze von Dennis (50)
+
+Jede Aufnahme als MP3 mit genau diesem Dateinamen in den Ordner `stimme/` legen,
+danach `node tools/stimme.mjs eintragen` ausführen.
+
+| Datei | Text |
+|---|---|
+| `begruessung.mp3` | Moin! Heute baust du einen Ofen aus der alten Gasflasche da drüben. Was zu tun ist, steht auf deinem Zettel. Und halt dich an meine Regeln an der Wand. Wenn du Mist baust, merk ich das. Ich merk alles. |
+| `fehler.brille.1.mp3` | Ohne Brille an die Flex?! Willst du blind werden? Brille auf, aber zack! |
+| `fehler.brille.2.mp3` | Wo ist deine Brille? Ein Funke im Auge und du kannst Feierabend machen. Für immer. |
+| `fehler.handschuhe.1.mp3` | Handschuhe! Die Dinger liegen da nicht zur Deko. |
+| `fehler.handschuhe.2.mp3` | Mit nackten Fingern? Die brauchst du noch. |
+| `fehler.schweissenHandschuhe.1.mp3` | Ohne Handschuhe schweißen?! Das gibt Verbrennungen bis zum Ellenbogen! Handschuhe an! |
+| `fehler.gasflasche.1.mp3` | STOPP! STOPP! STOPP! Die Flasche ist nicht gespült! Da ist noch Gas drin! Willst du die ganze Halle in die Luft jagen?! |
+| `fehler.gasflasche.2.mp3` | BIST DU WAHNSINNIG?! Ungespülte Gasflasche und dann die Flex dran?! Raus mit dem Ding und erst SPÜLEN! |
+| `fehler.helm.1.mp3` | OHNE HELM?! Du guckst direkt in den Lichtbogen! Morgen früh denkst du, jemand hat dir Sand in die Augen gekippt! HELM RUNTER! |
+| `fehler.helm.2.mp3` | HALT! Helm! Verblitzte Augen sind kein Spaß, das tut tagelang weh! |
+| `fehler.masse.1.mp3` | Da passiert nix? Logisch. Ohne Masse kein Lichtbogen. Klemme dran! |
+| `fehler.masse.2.mp3` | Masseklemme. MASSE. Steht sogar an der Wand. |
+| `fehler.stromHoch.1.mp3` | Viel zu viel Strom! Für eine 2,5er Elektrode? Du brennst ja Löcher rein! Runter damit, so um die 80 Ampere. |
+| `fehler.stromNiedrig.1.mp3` | Viel zu wenig Strom! Damit klebt die Elektrode doch dauernd fest. Dreh hoch, so um die 80 Ampere! |
+| `fehler.naht.1.mp3` | Was ist das denn? Das sieht aus wie Taubenkacke. Gleichmäßig, nicht hektisch! |
+| `fehler.naht.2.mp3` | Die Naht hält vielleicht bis zur Tür. Ruhiger führen! |
+| `fehler.schnitt.1.mp3` | Schief wie ein Kuhschwanz. Die Tür musst du jetzt passend schleifen. |
+| `fehler.schnitt.2.mp3` | Gerade heißt gerade. Nicht so ungefähr. |
+| `fehler.schlacke.1.mp3` | Und die Schlacke? Soll ich die wegklopfen? Hammer nehmen! |
+| `fehler.schlackeBrille.1.mp3` | Schlacke klopfen ohne Brille? Die Splitter fliegen dir direkt ins Auge! Brille auf! |
+| `fehler.kaffee.1.mp3` | FINGER WEG VON MEINEM KAFFEE! Steht CHEF drauf. Kannst du lesen? |
+| `fehler.kaffee.2.mp3` | Hast du gerade aus MEINER Tasse getrunken?! |
+| `fehler.nerven.1.mp3` | Guck auf deinen Zettel! Ich sag das nicht nochmal. |
+| `fehler.nerven.2.mp3` | Schon wieder du? Steht alles auf dem Zettel. |
+| `lob.1.mp3` | Jo. Passt. |
+| `lob.2.mp3` | Sauber. Geht doch. |
+| `lob.3.mp3` | Na also. Da kann man nicht meckern. |
+| `lob.4.mp3` | Hätte ich nicht besser gemacht. Fast. |
+| `lobSchnitt.mp3` | Sauberer Schnitt. Respekt. |
+| `tipp.ventil.mp3` | Erst mal das Restgas ablassen. Ventil an der Flasche aufdrehen, die steht am Waschplatz. |
+| `tipp.spuelen.mp3` | Jetzt die Flasche mit Wasser spülen. Schlauch hängt an der Wand. Ohne Spülen fasst die keiner an! |
+| `tipp.werkbank.mp3` | Flasche rüber auf die Werkbank. |
+| `tipp.anzeichnen.mp3` | Mit dem Speckstein die Tür anzeichnen. Liegt auf der Werkbank. |
+| `tipp.schneiden.mp3` | Jetzt mit der Flex die Tür ausschneiden. Sauber auf der Linie! |
+| `tipp.schneidenAusruestung.mp3` | Tür ausschneiden. Aber vorher Brille und Handschuhe aus dem Regal, klar? |
+| `tipp.schweissplatz.mp3` | Ab zum Schweißplatz mit dem Ding. |
+| `tipp.strom.mp3` | Schweißgerät einstellen. 2,5er Elektrode, also so 70 bis 100 Ampere. |
+| `tipp.schweissenMasseHelm.mp3` | Jetzt wird geschweißt. Aber erst: Masse dran und Helm auf! |
+| `tipp.schweissenMasse.mp3` | Jetzt wird geschweißt. Aber erst: Masse dran! |
+| `tipp.schweissenHelm.mp3` | Jetzt wird geschweißt. Aber erst: Helm auf! |
+| `tipp.schweissen.mp3` | Scharniere, Beine und Rohr anschweißen. Ruhige Hand! |
+| `tipp.schlacke.mp3` | Schlacke abklopfen. Hammer liegt auf dem Tisch. Brille auf! |
+| `tipp.lackieren.mp3` | Jetzt noch schwarz lackieren. Ofenlack, nicht irgendwas! |
+| `tipp.fertig.mp3` | Fertig? Dann gib her, ich guck mir das an. |
+| `nichtFertig.mp3` | Das ist doch noch kein Ofen. Mach erst fertig! |
+| `nichtLackiert.mp3` | Und lackieren? So rostet der dir doch weg. Ofenlack drauf, dann reden wir. |
+| `ende.gut.mp3` | Hm. Zeig mal her. ... Ja. Das ist ein Ofen. Ein richtig guter sogar. Den stell ich mir in die Werkstatt. |
+| `ende.mittel.mp3` | Na ja. Brennt bestimmt. Irgendwie. Nächstes Mal sauberer, dann wird das was. |
+| `ende.schlecht.mp3` | Was soll das sein? Ein Ofen? Das ist eine Gefahr für die Allgemeinheit. Nochmal von vorne! |
+| `rausgeflogen.mp3` | DAS REICHT! RAUS! Raus aus meiner Werkstatt! Komm wieder, wenn du gelernt hast, wie man sich benimmt! |

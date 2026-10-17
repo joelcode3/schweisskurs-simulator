@@ -25,7 +25,12 @@ export function baueDennis(scene) {
     const huefte = new THREE.Group();
     huefte.position.set(x, 0.9, 0);
     huefte.add(setze(teil(new THREE.CapsuleGeometry(0.074, 0.64, 4, 10), HOSE), 0, -0.42, 0));
-    huefte.add(setze(quader(0.13, 0.1, 0.27, 0x4a4038), 0, -0.86, 0.05));
+    // Beintasche außen
+    huefte.add(setze(quader(0.02, 0.12, 0.09, 0x34363c, { umriss: 0.003 }), x > 0 ? 0.072 : -0.072, -0.32, 0));
+    // Arbeitsschuh mit Sohle und runder Kappe
+    huefte.add(setze(quader(0.12, 0.08, 0.22, 0x4a4038), 0, -0.84, 0.03));
+    huefte.add(setze(kugel(0.06, 0x4a4038, {}, 12), 0, -0.85, 0.13));
+    huefte.add(setze(quader(0.135, 0.025, 0.3, 0x2a2622, { umriss: 0.004 }), 0, -0.895, 0.06));
     wurzel.add(huefte);
     beine.push(huefte);
   }
@@ -47,12 +52,20 @@ export function baueDennis(scene) {
   }
   // Reißverschluss
   rumpf.add(setze(quader(0.012, 0.5, 0.01, 0x55585e, { umriss: false }), 0, 0.4, 0.15));
-  // Kapuze vom Hoodie im Nacken und Kordeln
-  const kapuze = teil(new THREE.TorusGeometry(0.12, 0.055, 8, 18), HOODIE);
-  kapuze.position.set(0, 0.8, -0.04);
-  kapuze.rotation.x = Math.PI / 2 - 0.25;
-  rumpf.add(kapuze);
-  for (const x of [-0.045, 0.045]) rumpf.add(setze(zylinder(0.007, 0.007, 0.2, 0xb9bcc0, { umriss: false }, 6), x, 0.66, 0.16));
+  // Jackenkragen (zwei Laschen) und darunter der graue Hoodie
+  for (const seite of [-1, 1]) {
+    rumpf.add(setze(quader(0.09, 0.08, 0.02, JACKE, { umriss: 0.004 }), 0.06 * seite, 0.8, 0.1, -0.25, 0.5 * seite, 0.35 * seite));
+  }
+  rumpf.add(setze(quader(0.07, 0.07, 0.02, HOODIE, { umriss: 0.003 }), 0, 0.76, 0.135, -0.15, 0, 0));
+  // Kordeln vom Hoodie mit Metallenden
+  for (const x of [-0.03, 0.03]) {
+    rumpf.add(setze(zylinder(0.006, 0.006, 0.17, 0xc9ccd0, { umriss: false }, 6), x, 0.66, 0.158));
+    rumpf.add(setze(zylinder(0.008, 0.008, 0.025, 0x9aa0a6, { umriss: false }, 6), x, 0.565, 0.158));
+  }
+  // Reißverschluss-Zipper und Brusttasche
+  rumpf.add(setze(quader(0.02, 0.035, 0.01, 0x8a8f96, { umriss: false }), 0, 0.72, 0.158));
+  rumpf.add(setze(quader(0.1, 0.09, 0.015, 0x2b2d31, { umriss: 0.003 }), -0.085, 0.58, 0.148, 0, -0.25, 0));
+  rumpf.add(setze(quader(0.105, 0.03, 0.02, 0x2b2d31, { umriss: 0.003 }), -0.085, 0.625, 0.152, 0, -0.25, 0));
   // Namensschild
   const schildTex = leinwandTextur(128, 40, (g, b, h) => {
     g.fillStyle = '#f4f0e0'; g.fillRect(0, 0, b, h);
@@ -64,29 +77,68 @@ export function baueDennis(scene) {
   schild.rotation.y = 0.3;
   rumpf.add(schild);
 
-  // Der blaue Rucksack (immer dabei)
+  // Der blaue Rucksack (immer dabei): Korpus, Fronttasche, Seitentasche, Reißverschlüsse, Gurte
   const rucksack = new THREE.Group();
-  rucksack.add(teil(new THREE.CapsuleGeometry(0.15, 0.2, 6, 12), RUCKSACK));
-  rucksack.children[0].scale.set(1.1, 1, 0.55);
-  const tasche = teil(new THREE.CapsuleGeometry(0.11, 0.08, 6, 12), 0x5a8fe2);
-  tasche.scale.set(1.05, 1, 0.4);
-  tasche.position.set(0, -0.08, -0.07);
+  const korpus = teil(new THREE.CapsuleGeometry(0.15, 0.22, 8, 16), RUCKSACK);
+  korpus.scale.set(1.1, 1, 0.58);
+  rucksack.add(korpus);
+  const boden = teil(new THREE.CapsuleGeometry(0.13, 0.02, 6, 14), 0x1d3f86, { umriss: 0.004 });
+  boden.scale.set(1.2, 0.6, 0.62);
+  boden.position.y = -0.2;
+  rucksack.add(boden);
+  const tasche = teil(new THREE.CapsuleGeometry(0.11, 0.08, 8, 14), 0x5a8fe2);
+  tasche.scale.set(1.05, 1, 0.42);
+  tasche.position.set(0, -0.07, -0.075);
   rucksack.add(tasche);
   const zipMat = new THREE.MeshBasicMaterial({ color: 0xf2f4f7 });
-  const zip1 = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.005, 4, 24, Math.PI), zipMat);
-  zip1.position.set(0, 0.05, -0.085);
+  const zip1 = new THREE.Mesh(new THREE.TorusGeometry(0.135, 0.005, 4, 28, Math.PI), zipMat);
+  zip1.position.set(0, 0.06, -0.088);
   rucksack.add(zip1);
-  const zip2 = new THREE.Mesh(new THREE.TorusGeometry(0.095, 0.005, 4, 20, Math.PI), zipMat);
-  zip2.position.set(0, -0.06, -0.115);
+  const zip2 = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.005, 4, 24, Math.PI), zipMat);
+  zip2.position.set(0, -0.04, -0.12);
   rucksack.add(zip2);
-  rucksack.add(setze(quader(0.05, 0.02, 0.005, 0xffffff, { umriss: false }), 0.06, -0.16, -0.112));
-  rucksack.add(setze(teil(new THREE.TorusGeometry(0.035, 0.01, 6, 12, Math.PI), 0x1d3f86), 0, 0.27, 0));
-  rucksack.position.set(0, 0.42, -0.22);
-  rumpf.add(rucksack);
-  for (const x of [-0.12, 0.12]) {
-    rumpf.add(setze(quader(0.05, 0.02, 0.3, 0x1d3f86, { umriss: 0.004 }), x, 0.75, -0.02, 0.15, 0, 0));
-    rumpf.add(setze(quader(0.05, 0.3, 0.02, 0x1d3f86, { umriss: 0.004 }), x, 0.58, 0.145, -0.1, 0, 0));
+  // Zipper-Anhänger
+  for (const [x, y, z] of [[0.13, 0.03, -0.09], [-0.13, 0.03, -0.09], [0.095, -0.07, -0.122]]) {
+    rucksack.add(setze(quader(0.014, 0.04, 0.008, 0x111111, { umriss: false }), x, y - 0.02, z));
   }
+  // Logo-Feld (ohne Markennamen)
+  rucksack.add(setze(quader(0.06, 0.022, 0.006, 0xffffff, { umriss: false }), 0.05, -0.15, -0.122));
+  rucksack.add(setze(quader(0.016, 0.012, 0.007, RUCKSACK, { umriss: false }), 0.035, -0.15, -0.123));
+  // Seitentasche mit Netz
+  for (const seite of [-1, 1]) {
+    const seiten = teil(new THREE.CapsuleGeometry(0.045, 0.08, 4, 10), 0x1d3f86, { umriss: 0.004 });
+    seiten.scale.set(0.6, 1, 1);
+    seiten.position.set(0.165 * seite, -0.1, 0);
+    rucksack.add(seiten);
+  }
+  // Tragegriff oben
+  rucksack.add(setze(teil(new THREE.TorusGeometry(0.035, 0.01, 6, 12, Math.PI), 0x1d3f86), 0, 0.27, 0));
+  rucksack.position.set(0, 0.42, -0.23);
+  rumpf.add(rucksack);
+  // Schultergurte über die Schulter nach vorn, mit Brustgurt (flache Bänder)
+  const gurtMat = toon(0x1d3f86);
+  function band(punkte, breite) {
+    const kurve = new THREE.CatmullRomCurve3(punkte.map((p) => new THREE.Vector3(...p)));
+    const geo = new THREE.TubeGeometry(kurve, 20, 1, 4);
+    // Rohr flachdrücken: Querschnitt breit in x, dünn in Normalenrichtung
+    const pos = geo.attributes.position;
+    const mitte = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i++) {
+      const t = Math.floor(i / 5) / 20;
+      kurve.getPointAt(Math.min(1, t), mitte);
+      const dx = pos.getX(i) - mitte.x, dy = pos.getY(i) - mitte.y, dz = pos.getZ(i) - mitte.z;
+      pos.setXYZ(i, mitte.x + dx * breite, mitte.y + dy * 0.008, mitte.z + dz * 0.008);
+    }
+    geo.computeVertexNormals();
+    return teil(geo, 0, { material: gurtMat, umriss: 0.003 });
+  }
+  for (const seite of [-1, 1]) {
+    const x = 0.1 * seite;
+    rumpf.add(band([[x, 0.52, -0.16], [x, 0.72, -0.13], [x * 1.05, 0.81, -0.03], [x * 1.08, 0.77, 0.09], [x * 1.12, 0.62, 0.152], [x * 1.15, 0.42, 0.16]], 0.024));
+    rumpf.add(setze(quader(0.045, 0.03, 0.012, 0x111111, { umriss: false }), x * 1.15, 0.41, 0.168));
+  }
+  rumpf.add(setze(quader(0.2, 0.014, 0.008, 0x1d3f86, { umriss: 0.003 }), 0, 0.52, 0.166));
+  rumpf.add(setze(quader(0.035, 0.026, 0.012, 0x111111, { umriss: false }), 0, 0.52, 0.17));
 
   // Arme
   function arm(seite) {
@@ -96,7 +148,16 @@ export function baueDennis(scene) {
     const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.062, 0.02, 12, 1, true), reflexMat);
     ring.position.y = -0.12;
     schulter.add(ring);
-    const hand = kugel(0.06, HAUT);
+    const hand = new THREE.Group();
+    const faust = kugel(0.055, HAUT, {}, 12);
+    faust.scale.set(0.85, 1.15, 1);
+    hand.add(faust);
+    const daumen = teil(new THREE.CapsuleGeometry(0.016, 0.04, 4, 8), HAUT);
+    daumen.position.set(-0.035 * seite, 0.01, 0.03);
+    daumen.rotation.z = 0.5 * seite;
+    hand.add(daumen);
+    // Ärmelbündchen
+    hand.add(setze(zylinder(0.064, 0.064, 0.03, 0x1a1b1e, { umriss: 0.003 }, 12), 0, 0.06, 0));
     hand.position.y = -0.52;
     schulter.add(hand);
     rumpf.add(schulter);
@@ -118,7 +179,7 @@ export function baueDennis(scene) {
   const kopf = new THREE.Group();
   kopf.position.y = 0.98;
   rumpf.add(kopf);
-  rumpf.add(setze(zylinder(0.06, 0.07, 0.1, HAUT, { umriss: 0.005 }), 0, 0.92, 0.0));
+  rumpf.add(setze(zylinder(0.055, 0.06, 0.12, HAUT, { umriss: 0.004 }), 0, 0.9, 0.0));
   const hautMats = [];
   function haut(geo, opt = {}) {
     const m = toon(HAUT);
@@ -154,7 +215,7 @@ export function baueDennis(scene) {
   }
   const brauen = [];
   for (const x of [-0.062, 0.062]) {
-    const b = quader(0.06, 0.013, 0.02, 0xb07a40, { umriss: false });
+    const b = quader(0.064, 0.019, 0.024, 0xa87038, { umriss: false });
     b.position.set(x, 0.205, 0.145);
     kopf.add(b);
     brauen.push(b);
@@ -240,6 +301,7 @@ export function baueDennis(scene) {
   let schluckTimer = 4;
   let schluck = 0;
   let schrittPhase = 0;
+  let blinzeln = 2 + Math.random() * 3;
   const hautFarbe = new THREE.Color(HAUT);
   const zielFarbe = new THREE.Color(HAUT);
 
@@ -287,6 +349,11 @@ export function baueDennis(scene) {
     },
     update(dt) {
       zeit += dt;
+      // Blinzeln
+      blinzeln -= dt;
+      const zu = blinzeln < 0.12 && blinzeln > 0;
+      for (const a of augen) a.scale.y = zu ? 0.15 : 1;
+      if (blinzeln <= 0) blinzeln = 2.5 + Math.random() * 4;
       // Laufen
       let laeuft = false;
       if (ziel) {
