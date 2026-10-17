@@ -125,6 +125,9 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
     lichtAusSeit: 0,
     lichtGemeckert: 0,
     huefte: 'nie',
+    nebenDennis: 0,
+    mittag: 'nie',
+    baustelleZuletzt: -999,
     jammerTimer: 0,
     vorbei: false,
   };
@@ -505,6 +508,20 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
     if (!buehneBelegt()) auftritt({ schluessel: ['lob'], text: DENNIS.fegen, stufe: 'lob', stimmung: 'froh' });
   }
 
+  async function mittagspause() {
+    z.mittag = 'gerade';
+    z.beschaeftigt = true;
+    welt.objekte.brotdose.visible = false;
+    dennis.mittagspause(true);
+    await dennisKommt(1.1);
+    await auftritt({ schluessel: ['tomate'], text: DENNIS.tomate, stufe: 'info', stimmung: 'froh' });
+    z.beschaeftigt = false;
+    z.mittag = 'erledigt';
+    await dennis.heim();
+    dennis.mittagspause(false);
+    welt.objekte.brotdose.visible = true;
+  }
+
   async function aufhelfen() {
     z.huefte = 'erledigt';
     z.beschaeftigt = true;
@@ -721,6 +738,9 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
     dennis.stimmung(s);
   }
 
+  let letztePos = null;
+  const sekundenSeitStart = () => (performance.now() - z.start) / 1000;
+
   return {
     zustand: z,
     klick,
@@ -743,6 +763,20 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
           if (z.lichtGemeckert === 1) auftritt({ schluessel: ['licht'], text: DENNIS.licht, stufe: 'leicht', stimmung: 'skeptisch' });
           else fehler('licht');
         }
+      }
+      // Neben Dennis stehen bleiben: Baustellenfeeling (nicht im Liegen, höchstens alle 40 s)
+      const abstand = Math.hypot(kamera.position.x - dennis.position.x, kamera.position.z - dennis.position.z);
+      const steht = letztePos ? kamera.position.distanceTo(letztePos) < 0.002 : false;
+      letztePos = kamera.position.clone();
+      z.nebenDennis = abstand < 1.8 && steht && dennis.modus !== 'liegen' && !z.beschaeftigt ? z.nebenDennis + dt : 0;
+      if (z.nebenDennis > 1.2 && sekundenSeitStart() - z.baustelleZuletzt > 40 && !buehneBelegt()) {
+        z.baustelleZuletzt = sekundenSeitStart();
+        z.nebenDennis = 0;
+        auftritt({ schluessel: ['baustellenfeeling'], text: DENNIS.baustellenfeeling, stufe: 'info', stimmung: 'froh' });
+      }
+      // Mittagspause: Dennis kommt mit Brotdose rüber und isst eine Tomate (einmal pro Spiel)
+      if (z.mittag === 'nie' && sekundenSeitStart() > 140 && !z.beschaeftigt && dennis.modus === 'normal' && dennis.istDaheim() && !buehneBelegt() && Math.random() < dt * 0.03) {
+        mittagspause();
       }
       // Hüfte: einmal pro Spiel legt sich Dennis hin und jammert, bis man ihm aufhilft
       const sekunden = (performance.now() - z.start) / 1000;

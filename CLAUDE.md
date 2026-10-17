@@ -24,7 +24,9 @@
   2. skeptisch, ab 3. sauer), Brotdose (abbeißen = Ausraster), große Soundbox (Techno, Dennis tanzt),
   Lichtschalter (Dennis meckert), Besen (Dreck nach Schneiden/Schweißen, zählt in die Note),
   Hüfte (Dennis legt sich einmal pro Spiel hin und jammert, bis man ihm aufhilft),
-  Einweisung mit Klo-Pause (WC-Tür vorne rechts). Poster (assets/poster.jpg) mit Klebeband über der Kaffeeecke.
+  Einweisung mit Klo-Pause (WC-Tür vorne rechts). Neben Dennis stehen bleiben: „Was los??“ (stimme/baustellenfeeling.mp3,
+  1 s, nicht im Liegen, max. alle 40 s). Mittagspause: einmal pro Spiel kommt er mit Brotdose und isst eine Tomate
+  (stimme/tomate.mp3). Kiwis liegen lose auf dem Kaffeetisch. Poster (assets/poster.jpg) mit Klebeband über der Kaffeeecke.
 - Fokus: Desktop-Version (Betreiber-Wunsch), Handy-Ansicht erstmal zweitrangig.
 - Fehlerstufen: leicht (Ermahnung, Dennis guckt), mittel (kommt rüber, sauer), voll (rennt rüber, Ausraster).
 
@@ -62,6 +64,5 @@
 ## Offene Themen
 - Dinge aufheben, tragen, ablegen, anziehen, benutzen (Hand im Bild), Feuerlöscher benutzen.
 - Handy in die Hand nehmen -> Dennis beschwert sich (Betreiber hat Video).
-- Dennis kommt irgendwann mit Brotdose und isst eine Tomate (Betreiber hat Sounddatei).
 - Weitere Clips von Dennis (Begrüßung, Lob, Tipps, Ende, spezielle Fehler).
 - Weitere Projekte (Grill, Werkzeugwagen), weitere Fehler, ggf. MAG-Schweißen.

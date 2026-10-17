@@ -78,6 +78,8 @@ export const DENNIS = {
     zweite: 'Noch eine? ... Na gut. Aber die sind abgezählt.',
     leer: 'Alle weg?! Das waren meine Kiwis für die ganze Woche!',
   },
+  baustellenfeeling: 'Was los??',
+  tomate: '*mampf* ... Mittagspause. Tomate muss sein.',
   licht: 'Hallo?! Wer hat das Licht ausgemacht? Ich seh nix!',
   musikAus: 'Ey! Das war mein Lied!',
   huefte: {

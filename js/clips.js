@@ -28,6 +28,8 @@ export const KATEGORIEN = {
   huefte:           'Hüfte, hinten links',
   licht:            'Licht aus',
   musik:            'Musik aus beim Tanzen',
+  baustellenfeeling:'Baustellenfeeling (wenn man neben ihm steht)',
+  tomate:           'Mittagspause mit Tomate',
   ende_gut:         'Ende: Note 1 oder 2',
   ende_mittel:      'Ende: Note 3 oder 4',
   ende_schlecht:    'Ende: Note 5 oder 6',

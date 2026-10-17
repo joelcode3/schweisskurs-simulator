@@ -647,15 +647,15 @@ export function baueWelt(scene) {
   // Kaffeemaschine anklickbar machen
   merke(maschine, 'kaffeemaschine', 'Kaffeemaschine', null);
 
-  // Kiwischale auf dem Kaffeetisch
+  // Kiwis lose auf dem Kaffeetisch
   const kiwiSchale = new THREE.Group();
-  kiwiSchale.add(teil(new THREE.SphereGeometry(0.09, 16, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), 0xe8e2d0, { mat: { side: THREE.DoubleSide }, umriss: 0.004 }));
   const kiwis = [];
   const kiwiMat = toon(0x7a5a2e);
-  for (const [x, y, z] of [[-0.035, 0.0, -0.02], [0.035, 0.0, 0.0], [0, 0.0, 0.04], [0.0, 0.045, 0.005], [-0.03, 0.04, -0.03]]) {
+  for (const [x, y, z] of [[-0.06, 0.042, -0.08], [0.02, 0.042, -0.1], [0.07, 0.042, -0.02], [-0.03, 0.042, 0.05], [0.05, 0.042, 0.09]]) {
     const k = teil(new THREE.SphereGeometry(0.032, 10, 8), 0, { material: kiwiMat, umriss: 0.003 });
     k.scale.set(1, 0.85, 1.25);
     k.position.set(x, y - 0.015, z);
+    k.rotation.y = x * 20;
     kiwiSchale.add(k);
     kiwis.push(k);
   }
@@ -669,14 +669,14 @@ export function baueWelt(scene) {
     for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; g.beginPath(); g.ellipse(32 + Math.cos(a) * 15, 32 + Math.sin(a) * 15, 2, 1, a, 0, Math.PI * 2); g.fill(); }
   });
   const flaeche = new THREE.Mesh(new THREE.CircleGeometry(0.03, 16), new THREE.MeshBasicMaterial({ map: schnitt }));
-  flaeche.rotation.x = -Math.PI / 2;
-  flaeche.position.y = 0.001;
+  flaeche.rotation.x = Math.PI / 2;
+  flaeche.position.y = -0.001;
   halbe.add(flaeche);
-  halbe.rotation.set(-0.5, 0, 0.3);
-  halbe.position.set(0.04, 0.05, 0.03);
+  halbe.rotation.x = Math.PI;
+  halbe.position.set(-0.08, 0.03, 0.1);
   kiwiSchale.add(halbe);
   kiwis.push(halbe);
-  setze(kiwiSchale, -4.3, 0.895, 3.35);
+  setze(kiwiSchale, -4.3, 0.805, 3.4);
   scene.add(kiwiSchale);
   merke(kiwiSchale, 'kiwi', 'Dennis’ Kiwis', null);
 

@@ -212,6 +212,20 @@ export function baueDennis(scene) {
   becher.position.set(0, -0.3, 0.07);
   rechts.ellbogen.add(becher);
 
+  // Brotdose mit Tomate (für die Mittagspause), liegt sonst auf der Getränkekiste
+  const dose = new THREE.Group();
+  dose.add(teil(new THREE.BoxGeometry(0.2, 0.07, 0.14), 0, { material: toon(0xf0f4f6, { transparent: true, opacity: 0.6 }), umriss: 0.004 }));
+  dose.add(setze(quader(0.11, 0.025, 0.1, 0x8a5a2e, { umriss: 0.002 }), -0.035, -0.01, 0));
+  dose.position.set(0.02, -0.33, 0.12);
+  dose.rotation.set(1.2, 0, 0);
+  dose.visible = false;
+  links.ellbogen.add(dose);
+  const tomate = kugel(0.035, 0xd8352a, { umriss: 0.003 }, 12);
+  tomate.add(setze(quader(0.02, 0.008, 0.02, 0x2f7d4f, { umriss: false }), 0, 0.035, 0));
+  tomate.position.set(0, -0.32, 0.06);
+  tomate.visible = false;
+  rechts.ellbogen.add(tomate);
+
   // Kopf: schmal, Schnauzer, goldene Pilotenbrille, Locken
   const kopf = new THREE.Group();
   kopf.position.y = 0.98;
@@ -342,6 +356,7 @@ export function baueDennis(scene) {
   let schrittPhase = 0;
   let blinzeln = 2 + Math.random() * 3;
   let liegenAnteil = 0;
+  let essen = false;
   const hautFarbe = new THREE.Color(HAUT);
   const zielFarbe = new THREE.Color(HAUT);
 
@@ -374,6 +389,7 @@ export function baueDennis(scene) {
       if (beat !== undefined) takt = beat;
     },
     sichtbar(an) { wurzel.visible = an; },
+    mittagspause(an) { dose.visible = an; tomate.visible = an; essen = an; },
     gehZu(x, z, schnell = 1.3) {
       tempo = schnell;
       ziel = new THREE.Vector3(x, 0, z);
@@ -492,12 +508,19 @@ export function baueDennis(scene) {
 
       // Arme und Kaffee
       const wuetend = stimmung === 'wut';
-      becher.visible = !wuetend && !tanzt && modus !== 'liegen';
+      becher.visible = !wuetend && !tanzt && !essen && modus !== 'liegen';
       if (modus === 'liegen') {
         links.schulter.rotation.set(-0.3, 0, -0.9);
         links.ellbogen.rotation.set(-1.9, 0, 0);
         rechts.schulter.rotation.set(-0.2 + Math.sin(zeit * 3) * 0.6, 0, 0.6);
         rechts.ellbogen.rotation.set(-0.6, 0, 0);
+      } else if (essen) {
+        // Brotdose links vor dem Bauch, Tomate rechts zum Mund
+        const biss = Math.max(0, Math.sin(zeit * 2.2));
+        links.schulter.rotation.set(-0.5, 0, -0.1);
+        links.ellbogen.rotation.set(-1.2, 0, 0);
+        rechts.schulter.rotation.set(-0.5 - biss * 0.6, 0.2, 0.1);
+        rechts.ellbogen.rotation.set(-1.4 - biss * 0.6, 0, 0);
       } else if (tanzt) {
         const p = beat % 1;
         const hoch = Math.floor(beat / 2) % 2 === 0;
@@ -540,7 +563,7 @@ export function baueDennis(scene) {
       brauen[1].rotation.z = brauWinkel;
       brauen[0].position.y = brauen[1].position.y = 0.205 - Math.abs(brauWinkel) * 0.02 + (stimmung === 'froh' ? 0.01 : 0);
       if (stimmung === 'skeptisch' && !leidet) brauen[1].position.y += 0.015;
-      const mundAuf = leidet ? 0.02 + Math.abs(Math.sin(zeit * 5)) * 0.03
+      const mundAuf = essen ? 0.014 + Math.max(0, Math.sin(zeit * 9)) * 0.02 : leidet ? 0.02 + Math.abs(Math.sin(zeit * 5)) * 0.03
         : tanzt ? 0.025
           : wuetend ? 0.03 + Math.abs(Math.sin(zeit * 14)) * 0.035 : stimmung === 'sauer' ? 0.02 + Math.abs(Math.sin(zeit * 10)) * 0.02 : 0.014;
       mund.scale.set(stimmung === 'froh' || tanzt ? 1.3 : 1, mundAuf / 0.014, 1);
