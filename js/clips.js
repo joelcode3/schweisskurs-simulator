@@ -121,7 +121,8 @@ export function archivListe() {
 const buehne = () => document.getElementById('dennis-buehne');
 
 // stufe: leicht | mittel | voll | lob | info
-export function auftritt({ schluessel, text, stufe = 'mittel', stimmung = 'sauer' }) {
+export function auftritt({ schluessel, text, stufe = 'mittel', stimmung = 'sauer', seite = false }) {
+  const automatisch = seite || stufe === 'leicht' || stufe === 'lob' || stufe === 'info';
   const el = buehne();
   const medien = document.getElementById('dennis-medien');
   const blase = document.getElementById('dennis-text');
@@ -129,7 +130,7 @@ export function auftritt({ schluessel, text, stufe = 'mittel', stimmung = 'sauer
   const { kategorie, clip } = waehle(schluessel);
   insArchiv(kategorie);
 
-  el.className = stufe;
+  el.className = seite ? `${stufe} seite` : stufe;
   if (video) { video.onerror = null; video.onloadedmetadata = null; }
   medien.innerHTML = '';
   blase.textContent = '';
@@ -170,7 +171,7 @@ export function auftritt({ schluessel, text, stufe = 'mittel', stimmung = 'sauer
         if (aus) return;
         el.classList.remove('hochkant');
         medien.innerHTML = dennisPortrait(stimmung);
-        if (stufe === 'leicht' || stufe === 'lob' || stufe === 'info') timer = setTimeout(schliessen, Math.max(2600, anzeigeText.length * 55 + 1200));
+        if (automatisch) timer = setTimeout(schliessen, Math.max(2600, anzeigeText.length * 55 + 1200));
       };
       video.src = `clips/${clip.datei}`;
       video.currentTime = clip.start || 0;
@@ -193,8 +194,11 @@ export function auftritt({ schluessel, text, stufe = 'mittel', stimmung = 'sauer
           );
         });
       }
+      // Sicherheitsnetz, falls das Video hängt
+      if (automatisch) timer = setTimeout(schliessen, Math.max(9000, (clip.ende ? clip.ende - (clip.start || 0) : 8) * 1000 + 2000));
       video.onended = () => {
-        if (stufe === 'leicht' || stufe === 'lob' || stufe === 'info') timer = setTimeout(schliessen, 500);
+        clearTimeout(timer);
+        if (automatisch) timer = setTimeout(schliessen, 700);
       };
       if (clip.ende) {
         const pruefen = () => {
@@ -209,7 +213,7 @@ export function auftritt({ schluessel, text, stufe = 'mittel', stimmung = 'sauer
       const mund = medien.querySelector('.mund');
       if (mund) mund.style.transformOrigin = '100px 98px';
       const datei = stimme.aktiv ? stimme.saetze[satzId(anzeigeText)] : null;
-      const automatischZu = stufe === 'leicht' || stufe === 'lob' || stufe === 'info';
+      const automatischZu = automatisch;
       const brummelnStatt = () => {
         const silben = Math.max(4, Math.round(anzeigeText.length / 5));
         const dauer = brummeln(silben, stufe === 'voll' ? 1 : stufe === 'mittel' ? 0.4 : 0);

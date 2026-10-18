@@ -335,16 +335,7 @@ export function baueWelt(scene) {
   setze(elPack, -4.55, 1.31, -0.25);
   scene.add(elPack);
 
-  // Fach "Schutzausrüstung" im Regal: helles Brett, Schild, Brille und Handschuhe gut sichtbar
-  const fachSchild = leinwandTextur(320, 60, (g, b, h) => {
-    g.fillStyle = '#f2c21c'; g.fillRect(0, 0, b, h);
-    g.strokeStyle = '#111'; g.lineWidth = 4; g.strokeRect(2, 2, b - 4, h - 4);
-    g.fillStyle = '#111'; g.font = 'bold 30px Arial, sans-serif'; g.textAlign = 'center';
-    g.fillText('SCHUTZAUSRÜSTUNG', b / 2, 41, b - 20);
-  });
-  const fach = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.064), new THREE.MeshBasicMaterial({ map: fachSchild }));
-  setze(fach, -4.47, 1.205, -0.6, 0, Math.PI / 2, 0);
-  scene.add(fach);
+  // Helles Brett im Regal für Brille und Handschuhe
   scene.add(setze(quader(0.42, 0.012, 1.2, 0xe8e2d0, { wirft: false }), -4.66, 1.272, -0.6));
 
   // Schutzbrille: gebogene klare Scheibe mit Nasenausschnitt, gelber Rahmen oben, zwei Bügel

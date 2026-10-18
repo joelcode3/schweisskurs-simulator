@@ -30,9 +30,8 @@ export function baueDennis(scene) {
   koerper.add(becken);
   const guertel = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.035, 20, 1, true), toon(0x1a1a1a));
   guertel.scale.set(1, 1, 0.78);
-  guertel.position.y = 0.95;
-  koerper.add(guertel);
-  koerper.add(setze(quader(0.045, 0.035, 0.012, 0x9aa0a6, { umriss: false }), 0, 0.95, 0.158));
+  guertel.position.y = 0.05;
+  const guertelSchnalle = setze(quader(0.045, 0.035, 0.012, 0x9aa0a6, { umriss: false }), 0, 0.05, 0.158);
 
   // Beine: Oberschenkel, Knie, Unterschenkel, Arbeitsschuh
   const beine = [];
@@ -64,6 +63,9 @@ export function baueDennis(scene) {
   const rumpf = new THREE.Group();
   rumpf.position.y = 0.9;
   koerper.add(rumpf);
+  // Gürtel hängt am Oberkörper, damit er beim Tanzen mitgeht
+  rumpf.add(guertel);
+  rumpf.add(guertelSchnalle);
   // Schultern füllen (keine Lücke unter dem Hals)
   const schultern = teil(new THREE.SphereGeometry(0.2, 16, 10), JACKE);
   schultern.scale.set(1.35, 0.5, 0.78);
