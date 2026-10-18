@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=20261018-10">
+  <link rel="stylesheet" href="css/style.css?v=20261018-12">
   <script type="importmap">
     { "imports": { "three": "./vendor/three.module.min.js" } }
   </script>
@@ -75,31 +75,48 @@
     <button id="dennis-weiter" class="knopf klein" type="button">Weiter</button>
   </div>
 
-  <!-- Startbildschirm -->
-  <div id="start" class="bildschirm">
-    <div class="start-karte">
-      <div class="warnstreifen"></div>
-      <h1>Schweißkurs<br><span>mit Dennis</span></h1>
-      <p class="unterzeile">Bau einen Ofen aus einer alten Gasflasche. Mach keinen Mist. Dennis guckt zu.</p>
-      <div class="start-knoepfe">
-        <button id="start-los" class="knopf gross" type="button">Kurs starten</button>
-        <label class="schalter">
-          <input type="checkbox" id="dennis-modus">
-          <span class="schalter-bahn"></span>
-          <span>Dennis-Modus <small>(doppelte Wut)</small></span>
-        </label>
-        <button id="start-archiv" class="knopf leise" type="button">Dennis-Archiv</button>
+  <!-- Startbildschirm: Werkstatt von außen, Plakat, Tür mit Zahlenschloss (Code öffnet die Tür) -->
+  <div id="start" class="bildschirm aussen">
+    <div class="halle">
+      <div class="halle-schild">Schweißkurs <span>mit Dennis</span></div>
+      <div class="halle-front">
+        <div class="plakat">
+          <div class="plakat-band links"></div><div class="plakat-band rechts"></div>
+          <div class="plakat-kopf">HEUTE:</div>
+          <div class="plakat-foto"><img src="assets/dennis-plakat.jpg" alt="Dennis" onerror="this.remove()"><svg viewBox="0 0 40 40" class="dennis-mini" id="plakat-gesicht"></svg></div>
+          <div class="plakat-text">Gasflaschen-Ofen schweißen<br>mit <b>DENNIS</b></div>
+        </div>
+        <div class="tuer" id="tuer">
+          <div class="tuer-fluegel">
+            <div class="tuer-griff"></div>
+            <div class="riegel"></div>
+            <div class="schloss" id="schloss">
+              <div class="buegel"></div>
+              <div class="schloss-koerper">
+                <div class="raeder">
+                  <button type="button" class="rad" data-i="0" aria-label="Ziffer 1">0</button>
+                  <button type="button" class="rad" data-i="1" aria-label="Ziffer 2">0</button>
+                  <button type="button" class="rad" data-i="2" aria-label="Ziffer 3">0</button>
+                  <button type="button" class="rad" data-i="3" aria-label="Ziffer 4">0</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+      <div class="halle-boden"></div>
+    </div>
+    <div class="start-unten">
+      <p class="schloss-tipp" id="schloss-tipp">Die Tür ist abgeschlossen. Ziffern anklicken (oben = höher, unten = niedriger), bis der Code stimmt.</p>
       <div class="steuerung">
         <div><b>Computer:</b> Maus ziehen = umschauen, WASD = gehen, Klick = benutzen/aufheben/ablegen, E = benutzen, Q = werfen, G = fallen lassen</div>
         <div><b>Handy:</b> Wischen = umschauen, Tippen = benutzen, unten Stationen wählen</div>
       </div>
-      <div class="warnstreifen"></div>
     </div>
   </div>
 
   <div id="hochkant">Handy quer halten, dann passt die Werkstatt besser aufs Bild.</div>
 
-  <script type="module" src="js/main.js?v=20261018-10"></script>
+  <script type="module" src="js/main.js?v=20261018-12"></script>
 </body>
 </html>

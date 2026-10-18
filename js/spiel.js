@@ -1,6 +1,6 @@
 // Spielablauf: Zustand, Aktionen, Fehler, Dennis-Reaktionen, Bewertung.
 import * as THREE from 'three';
-import { STATIONEN, AUGENHOEHE, NOTIZEN } from './world.js';
+import { STATIONEN, AUGENHOEHE } from './world.js';
 import { auftritt, hatClip, buehneBelegt } from './clips.js';
 import { pfadSpiel, schlackeSpiel, hulaSpiel, DENNIS_HULA_REKORD } from './minispiele.js';
 import { blip, kratzen, jingle, klonk, brummeln, dauer as dauerTon, technoAn, technoAus, technoBeat, klospuelung, mampfen, klick as schalterKlick, stimmeAbspielen, stimmenVorladen } from './audio.js';
@@ -97,7 +97,7 @@ const FEHLER = {
     texte: [DENNIS.hand.handy],
   },
   figur: {
-    stufe: 'leicht', wut: 5, nebensache: true, clip: 'ermahnung', name: 'Dennis’ Skulptur angefasst',
+    stufe: 'leicht', wut: 5, nebensache: true, ton: 'stimme/naehe-2a.mp3', clip: 'ermahnung', name: 'Dennis’ Skulptur angefasst',
     texte: [DENNIS.hand.figur],
   },
   werfen: {
@@ -130,6 +130,12 @@ const FEHLER = {
   },
 };
 const ARGERN_BEI = ['kaffee', 'kiwi', 'brotdose'];
+// Was Dennis sagt, wenn man etwas wirft (je nach Ding)
+const WURF_ART = {
+  flex: 'werkzeug', hammer: 'werkzeug', edding: 'edding',
+  brille: 'ausruestung', handschuhe: 'ausruestung', helm: 'ausruestung',
+  hulahup: 'reifen', klemmbrett: 'notizen', besen: 'besen', feuerloescher: 'loescher',
+};
 const ARGERN_TOENE = ['stimme/aergern-1.mp3', 'stimme/aergern-2.mp3'];
 const STUFEN_CLIP = { leicht: 'ermahnung', mittel: 'sauer', voll: 'ausraster' };
 const STUFEN_STIMMUNG = { leicht: 'skeptisch', mittel: 'sauer', voll: 'wut' };
@@ -142,7 +148,7 @@ const NAEHTE = {
   rohr: { name: 'Ofenrohr', form: 'kreis', text: 'Einmal komplett rundherum. Nicht hetzen, nicht trödeln.' },
 };
 
-export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }) {
+export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
   const z = {
     ppe: { brille: false, handschuhe: false, helm: false },
     ventilAuf: false,
@@ -190,7 +196,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
     jammerTimer: 0,
     vorbei: false,
   };
-  const multi = dennisModus ? 2 : 1;
+  const multi = 1;
 
   function alleNaehte() { return Object.values(z.naehte).every((q) => q !== null); }
   function irgendeineNaht() { return Object.values(z.naehte).some((q) => q !== null); }
@@ -271,7 +277,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
     await steuerung.dreheZu(dennis.kopfPosition(), 0.35);
   }
 
-  async function fehler(id, extraText) {
+  async function fehler(id, extraText, { ton: tonVorgabe = null } = {}) {
     const f = FEHLER[id];
     ui.schliesseMenue();
     z.beschaeftigt = true;
@@ -305,10 +311,14 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
     const text = extraText || zufallAus(f.texte);
     // An Kaffee, Kiwis, Brotdose: Originalton ärgernleicht1, dann 2, dann abwechselnd
     let ton = null;
-    if (ARGERN_BEI.includes(id)) ton = ARGERN_TOENE[z.aergern++ % ARGERN_TOENE.length];
+    if (tonVorgabe) ton = tonVorgabe;
+    else if (ARGERN_BEI.includes(id)) ton = ARGERN_TOENE[z.aergern++ % ARGERN_TOENE.length];
     else if (f.ton) ton = f.ton;
     if (f.nebensache) await Promise.all([kommt, dennisSagt(text, f.stufe !== 'leicht', { ton })]);
-    else await Promise.all([kommt, auftritt({ schluessel: f.nurZeichnung ? [f.clip] : [f.clip, STUFEN_CLIP[f.stufe]], text, stufe: f.stufe, stimmung: STUFEN_STIMMUNG[f.stufe], seite: true })]);
+    else {
+      nebenbeiStoppen();
+      await Promise.all([kommt, auftritt({ schluessel: f.nurZeichnung ? [f.clip] : [f.clip, STUFEN_CLIP[f.stufe]], text, stufe: f.stufe, stimmung: STUFEN_STIMMUNG[f.stufe], seite: true })]);
+    }
     if (z.wut >= 100) {
       await rausgeflogen();
       return;
@@ -326,21 +336,59 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
   async function stimmenLaden() {
     if (stimmen) return;
     try { stimmen = (await (await fetch('stimme/stimme.json')).json()).saetze || {}; } catch { stimmen = {}; }
-    stimmenVorladen([...Object.values(stimmen).map((d) => `stimme/${d}`), ...MURMELN, TANZ_RUF, HULA_TON, ...ARGERN_TOENE, ...NAEHE_1, ...NAEHE_2, 'stimme/abwerfen-1.mp3', 'stimme/muell.mp3', 'assets/klospuelung.mp3']);
+    stimmenVorladen([...Object.values(stimmen).map((d) => `stimme/${d}`), ...MURMELN, TANZ_RUF, HULA_TON, ...ARGERN_TOENE, ...NAEHE_1, ...NAEHE_2, 'stimme/naehe-2a.mp3', 'stimme/hand.handy.mp3', 'stimme/hand.handyNochmal.mp3', 'stimme/abwerfen-1.mp3', 'stimme/muell.mp3', 'assets/klospuelung.mp3']);
   }
   let stimmeJetzt = null;
-  function stimmeStoppen(ausblenden = 0.15) {
-    if (stimmeJetzt) { stimmeJetzt.stopp(ausblenden); stimmeJetzt = null; }
-  }
   function sprechLautstaerke() {
-    const d = Math.hypot(kamera.position.x - dennis.position.x, kamera.position.z - dennis.position.z);
-    return 0.3 + 0.85 * Math.max(0, Math.min(1, (6.5 - d) / 5.5));
+    return lautstaerkeNachAbstand(8);
   }
-  async function dennisSagt(text, sauer = false, { minMs = 0, beimTanzen = false, ton = null } = {}) {
+  // Alles, was Dennis sagt, kommt nacheinander, nie gleichzeitig. Wichtigkeit (prio):
+  //   2 = von uns provoziert (Fehler, Reaktionen), 1 = Ereignis (Klo, Feuer, Hüfte), 0 = nebenbei (Was los, Jammern, Mittag)
+  // Wichtiges kommt zuerst; läuft gerade etwas Nebensächliches (auch Gemurmel), wird es kurz ausgeblendet.
+  const sprechListe = [];
+  let sprechAktiv = null;
+  let sprichtGerade = false;
+  function nebenbeiStoppen() {
+    if (murmelTon) { murmelTon.stopp(0.2); murmelTon = null; }
+    if (sprechAktiv && sprechAktiv.prio === 0) { if (stimmeJetzt) stimmeJetzt.stopp(0.2); sprechAktiv.abbrechen(); }
+  }
+  function dennisSagt(text, sauer = false, optionen = {}) {
+    return new Promise((fertig) => {
+      const e = { text, sauer, optionen, prio: optionen.prio ?? 2, zeit: performance.now(), fertig };
+      e.abbruch = new Promise((r) => { e.abbrechen = r; });
+      sprechListe.push(e);
+      if (e.prio > 0) nebenbeiStoppen();
+      sprechSchleife();
+    });
+  }
+  async function sprechSchleife() {
+    if (sprichtGerade) return;
+    sprichtGerade = true;
+    while (sprechListe.length) {
+      sprechListe.sort((a, b) => b.prio - a.prio || a.zeit - b.zeit);
+      const e = sprechListe.shift();
+      // Nebensächliches, das zu lange warten musste, fällt weg
+      if (e.prio === 0 && performance.now() - e.zeit > 6000) { e.fertig(); continue; }
+      sprechAktiv = e;
+      try { await sprechen(e); } catch { /* weiter */ }
+      sprechAktiv = null;
+      e.fertig();
+    }
+    sprichtGerade = false;
+  }
+  // Ruhe für Gemurmel/Nähe-Sprüche: nichts in der Warteschlange und niemand spricht
+  const ruhig = () => !sprichtGerade && !sprechListe.length && !stimmeJetzt;
+
+  async function sprechen(e) {
+    const { text, sauer } = e;
+    const { minMs = 0, beimTanzen = false, ton = null } = e.optionen;
     if (dennis.modus === 'tanzen' && !beimTanzen) return;
     await stimmenLaden();
-    stimmeStoppen();
-    if (murmelTon) { murmelTon.stopp(); murmelTon = null; }
+    // Gemurmel (Nähe, Tanz, Fegen): Wichtiges blendet es aus, Nebensächliches wartet
+    if (murmelTon && e.prio > 0) { murmelTon.stopp(0.2); murmelTon = null; }
+    if (murmelTon) await Promise.race([murmelTon.fertig, warte(7000)]);
+    // Läuft gerade ein Video von Dennis (mit Ton), erst danach sprechen
+    for (let i = 0; i < 60 && buehneBelegt(); i++) await warte(200);
     const datei = ton || (stimmen[satzId(text)] ? `stimme/${stimmen[satzId(text)]}` : null);
     let dauer = Math.max(2200, text.length * 55 + 1000, minMs);
     let t = null;
@@ -353,9 +401,10 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
       t.fertig = warte(t.dauer * 1000 + 100);
     }
     stimmeJetzt = t;
-    if (t.fertig) t.fertig.then(() => { if (stimmeJetzt === t) stimmeJetzt = null; });
     ui.sprechzeile(text, dauer, sauer);
-    await warte(Math.min(dauer, 3500));
+    await Promise.race([t.fertig, warte(15000), e.abbruch]);
+    if (stimmeJetzt === t) stimmeJetzt = null;
+    await warte(250);
   }
 
   async function lob(text) {
@@ -642,10 +691,9 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
     mampfen();
     if (!dennisSiehts()) { ui.hinweis('Heimlich eine Kiwi gegessen. Dennis hat nix gemerkt.'); return; }
     z.kiwisGegessen++;
-    if (z.kiwisGegessen === 1) {
-      await dennisSagt(DENNIS.kiwi.erste);
-    } else if (z.kiwisGegessen === 2) {
-      await dennisSagt(DENNIS.kiwi.zweite);
+    // die ersten beiden erlaubt Dennis: kein Spruch, nur das Bissgeräusch
+    if (z.kiwisGegessen <= 2) {
+      ui.hinweis(z.kiwisGegessen === 1 ? 'Lecker. Dennis nickt.' : 'Noch eine. Dennis zieht die Augenbraue hoch.');
     } else {
       await fehler('kiwi', z.kiwisWeg >= 6 ? DENNIS.kiwi.leer : undefined);
     }
@@ -694,7 +742,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
     const besen = welt.objekte.besen;
     if (hand.item?.id === 'besen') {
       z.dreckSeit = sekundenSeitStart();
-      dennisSagt(DENNIS.besenInDerHand);
+      dennisSagt(DENNIS.besenInDerHand, false, { prio: 1 });
       return;
     }
     z.dennisFegt = true;
@@ -727,10 +775,10 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
   }
 
   // ---------- Murmeln: Originaltöne, lauter je näher man ist ----------
-  const MURMELN = [9].map((n) => `stimme/murmeln-${n}.mp3`);
+  const MURMELN = []; // keine Zufalls-Murmler mehr: ansprechen2 kommt nur noch bei der Holzfigur
   // Sprüche, wenn man in Dennis' Nähe kommt: 1 = entspannt (nah zu hören), 2 = gereizt (auch weiter weg zu hören)
   const NAEHE_1 = ['stimme/naehe-1a.mp3', 'stimme/naehe-1b.mp3']; // ansprechen1, ansprechen11
-  const NAEHE_2 = ['stimme/naehe-2a.mp3', 'stimme/naehe-2b.mp3', 'stimme/naehe-2c.mp3']; // ansprechen2, 22, 22222
+  const NAEHE_2 = ['stimme/naehe-2b.mp3', 'stimme/naehe-2c.mp3']; // ansprechen22, 22222 (ansprechen2 nur bei der Holzfigur)
   let naechsterNaehe = 30;
   // Nur beim Tanzen (Box an): immer mal wieder dieser Spruch, sonst sagt er beim Tanzen nichts
   const TANZ_RUF = 'stimme/murmeln-8.mp3';
@@ -738,9 +786,11 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
   let murmelTon = null;
   let naechstesMurmeln = 20;
   let letzterMurmel = -1;
+  // Je näher, desto lauter; auch in der hintersten Ecke noch hörbar (größere Reichweite = lauter aus der Ferne)
   function lautstaerkeNachAbstand(reichweite = 5.5) {
     const d = Math.hypot(kamera.position.x - dennis.position.x, kamera.position.z - dennis.position.z);
-    return Math.max(0, Math.min(1, (reichweite - d) / (reichweite - 1))) * 1.1;
+    const boden = reichweite >= 8 ? 0.3 : 0.2;
+    return Math.max(boden, Math.min(1.15, 1.6 / (d + 0.4)));
   }
   async function ortsTon(url, reichweite = 5.5) {
     const t = await stimmeAbspielen(url, lautstaerkeNachAbstand(reichweite));
@@ -751,6 +801,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
     return t;
   }
   async function murmeln() {
+    if (!MURMELN.length) return;
     let n;
     do { n = Math.floor(Math.random() * MURMELN.length); } while (n === letzterMurmel && MURMELN.length > 1);
     letzterMurmel = n;
@@ -763,7 +814,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
     if (regulaer) z.klo = 'erledigt';
     if (dennis.modus !== 'normal') dennis.aufstehen();
     // erst Bescheid sagen (Dennis bleibt kurz stehen), dann rennt er raus
-    await dennisSagt(text, !regulaer);
+    await dennisSagt(text, !regulaer, { prio: regulaer ? 1 : 2 });
     z.aufKlo = true;
     ui.pauseZeigen(true, 'Dennis ist auf dem Klo: Arbeitspause, bis er zurück ist');
     await Promise.race([dennis.gehZu(welt.KLO.x, welt.KLO.z, regulaer ? 3.4 : 4.2), warte(6000)]);
@@ -785,7 +836,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
     if (regulaer) {
       z.wut = Math.max(0, z.wut - 10);
       aktualisieren();
-      dennisSagt(DENNIS.kloZurueck);
+      dennisSagt(DENNIS.kloZurueck, false, { prio: 1 });
     }
     await Promise.race([dennis.heim(), warte(9000)]);
   }
@@ -811,7 +862,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
     dennis.setzeModus('sitzen');
     const essStart = performance.now();
     // Brotdose auf: sofort der Originalton (Brotdose, Tomaten, Bananen)
-    await dennisSagt(DENNIS.tomate);
+    await dennisSagt(DENNIS.tomate, false, { prio: 1 });
     await warte(Math.max(1500, 8000 - (performance.now() - essStart)));
     if (z.mittag !== 'gerade' || mittagGeweckt) return;
     dennis.mittagspause(false);
@@ -914,7 +965,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
   async function dennisLoescht() {
     if (z.dennisLoescht || z.feuer !== 'brennt') return;
     z.dennisLoescht = true;
-    dennisSagt(z.feuerGrund === 'kippe' ? DENNIS.feuer.rufJohnny : DENNIS.feuer.ruf, true);
+    dennisSagt(z.feuerGrund === 'kippe' ? DENNIS.feuer.rufJohnny : DENNIS.feuer.ruf, true, { prio: 1 });
     // aus Pause, Klo, Schlaf oder Liegen raus
     if (dennis.modus === 'sitzen' || dennis.modus === 'schlafen') { mittagGeweckt = true; z.mittag = 'erledigt'; welt.objekte.brotdose.visible = true; }
     if (dennis.modus !== 'normal') dennis.aufstehen(dennis.position.x, dennis.position.z);
@@ -963,7 +1014,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
   // Hüfte: Dennis humpelt auf freien Boden und legt sich dort hin (nicht unters Sofa)
   async function hueftePlatt() {
     z.huefte = 'geht';
-    dennisSagt(DENNIS.huefte.start, true);
+    dennisSagt(DENNIS.huefte.start, true, { prio: 1 });
     const P = welt.HUEFTE_PLATZ;
     const da = await Promise.race([dennis.gehZu(P.x, P.z, 0.8), warte(9000).then(() => null)]);
     if (z.huefte !== 'geht') return;
@@ -973,7 +1024,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
     dennis.setzeModus('liegen');
     z.huefte = 'liegt';
     z.jammerTimer = 14;
-    dennisSagt(DENNIS.huefte.jammern[0], true, { minMs: 8000 });
+    dennisSagt(DENNIS.huefte.jammern[0], true, { minMs: 8000, prio: 1 });
   }
 
   async function aufhelfen() {
@@ -1038,8 +1089,12 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
   async function handyReaktion() {
     if (!dennisSiehts()) return;
     handyMal++;
-    if (handyMal === 1) { dennisSagt(DENNIS.hand.handy, true); return; }
-    await fehler('handy', DENNIS.hand.handyNochmal);
+    // Ton und Text abwechselnd: handy1, handy2, handy1, ... (ab dem 2. Mal mit Wut)
+    const erster = handyMal % 2 === 1;
+    const text = erster ? DENNIS.hand.handy : DENNIS.hand.handyNochmal;
+    const ton = erster ? 'stimme/hand.handy.mp3' : 'stimme/hand.handyNochmal.mp3';
+    if (handyMal === 1) { dennisSagt(text, true, { ton }); return; }
+    await fehler('handy', text, { ton });
   }
 
   function anziehen() {
@@ -1080,7 +1135,6 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
     if (id === 'feuerloescher') return spruehen();
     if (id === 'besen') return fegen();
     if (id === 'handy') { ui.hinweis('3 neue Nachrichten. Alle unwichtig.'); return handyReaktion(); }
-    if (id === 'klemmbrett') return notizenLesen();
     if (id === 'hulahup') { ui.hinweis('Klick auf Dennis, dann gibst du ihm den Reifen.'); return; }
     if (id === 'flex') {
       if (ohneAufsicht()) return;
@@ -1093,10 +1147,6 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
   }
 
   // ziel: 'feuer', 'dennis' oder leer (dann zählt, wohin man guckt)
-  function notizenLesen() {
-    ui.infoDialog('Dennis’ Notizen', `<ul class="notizen">${NOTIZEN.map((n) => `<li>${n}</li>`).join('')}</ul>`, [{ text: 'Weglegen' }]);
-  }
-
   async function spruehen(ziel) {
     const F = welt.FEUER;
     const feuerPos = new THREE.Vector3(F.x, 0.6, F.z);
@@ -1147,7 +1197,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
       if (getroffen || !dennisSiehts() || z.vorbei) return;
       if (id === 'figur') fehler('figurWerfen');
       else if (id === 'handy') dennisSagt(DENNIS.hand.handyWerfen);
-      else fehler('werfen');
+      else fehler('werfen', DENNIS.wurf[WURF_ART[id]] || DENNIS.wurf.werkzeug);
     }, 700);
   }
 
@@ -1306,7 +1356,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
       case 'feuerloescher':
         return ['Feuerlöscher', 'Pulverlöscher, 6 kg.', [A('In die Hand nehmen', 'hand', () => aufnehmen('feuerloescher', welt.objekte.feuerloescher))]];
       case 'klemmbrett':
-        return ['Dennis’ Klemmbrett', 'Eine Liste in Dennis’ Handschrift.', [A('Lesen', 'auge', notizenLesen), A('In die Hand nehmen', 'hand', () => aufnehmen('klemmbrett', welt.objekte.klemmbrett))]];
+        return ['Dennis’ Klemmbrett', 'Eine Liste in Dennis’ Handschrift.', [A('In die Hand nehmen', 'hand', () => aufnehmen('klemmbrett', welt.objekte.klemmbrett))]];
       case 'hulahup':
         return ['Hula-Hoop-Reifen', `Gehört Dennis. Sein Rekord: ${DENNIS_HULA_REKORD} Runden.`, [
           A('Dennis’ Rekord knacken (Minispiel)', 'funke', hulaRekord),
@@ -1432,7 +1482,9 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
     await auftritt({ schluessel: [kat], text: texte[kat], stufe: n >= 5 ? 'voll' : 'mittel', stimmung });
     const minuten = Math.round((performance.now() - z.start) / 60000);
     const naehte = Object.entries(NAEHTE).map(([k, nn]) => `<li><span>${nn.name}</span><b>${z.naehte[k]} %</b></li>`).join('');
-    const wahl = await ui.infoDialog('Kurs bestanden?', `
+    const bestanden = n <= 4;
+    await ui.infoDialog(bestanden ? 'Bestanden!' : 'Nicht bestanden!', `
+      <img class="ende-foto" src="assets/ende-${bestanden ? 'bestanden' : 'nichtbestanden'}.webp" alt="">
       <div class="note" style="color:${n <= 2 ? '#2b7a2b' : n <= 4 ? '#b5641b' : '#b3170d'}">Note ${n}</div>
       <ul class="wertung-liste">
         <li><span>Schnitt</span><b>${z.schnittQ} %</b></li>${naehte}
@@ -1442,8 +1494,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
         <li><span>Zeit</span><b>${minuten} Min.</b></li>
       </ul>
       ${z.fehler.length ? `<p><b>Fehler (${z.fehler.length}):</b></p><ul class="fehler-liste">${z.fehler.map((f) => `<li>${f}</li>`).join('')}</ul>` : '<p><b>Kein einziger Fehler. Dennis ist sprachlos.</b></p>'}`,
-    [{ text: 'Nochmal' }, { text: 'Dennis-Archiv', klasse: 'leise' }]);
-    if (wahl === 1) location.hash = '#archiv';
+    [{ text: 'Nochmal' }]);
     location.reload();
   }
 
@@ -1452,11 +1503,11 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
     dennis.stimmung('wut');
     await auftritt({ schluessel: ['rausgeflogen', 'ausraster'], text: DENNIS.rausgeflogen, stufe: 'voll', stimmung: 'wut' });
     jingle(false);
-    const wahl = await ui.infoDialog('Rausgeflogen!', `<p>Dennis ist der Kragen geplatzt.</p>
+    await ui.infoDialog('Rausgeflogen!', `<img class="ende-foto" src="assets/ende-nichtbestanden.webp" alt="">
+      <p>Dennis ist der Kragen geplatzt.</p>
       <ul class="fehler-liste">${z.fehler.map((f) => `<li>${f}</li>`).join('')}</ul>
       <p class="klein">Tipp: Die Regeln an der Wand hinter der Werkbank lesen.</p>`,
-    [{ text: 'Nochmal versuchen', klasse: 'rot' }, { text: 'Dennis-Archiv', klasse: 'leise' }]);
-    if (wahl === 1) location.hash = '#archiv';
+    [{ text: 'Nochmal versuchen', klasse: 'rot' }]);
     location.reload();
   }
 
@@ -1514,10 +1565,10 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
       const passt = abstand < 1.9 && steht && hingegangen && dennis.modus === 'normal' && dennis.wurzel.visible && !z.beschaeftigt;
       if (!passt) z.nebenDennis = 0;
       else if (!z.nebenDennis) z.nebenDennis = sekundenSeitStart();
-      if (z.nebenDennis && sekundenSeitStart() - z.nebenDennis > 1.0 && sekundenSeitStart() - z.baustelleZuletzt > 40 && !buehneBelegt()) {
+      if (z.nebenDennis && sekundenSeitStart() - z.nebenDennis > 1.0 && sekundenSeitStart() - z.baustelleZuletzt > 40 && !buehneBelegt() && ruhig() && !murmelTon) {
         z.baustelleZuletzt = sekundenSeitStart();
         z.nebenDennis = 0;
-        dennisSagt(DENNIS.baustellenfeeling);
+        dennisSagt(DENNIS.baustellenfeeling, false, { prio: 0 });
       }
       // Dennis fegt selbst, wenn der Dreck über 45 s liegen bleibt
       if (welt.dreck && !z.dennisFegt && !z.dennisLoescht && sekundenSeitStart() - z.dreckSeit > 45 && !z.beschaeftigt && dennis.modus === 'normal' && dennis.istDaheim() && !buehneBelegt()) {
@@ -1536,7 +1587,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
       const gereizt = z.wut >= 35;
       const liste = gereizt ? NAEHE_2 : NAEHE_1;
       const reichweite = gereizt ? 8 : 4.5;
-      if (liste.length && !murmelTon && !stimmeJetzt && dennisFrei && dennis.wurzel.visible && !z.beschaeftigt && !buehneBelegt()
+      if (liste.length && !murmelTon && ruhig() && dennisFrei && dennis.wurzel.visible && !z.beschaeftigt && !buehneBelegt()
         && sekundenSeitStart() > naechsterNaehe && abstand < reichweite - 1.2 && Math.random() < dt * 0.5) {
         naechsterNaehe = sekundenSeitStart() + 20 + Math.random() * 20;
         naechstesMurmeln = Math.max(naechstesMurmeln, sekundenSeitStart() + 10);
@@ -1544,11 +1595,11 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
       }
       // Tanzen: gleich beim Anschalten und dann immer mal wieder der Tanz-Spruch
       if (dennis.modus !== 'tanzen') naechsterTanzRuf = 0;
-      else if (!murmelTon && !stimmeJetzt && sekundenSeitStart() >= naechsterTanzRuf && !buehneBelegt()) {
+      else if (!murmelTon && ruhig() && sekundenSeitStart() >= naechsterTanzRuf && !buehneBelegt()) {
         naechsterTanzRuf = sekundenSeitStart() + 9 + Math.random() * 8;
         ortsTon(TANZ_RUF).then((t) => { if (t) t.tanz = true; });
       }
-      if (!murmelTon && !stimmeJetzt && sekundenSeitStart() > naechstesMurmeln && !z.beschaeftigt && !buehneBelegt() && dennis.wurzel.visible && dennisFrei && lautstaerkeNachAbstand() > 0.15) {
+      if (!murmelTon && ruhig() && sekundenSeitStart() > naechstesMurmeln && !z.beschaeftigt && !buehneBelegt() && dennis.wurzel.visible && dennisFrei && lautstaerkeNachAbstand() > 0.15) {
         naechstesMurmeln = sekundenSeitStart() + 15 + Math.random() * 20;
         murmeln();
       }
@@ -1588,7 +1639,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
           if (!z.fehler.includes(FEHLER.huefte.name)) z.fehler.push(FEHLER.huefte.name);
           ui.wutZeigen(z.wut, stimmungAusWut());
           ui.wutWackeln();
-          dennisSagt(zufallAus(DENNIS.huefte.jammern), true, { minMs: 8000 });
+          dennisSagt(zufallAus(DENNIS.huefte.jammern), true, { minMs: 8000, prio: 0 });
           if (z.wut >= 100) { z.beschaeftigt = true; rausgeflogen(); }
         }
       }

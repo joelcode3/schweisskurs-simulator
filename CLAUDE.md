@@ -20,8 +20,13 @@
 - Aussehen Dennis (nach Fotos): schlank, blond-rötliche Locken (oben/hinten voluminös), goldene Pilotenbrille,
   Schnauzer, leichter Dreitagebart, schwarze Arbeitsjacke mit Kragen und Reflexstreifen, darunter grauer Hoodie (keine Kordeln), schwarze
   Arbeitshose, **hässlicher blauer Rucksack** (ausdrücklich gewünscht). Keine roten Wangen, kein Gehörschutz, keine Mütze, kein grauer Ring am Hals.
-- Nebenbei-Interaktionen: Kaffee kochen und Dennis bringen (Wut sinkt, ab dem 3. meckert er), Kiwis (1. ok,
-  2. skeptisch, ab 3. sauer), Brotdose (abbeißen = Ausraster), große Soundbox (Techno, Dennis tanzt),
+- Startbildschirm: Werkstatt von außen, Plakat „Heute: Gasflaschen-Ofen schweißen mit Dennis“ (Foto assets/dennis-plakat.jpg,
+  fehlt noch -> gezeichnetes Gesicht), Tür mit Zahlenschloss: Code **1312** öffnet die Tür und startet das Spiel.
+  Kein Dennis-Modus, kein Dennis-Archiv mehr. Keine Hintergrundmusik (Betreiber: erstmal nicht).
+- Bewertung am Ende mit freigestelltem Foto im Comic-Look: assets/ende-bestanden.webp (Daumen hoch, Note 1–4),
+  assets/ende-nichtbestanden.webp (Mittelfinger, Note 5–6 und Rausschmiss).
+- Nebenbei-Interaktionen: Kaffee kochen und Dennis bringen (Wut sinkt, ab dem 3. meckert er), Kiwis (1. und 2. erlaubt:
+  kein Spruch, nur Bissgeräusch; ab 3. sauer), Brotdose (abbeißen = Ausraster), große Soundbox (Techno, Dennis tanzt),
   Lichtschalter (Dennis meckert), Besen (Dreck nach Schneiden/Schweißen, zählt in die Note),
   Hüfte (Dennis humpelt einmal pro Spiel auf freien Boden in der Raummitte, legt sich hin und jammert, bis man ihm aufhilft),
   Klo-Pause zwischendurch (frühestens nach 100 s, WC-Tür vorne rechts mit WC-Schild). Dennis sagt erst Bescheid,
@@ -33,14 +38,18 @@
   Dennis steht nicht immer vor dem Sofa: alle 30–55 s wechselt er zu einem anderen Platz (PLAETZE in dennis.js).
   Tanzen (Box an): nur dann und immer wieder stimme/murmeln-8.mp3 (95281C52…), sonst sagt er beim Tanzen nichts.
   Hüfte: erster Hilferuf beim Hinlegen, Hilferuf-Blasen bleiben ca. 8 s.
-  Murmeln (nur wenn Dennis frei ist, nicht beim Tanzen/Schlafen/Löschen/Hüfte/Mittag/Klo/Fegen/Hula): nur stimme/murmeln-9.mp3
-  (ansprechen2), zufällig alle 15–35 s, nur Ton, Lautstärke nach Abstand.
+  Kein zufälliges Murmeln mehr: ansprechen2 (stimme/naehe-2a.mp3) kommt nur, wenn man die Holzfigur anfasst.
+  Sprach-Reihenfolge: Dennis spricht nie gleichzeitig. Warteschlange mit Wichtigkeit: von uns provoziert (2) vor Ereignis
+  (Klo, Feuer, Hüfte = 1) vor nebenbei (Was los, Jammern, Nähe-Sprüche, Tanz-Spruch = 0); Nebensächliches wird für
+  Wichtiges ausgeblendet. Lautstärke: je näher, desto lauter, aber überall noch hörbar.
+  Werfen: eigene Sprüche je Ding (Werkzeug, Edding, Schutzausrüstung, Reifen, Notizen, Besen, Löscher).
+  Handy: Ton/Text abwechselnd handy1, handy2, handy1, ...
   Hula-Hoop: Reifen hängt an der Rückwand zwischen Regal und Werkbank. Dennis holt ihn sich alle 1,5–2,5 min (oder man
   bringt ihn: Reifen in die Hand, auf Dennis klicken), macht Hula-Hoop und sagt dabei stimme/murmeln-10.mp3 (hello_fresh,
   nur noch dafür), hängt ihn danach zurück. Minispiel am Reifen: „Dennis’ Rekord knacken“ (A/D bzw. links/rechts tippen im Takt,
   Rekord 47 Runden, eigener Rekord im Browser gespeichert; Dennis kommentiert, wenn er zuguckt).
   Nähe-Sprüche: kommt man in Dennis' Nähe, sagt er ab und zu etwas (stimme/naehe-1a/1b = ansprechen1/11 wenn entspannt,
-  naehe-2a/2b/2c = ansprechen2/22/22222 ab Wut 35, dann auch weiter weg hörbar). Je näher, desto lauter.
+  naehe-2b/2c = ansprechen22/22222 ab Wut 35, dann auch weiter weg hörbar). Je näher, desto lauter.
   Ärgern (Kaffee, Kiwi, Brotdose): Ton stimme/aergern-1 (ärgernleicht1), dann aergern-2, dann abwechselnd.
   Abgeworfen/getroffen: Ton stimme/abwerfen-1.mp3 + Blase (kein Video).
   Schläft Dennis oder ist er auf dem Klo, merkt er nichts (Kiwis, Brotdose, Tasse, Werfen, Handy, Figur ohne Wut).
@@ -52,7 +61,7 @@
   Fegen senkt Wut (-8), Aufhelfen nach Hüfte (-12, Dennis freut sich).
 - Holzfigur (Baumstamm mit geschnitztem Hintern, ~70 cm) steht zwischen Box und Besen.
 - Bemalte Holz-Skulptur (langer Penis, nach Foto vom Betreiber) hängt über dem Fenster über der Soundbox.
-- Dennis' Klemmbrett (liegt auf dem Sofa): aufheben, E = lesen. Notizen in NOTIZEN (world.js): Lydia anrufen, Hüfte hinten
+- Dennis' Klemmbrett (liegt auf dem Sofa): Klick = in die Hand, dann liest man es (kein Menü, kein „Lesen“). Notizen in NOTIZEN (world.js): Lydia anrufen, Hüfte hinten
   links, Heringe essen, Arzttermine, TK-Pizza einkaufen, Sexy abmelden, Fußmatte waschen.
 - Erste-Hilfe-Kasten neben dem Feuerlöscher. Klospülung = assets/klospuelung.mp3 (Ton aus dem Video vom Betreiber, mit Ausblenden).
 - Feuer: einmal pro Spiel (nach dem Flexen bald) brennt der Mülleimer neben der Werkbank. Vor dem Flexen nur mit
@@ -92,6 +101,8 @@
 - Fehlt ein Clip, zeigt das Spiel ein gezeichnetes Dennis-Gesicht mit Gebrabbel und Sprechblase.
 - Gebrabbel (Sätze ohne Aufnahme, `brummeln` in audio.js): gedämpfte Posaune wie bei den Peanuts (Betreiber-Wahl C).
 - `window.__werkstatt` ist nur für Tests (Playwright) gedacht.
+- Clips: zu jedem `clips/x.mp4` gibt es `clips/x.jpg` (erstes Bild, als Vorschau gegen gelben Rahmen/Ruckeln).
+  Nach neuen Clips erzeugen: `ffmpeg -ss 0 -i clips/x.mp4 -frames:v 1 -vf "scale='min(480,iw)':-2" -q:v 7 clips/x.jpg`.
 
 ## Clips
 - Comic-Look wird beim Zuschneiden ins Video gerechnet (Glätten, weniger Farbstufen, schwarze Konturen),

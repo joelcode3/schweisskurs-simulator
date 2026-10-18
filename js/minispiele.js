@@ -824,8 +824,8 @@ export function hulaSpiel() {
   let bester = 0;
   try { bester = Number(localStorage.getItem('hula-rekord') || 0); } catch { /* egal */ }
   let phase = -Math.PI / 2; // sin(phase) = -1 links, +1 rechts
-  let tempo = 3.2; // rad/s
-  let halt = 70; // 0..100, bei 0 fällt der Reifen
+  let tempo = 4.6; // rad/s
+  let halt = 80; // 0..100, bei 0 fällt der Reifen
   let schlaege = 0;
   let erwartet = null; // 'a' oder 'd', welche Seite als Nächstes dran ist
   let fensterGetroffen = false;
@@ -840,7 +840,7 @@ export function hulaSpiel() {
 
   function seiteJetzt() {
     const s = Math.sin(phase);
-    return s < -0.72 ? 'a' : s > 0.72 ? 'd' : null;
+    return s < -0.45 ? 'a' : s > 0.45 ? 'd' : null;
   }
   function druck(taste) {
     if (!laeuft || gefallen) return;
@@ -848,13 +848,13 @@ export function hulaSpiel() {
     if (s === taste && (erwartet === null || erwartet === taste) && !fensterGetroffen) {
       fensterGetroffen = true;
       schlaege++;
-      halt = Math.min(100, halt + 7);
-      tempo = Math.min(7.5, tempo + 0.05);
+      halt = Math.min(100, halt + 9);
+      tempo = Math.min(8.5, tempo + 0.04);
       erwartet = taste === 'a' ? 'd' : 'a';
       blip(taste === 'a' ? 520 : 620, 0.05, 0.12);
       blitz = { seite: taste, gut: true, t: 0.25 };
     } else {
-      halt -= 16;
+      halt -= 9;
       klonk(0.25);
       blitz = { seite: taste, gut: false, t: 0.25 };
     }
@@ -896,12 +896,12 @@ export function hulaSpiel() {
       const s = seiteJetzt();
       if (s === null && letzteSeite) {
         if (!fensterGetroffen && (erwartet === null || erwartet === letzteSeite)) {
-          if (erwartet !== null) { halt -= 13; blitz = { seite: letzteSeite, gut: false, t: 0.25 }; }
+          if (erwartet !== null) { halt -= 8; blitz = { seite: letzteSeite, gut: false, t: 0.25 }; }
         }
         fensterGetroffen = false;
       }
       letzteSeite = s || 0;
-      halt -= dt * 2.5;
+      halt -= dt * 1.2;
       if (halt <= 0) {
         gefallen = true;
         klonk(0.6);
