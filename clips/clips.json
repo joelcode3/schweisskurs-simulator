@@ -17,6 +17,15 @@
   "ausraster": [
     {
       "datei": "ausraster-1.mp4"
+    },
+    {
+      "datei": "ausraster-2.mp4"
+    },
+    {
+      "datei": "ausraster-3.mp4"
+    },
+    {
+      "datei": "ausraster-4.mp4"
     }
   ],
   "lob": [
@@ -38,7 +47,11 @@
   "ende_gut": [],
   "ende_mittel": [],
   "ende_schlecht": [],
-  "rausgeflogen": [],
+  "rausgeflogen": [
+    {
+      "datei": "rausgeflogen-1.mp4"
+    }
+  ],
   "fehler_brotdose": [
     {
       "datei": "zwischendurch-1.mp4"

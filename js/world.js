@@ -189,6 +189,25 @@ export function baueWelt(scene) {
   objekte.feuerloescher = loescher;
   loescher.userData.wand = { pos: loescher.position.clone(), rot: loescher.rotation.clone() };
 
+  // Erste-Hilfe-Kasten neben dem Feuerlöscher
+  const ersteHilfe = new THREE.Group();
+  ersteHilfe.add(quader(0.34, 0.26, 0.11, 0x1f8a4c));
+  ersteHilfe.add(setze(quader(0.07, 0.17, 0.005, 0xffffff, { umriss: false }), 0, 0, 0.056));
+  ersteHilfe.add(setze(quader(0.17, 0.07, 0.005, 0xffffff, { umriss: false }), 0, 0, 0.056));
+  ersteHilfe.add(setze(quader(0.08, 0.02, 0.03, 0x14301f), 0, 0.14, 0.02));
+  setze(ersteHilfe, RAUM.xMax - 0.06, 1.45, -1.55, 0, -Math.PI / 2, 0);
+  scene.add(ersteHilfe);
+  merke(ersteHilfe, 'ersteHilfe', 'Erste-Hilfe-Kasten', null);
+
+  // Hula-Hoop-Reifen an der Rückwand zwischen Regal und Werkbank
+  const reifen = baueReifen();
+  setze(reifen, -2.9, 1.55, RAUM.zMin + 0.06);
+  scene.add(reifen);
+  scene.add(setze(zylinder(0.008, 0.008, 0.08, 0x7a7a7a, {}, 6), -2.9, 1.98, RAUM.zMin + 0.03, Math.PI / 2, 0, 0));
+  merke(reifen, 'hulahup', 'Hula-Hoop-Reifen', null);
+  objekte.hulahup = reifen;
+  reifen.userData.wand = { pos: reifen.position.clone(), rot: reifen.rotation.clone() };
+
   // ---------- Plakate ----------
   function plakat(b, h, malen, x, y, z, ry) {
     const t = leinwandTextur(Math.round(b * 400), Math.round(h * 400), malen);
@@ -688,6 +707,58 @@ export function baueWelt(scene) {
   merke(brotdose, 'brotdose', 'Dennis’ Brotdose', null);
   objekte.brotdose = brotdose;
 
+  // Holz-Skulptur (langer Penis, bemaltes Brett) oben an der Wand über der Soundbox und dem Fenster
+  const skulpturTex = leinwandTextur(1024, 320, (g) => {
+    g.clearRect(0, 0, 1024, 320);
+    g.lineJoin = 'round';
+    g.lineCap = 'round';
+    const holz = '#e6ad45';
+    const kontur = '#2b1d10';
+    // Schnur zum Nagel
+    g.strokeStyle = '#d8cba8'; g.lineWidth = 6;
+    g.beginPath(); g.moveTo(955, 70); g.lineTo(985, 6); g.stroke();
+    // Umriss (dick, dunkel), dann Füllung
+    function form(farbe, extra) {
+      g.strokeStyle = farbe; g.fillStyle = farbe;
+      g.lineWidth = 92 + extra;
+      g.beginPath(); g.moveTo(250, 230); g.bezierCurveTo(480, 200, 700, 150, 910, 110); g.stroke();
+      g.beginPath(); g.ellipse(150, 238, 86 + extra / 2, 70 + extra / 2, -0.2, 0, Math.PI * 2); g.fill();
+      g.beginPath(); g.ellipse(255, 262, 66 + extra / 2, 52 + extra / 2, 0.1, 0, Math.PI * 2); g.fill();
+      g.beginPath(); g.ellipse(935, 100, 62 + extra / 2, 50 + extra / 2, -0.25, 0, Math.PI * 2); g.fill();
+    }
+    form(kontur, 14);
+    form(holz, 0);
+    // Eichel etwas rötlicher, mit Kerbe
+    g.fillStyle = '#e07a4e';
+    g.beginPath(); g.ellipse(945, 97, 50, 40, -0.25, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = kontur; g.lineWidth = 6;
+    g.beginPath(); g.moveTo(900, 70); g.quadraticCurveTo(890, 105, 905, 140); g.stroke();
+    g.beginPath(); g.moveTo(970, 92); g.lineTo(990, 98); g.stroke();
+    // rote Flecken und Holzstriche
+    g.fillStyle = '#d8553a';
+    for (const [x, y, w] of [[420, 205, 60], [600, 168, 70], [760, 136, 50], [330, 228, 40]]) { g.beginPath(); g.ellipse(x, y, w, 12, -0.18, 0, Math.PI * 2); g.fill(); }
+    g.strokeStyle = kontur; g.lineWidth = 5;
+    for (const [x, y] of [[360, 200], [520, 180], [680, 150], [830, 120], [470, 228], [640, 196]]) { g.beginPath(); g.moveTo(x, y); g.lineTo(x + 36, y - 6); g.stroke(); }
+    // Punkte auf den Kugeln
+    g.fillStyle = kontur;
+    for (let i = 0; i < 26; i++) {
+      const a = i * 2.39;
+      const r = 20 + (i * 37 % 45);
+      const cx = i % 2 ? 150 : 255;
+      const cy = i % 2 ? 245 : 268;
+      g.beginPath(); g.arc(cx + Math.cos(a) * r * 0.9, cy + Math.sin(a) * r * 0.55, 4, 0, Math.PI * 2); g.fill();
+    }
+    g.strokeStyle = kontur; g.lineWidth = 5;
+    g.beginPath(); g.moveTo(205, 205); g.quadraticCurveTo(212, 250, 200, 300); g.stroke();
+  });
+  const skulptur = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.47), new THREE.MeshBasicMaterial({ map: skulpturTex, transparent: true, alphaTest: 0.4, side: THREE.DoubleSide }));
+  const skulpturHalter = new THREE.Group();
+  skulpturHalter.add(skulptur);
+  skulptur.rotation.z = 0.1;
+  // über dem Fenster (das Fenster sitzt direkt über der Box)
+  setze(skulpturHalter, RAUM.xMin + 0.04, 2.84, 1.35, 0, Math.PI / 2, 0);
+  scene.add(skulpturHalter);
+
   // Große Soundbox (Standlautsprecher)
   const box = new THREE.Group();
   box.add(setze(quader(0.42, 1.05, 0.42, 0x151517), 0, 0.525, 0));
@@ -744,14 +815,23 @@ export function baueWelt(scene) {
   const klo = new THREE.Group();
   klo.add(setze(quader(0.85, 2.05, 0.05, 0xd9d4c4), 0, 1.025, 0));
   klo.add(setze(quader(0.95, 0.06, 0.07, 0x3b3b3b), 0, 2.08, 0));
-  klo.add(setze(zylinder(0.022, 0.022, 0.12, 0xc9c9c9, {}, 10), 0.3, 1.0, -0.05, Math.PI / 2, 0, 0));
-  const wcTex = leinwandTextur(128, 128, (g, b, h) => {
-    g.fillStyle = '#2f5fa8'; g.fillRect(0, 0, b, h);
-    g.fillStyle = '#fff'; g.font = 'bold 64px Arial'; g.textAlign = 'center'; g.fillText('WC', b / 2, 86);
+  klo.add(setze(zylinder(0.022, 0.022, 0.12, 0xc9c9c9, {}, 10), 0.3, 1.0, 0.05, Math.PI / 2, 0, 0));
+  // WC-Schild zur Werkstatt hin: Schrift und Männchen/Weibchen
+  const wcTex = leinwandTextur(256, 160, (g, b, h) => {
+    g.fillStyle = '#ffffff'; g.fillRect(0, 0, b, h);
+    g.strokeStyle = '#1d1d1f'; g.lineWidth = 8; g.strokeRect(4, 4, b - 8, h - 8);
+    g.fillStyle = '#1d1d1f'; g.font = 'bold 84px Arial'; g.textAlign = 'center'; g.fillText('WC', 78, 112);
+    function figur(x, rock) {
+      g.beginPath(); g.arc(x, 44, 13, 0, Math.PI * 2); g.fill();
+      if (rock) { g.beginPath(); g.moveTo(x, 60); g.lineTo(x - 22, 110); g.lineTo(x + 22, 110); g.closePath(); g.fill(); }
+      else g.fillRect(x - 13, 60, 26, 50);
+      g.fillRect(x - 10, 108, 7, 28); g.fillRect(x + 3, 108, 7, 28);
+    }
+    g.fillStyle = '#2f5fa8'; figur(180, false);
+    g.fillStyle = '#c8352a'; figur(224, true);
   });
-  const wcSchild = new THREE.Mesh(new THREE.PlaneGeometry(0.18, 0.18), new THREE.MeshBasicMaterial({ map: wcTex }));
-  wcSchild.position.set(0, 1.6, -0.03);
-  wcSchild.rotation.y = Math.PI;
+  const wcSchild = new THREE.Mesh(new THREE.PlaneGeometry(0.36, 0.225), new THREE.MeshBasicMaterial({ map: wcTex }));
+  wcSchild.position.set(0, 1.62, 0.03);
   klo.add(wcSchild);
   setze(klo, 1.4, 0, RAUM.zMax - 0.03, 0, Math.PI, 0);
   scene.add(klo);
@@ -954,6 +1034,27 @@ export function baueWelt(scene) {
     wippe.rotation.x = an ? 0 : 0.5;
   }
 
+  // Dennis' Klemmbrett mit Notizen, liegt auf dem Sofa
+  const klemmbrett = new THREE.Group();
+  const notizTex = leinwandTextur(256, 340, (g, b, h) => {
+    g.fillStyle = '#fbfaf3'; g.fillRect(0, 0, b, h);
+    g.strokeStyle = '#9ec3e6'; g.lineWidth = 2;
+    for (let y = 70; y < h; y += 27) { g.beginPath(); g.moveTo(10, y); g.lineTo(b - 10, y); g.stroke(); }
+    g.fillStyle = '#1f3f8a';
+    g.font = '24px "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive';
+    NOTIZEN.forEach((t, i) => g.fillText(t, 16, 64 + i * 27));
+  });
+  klemmbrett.add(quader(0.23, 0.012, 0.32, 0x8a5a2e));
+  const blatt = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.27), new THREE.MeshBasicMaterial({ map: notizTex }));
+  blatt.rotation.x = -Math.PI / 2;
+  blatt.position.set(0, 0.0075, 0.015);
+  klemmbrett.add(blatt);
+  klemmbrett.add(setze(quader(0.1, 0.02, 0.04, 0xb8bcc2), 0, 0.014, -0.135));
+  setze(klemmbrett, -3.75, 0.49, 3.5, 0, 0.5, 0);
+  scene.add(klemmbrett);
+  merke(klemmbrett, 'klemmbrett', 'Dennis’ Klemmbrett', null);
+  objekte.klemmbrett = klemmbrett;
+
   // ---------- Gasflasche ----------
   const flasche = baueFlasche();
   scene.add(flasche.gruppe);
@@ -1039,6 +1140,7 @@ export function baueWelt(scene) {
     },
     // Freier Boden für die Hüfte (liegend ca. 2,3 m lang, Kopf Richtung Werkstattmitte)
     HUEFTE_PLATZ: { x: -1.6, z: 1.1, dreh: -Math.PI / 2 },
+    HULA_PLATZ: { x: -2.9, z: -3.2 },
     SOFA: { x: -3.2, z: RAUM.zMax - 0.45, sitzZ: RAUM.zMax - 0.5, vorneZ: RAUM.zMax - 1.15 },
     update(dt) {
       for (const a of animiert) a(dt);
@@ -1244,3 +1346,30 @@ export function baueHandschuh(seite) {
   h.add(daumen);
   return h;
 }
+
+// Hula-Hoop-Reifen: senkrecht (für die Wand), Kreis in der x-y-Ebene
+export function baueReifen() {
+  const g = new THREE.Group();
+  const r = 0.45;
+  g.add(teil(new THREE.TorusGeometry(r, 0.016, 8, 48), 0xe84a9a, { umriss: 0.004 }));
+  // ein paar weiße Klebestreifen
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    const st = teil(new THREE.TorusGeometry(r, 0.0175, 8, 6, 0.12), 0xffffff, { umriss: false });
+    st.rotation.z = a;
+    g.add(st);
+  }
+  return g;
+}
+
+export const NOTIZEN = [
+  'Lydia anrufen',
+  'Hüfte hinten links!!',
+  'Heringe essen',
+  'Orthopäde Di 8:15',
+  'Zahnarzt Mi 14:30',
+  'Hautarzt Fr 9:00',
+  'TK-Pizza einkaufen',
+  'Sexy abmelden',
+  'Fußmatte waschen',
+];

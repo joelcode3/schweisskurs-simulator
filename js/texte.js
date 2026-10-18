@@ -3,8 +3,9 @@
 
 export const DENNIS = {
   begruessung: 'Moin! Heute baust du einen Ofen aus der alten Gasflasche da drüben. Was zu tun ist, steht auf deinem Zettel. Und halt dich an meine Regeln an der Wand. Wenn du Mist baust, merk ich das. Ich merk alles.',
-  klo: 'Warte kurz!',
-  kloZurueck: 'Ahh. Jetzt geht’s mir besser.',
+  klo: 'Warte kurz! Ich muss mal ganz dringend. Solange ich weg bin, wird NICHT gearbeitet. Keine Aufsicht, keine Arbeit!',
+  kloZurueck: 'Ahh. Jetzt geht’s mir besser. Weitermachen!',
+  kloOhneAufsicht: 'Ohne Aufsicht wird nicht gearbeitet. Warte, bis Dennis vom Klo zurück ist.',
   feuer: {
     ruf: 'FEUER!! Im Mülleimer! Wer hat da Funken reinfliegen lassen?!',
     sauer: 'Wer passt hier eigentlich auf?! Beim Flexen guckt man, wo die Funken hinfliegen!',

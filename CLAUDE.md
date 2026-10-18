@@ -24,7 +24,8 @@
   2. skeptisch, ab 3. sauer), Brotdose (abbeißen = Ausraster), große Soundbox (Techno, Dennis tanzt),
   Lichtschalter (Dennis meckert), Besen (Dreck nach Schneiden/Schweißen, zählt in die Note),
   Hüfte (Dennis humpelt einmal pro Spiel auf freien Boden in der Raummitte, legt sich hin und jammert, bis man ihm aufhilft),
-  Klo-Pause zwischendurch (frühestens nach 100 s, „Warte kurz!“, WC-Tür vorne rechts). Geht man zu Dennis hin und bleibt
+  Klo-Pause zwischendurch (frühestens nach 100 s, WC-Tür vorne rechts mit WC-Schild). Dennis sagt erst Bescheid,
+  dann rennt er raus; solange er weg ist: Arbeitspause (gelbes Band oben, Arbeitsschritte gesperrt). Geht man zu Dennis hin und bleibt
   stehen: „Was los??“ (stimme/baustellenfeeling.mp3, 1 s, nicht im Liegen, nicht wenn er selbst kommt, max. alle 40 s). Mittagspause: einmal pro Spiel setzt er sich aufs Sofa (vorne links), isst aus der Brotdose eine Tomate
   (stimme/tomate.mp3), legt sich dann ~22 s schlafen (Z Z Z). Wecken = Wut. Kiwis liegen lose auf dem Kaffeetisch.
   (stimme/tomate.mp3 kommt sofort, wenn er die Brotdose auspackt). Auf dem Sofa liegt er mit Kopf und Waden auf den Lehnen.
@@ -32,8 +33,12 @@
   Dennis steht nicht immer vor dem Sofa: alle 30–55 s wechselt er zu einem anderen Platz (PLAETZE in dennis.js).
   Tanzen (Box an): nur dann und immer wieder stimme/murmeln-8.mp3 (95281C52…), sonst sagt er beim Tanzen nichts.
   Hüfte: erster Hilferuf beim Hinlegen, Hilferuf-Blasen bleiben ca. 8 s.
-  Murmeln (nur wenn Dennis frei ist, nicht beim Tanzen/Schlafen/Löschen/Hüfte/Mittag/Klo/Fegen): stimme/murmeln-9/10.mp3
-  (vom Betreiber: ansprechen2, hello_fresh), zufällig alle 15–35 s, nur Ton, Lautstärke nach Abstand.
+  Murmeln (nur wenn Dennis frei ist, nicht beim Tanzen/Schlafen/Löschen/Hüfte/Mittag/Klo/Fegen/Hula): nur stimme/murmeln-9.mp3
+  (ansprechen2), zufällig alle 15–35 s, nur Ton, Lautstärke nach Abstand.
+  Hula-Hoop: Reifen hängt an der Rückwand zwischen Regal und Werkbank. Dennis holt ihn sich alle 1,5–2,5 min (oder man
+  bringt ihn: Reifen in die Hand, auf Dennis klicken), macht Hula-Hoop und sagt dabei stimme/murmeln-10.mp3 (hello_fresh,
+  nur noch dafür), hängt ihn danach zurück.
+  Schläft Dennis oder ist er auf dem Klo, merkt er nichts (Kiwis, Brotdose, Tasse, Werfen, Handy, Figur ohne Wut).
   Sprache (Aufnahme oder Gebrabbel): je näher der Spieler, desto lauter; Aufnahmen werden vorgeladen, Blase und Ton
   starten gleichzeitig; schließt das Dennis-Fenster (Weiter), blendet sein Gebrabbel aus.
   Alle Töne mit kurzem Ein- und Ausblenden. Poster (assets/poster.jpg) mit Klebeband über der Kaffeeecke.
@@ -41,6 +46,10 @@
   Kaffeetisch, breit, mit Brotdose) = „Ist da Milch drin? GIFT!!“ + Klo + Wut. Nach dem Klo: Klospülung. Reguläres Klo (nicht ausgelöst) senkt die Wut (-10).
   Fegen senkt Wut (-8), Aufhelfen nach Hüfte (-12, Dennis freut sich).
 - Holzfigur (Baumstamm mit geschnitztem Hintern, ~70 cm) steht zwischen Box und Besen.
+- Bemalte Holz-Skulptur (langer Penis, nach Foto vom Betreiber) hängt über dem Fenster über der Soundbox.
+- Dennis' Klemmbrett (liegt auf dem Sofa): aufheben, E = lesen. Notizen in NOTIZEN (world.js): Lydia anrufen, Hüfte hinten
+  links, Heringe essen, Arzttermine, TK-Pizza einkaufen, Sexy abmelden, Fußmatte waschen.
+- Erste-Hilfe-Kasten neben dem Feuerlöscher. Klospülung = assets/klospuelung.mp3 (Ton aus dem Video vom Betreiber, mit Ausblenden).
 - Feuer: einmal pro Spiel (nach dem Flexen bald) brennt der Mülleimer neben der Werkbank. Vor dem Flexen nur mit
   anderem Grund: Johnny hat seine Kippe reingeschnippt (eigene Sprüche). Dennis ruft (Blase rechts),
   holt den Feuerlöscher (rechte Wand zwischen Schweißplatz und Waschplatz) und löscht selbst, wird sauer. Löscht man selbst: Lob, Wut sinkt. Hält man den Löscher
@@ -49,7 +58,8 @@
   auf ebene Flächen legen (Klick), fallen lassen (G), werfen (Q), benutzen/anziehen (E). Leiste unten zeigt, was man hält.
   Edding/Flex/Hammer müssen in der Hand sein zum Anzeichnen/Schneiden/Schlacke. Gasflasche: „Hochheben“, langsamer gehen,
   per Klick auf Werkbank/Schweißtisch/Waschplatz abstellen. Ausrüstung im HUD anklicken = abnehmen (in die Hand).
-  Reaktionen: Werfen (Ermahnung), Dennis treffen (Ausraster), Figur anfassen/werfen, Handy (1. Mal Blase, dann Wut),
+  Reaktionen: Werfen (Ermahnung), Dennis treffen (Ausraster), Figur anfassen/werfen, Handy (1. Mal Blase + stimme/hand.handy.mp3,
+  danach Wut + stimme/hand.handyNochmal.mp3, Ton aus handy1/handy2.MOV),
   Löscher auf Dennis (Ausraster), Löscher sinnlos (Ermahnung), laufende Flex auf Dennis (sauer).
 - Bedienung: Hat ein Ding nur eine Aktion, wird sie beim Klick direkt ausgeführt (kein Menü). Box und Licht schalten
   sofort beim Klick (ohne Hinlaufen). Abbrechen-Knöpfe hell mit dunkler Schrift.
@@ -82,7 +92,9 @@
 - Comic-Look wird beim Zuschneiden ins Video gerechnet (Glätten, weniger Farbstufen, schwarze Konturen),
   im Spiel kommen Rasterpunkte, Comic-Rahmen und Sprechblase dazu. Hochkant-Clips bekommen einen hohen Rahmen.
 - Chromium in der Testumgebung kann kein H.264 abspielen: zum Testen das Video per `page.route` als WebM ausliefern.
-- Bisher: `ermahnung-1.mp4` (guckt vom Rechner hoch, schüttelt den Kopf), `ausraster-1.mp4` (dreht sich um und brüllt),
+- Ausraster: `ausraster-1..4.mp4` (neu vom Betreiber, zufällig bei schlimmen Fehlern), `rausgeflogen-1.mp4`
+  (ausraster_rauschmiss, nur beim Rausschmiss). Videos starten sofort, Dennis läuft währenddessen her; Clips werden vorgeladen.
+- Bisher außerdem: `ermahnung-1.mp4` (guckt vom Rechner hoch, schüttelt den Kopf),
   `ermahnung-2.mp4` (Hoodie draußen, redet, guckt skeptisch), `sauer-1.mp4` (an der Werkbank, dreht sich um, laut),
   `lob-1.mp4` (Kursraum, lächelt), `zwischendurch-1/2.mp4` (Helm, Warnweste, blauer Rucksack, Brotdose – noch ungenutzt).
   Zuordnung nur nach Bild und Lautstärke geraten (Ton nicht transkribierbar) – Betreiber fragen, was Dennis sagt.
