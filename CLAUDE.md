@@ -83,6 +83,11 @@
 - KI-Stimmklon ist in dieser Umgebung nicht möglich (huggingface.co gesperrt). Stimmproben nie ins Repo (öffentlich).
 
 ## Offene Themen
+- Für später gemerkt (Betreiber, 18.10.):
+  - Bug: Man steckt fest, wenn man zwischen Dennis und Sofa steht.
+  - Gebrabbel (Brummelstimme) soll anders klingen – Vorschläge gemacht, Antwort abwarten.
+  - Hüfte: Dennis soll sich auf freien Boden legen (liegt meist halb unterm Sofa).
+  - Kein Gemurmel, solange Dennis anders beschäftigt ist (schlafen, Feuer löschen, Hüfte, Mittagspause).
 - Handy-Video von Dennis einbauen (Betreiber hat Video), sobald geschickt.
 - Weitere Clips von Dennis (Begrüßung, Lob, Tipps, Ende, spezielle Fehler).
 - Weitere Projekte (Grill, Werkzeugwagen), weitere Fehler, ggf. MAG-Schweißen.
