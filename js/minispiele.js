@@ -814,3 +814,186 @@ export function schlackeSpiel() {
   requestAnimationFrame(schleife);
   return versprechen;
 }
+
+// Hula-Hoop: Der Reifen schwingt um die Hüfte. Im richtigen Moment abwechselnd A (links) und D (rechts) drücken
+// (Handy: links/rechts tippen). Treffer halten den Reifen oben, Fehler lassen ihn sinken. Gezählt werden Runden.
+export const DENNIS_HULA_REKORD = 47;
+export function hulaSpiel() {
+  const { el, canvas, ctx, oben, unten, masse: m } = vorbereiten('Hula-Hoop: Knackst du Dennis’ Rekord?',
+    'Drücke A, wenn der Reifen links ist, und D, wenn er rechts ist. Immer abwechselnd. Handy: links/rechts tippen.');
+  let bester = 0;
+  try { bester = Number(localStorage.getItem('hula-rekord') || 0); } catch { /* egal */ }
+  let phase = -Math.PI / 2; // sin(phase) = -1 links, +1 rechts
+  let tempo = 3.2; // rad/s
+  let halt = 70; // 0..100, bei 0 fällt der Reifen
+  let schlaege = 0;
+  let erwartet = null; // 'a' oder 'd', welche Seite als Nächstes dran ist
+  let fensterGetroffen = false;
+  let letzteSeite = 0;
+  let laeuft = true;
+  let gefallen = false;
+  let fall = 0;
+  let blitz = { seite: null, gut: false, t: 0 };
+  let fertigAufloesen;
+  const versprechen = new Promise((res) => { fertigAufloesen = res; });
+  const runden = () => Math.floor(schlaege / 2);
+
+  function seiteJetzt() {
+    const s = Math.sin(phase);
+    return s < -0.72 ? 'a' : s > 0.72 ? 'd' : null;
+  }
+  function druck(taste) {
+    if (!laeuft || gefallen) return;
+    const s = seiteJetzt();
+    if (s === taste && (erwartet === null || erwartet === taste) && !fensterGetroffen) {
+      fensterGetroffen = true;
+      schlaege++;
+      halt = Math.min(100, halt + 7);
+      tempo = Math.min(7.5, tempo + 0.05);
+      erwartet = taste === 'a' ? 'd' : 'a';
+      blip(taste === 'a' ? 520 : 620, 0.05, 0.12);
+      blitz = { seite: taste, gut: true, t: 0.25 };
+    } else {
+      halt -= 16;
+      klonk(0.25);
+      blitz = { seite: taste, gut: false, t: 0.25 };
+    }
+  }
+  function taste(e) {
+    if (e.repeat) return;
+    const k = e.key.toLowerCase();
+    if (k === 'a' || k === 'arrowleft') druck('a');
+    else if (k === 'd' || k === 'arrowright') druck('d');
+  }
+  function tipp(e) {
+    const r = canvas.getBoundingClientRect();
+    druck(e.clientX - r.left < r.width / 2 ? 'a' : 'd');
+  }
+  window.addEventListener('keydown', taste);
+  canvas.addEventListener('pointerdown', tipp);
+  unten.appendChild(knopf('Aufhören', 'leise klein', () => schliessen()));
+
+  function schliessen() {
+    if (!laeuft) return;
+    laeuft = false;
+    window.removeEventListener('keydown', taste);
+    canvas.removeEventListener('pointerdown', tipp);
+    el.classList.add('versteckt');
+    const r = runden();
+    let neuerRekord = false;
+    if (r > bester) { neuerRekord = true; try { localStorage.setItem('hula-rekord', String(r)); } catch { /* egal */ } }
+    fertigAufloesen({ runden: r, neuerRekord, bester: Math.max(bester, r) });
+  }
+
+  let letzte = performance.now();
+  function schleife(jetzt) {
+    if (!laeuft) return;
+    const dt = Math.min(0.05, (jetzt - letzte) / 1000);
+    letzte = jetzt;
+    if (!gefallen) {
+      phase += tempo * dt;
+      // Fenster verpasst? (Seite vorbei, ohne gedrückt zu haben)
+      const s = seiteJetzt();
+      if (s === null && letzteSeite) {
+        if (!fensterGetroffen && (erwartet === null || erwartet === letzteSeite)) {
+          if (erwartet !== null) { halt -= 13; blitz = { seite: letzteSeite, gut: false, t: 0.25 }; }
+        }
+        fensterGetroffen = false;
+      }
+      letzteSeite = s || 0;
+      halt -= dt * 2.5;
+      if (halt <= 0) {
+        gefallen = true;
+        klonk(0.6);
+        setTimeout(() => {
+          unten.innerHTML = '';
+          unten.appendChild(knopf('Weiter', '', () => schliessen()));
+        }, 900);
+      }
+    } else {
+      fall = Math.min(1, fall + dt * 2.5);
+    }
+    blitz.t = Math.max(0, blitz.t - dt);
+    zeichnen();
+    requestAnimationFrame(schleife);
+  }
+
+  function zeichnen() {
+    const b = m.b, h = m.h;
+    ctx.clearRect(0, 0, b, h);
+    ctx.fillStyle = '#2a2620';
+    ctx.fillRect(0, 0, b, h);
+    const cx = b / 2;
+    const gross = Math.min(b, h);
+    const hueftY = h * 0.64;
+    const kopfY = h * 0.33;
+    const fussY = h * 0.86;
+    const s = Math.sin(phase);
+    const c = Math.cos(phase);
+    const hueftX = cx - s * gross * 0.025;
+    // Beine und Oberkörper (Comic-Silhouette)
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = gross * 0.07;
+    ctx.beginPath(); ctx.moveTo(hueftX - gross * 0.04, hueftY); ctx.lineTo(cx - gross * 0.06, fussY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(hueftX + gross * 0.04, hueftY); ctx.lineTo(cx + gross * 0.06, fussY); ctx.stroke();
+    ctx.strokeStyle = '#2b3a55';
+    ctx.lineWidth = gross * 0.055;
+    ctx.beginPath(); ctx.moveTo(hueftX - gross * 0.04, hueftY); ctx.lineTo(cx - gross * 0.06, fussY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(hueftX + gross * 0.04, hueftY); ctx.lineTo(cx + gross * 0.06, fussY); ctx.stroke();
+    ctx.fillStyle = '#2b3a55';
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.roundRect(hueftX - gross * 0.08, kopfY + gross * 0.05, gross * 0.16, hueftY - kopfY - gross * 0.02, 18); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#efc3a6';
+    ctx.beginPath(); ctx.arc(hueftX, kopfY, gross * 0.05, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    // Reifen: Ellipse um die Hüfte, sinkt bei wenig Halt, fällt am Ende runter
+    const tief = (1 - halt / 100) * gross * 0.12 + fall * (fussY - hueftY);
+    const rx = gross * 0.2;
+    const ry = gross * 0.05 * (1 + fall);
+    const rX = hueftX + s * gross * 0.06;
+    const rY = hueftY + tief;
+    ctx.lineWidth = gross * 0.018;
+    for (const [von, bis, farbe] of [[Math.PI, Math.PI * 2, '#b8336f'], [0, Math.PI, '#e84a9a']]) {
+      ctx.strokeStyle = '#111';
+      ctx.lineWidth = gross * 0.026;
+      ctx.beginPath(); ctx.ellipse(rX, rY, rx, ry, c * 0.15 * (1 - fall), von, bis); ctx.stroke();
+      ctx.strokeStyle = farbe;
+      ctx.lineWidth = gross * 0.016;
+      ctx.beginPath(); ctx.ellipse(rX, rY, rx, ry, c * 0.15 * (1 - fall), von, bis); ctx.stroke();
+    }
+    // Tasten-Hinweise links/rechts
+    const seite = seiteJetzt();
+    for (const [k, x] of [['a', b * 0.18], ['d', b * 0.82]]) {
+      const aktiv = !gefallen && seite === k && (erwartet === null || erwartet === k);
+      const bl = blitz.t > 0 && blitz.seite === k;
+      ctx.fillStyle = bl ? (blitz.gut ? '#6cbf5a' : '#e23b2e') : aktiv ? '#ffc81e' : '#3a3d44';
+      ctx.strokeStyle = '#111';
+      ctx.lineWidth = 4;
+      const g = gross * 0.13 * (aktiv ? 1.12 : 1);
+      ctx.beginPath(); ctx.roundRect(x - g / 2, h * 0.5 - g / 2, g, g, 14); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#111';
+      ctx.font = `bold ${Math.round(g * 0.55)}px Bangers, Impact, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(k.toUpperCase(), x, h * 0.5 + 2);
+    }
+    // Zähler und Halt-Balken
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${Math.round(Math.min(gross * 0.07, 40))}px Bangers, Impact, sans-serif`;
+    ctx.fillText(`${runden()} ${runden() === 1 ? 'Runde' : 'Runden'}`, cx, 190);
+    ctx.font = `bold ${Math.round(gross * 0.032)}px Nunito, sans-serif`;
+    ctx.fillStyle = runden() > DENNIS_HULA_REKORD ? '#6cbf5a' : '#ffc81e';
+    ctx.fillText(`Dennis’ Rekord: ${DENNIS_HULA_REKORD}   Dein Rekord: ${Math.max(bester, runden())}`, cx, 132);
+    const bb = Math.min(320, b * 0.5);
+    balken(ctx, cx - bb / 2, 142, bb, 12, Math.max(0, halt) / 100, halt > 35 ? '#6cbf5a' : '#e23b2e');
+    if (gefallen) {
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${Math.round(gross * 0.09)}px Bangers, Impact, sans-serif`;
+      ctx.fillText('Runtergefallen!', cx, h * 0.42);
+    }
+  }
+  requestAnimationFrame(schleife);
+  return versprechen;
+}
