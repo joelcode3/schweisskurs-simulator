@@ -78,7 +78,7 @@ const FEHLER = {
   },
   feuer: {
     stufe: 'mittel', wut: 12, nebensache: true, clip: 'ermahnung', name: 'Feuer im Mülleimer nicht gelöscht',
-    texte: [DENNIS.feuer.sauer],
+    texte: [DENNIS.feuer.sauer, DENNIS.feuer.sauerJohnny],
   },
   geweckt: {
     stufe: 'leicht', wut: 6, nebensache: true, clip: 'ermahnung', name: 'Dennis aus dem Mittagsschlaf geweckt',
@@ -777,8 +777,10 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
 
   // ---------- Feuer im Mülleimer ----------
   let feuerTon = null;
+  // Grund: nach dem Flexen Funken, vorher hat Johnny seine Kippe reingeschnippt
   function feuerStart() {
     z.feuer = 'brennt';
+    z.feuerGrund = z.geschnitten ? 'funken' : 'kippe';
     z.feuerSeit = sekundenSeitStart();
     welt.feuer(true);
     feuerTon = dauerTon('schweissen');
@@ -794,7 +796,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
   async function dennisLoescht() {
     if (z.dennisLoescht || z.feuer !== 'brennt') return;
     z.dennisLoescht = true;
-    dennisSagt(DENNIS.feuer.ruf, true);
+    dennisSagt(z.feuerGrund === 'kippe' ? DENNIS.feuer.rufJohnny : DENNIS.feuer.ruf, true);
     // aus Pause, Klo, Schlaf oder Liegen raus
     if (dennis.modus === 'sitzen' || dennis.modus === 'schlafen') { mittagGeweckt = true; z.mittag = 'erledigt'; welt.objekte.brotdose.visible = true; }
     if (dennis.modus !== 'normal') dennis.aufstehen(dennis.position.x, dennis.position.z);
@@ -829,7 +831,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
     feuerAus();
     await warte(800);
     dennis.stimmung('sauer');
-    if (!(await wutPlus(FEHLER.feuer))) dennisSagt(DENNIS.feuer.sauer, true);
+    if (!(await wutPlus(FEHLER.feuer))) dennisSagt(z.feuerGrund === 'kippe' ? DENNIS.feuer.sauerJohnny : DENNIS.feuer.sauer, true);
     await warte(2500);
     const W = welt.LOESCHER;
     await Promise.race([dennis.gehZu(W.x, W.z, 1.6), warte(9000)]);
@@ -838,6 +840,21 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
     z.dennisLoescht = false;
     dennis.stimmung('ruhig');
     dennis.heim();
+  }
+
+  // Hüfte: Dennis humpelt auf freien Boden und legt sich dort hin (nicht unters Sofa)
+  async function hueftePlatt() {
+    z.huefte = 'geht';
+    dennisSagt(DENNIS.huefte.start, true);
+    const P = welt.HUEFTE_PLATZ;
+    const da = await Promise.race([dennis.gehZu(P.x, P.z, 0.8), warte(9000).then(() => null)]);
+    if (z.huefte !== 'geht') return;
+    if (da === false) { z.huefte = 'nie'; return; }
+    if (da === null) dennis.springZu(P.x, P.z);
+    dennis.wurzel.rotation.y = P.dreh;
+    dennis.setzeModus('liegen');
+    z.huefte = 'liegt';
+    z.jammerTimer = 14;
   }
 
   async function aufhelfen() {
@@ -1313,6 +1330,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
   return {
     zustand: z,
     klick,
+    hueftePlatt, // nur für Tests
     stationWaehlen,
     intro,
     aktualisieren,
@@ -1356,10 +1374,12 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
         dennisFegt();
       }
       // Murmeln in der Nähe (nicht während Dennis spricht oder weg ist)
+      // Gemurmel nur, wenn Dennis nichts anderes zu tun hat (nicht beim Schlafen, Löschen, Hüfte, Mittag, Klo, Fegen)
+      const dennisFrei = (dennis.modus === 'normal' || dennis.modus === 'tanzen') && !z.dennisLoescht && !z.dennisFegt && !z.aufKlo
+        && z.mittag !== 'gerade' && z.huefte !== 'geht' && z.huefte !== 'liegt';
       if (murmelTon) {
-        const darfReden = dennis.modus === 'normal' || dennis.modus === 'tanzen' || z.dennisFegt;
-        if ((buehneBelegt() && !z.dennisFegt) || (!darfReden && murmelTon.murmeln)) { murmelTon.stopp(); murmelTon = null; } else murmelTon.lautstaerke(lautstaerkeNachAbstand());
-      } else if (sekundenSeitStart() > naechstesMurmeln && !z.beschaeftigt && !buehneBelegt() && dennis.wurzel.visible && (dennis.modus === 'normal' || dennis.modus === 'tanzen') && lautstaerkeNachAbstand() > 0.15) {
+        if ((buehneBelegt() && !z.dennisFegt) || (murmelTon.murmeln && !dennisFrei)) { murmelTon.stopp(); murmelTon = null; } else murmelTon.lautstaerke(lautstaerkeNachAbstand());
+      } else if (sekundenSeitStart() > naechstesMurmeln && !z.beschaeftigt && !buehneBelegt() && dennis.wurzel.visible && dennisFrei && lautstaerkeNachAbstand() > 0.15) {
         naechstesMurmeln = sekundenSeitStart() + 15 + Math.random() * 20;
         murmeln();
       }
@@ -1376,10 +1396,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus }
       // Hüfte: einmal pro Spiel legt sich Dennis hin und jammert, bis man ihm aufhilft
       const sekunden = (performance.now() - z.start) / 1000;
       if (z.huefte === 'nie' && sekunden > 75 && !z.beschaeftigt && !z.dennisFegt && !z.dennisLoescht && dennis.istDaheim() && !buehneBelegt() && Math.random() < dt * 0.04) {
-        z.huefte = 'liegt';
-        z.jammerTimer = 14;
-        dennis.setzeModus('liegen');
-        dennisSagt(DENNIS.huefte.start, true);
+        hueftePlatt();
       }
       if (z.huefte === 'liegt' && dennis.modus === 'liegen') {
         z.jammerTimer -= dt;

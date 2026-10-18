@@ -25,8 +25,10 @@ $('zettel-kopf').addEventListener('click', () => $('zettel').classList.toggle('z
 if (window.innerHeight < 500 || window.innerWidth < 600) $('zettel').classList.add('zu');
 
 export function wutZeigen(wert, stimmung) {
+  // Verlauf immer über die ganze Balkenbreite: grün links, rot rechts
+  const w = Math.max(1, Math.min(100, wert));
   $('wut-fuellung').style.width = `${Math.min(100, wert)}%`;
-  $('wut-fuellung').style.backgroundPosition = `${-Math.min(100, wert) * 2}px 0`;
+  $('wut-fuellung').style.backgroundSize = `${10000 / w}% 100%`;
   $('wut-gesicht').innerHTML = dennisMini(stimmung);
   const stufe = wert >= 85 ? 'kurz vorm Platzen' : wert >= 60 ? 'stinksauer' : wert >= 35 ? 'genervt' : wert >= 12 ? 'skeptisch' : 'entspannt';
   $('wut-stufe').textContent = stufe;
