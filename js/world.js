@@ -478,12 +478,33 @@ export function baueWelt(scene) {
   scene.add(pfuetze);
   hindernis(4.35, 5, 1.1, 2.1);
 
-  // Schlauch an der Wand
+  // Schlauch an der Wand: Halter oben, lange Schlaufen nach unten, Spritzpistole hängt unten dran
   const schlauch = new THREE.Group();
-  schlauch.add(setze(teil(new THREE.TorusGeometry(0.17, 0.022, 8, 28), 0x3c9a3a), 0, 0, 0));
-  schlauch.add(setze(teil(new THREE.TorusGeometry(0.14, 0.022, 8, 28), 0x3c9a3a), 0, -0.01, 0.03));
-  schlauch.add(setze(zylinder(0.02, 0.02, 0.12, FARBE.stahl, {}, 8), 0, 0.2, -0.02));
-  setze(schlauch, RAUM.xMax - 0.06, 1.45, 2.45, 0, Math.PI / 2, 0);
+  const schlauchMat = toon(0x3c9a3a);
+  schlauch.add(setze(quader(0.18, 0.1, 0.12, 0x3a3d42), 0, 0.42, 0));
+  for (const [dx, dz, b, h] of [[-0.04, 0.02, 0.13, 0.42], [0.03, 0.04, 0.15, 0.48], [0.0, 0.06, 0.12, 0.38]]) {
+    const pkt = [];
+    for (let i = 0; i < 24; i++) {
+      const w = (i / 24) * Math.PI * 2;
+      pkt.push(new THREE.Vector3(Math.sin(w) * b + dx, 0.4 - (1 - Math.cos(w)) * h, dz + Math.sin(w * 2) * 0.01));
+    }
+    const kurve = new THREE.CatmullRomCurve3(pkt, true);
+    schlauch.add(teil(new THREE.TubeGeometry(kurve, 64, 0.022, 8, true), 0, { material: schlauchMat, umriss: 0.004 }));
+  }
+  // loses Ende mit Spritzpistole
+  const ende = new THREE.CatmullRomCurve3([new THREE.Vector3(0.1, 0.38, 0.08), new THREE.Vector3(0.2, 0.0, 0.1), new THREE.Vector3(0.22, -0.45, 0.1), new THREE.Vector3(0.2, -0.62, 0.1)]);
+  schlauch.add(teil(new THREE.TubeGeometry(ende, 32, 0.02, 8, false), 0, { material: schlauchMat, umriss: 0.004 }));
+  const pistole = new THREE.Group();
+  pistole.add(setze(quader(0.05, 0.16, 0.05, 0xe2531e), 0, -0.08, 0));
+  pistole.add(setze(zylinder(0.022, 0.018, 0.16, 0x3a3d42, {}, 10), 0, -0.13, 0.08, Math.PI / 2, 0, 0));
+  pistole.add(setze(quader(0.015, 0.06, 0.03, 0x111111), 0, -0.1, 0.04));
+  setze(pistole, 0.2, -0.62, 0.1);
+  schlauch.add(pistole);
+  // unsichtbare Klickfläche über dem ganzen Schlauch (sonst trifft man durch die Schlaufen die Wand)
+  const klickFlaeche = new THREE.Mesh(new THREE.BoxGeometry(0.55, 1.25, 0.2), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
+  klickFlaeche.position.set(0.05, -0.15, 0.06);
+  schlauch.add(klickFlaeche);
+  setze(schlauch, RAUM.xMax - 0.08, 1.45, 2.45, 0, -Math.PI / 2, 0);
   scene.add(schlauch);
   merke(schlauch, 'schlauch', 'Wasserschlauch', 'wasch');
   objekte.schlauch = schlauch;
