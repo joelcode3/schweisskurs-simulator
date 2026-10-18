@@ -86,16 +86,21 @@ async function spielStarten() {
   gestartet = true;
   audioStart();
   videoFreischalten();
-  document.getElementById('tuer').classList.add('offen');
-  await Promise.all([clipsGeladen, new Promise((r) => setTimeout(r, 1200))]);
+  const mitSchloss = !document.getElementById('start').classList.contains('versteckt');
+  if (mitSchloss) document.getElementById('tuer').classList.add('offen');
+  await Promise.all([clipsGeladen, new Promise((r) => setTimeout(r, mitSchloss ? 1200 : 0))]);
   document.getElementById('start').classList.add('versteckt');
+  document.getElementById('start-einfach').classList.add('versteckt');
   spiel = baueSpiel({ welt, dennis, steuerung, kamera, hand });
   ui.zeigeHud(true);
   stationAlt = undefined;
   spiel.intro();
 }
 
-// Zahlenschloss an der Werkstatttür: nur mit dem richtigen Code geht sie auf
+// Aktuell: einfacher Start per Knopf
+document.getElementById('start-los').addEventListener('click', spielStarten);
+
+// Für später: Zahlenschloss an der Werkstatttür: nur mit dem richtigen Code geht sie auf
 const CODE = '1312';
 const raeder = [...document.querySelectorAll('#schloss .rad')];
 document.getElementById('plakat-gesicht').innerHTML = dennisMini('ruhig');

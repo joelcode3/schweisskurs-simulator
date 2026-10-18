@@ -20,8 +20,10 @@
 - Aussehen Dennis (nach Fotos): schlank, blond-rötliche Locken (oben/hinten voluminös), goldene Pilotenbrille,
   Schnauzer, leichter Dreitagebart, schwarze Arbeitsjacke mit Kragen und Reflexstreifen, darunter grauer Hoodie (keine Kordeln), schwarze
   Arbeitshose, **hässlicher blauer Rucksack** (ausdrücklich gewünscht). Keine roten Wangen, kein Gehörschutz, keine Mütze, kein grauer Ring am Hals.
-- Startbildschirm: Werkstatt von außen, Plakat „Heute: Gasflaschen-Ofen schweißen mit Dennis“ (Foto assets/dennis-plakat.jpg,
-  fehlt noch -> gezeichnetes Gesicht), Tür mit Zahlenschloss: Code **1312** öffnet die Tür und startet das Spiel.
+- Start aktuell: einfache Karte mit „Kurs starten“, danach direkt Dennis' Begrüßung (#start-einfach).
+- FÜR SPÄTER gemerkt (Betreiber): Startbildschirm Werkstatt von außen, Plakat „Heute: Gasflaschen-Ofen schweißen mit Dennis“
+  (Foto assets/dennis-plakat.jpg, kommt später), Tür mit Zahlenschloss, Code **1312**. Ist fertig gebaut (#start, Klasse
+  `versteckt`); zum Aktivieren `versteckt` dort entfernen und #start-einfach ausblenden.
   Kein Dennis-Modus, kein Dennis-Archiv mehr. Keine Hintergrundmusik (Betreiber: erstmal nicht).
 - Bewertung am Ende mit freigestelltem Foto im Comic-Look: assets/ende-bestanden.webp (Daumen hoch, Note 1–4),
   assets/ende-nichtbestanden.webp (Mittelfinger, Note 5–6 und Rausschmiss).
@@ -40,7 +42,8 @@
   Wasserschlauch (lange Schlaufen mit Spritzpistole, unsichtbare Klickfläche drüber): in die Hand nehmen, E gedrückt halten = Dauerstrahl, Pfützen wo das Wasser landet (Dennis treffen = sauer, sonst meckert er; löscht auch Feuer),
   G = zurückhängen, reicht nur ca. 5 m vom Waschplatz.
   Wasserrohrbruch (Frost): einmal pro Spiel nach ca. 3–5 min spritzt das Rohr am Waschplatz (Pfütze, Wasser-Symbol unten
-  rechts). Rohrzange von der Werkzeugwand holen, auf das Rohr klicken (oder E in der Nähe), festziehen. Nach ca. 22 s
+  rechts). Rohrzange (detailliert: rote Griffe, Hakenbacke, Rändelmutter) von der Werkzeugwand holen,
+  auf das Rohr klicken (Leckstelle: Messing-Verschraubung mit pulsierendem gelbem Ring, große Klickfläche) (oder E in der Nähe), festziehen. Nach ca. 22 s
   macht Dennis es selbst und ist stinkig (+12 Wut).
   Dennis steht nicht immer vor dem Sofa: alle 30–55 s wechselt er zu einem anderen Platz (PLAETZE in dennis.js).
   Tanzen (Box an): nur dann und immer wieder stimme/murmeln-8.mp3 (95281C52…), sonst sagt er beim Tanzen nichts.
@@ -55,7 +58,8 @@
   bringt ihn: Reifen in die Hand, auf Dennis klicken), macht Hula-Hoop und sagt dabei stimme/murmeln-10.mp3 (hello_fresh,
   nur noch dafür), hängt ihn danach zurück. Minispiel am Reifen: „Dennis’ Rekord knacken“ (A/D bzw. links/rechts tippen im Takt,
   Rekord 47 Runden, eigener Rekord im Browser gespeichert; Dennis kommentiert, wenn er zuguckt). Spielprinzip: so schnell
-  wie möglich abwechselnd A/D (zu langsam = Reifen fällt). Schlacke-Minispiel auf rotem Ofen-Untergrund, Flexen großzügiger.
+  wie möglich abwechselnd A/D (zu langsam = Reifen fällt; Schwierigkeit: +10 je richtiger Taste, -14 bei falscher,
+  Abfall 28 + 0,4 je Runde pro Sekunde in minispiele.js). Schlacke-Minispiel auf rotem Ofen-Untergrund, Flexen großzügiger.
   Nähe-Sprüche: kommt man in Dennis' Nähe, sagt er ab und zu etwas (stimme/naehe-1a/1b = ansprechen1/11 wenn entspannt,
   naehe-2b/2c = ansprechen22/22222 ab Wut 35, dann auch weiter weg hörbar). Je näher, desto lauter.
   Ärgern (Kaffee, Kiwi, Brotdose): Ton stimme/aergern-1 (ärgernleicht1), dann aergern-2, dann abwechselnd.
@@ -88,6 +92,9 @@
 - Bedienung: Hat ein Ding nur eine Aktion, wird sie beim Klick direkt ausgeführt (kein Menü). Box und Licht schalten
   sofort beim Klick (ohne Hinlaufen). Abbrechen-Knöpfe hell mit dunkler Schrift.
 - Dennis hält seinen Becher immer aufrecht, Schuhsohlen rund (keine eckigen Platten).
+- clips.json enthält nur noch ausraster-1..4 und rausgeflogen-1 (alle anderen Listen leer, Betreiber-Wunsch).
+- Hüfte: erst still hinlegen, dann rufen und jammern. Schlauch: nur die Spritzpistole kommt in die Hand (Wasser aus der Düse),
+  Pfützen unregelmäßig (Klecks-Texturen).
 - Anzeige-Regeln (Betreiber): Videos NUR bei Ausrastern (Fehlerstufe voll, Rausschmiss, schlechte Note am Ende = Rausschmiss-Video),
   rechts am Rand, ohne Wegklicken. Alles andere (auch Tipps, Abgabe, Lob, Ende gut) nur als Sprechblase. „Was los??“ nur Ton, keine Blase. Alle Sprechblasen (Nebensachen, Lob) rechts am Rand, verschwinden von selbst.
   Mute-Knopf und Lautstärkeregler unten links (gespeichert im Browser).

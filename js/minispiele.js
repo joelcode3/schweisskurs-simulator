@@ -844,13 +844,13 @@ export function hulaSpiel() {
     gestartet = true;
     if (erwartet === null || taste === erwartet) {
       schlaege++;
-      halt = Math.min(100, halt + 11);
+      halt = Math.min(100, halt + 10);
       schwung = schwung * 0.7 + 3;
       erwartet = taste === 'a' ? 'd' : 'a';
       blip(taste === 'a' ? 520 : 620, 0.04, 0.1);
       blitz = { seite: taste, gut: true, t: 0.12 };
     } else {
-      halt -= 6;
+      halt -= 14;
       blitz = { seite: taste, gut: false, t: 0.2 };
     }
   }
@@ -888,7 +888,8 @@ export function hulaSpiel() {
     if (!gefallen) {
       schwung = Math.max(0, schwung - dt * 2.5);
       phase += (2 + schwung * 2.2) * dt;
-      if (gestartet) halt -= dt * 22;
+      // wird mit jeder Runde anstrengender
+      if (gestartet) halt -= dt * (28 + runden() * 0.4);
       if (halt <= 0) {
         gefallen = true;
         klonk(0.6);

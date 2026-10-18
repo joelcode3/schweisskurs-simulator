@@ -1051,7 +1051,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
   // Hüfte: Dennis humpelt auf freien Boden und legt sich dort hin (nicht unters Sofa)
   async function hueftePlatt() {
     z.huefte = 'geht';
-    dennisSagt(sag(DENNIS.huefte.start), true, { prio: 1 });
+    // erst still hinhumpeln und hinlegen, dann rufen und jammern
     const P = welt.HUEFTE_PLATZ;
     const da = await Promise.race([dennis.gehZu(P.x, P.z, 0.8), warte(9000).then(() => null)]);
     if (z.huefte !== 'geht') return;
@@ -1060,7 +1060,9 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     dennis.wurzel.rotation.y = P.dreh;
     dennis.setzeModus('liegen');
     z.huefte = 'liegt';
-    z.jammerTimer = 14;
+    z.jammerTimer = 16;
+    await warte(900);
+    dennisSagt(sag(DENNIS.huefte.start), true, { prio: 1 });
     dennisSagt(DENNIS.huefte.jammern[0], true, { minMs: 8000, prio: 1 });
   }
 
@@ -1120,6 +1122,14 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
   }
 
   function aufnehmen(id, obj) {
+    if (id === 'schlauch' && !hand.item) {
+      // nur die Spritzpistole kommt in die Hand, der Schlauch bleibt an der Wand
+      welt.objekte.schlauch.userData.pistole.visible = false;
+      hand.nimm('schlauch', hand.spritze);
+      blip(520, 0.05);
+      handleisteZeigen();
+      return;
+    }
     if (hand.item) { ui.hinweis(`Du hast schon ${hand.item.cfg.name} in der Hand. Erst ablegen (auf eine Fläche klicken) oder fallen lassen (G).`, 3200); return; }
     obj.userData.interaktiv.station = null;
     hand.nimm(id, obj);
@@ -1199,10 +1209,12 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
   // ziel: 'feuer', 'dennis' oder leer (dann zählt, wohin man guckt)
   // ---------- Wasserschlauch: rumspritzen ----------
   function schlauchZurueck() {
-    const obj = hand.weg();
-    if (obj) welt.zurueckAnDieWand(obj);
+    hand.weg();
+    welt.objekte.schlauch.userData.pistole.visible = true;
     handleisteZeigen();
   }
+  // Düsenspitze der Spritzpistole vor der Kamera (passt zur Haltung in hand.js)
+  const DUESE = new THREE.Vector3(0.2, -0.15, -0.72);
   // Dauerstrahl, solange E (oder der Knopf unten) gedrückt ist
   let spritzLauf = null;
   function spritzen() {
@@ -1220,8 +1232,8 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     const sl = spritzLauf;
     sl.dauer += dt;
     const vorne = steuerung.blickRichtung();
-    const von = kamera.position.clone().add(vorne.clone().multiplyScalar(0.5));
-    von.y -= 0.3;
+    kamera.updateMatrixWorld();
+    const von = kamera.localToWorld(DUESE.clone());
     sl.takt += dt;
     while (sl.takt > 0.012) {
       sl.takt -= 0.012;

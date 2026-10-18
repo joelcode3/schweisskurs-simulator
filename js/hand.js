@@ -20,7 +20,7 @@ const HALTUNG = {
   klemmbrett: { pos: [0.06, -0.1, -0.4], rot: [Math.PI / 2 - 0.3, 0, 0], name: 'Dennis’ Klemmbrett' },
   hulahup: { pos: [0.3, -0.5, -1.05], rot: [0.35, 1.1, 0], skala: 0.85, name: 'Hula-Hoop-Reifen', benutzen: 'Dennis bringen' },
   rohrzange: { pos: [0.24, -0.22, -0.52], rot: [0.4, 0.3, -0.9], name: 'Rohrzange', benutzen: 'Reparieren' },
-  schlauch: { pos: [0.3, -0.16, -0.9], rot: [0.1, 0.5, 0], skala: 0.42, name: 'Wasserschlauch', benutzen: 'Spritzen (halten)', nichtWerfen: true, nichtAblegen: true },
+  schlauch: { pos: [0.2, -0.2, -0.55], rot: [0.1, 0.12, 0], skala: 1.2, name: 'Wasserschlauch', benutzen: 'Spritzen (halten)', nichtWerfen: true, nichtAblegen: true },
   kaffee: { pos: [0.2, -0.17, -0.45], rot: [0.1, 2.2, 0], skala: 1.3, name: 'Kaffee für Dennis', nichtWerfen: true, nichtAblegen: true },
 };
 
@@ -67,6 +67,14 @@ export function baueHand(scene, kamera) {
   let wackel = 0;
   const fliegend = [];
 
+  // Spritzpistole vom Gartenschlauch (nur in der Hand; der Schlauch selbst bleibt an der Wand)
+  const spritze = new THREE.Group();
+  spritze.add(setze(quader(0.04, 0.13, 0.05, 0xe2531e), 0, -0.05, 0.02, 0.25, 0, 0));
+  spritze.add(setze(zylinder(0.02, 0.016, 0.17, 0x3a3d42, {}, 12), 0, 0.02, -0.06, Math.PI / 2, 0, 0));
+  spritze.add(setze(zylinder(0.024, 0.024, 0.02, 0xe2531e, {}, 12), 0, 0.02, -0.15, Math.PI / 2, 0, 0));
+  spritze.add(setze(quader(0.012, 0.06, 0.025, 0x111111), 0, -0.03, -0.02, 0.4, 0, 0));
+  spritze.add(setze(zylinder(0.016, 0.016, 0.12, 0x3c9a3a, {}, 8), 0, -0.14, 0.06, 0.6, 0, 0));
+
   // Kaffeebecher (nur in der Hand, nicht in der Werkstatt)
   const becher = new THREE.Group();
   const tex = leinwandTextur(128, 64, (g, b) => {
@@ -101,6 +109,7 @@ export function baueHand(scene, kamera) {
     get item() { return item; },
     get schwer() { return !!(item && item.cfg.schwer); },
     becher,
+    spritze,
     handschuhe(an) {
       for (const h of [rechts, links]) for (const m of h.userData.haut) m.material = an ? handschuhMat : hautMat;
     },
