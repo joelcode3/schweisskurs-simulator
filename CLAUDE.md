@@ -37,7 +37,7 @@
   Dreck: nach 18 s meckert Dennis (+4 Wut), nach 32 s holt er den Besen und fegt selbst (stimme/muell.mp3, +8 Wut, Note -2).
   Sprüche haben meist mehrere Varianten (Listen in texte.js, `sag()` wählt zufällig).
   Beim Hula-Hoop sagt Dennis nur „hello fresh“, sonst nichts (Wichtiges wartet, Nebensächliches fällt weg).
-  Wasserschlauch: in die Hand nehmen, E = spritzen (Dennis treffen = sauer, sonst meckert er; löscht auch Feuer),
+  Wasserschlauch (lange Schlaufen mit Spritzpistole, unsichtbare Klickfläche drüber): in die Hand nehmen, E = spritzen (Dennis treffen = sauer, sonst meckert er; löscht auch Feuer),
   G = zurückhängen, reicht nur ca. 5 m vom Waschplatz.
   Wasserrohrbruch (Frost): einmal pro Spiel nach ca. 3–5 min spritzt das Rohr am Waschplatz (Pfütze, Wasser-Symbol unten
   rechts). Rohrzange von der Werkzeugwand holen, auf das Rohr klicken (oder E in der Nähe), festziehen. Nach ca. 22 s
@@ -65,7 +65,8 @@
   starten gleichzeitig; schließt das Dennis-Fenster (Weiter), blendet sein Gebrabbel aus.
   Alle Töne mit kurzem Ein- und Ausblenden. Poster (assets/poster.jpg) mit Klebeband über der Kaffeeecke.
 - Kaffee: 1. senkt Wut (-20), 3 hintereinander (seit letztem Klo) = sofort aufs Klo + etwas Wut. Milch (Tüte auf dem
-  Kaffeetisch, breit, mit Brotdose) = „Ist da Milch drin? GIFT!!“ + Klo + Wut. Nach dem Klo: Klospülung. Reguläres Klo (nicht ausgelöst) senkt die Wut (-10).
+  Kaffeetisch, breit, mit Brotdose) = „Ist da Milch drin? GIFT!!“ + Klo + Wut. Auf dem Klo: laut stimme/klo-1 oder klo-2 (abwechselnd, Ton aus IMG_3472/IMG_6967), danach Klospülung.
+  Musik an, während Dennis Mittagspause macht oder schläft: er steht auf und ist sauer (+14 Wut). Reguläres Klo (nicht ausgelöst) senkt die Wut (-10).
   Fegen senkt Wut (-8), Aufhelfen nach Hüfte (-12, Dennis freut sich).
 - Holzfigur (Baumstamm mit geschnitztem Hintern, ~70 cm) steht zwischen Box und Besen.
 - Bemalte Holz-Skulptur (langer Penis, nach Foto vom Betreiber) hängt über dem Fenster über der Soundbox.

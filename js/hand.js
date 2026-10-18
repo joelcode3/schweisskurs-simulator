@@ -20,7 +20,7 @@ const HALTUNG = {
   klemmbrett: { pos: [0.06, -0.1, -0.4], rot: [Math.PI / 2 - 0.3, 0, 0], name: 'Dennis’ Klemmbrett' },
   hulahup: { pos: [0.3, -0.5, -1.05], rot: [0.35, 1.1, 0], skala: 0.85, name: 'Hula-Hoop-Reifen', benutzen: 'Dennis bringen' },
   rohrzange: { pos: [0.24, -0.22, -0.52], rot: [0.4, 0.3, -0.9], name: 'Rohrzange', benutzen: 'Reparieren' },
-  schlauch: { pos: [0.26, -0.3, -0.62], rot: [0.2, -0.4, 0.3], skala: 0.7, name: 'Wasserschlauch', benutzen: 'Spritzen', nichtWerfen: true, nichtAblegen: true },
+  schlauch: { pos: [0.3, -0.16, -0.9], rot: [0.1, 0.5, 0], skala: 0.42, name: 'Wasserschlauch', benutzen: 'Spritzen', nichtWerfen: true, nichtAblegen: true },
   kaffee: { pos: [0.2, -0.17, -0.45], rot: [0.1, 2.2, 0], skala: 1.3, name: 'Kaffee für Dennis', nichtWerfen: true, nichtAblegen: true },
 };
 

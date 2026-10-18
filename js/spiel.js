@@ -126,6 +126,10 @@ const FEHLER = {
     stufe: 'mittel', wut: 15, clip: 'sauer', name: 'Mit laufender Flex auf Dennis gezeigt',
     texte: DENNIS.hand.flexAufDennis,
   },
+  musikPause: {
+    stufe: 'mittel', wut: 14, nebensache: true, clip: 'sauer', name: 'Musik angemacht, während Dennis Pause macht',
+    texte: DENNIS.musikPause,
+  },
   nassgespritzt: {
     stufe: 'mittel', wut: 15, nebensache: true, clip: 'sauer', name: 'Dennis nassgespritzt',
     texte: DENNIS.schlauch.nass,
@@ -140,6 +144,7 @@ const FEHLER = {
   },
 };
 const ARGERN_BEI = ['kaffee', 'kiwi', 'brotdose'];
+const KLO_TOENE = ['stimme/klo-1.mp3', 'stimme/klo-2.mp3'];
 // Was Dennis sagt, wenn man etwas wirft (je nach Ding)
 const WURF_ART = {
   flex: 'werkzeug', hammer: 'werkzeug', rohrzange: 'werkzeug', edding: 'edding',
@@ -347,7 +352,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
   async function stimmenLaden() {
     if (stimmen) return;
     try { stimmen = (await (await fetch('stimme/stimme.json')).json()).saetze || {}; } catch { stimmen = {}; }
-    stimmenVorladen([...Object.values(stimmen).map((d) => `stimme/${d}`), ...MURMELN, TANZ_RUF, HULA_TON, ...ARGERN_TOENE, ...NAEHE_1, ...NAEHE_2, 'stimme/naehe-2a.mp3', 'stimme/hand.handy.mp3', 'stimme/hand.handyNochmal.mp3', 'stimme/abwerfen-1.mp3', 'stimme/muell.mp3', 'assets/klospuelung.mp3']);
+    stimmenVorladen([...Object.values(stimmen).map((d) => `stimme/${d}`), ...MURMELN, TANZ_RUF, HULA_TON, ...ARGERN_TOENE, ...KLO_TOENE, ...NAEHE_1, ...NAEHE_2, 'stimme/naehe-2a.mp3', 'stimme/hand.handy.mp3', 'stimme/hand.handyNochmal.mp3', 'stimme/abwerfen-1.mp3', 'stimme/muell.mp3', 'assets/klospuelung.mp3']);
   }
   let stimmeJetzt = null;
   function sprechLautstaerke() {
@@ -722,6 +727,15 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
       technoAn();
       welt.boxTakt(technoBeat);
       ui.hinweis('Bumm. Bumm. Bumm.');
+      // Musik an, während Dennis Mittagspause macht oder schläft: er wird wach und sauer
+      if (z.mittag === 'gerade' && (dennis.modus === 'sitzen' || dennis.modus === 'schlafen')) {
+        mittagGeweckt = true;
+        dennis.aufstehen(welt.SOFA.x, welt.SOFA.vorneZ);
+        dennis.mittagspause(false);
+        welt.objekte.brotdose.visible = true;
+        z.mittag = 'erledigt';
+        fehler('musikPause').then(() => dennis.heim());
+      }
     } else {
       technoAus();
       welt.boxTakt(null);
@@ -836,7 +850,10 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     ui.pauseZeigen(true, 'Dennis ist auf dem Klo: Arbeitspause, bis er zurück ist');
     await Promise.race([dennis.gehZu(welt.KLO.x, welt.KLO.z, regulaer ? 3.4 : 4.2), warte(6000)]);
     dennis.sichtbar(false);
-    await warte(6000 + Math.random() * 4000);
+    // Geräusch vom Klo (laut, abwechselnd die beiden Aufnahmen vom Betreiber)
+    await warte(2500);
+    if (!dennis.wurzel.visible) stimmeAbspielen(KLO_TOENE[(z.kloTon = (z.kloTon || 0) + 1) % KLO_TOENE.length], 1.4);
+    await warte(3500 + Math.random() * 4000);
     if (!dennis.wurzel.visible) {
       // Spülung als Aufnahme (assets/klospuelung.mp3), sonst live erzeugt
       const sp = await stimmeAbspielen('assets/klospuelung.mp3', Math.max(0.35, lautstaerkeNachAbstand()));
