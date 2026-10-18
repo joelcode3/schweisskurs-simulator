@@ -30,6 +30,11 @@ export const DENNIS = {
     loeschen: 'Gut reagiert! Genau so.',
     loescherSpielen: 'Der Feuerlöscher ist kein Spielzeug! Den muss ich jetzt neu befüllen lassen!',
   },
+  hula: {
+    gebrochen: 'WAS?! Mehr als 47?! ... Das zählt nicht, ich hatte heute Hüfte!',
+    knapp: 'Nicht schlecht. Aber an meine 47 kommst du nicht ran.',
+    schwach: 'Pff. Mein Rekord sind 47 Runden. Üben!',
+  },
   geweckt: 'Hä? Was is’n?! Ich hab Pause!',
 
   fehler: {
