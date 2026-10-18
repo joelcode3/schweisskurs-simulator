@@ -176,15 +176,15 @@ export function baueWelt(scene) {
   setze(tuer, -1.6, 0, RAUM.zMax - 0.03, 0, Math.PI, 0);
   scene.add(tuer);
 
-  // Feuerlöscher neben der Tür
+  // Feuerlöscher an der rechten Wand zwischen Schweißplatz und Waschplatz
   const loescher = new THREE.Group();
   loescher.add(setze(zylinder(0.09, 0.09, 0.5, FARBE.rot), 0, 0.25, 0));
   loescher.add(setze(kugel(0.09, FARBE.rot), 0, 0.5, 0));
   loescher.add(setze(zylinder(0.025, 0.025, 0.08, FARBE.schwarz), 0, 0.6, 0));
   loescher.add(setze(quader(0.12, 0.025, 0.03, FARBE.schwarz), 0.04, 0.65, 0));
-  setze(loescher, -2.3, 0.9, RAUM.zMax - 0.14);
+  setze(loescher, RAUM.xMax - 0.14, 0.9, -1.0, 0, -Math.PI / 2, 0);
   scene.add(loescher);
-  scene.add(setze(quader(0.22, 0.04, 0.14, 0x444444), -2.3, 0.88, RAUM.zMax - 0.1));
+  scene.add(setze(quader(0.14, 0.04, 0.22, 0x444444), RAUM.xMax - 0.1, 0.88, -1.0));
   merke(loescher, 'feuerloescher', 'Feuerlöscher', null);
   objekte.feuerloescher = loescher;
   loescher.userData.wand = { pos: loescher.position.clone(), rot: loescher.rotation.clone() };
@@ -411,36 +411,15 @@ export function baueWelt(scene) {
   merke(brille, 'brille', 'Schutzbrille', 'regal');
   objekte.brille = brille;
 
-  // Schweißerhandschuhe: lange braune Lederhandschuhe mit Stulpe, aufrecht nebeneinander
+  // Schweißerhandschuhe: flach nebeneinander auf dem Regalbrett, Finger zur Wand
   const handschuhe = new THREE.Group();
-  function handschuh(seite) {
-    const h = new THREE.Group();
-    const leder = 0xa8743d;
-    const stulpe = teil(new THREE.CylinderGeometry(0.055, 0.045, 0.14, 12), 0xc38f52, { umriss: 0.004 });
-    stulpe.position.y = 0.07;
-    h.add(stulpe);
-    const naht = teil(new THREE.TorusGeometry(0.047, 0.005, 4, 14), 0x6b4522, { umriss: false });
-    naht.rotation.x = Math.PI / 2;
-    naht.position.y = 0.14;
-    h.add(naht);
-    const handteil = teil(new THREE.CapsuleGeometry(0.045, 0.06, 4, 10), leder, { umriss: 0.004 });
-    handteil.scale.set(1.1, 1, 0.6);
-    handteil.position.y = 0.2;
-    h.add(handteil);
-    for (let f = 0; f < 4; f++) {
-      const finger = teil(new THREE.CapsuleGeometry(0.012, 0.045, 4, 6), leder, { umriss: 0.003 });
-      finger.position.set(-0.033 + f * 0.022, 0.285 - Math.abs(f - 1.5) * 0.008, 0);
-      h.add(finger);
-    }
-    const daumen = teil(new THREE.CapsuleGeometry(0.015, 0.04, 4, 6), leder, { umriss: 0.003 });
-    daumen.position.set(0.06 * seite, 0.21, 0);
-    daumen.rotation.z = -0.7 * seite;
-    h.add(daumen);
-    return h;
+  for (const seite of [-1, 1]) {
+    const h = baueHandschuh(seite);
+    h.rotation.set(-Math.PI / 2 + 0.06, 0, seite * 0.15);
+    h.position.set(seite * 0.07, 0.016, 0.13);
+    handschuhe.add(h);
   }
-  handschuhe.add(setze(handschuh(-1), -0.075, 0, 0, 0, 0, 0.1));
-  handschuhe.add(setze(handschuh(1), 0.075, 0, 0, 0, 0, -0.1));
-  setze(handschuhe, -4.62, 1.28, -0.38, 0, Math.PI / 2, 0);
+  setze(handschuhe, -4.66, 1.28, -0.55, 0, Math.PI / 2, 0);
   scene.add(handschuhe);
   merke(handschuhe, 'handschuhe', 'Schweißerhandschuhe', 'regal');
   objekte.handschuhe = handschuhe;
@@ -632,8 +611,8 @@ export function baueWelt(scene) {
 
   // ---------- Kaffeeecke ----------
   const kaffeeTisch = new THREE.Group();
-  kaffeeTisch.add(setze(quader(0.7, 0.05, 0.5, FARBE.holz), 0, 0.78, 0));
-  for (const [x, z] of [[-0.3, -0.2], [0.3, -0.2], [-0.3, 0.2], [0.3, 0.2]]) {
+  kaffeeTisch.add(setze(quader(1.2, 0.05, 0.5, FARBE.holz), 0, 0.78, 0));
+  for (const [x, z] of [[-0.55, -0.2], [0.55, -0.2], [-0.55, 0.2], [0.55, 0.2]]) {
     kaffeeTisch.add(setze(quader(0.04, 0.78, 0.04, FARBE.stahlDunkel), x, 0.39, z));
   }
   const maschine = new THREE.Group();
@@ -643,9 +622,9 @@ export function baueWelt(scene) {
   maschine.add(setze(zylinder(0.06, 0.05, 0.12, 0x333333, {}, 12), 0, 0.06, 0.1));
   setze(maschine, -0.15, 0.805, -0.05);
   kaffeeTisch.add(maschine);
-  setze(kaffeeTisch, -4.45, 0, 3.4, 0, Math.PI / 2, 0);
+  setze(kaffeeTisch, -4.45, 0, 3.35, 0, Math.PI / 2, 0);
   scene.add(kaffeeTisch);
-  hindernis(-4.75, -4.15, 3.0, 3.8);
+  hindernis(-4.75, -4.15, 2.7, 3.95);
 
   const tasseTex = leinwandTextur(128, 64, (g, b, h) => {
     g.fillStyle = '#ffffff'; g.fillRect(0, 0, b, h);
@@ -698,19 +677,13 @@ export function baueWelt(scene) {
   scene.add(kiwiSchale);
   merke(kiwiSchale, 'kiwi', 'Dennis’ Kiwis', null);
 
-  // Getränkekiste mit Dennis' Brotdose
-  const kiste = new THREE.Group();
-  kiste.add(setze(quader(0.4, 0.3, 0.3, 0x2f6a3a), 0, 0.15, 0));
-  for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j += 2) kiste.add(setze(zylinder(0.03, 0.03, 0.1, 0x3a2412, {}, 8), i * 0.12, 0.33, j * 0.06));
-  setze(kiste, -4.62, 0, 2.55, 0, Math.PI / 2, 0);
-  scene.add(kiste);
-  hindernis(-4.85, -4.45, 2.3, 2.8);
+  // Dennis' Brotdose auf dem Kaffeetisch
   const brotdose = new THREE.Group();
   brotdose.add(teil(new THREE.BoxGeometry(0.2, 0.07, 0.14), 0, { material: toon(0xf0f4f6, { transparent: true, opacity: 0.6 }), umriss: 0.004 }));
   brotdose.add(setze(quader(0.21, 0.015, 0.15, 0xc8352a, { umriss: 0.003 }), 0, 0.042, 0));
   brotdose.add(setze(kugel(0.03, 0xd8352a, { umriss: 0.002 }, 10), 0.06, -0.005, 0.02));
   brotdose.add(setze(teil(new THREE.TorusGeometry(0.06, 0.016, 6, 12, 2.2), 0xf2d23c, { umriss: 0.002 }), -0.03, -0.02, 0, Math.PI / 2, 0, 0.5));
-  setze(brotdose, -4.62, 0.43, 2.55, 0, 0.4, 0);
+  setze(brotdose, -4.45, 0.84, 2.95, 0, 0.4, 0);
   scene.add(brotdose);
   merke(brotdose, 'brotdose', 'Dennis’ Brotdose', null);
   objekte.brotdose = brotdose;
@@ -1044,7 +1017,7 @@ export function baueWelt(scene) {
     get dreck() { return dreck.length; },
     KLO: { x: 1.4, z: 3.55 },
     FEUER: { x: 1.55, z: -3.3, vorX: 1.55, vorZ: -2.45 },
-    LOESCHER: { x: -2.3, z: 3.35 },
+    LOESCHER: { x: 4.35, z: -1.0 },
     feuer(an) { feuer.visible = an; feuerLicht.intensity = an ? 4 : 0; },
     get brennt() { return feuer.visible; },
     pulver,
@@ -1243,4 +1216,31 @@ function baueFlasche() {
       for (const m of nahtMats) m.color.setHex(farbe);
     },
   };
+}
+
+// Lederhandschuh (Stulpe unten bei y = 0, Finger oben), flach wie ein echter Handschuh
+export function baueHandschuh(seite) {
+  const h = new THREE.Group();
+  const leder = 0xa8743d;
+  const flach = 0.32;
+  // Stulpe: kurz, flach, leicht ausgestellt
+  const stulpe = teil(new THREE.CylinderGeometry(0.04, 0.05, 0.1, 12), 0xc38f52, { umriss: 0.002 });
+  stulpe.scale.z = flach;
+  stulpe.position.y = 0.05;
+  h.add(stulpe);
+  const handteil = teil(new THREE.BoxGeometry(0.075, 0.09, 0.03), leder, { umriss: 0.002 });
+  handteil.position.y = 0.145;
+  h.add(handteil);
+  for (let f = 0; f < 4; f++) {
+    const finger = teil(new THREE.CapsuleGeometry(0.008, 0.045 - Math.abs(f - 1.5) * 0.008, 3, 6), leder, { umriss: 0.0015 });
+    finger.scale.z = 0.8;
+    finger.position.set(-0.027 + f * 0.018, 0.215 - Math.abs(f - 1.5) * 0.006, 0);
+    h.add(finger);
+  }
+  const daumen = teil(new THREE.CapsuleGeometry(0.009, 0.035, 3, 6), leder, { umriss: 0.0015 });
+  daumen.scale.z = 0.8;
+  daumen.position.set(0.048 * seite, 0.13, 0);
+  daumen.rotation.z = -0.7 * seite;
+  h.add(daumen);
+  return h;
 }

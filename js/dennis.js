@@ -11,10 +11,13 @@ const HAAR = [0xd9b273, 0xc99d5f, 0xe6c48a, 0xbb8d52];
 const GOLD = 0xd7b25c;
 const RUCKSACK = 0x2b63c6;
 const HEIM = new THREE.Vector3(-3.55, 0, 2.55);
+// Wo Dennis zwischendurch rumsteht (abseits der Stationen, nicht im Weg)
+const PLAETZE = [[-3.55, 2.55], [-2.1, 2.3], [1.8, 2.2], [-1.7, -1.8], [1.6, -0.3]];
 
 export function baueDennis(scene) {
   const wurzel = new THREE.Group();
   wurzel.position.copy(HEIM);
+  const platz = HEIM.clone();
   wurzel.scale.setScalar(0.93);
   scene.add(wurzel);
   const zufall = (() => { let s = 7; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; })();
@@ -51,7 +54,12 @@ export function baueDennis(scene) {
     schuh.position.y = -0.42;
     schuh.add(setze(quader(0.12, 0.08, 0.22, 0x4a4038), 0, 0, 0.03));
     schuh.add(setze(kugel(0.06, 0x4a4038, {}, 12), 0, -0.01, 0.13));
-    schuh.add(setze(quader(0.135, 0.025, 0.3, 0x2a2622, { umriss: 0.004 }), 0, -0.055, 0.06));
+    // Sohle rund statt eckiger Platte
+    const sohle = teil(new THREE.CapsuleGeometry(0.06, 0.16, 4, 12), 0x2a2622, { umriss: 0.004 });
+    sohle.rotation.x = Math.PI / 2;
+    sohle.scale.set(1, 1, 0.28);
+    sohle.position.set(0, -0.05, 0.06);
+    schuh.add(sohle);
     k.add(schuh);
     huefte.add(k);
     koerper.add(huefte);
@@ -213,8 +221,9 @@ export function baueDennis(scene) {
   becher.add(setze(teil(new THREE.TorusGeometry(0.026, 0.008, 6, 12), 0xf4f0e6), 0.05, 0, 0));
   becher.position.set(0, -0.3, 0.07);
   rechts.ellbogen.add(becher);
+  const becherQ = new THREE.Quaternion();
 
-  // Brotdose mit Tomate (für die Mittagspause), liegt sonst auf der Getränkekiste
+  // Brotdose mit Tomate (für die Mittagspause), steht sonst auf dem Kaffeetisch
   const dose = new THREE.Group();
   dose.add(teil(new THREE.BoxGeometry(0.2, 0.07, 0.14), 0, { material: toon(0xf0f4f6, { transparent: true, opacity: 0.6 }), umriss: 0.004 }));
   dose.add(setze(teil(new THREE.TorusGeometry(0.06, 0.016, 6, 12, 2.2), 0xf2d23c, { umriss: 0.002 }), -0.03, -0.01, 0, Math.PI / 2, 0, 0.5));
@@ -398,6 +407,10 @@ export function baueDennis(scene) {
   let schrittPhase = 0;
   let blinzeln = 2 + Math.random() * 3;
   let liegenAnteil = 0;
+  let aufSofa = false;
+  const SOFA_OBEN = 0.55; // Oberkörper hoch (rad)
+  const SOFA_BEINE = 0.3; // Beine hoch (rad)
+  const SOFA_HUEFTE = 0.52; // Höhe Hüftgelenk über dem Boden
   let sitzAnteil = 0;
   let essen = false;
   const hautFarbe = new THREE.Color(HAUT);
@@ -441,6 +454,7 @@ export function baueDennis(scene) {
     },
     aufstehen(x, z) {
       modus = 'normal';
+      aufSofa = false;
       wurzel.position.y = 0;
       if (x !== undefined) wurzel.position.set(x, 0, z);
       essen = false;
@@ -449,6 +463,8 @@ export function baueDennis(scene) {
     },
     besen(an) { besenInHand.visible = an; },
     feuerloescher(an) { loescherHand.visible = an; },
+    // Auf dem Sofa schlafen: eingeknickte Haltung (Wurzel auf den Hintern setzen)
+    sofa(an) { aufSofa = an; },
     mittagspause(an) { dose.visible = an; tomate.visible = an; essen = an; },
     // Löst mit true auf, wenn er ankommt, mit false, wenn ein neues Ziel dazwischenkommt
     gehZu(x, z, schnell = 1.3) {
@@ -465,13 +481,22 @@ export function baueDennis(scene) {
       zielAufloesen = null;
       if (r) r(true);
     },
+    // Zurück an seinen aktuellen Platz, Blick in die Werkstatt
     heim() {
-      return api.gehZu(HEIM.x, HEIM.z, 1.2).then(() => {
-        wurzel.rotation.y = Math.atan2(-HEIM.x * 0.6, -HEIM.z - 1);
+      return api.gehZu(platz.x, platz.z, 1.2).then((da) => {
+        if (da) wurzel.rotation.y = Math.atan2(-platz.x, -0.5 - platz.z);
+        return da;
       });
     },
     istDaheim() {
-      return wurzel.position.distanceTo(HEIM) < 0.2 && !ziel;
+      return wurzel.position.distanceTo(platz) < 0.2 && !ziel;
+    },
+    // Woanders hinstellen (zufälliger anderer Platz)
+    neuerPlatz() {
+      const frei = PLAETZE.filter(([x, z]) => Math.hypot(x - platz.x, z - platz.z) > 0.5);
+      const [x, z] = frei[Math.floor(Math.random() * frei.length)];
+      platz.set(x, 0, z);
+      return api.heim();
     },
     update(dt) {
       zeit += dt;
@@ -510,6 +535,13 @@ export function baueDennis(scene) {
       sitzAnteil = naeher(sitzAnteil, modus === 'sitzen' ? 1 : 0, Math.min(1, dt * 4));
       koerper.rotation.x = -Math.PI / 2 * liegenAnteil;
       koerper.position.set(0, 0.16 * liegenAnteil - 0.32 * sitzAnteil, 0.9 * liegenAnteil);
+      // Auf dem Sofa: in der Hüfte eingeknickt, Hintern auf dem Polster (Wurzel = Hintern),
+      // Oberkörper schräg hoch zur einen Lehne, Beine schräg hoch zur anderen
+      const sofaLiegen = aufSofa && modus === 'schlafen';
+      if (sofaLiegen) {
+        koerper.rotation.x = -Math.PI / 2 + SOFA_OBEN;
+        koerper.position.set(0, SOFA_HUEFTE - 0.88 * Math.sin(SOFA_OBEN), 0.88 * Math.cos(SOFA_OBEN));
+      }
       // Schlafen: Z Z Z über dem Kopf
       const kp = api.kopfPosition();
       zzz.forEach((sp, i) => {
@@ -540,6 +572,12 @@ export function baueDennis(scene) {
           knie[i].rotation.x = naeher(knie[i].rotation.x, 1.5, k);
         }
         rumpf.position.y = 0.9 + Math.sin(zeit * 1.8) * 0.004;
+      } else if (sofaLiegen) {
+        for (let i = 0; i < 2; i++) {
+          beine[i].rotation.x = -(SOFA_OBEN + SOFA_BEINE);
+          knie[i].rotation.x = i ? 0.12 : 0.25;
+        }
+        rumpf.position.y = 0.9 + Math.sin(zeit * 1.3) * 0.01;
       } else if (modus === 'schlafen') {
         for (let i = 0; i < 2; i++) {
           beine[i].rotation.x = naeher(beine[i].rotation.x, i ? -0.1 : -0.35, k);
@@ -668,6 +706,14 @@ export function baueDennis(scene) {
         const heben = schluck > 0 ? Math.sin((schluck / 2.2) * Math.PI) : 0;
         rechts.schulter.rotation.set(-0.25 - heben * 0.9 + schwing, heben * 0.3, 0.12 - heben * 0.2);
         rechts.ellbogen.rotation.set(-0.9 - heben * 1.3, 0, 0);
+      }
+
+      // Becher bleibt aufrecht, egal wie der Arm steht; beim Schluck kippt er etwas zum Mund
+      if (becher.visible) {
+        const kipp = schluck > 0 ? Math.sin((schluck / 2.2) * Math.PI) * 0.9 : 0;
+        rechts.ellbogen.getWorldQuaternion(becherQ).invert();
+        becher.quaternion.copy(becherQ).multiply(wurzel.quaternion);
+        becher.rotateX(-kipp);
       }
 
       // Gesicht
