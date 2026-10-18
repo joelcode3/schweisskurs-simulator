@@ -2,6 +2,11 @@
 let ctx = null;
 let master = null;
 let rausch = null;
+let lautstaerke = 0.8;
+export function setzeLautstaerke(v) {
+  lautstaerke = v;
+  if (master) master.gain.setTargetAtTime(v * 0.875, ctx.currentTime, 0.03);
+}
 
 export function audioStart() {
   if (!ctx) {
@@ -9,7 +14,7 @@ export function audioStart() {
     if (!AC) return;
     ctx = new AC();
     master = ctx.createGain();
-    master.gain.value = 0.7;
+    master.gain.value = lautstaerke * 0.875;
     master.connect(ctx.destination);
     const len = ctx.sampleRate * 2;
     rausch = ctx.createBuffer(1, len, ctx.sampleRate);

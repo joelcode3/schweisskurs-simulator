@@ -12,7 +12,7 @@
   bei 100 fliegt man raus). Am Ende Schulnote 1–6.
 - Dennis ist der echte Schweißkurslehrer eines Kumpels. Er ist mit den Videos einverstanden,
   das Spiel ist **nur für Kumpels** (Seite hat `noindex`).
-- Stationen: Regal (Brille, Handschuhe), Waschplatz (Flasche, Schlauch), Werkbank (Speckstein, Flex),
+- Stationen: Regal (Brille, Handschuhe), Waschplatz (Flasche, Schlauch), Werkbank (blauer Edding, Flex, Handy),
   Schweißplatz (Gerät, Masseklemme, Helm, Hammer), Kaffeeecke (Dennis, Tasse „CHEF“).
 - Fertiger Ofen (Vorbild-Foto vom Betreiber): stehende Gasflasche, mattschwarz lackiert, Tür unten an der Seite
   mit Holzgriff, langes Ofenrohr oben (statt Ventil), drei schräge Beine am Fußring, zwei seitliche Tragegriffe.
@@ -25,14 +25,28 @@
   Lichtschalter (Dennis meckert), Besen (Dreck nach Schneiden/Schweißen, zählt in die Note),
   Hüfte (Dennis legt sich einmal pro Spiel hin und jammert, bis man ihm aufhilft),
   Klo-Pause zwischendurch (frühestens nach 100 s, „Warte kurz!“, WC-Tür vorne rechts). Geht man zu Dennis hin und bleibt
-  stehen: „Was los??“ (stimme/baustellenfeeling.mp3, 1 s, nicht im Liegen, nicht wenn er selbst kommt, max. alle 40 s). Mittagspause: einmal pro Spiel kommt er mit Brotdose und isst eine Tomate
-  (stimme/tomate.mp3). Kiwis liegen lose auf dem Kaffeetisch.
+  stehen: „Was los??“ (stimme/baustellenfeeling.mp3, 1 s, nicht im Liegen, nicht wenn er selbst kommt, max. alle 40 s). Mittagspause: einmal pro Spiel setzt er sich aufs Sofa (vorne links), isst aus der Brotdose eine Tomate
+  (stimme/tomate.mp3), legt sich dann ~22 s schlafen (Z Z Z). Wecken = Wut. Kiwis liegen lose auf dem Kaffeetisch.
   Liegt Dreck > 45 s, holt Dennis den Besen und fegt selbst (stimme/muell.mp3, Note -2).
-  Murmeln: stimme/murmeln-1..10.mp3 (Originaltöne aus den Videos), zufällig alle 15–35 s, nur Ton, Lautstärke nach Abstand.
+  Murmeln: nur stimme/murmeln-8..10.mp3 (vom Betreiber extra dafür geschickt: 95281C52…, ansprechen2, hello_fresh), zufällig alle 15–35 s, nur Ton, Lautstärke nach Abstand.
   Alle Töne mit kurzem Ein- und Ausblenden. Poster (assets/poster.jpg) mit Klebeband über der Kaffeeecke.
+- Kaffee: 1. senkt Wut (-20), 3 hintereinander (seit letztem Klo) = sofort aufs Klo + etwas Wut. Milch (Tüte auf dem
+  Kaffeetisch) = „Ist da Milch drin? GIFT!!“ + Klo + Wut. Reguläres Klo (nicht ausgelöst) senkt die Wut (-10).
+  Fegen senkt Wut (-8), Aufhelfen nach Hüfte (-12, Dennis freut sich).
+- Holzfigur (Baumstamm mit geschnitztem Hintern, ~70 cm) steht zwischen Box und Besen.
+- Feuer: einmal pro Spiel (nach dem Flexen bald) brennt der Mülleimer neben der Werkbank. Dennis ruft (Blase rechts),
+  holt den Feuerlöscher und löscht selbst, wird sauer. Löscht man selbst: Lob, Wut sinkt. Hält man den Löscher
+  und tut nichts, drängelt Dennis (Wut steigt).
+- Hand-System (`js/hand.js`): Werkzeug, Ausrüstung, Feuerlöscher, Besen, Figur, Handy kann man aufheben (Hand im Bild),
+  auf ebene Flächen legen (Klick), fallen lassen (G), werfen (Q), benutzen/anziehen (E). Leiste unten zeigt, was man hält.
+  Edding/Flex/Hammer müssen in der Hand sein zum Anzeichnen/Schneiden/Schlacke. Gasflasche: „Hochheben“, langsamer gehen,
+  per Klick auf Werkbank/Schweißtisch/Waschplatz abstellen. Ausrüstung im HUD anklicken = abnehmen (in die Hand).
+  Reaktionen: Werfen (Ermahnung), Dennis treffen (Ausraster), Figur anfassen/werfen, Handy (1. Mal Blase, dann Wut),
+  Löscher auf Dennis (Ausraster), Löscher sinnlos (Ermahnung), laufende Flex auf Dennis (sauer).
+- Bedienung: Hat ein Ding nur eine Aktion, wird sie beim Klick direkt ausgeführt (kein Menü).
 - Anzeige-Regeln (Betreiber): Videos nur für Arbeitssicherheit und Aufgaben, rechts am Rand, ohne Wegklicken,
-  verschwinden von selbst. Nebensachen (Kaffee, Kiwi, Licht, Hüfte, Klo, „Was los??“) nur als kleine Sprechblase
-  über Dennis' Kopf (folgt ihm). Lob ohne Video als feste Sprechblase rechts (bleibt stehen bis zum nächsten Lob).
+  verschwinden von selbst. Alle Sprechblasen (Nebensachen, Lob) rechts am Rand, verschwinden von selbst.
+  Mute-Knopf und Lautstärkeregler unten links (gespeichert im Browser).
   Begrüßung am Anfang bleibt als großes Fenster. Stations-Knöpfe nur auf Touch-Geräten.
 - Fokus: Desktop-Version (Betreiber-Wunsch), Handy-Ansicht erstmal zweitrangig.
 - Fehlerstufen: leicht (Ermahnung, Dennis guckt), mittel (kommt rüber, sauer), voll (rennt rüber, Ausraster).
@@ -42,7 +56,7 @@
 - `js/main.js` Einstieg · `js/world.js` Werkstatt + Gasflasche · `js/dennis.js` 3D-Dennis
 - `js/steuerung.js` Kamera/Gehen/Klicks · `js/spiel.js` Ablauf, Fehler, Texte, Note
 - `js/minispiele.js` Schneiden, Schweißen, Schlacke · `js/clips.js` Dennis-Auftritte + Archiv
-- `js/ui.js` HUD/Dialoge · `js/audio.js` Geräusche (live erzeugt) · `js/gesicht.js` Comic-Gesicht + Icons
+- `js/hand.js` Dinge in der Hand (Haltung, Ablegen, Werfen mit Physik) · `js/ui.js` HUD/Dialoge · `js/audio.js` Geräusche (live erzeugt) · `js/gesicht.js` Comic-Gesicht + Icons
 - `vendor/three.module.min.js` (Three.js r170, lokal, keine CDN-Abhängigkeit)
 - `clips/clips.json` + `clips/*.mp4` – Dennis-Videos, siehe `clips/LIESMICH.md`
 - `tools/clip_schneiden.sh` – Rohvideo zuschneiden, verkleinern, iPhone-HDR umrechnen und Comic-Look anwenden (ffmpeg)
@@ -69,7 +83,6 @@
 - KI-Stimmklon ist in dieser Umgebung nicht möglich (huggingface.co gesperrt). Stimmproben nie ins Repo (öffentlich).
 
 ## Offene Themen
-- Dinge aufheben, tragen, ablegen, anziehen, benutzen (Hand im Bild), Feuerlöscher benutzen.
-- Handy in die Hand nehmen -> Dennis beschwert sich (Betreiber hat Video).
+- Handy-Video von Dennis einbauen (Betreiber hat Video), sobald geschickt.
 - Weitere Clips von Dennis (Begrüßung, Lob, Tipps, Ende, spezielle Fehler).
 - Weitere Projekte (Grill, Werkzeugwagen), weitere Fehler, ggf. MAG-Schweißen.

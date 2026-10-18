@@ -182,10 +182,12 @@ export function baueWelt(scene) {
   loescher.add(setze(kugel(0.09, FARBE.rot), 0, 0.5, 0));
   loescher.add(setze(zylinder(0.025, 0.025, 0.08, FARBE.schwarz), 0, 0.6, 0));
   loescher.add(setze(quader(0.12, 0.025, 0.03, FARBE.schwarz), 0.04, 0.65, 0));
-  setze(loescher, -2.55, 0.9, RAUM.zMax - 0.14);
+  setze(loescher, -2.3, 0.9, RAUM.zMax - 0.14);
   scene.add(loescher);
-  scene.add(setze(quader(0.22, 0.04, 0.14, 0x444444), -2.55, 0.88, RAUM.zMax - 0.1));
+  scene.add(setze(quader(0.22, 0.04, 0.14, 0x444444), -2.3, 0.88, RAUM.zMax - 0.1));
   merke(loescher, 'feuerloescher', 'Feuerlöscher', null);
+  objekte.feuerloescher = loescher;
+  loescher.userData.wand = { pos: loescher.position.clone(), rot: loescher.rotation.clone() };
 
   // ---------- Plakate ----------
   function plakat(b, h, malen, x, y, z, ry) {
@@ -296,11 +298,35 @@ export function baueWelt(scene) {
   merke(flex, 'flex', 'Winkelschleifer', 'werkbank');
   objekte.flex = flex;
 
-  // Speckstein
-  const stein = quader(0.08, 0.02, 0.025, 0xf4f1e6);
-  setze(stein, -0.5, 0.915, -2.65, 0, 0.3, 0);
-  scene.add(stein);
-  merke(stein, 'speckstein', 'Speckstein (Anzeichnen)', 'werkbank');
+  // Blauer Edding zum Anzeichnen
+  const edding = new THREE.Group();
+  edding.add(setze(zylinder(0.011, 0.011, 0.11, 0x1f4fd1, { umriss: 0.003 }, 10), 0, 0, 0, 0, 0, Math.PI / 2));
+  edding.add(setze(zylinder(0.012, 0.012, 0.04, 0x163a9c, { umriss: 0.003 }, 10), 0.07, 0, 0, 0, 0, Math.PI / 2));
+  edding.add(setze(quader(0.03, 0.012, 0.004, 0xffffff, { umriss: false }), -0.01, 0, 0.011));
+  setze(edding, -0.5, 0.913, -2.65, 0, 0.3, 0);
+  scene.add(edding);
+  merke(edding, 'edding', 'Blauer Edding (Anzeichnen)', 'werkbank');
+  objekte.edding = edding;
+
+  // Dein Handy auf der Werkbank
+  const handyGr = new THREE.Group();
+  handyGr.add(quader(0.075, 0.009, 0.15, 0x1a1a1c, { umriss: 0.002 }));
+  const displayTex = leinwandTextur(64, 128, (g) => {
+    const gr = g.createLinearGradient(0, 0, 64, 128);
+    gr.addColorStop(0, '#2f5fa8'); gr.addColorStop(1, '#8a3fb0');
+    g.fillStyle = gr; g.fillRect(0, 0, 64, 128);
+    g.fillStyle = '#fff'; g.font = 'bold 16px Arial'; g.textAlign = 'center'; g.fillText('12:47', 32, 30);
+    g.fillStyle = '#5cbf4a'; g.beginPath(); g.arc(32, 80, 14, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#fff'; g.font = 'bold 14px Arial'; g.fillText('3', 32, 85);
+  });
+  const display = new THREE.Mesh(new THREE.PlaneGeometry(0.066, 0.135), new THREE.MeshBasicMaterial({ map: displayTex }));
+  display.rotation.x = -Math.PI / 2;
+  display.position.y = 0.0055;
+  handyGr.add(display);
+  setze(handyGr, 1.0, 0.905, -2.62, 0, -0.4, 0);
+  scene.add(handyGr);
+  merke(handyGr, 'handy', 'Dein Handy', 'werkbank');
+  objekte.handy = handyGr;
 
   // ---------- Regal ----------
   const regal = new THREE.Group();
@@ -597,6 +623,7 @@ export function baueWelt(scene) {
   setze(hammer, 2.68, 0.865, -2.7, 0, -0.3, 0);
   scene.add(hammer);
   merke(hammer, 'hammer', 'Schlackenhammer', 'schweiss');
+  objekte.hammer = hammer;
   const buerste = new THREE.Group();
   buerste.add(setze(quader(0.22, 0.02, 0.035, FARBE.holz), 0, 0, 0));
   buerste.add(setze(quader(0.12, 0.025, 0.03, 0xb0b0b0), -0.04, -0.02, 0));
@@ -681,8 +708,8 @@ export function baueWelt(scene) {
   const brotdose = new THREE.Group();
   brotdose.add(teil(new THREE.BoxGeometry(0.2, 0.07, 0.14), 0, { material: toon(0xf0f4f6, { transparent: true, opacity: 0.6 }), umriss: 0.004 }));
   brotdose.add(setze(quader(0.21, 0.015, 0.15, 0xc8352a, { umriss: 0.003 }), 0, 0.042, 0));
-  brotdose.add(setze(quader(0.11, 0.025, 0.1, 0x8a5a2e, { umriss: 0.002 }), -0.035, -0.01, 0));
-  brotdose.add(setze(kugel(0.03, 0xc0392b, { umriss: 0.002 }, 10), 0.06, -0.005, 0.02));
+  brotdose.add(setze(kugel(0.03, 0xd8352a, { umriss: 0.002 }, 10), 0.06, -0.005, 0.02));
+  brotdose.add(setze(teil(new THREE.TorusGeometry(0.06, 0.016, 6, 12, 2.2), 0xf2d23c, { umriss: 0.002 }), -0.03, -0.02, 0, Math.PI / 2, 0, 0.5));
   setze(brotdose, -4.62, 0.43, 2.55, 0, 0.4, 0);
   scene.add(brotdose);
   merke(brotdose, 'brotdose', 'Dennis’ Brotdose', null);
@@ -727,6 +754,8 @@ export function baueWelt(scene) {
   setze(besen, -4.88, 0, 2.05, 0.18, Math.PI / 2, 0);
   scene.add(besen);
   merke(besen, 'besen', 'Besen', null);
+  objekte.besen = besen;
+  besen.userData.wand = { pos: besen.position.clone(), rot: besen.rotation.clone() };
 
   // Lichtschalter neben der Tür
   const schalter = new THREE.Group();
@@ -795,6 +824,152 @@ export function baueWelt(scene) {
       dreck.push(d);
     }
   }
+
+  // Altes Sofa neben der Kaffeeecke (Dennis' Mittagspause)
+  const sofa = new THREE.Group();
+  const SOFA_STOFF = 0x6b5a3a;
+  sofa.add(setze(quader(1.6, 0.25, 0.75, 0x4a3d28), 0, 0.2, 0));
+  for (const x of [-0.39, 0.39]) {
+    const kissen = quader(0.76, 0.14, 0.62, SOFA_STOFF);
+    kissen.position.set(x, 0.39, 0.04);
+    sofa.add(kissen);
+  }
+  sofa.add(setze(quader(1.6, 0.5, 0.18, SOFA_STOFF), 0, 0.55, -0.3, -0.12, 0, 0));
+  for (const x of [-0.86, 0.86]) sofa.add(setze(quader(0.14, 0.42, 0.75, 0x5a4a30), x, 0.42, 0));
+  for (const [x, z] of [[-0.75, -0.3], [0.75, -0.3], [-0.75, 0.3], [0.75, 0.3]]) sofa.add(setze(zylinder(0.03, 0.025, 0.08, 0x2a2018, {}, 8), x, 0.04, z));
+  // Flicken und Decke
+  sofa.add(setze(quader(0.18, 0.012, 0.16, 0x8a3a2a, { umriss: 0.002 }), 0.45, 0.466, 0.1, 0, 0.3, 0));
+  const sofaDecke = teil(new THREE.BoxGeometry(0.5, 0.04, 0.55), 0x2f5f86, { umriss: 0.003 });
+  sofaDecke.position.set(-0.55, 0.48, 0.0);
+  sofaDecke.rotation.y = 0.2;
+  sofa.add(sofaDecke);
+  setze(sofa, -3.2, 0, RAUM.zMax - 0.45);
+  sofa.rotation.y = Math.PI;
+  scene.add(sofa);
+  hindernis(-4.05, -2.35, 3.15, 4.0);
+
+  // Milchtüte auf dem Kaffeetisch
+  const milchTex = leinwandTextur(64, 128, (g, b, h) => {
+    g.fillStyle = '#ffffff'; g.fillRect(0, 0, b, h);
+    g.fillStyle = '#2f5fa8'; g.fillRect(0, 0, b, 34);
+    g.fillStyle = '#2f5fa8'; g.font = 'bold 18px Arial'; g.textAlign = 'center'; g.fillText('MILCH', b / 2, 80);
+  });
+  const milch = new THREE.Group();
+  milch.add(teil(new THREE.BoxGeometry(0.07, 0.17, 0.07), 0, { material: toon(0xffffff, { map: milchTex }), umriss: 0.003 }));
+  const giebel = teil(new THREE.CylinderGeometry(0.0001, 0.05, 0.05, 4, 1), 0xffffff, { umriss: 0.003 });
+  giebel.rotation.y = Math.PI / 4;
+  giebel.position.y = 0.11;
+  milch.add(giebel);
+  setze(milch, -4.6, 0.89, 3.62);
+  scene.add(milch);
+  merke(milch, 'milch', 'Milch', null);
+
+  // Holzschnitzfigur: Baumstamm mit geschnitztem Hintern (ca. 70 cm), steht auf dem Boden in Dennis' Ecke
+  const figur = new THREE.Group();
+  const HOLZ = 0xc08a4a;
+  const holzMat = toon(HOLZ);
+  const holz = (geo, x, y, z, rx = 0, ry = 0, rz = 0) => setze(teil(geo, 0, { material: holzMat, umriss: 0.005 }), x, y, z, rx, ry, rz);
+  // Oberteil (Rücken, oben gerade abgesägt)
+  figur.add(holz(new THREE.CylinderGeometry(0.115, 0.125, 0.26, 18), 0, 0.57, 0));
+  figur.add(setze(zylinder(0.112, 0.112, 0.006, 0xd9b27a, { umriss: false }, 18), 0, 0.703, 0));
+  // Hintern: zwei Backen nach hinten (lokal -z)
+  for (const x of [-0.06, 0.06]) {
+    const backe = holz(new THREE.SphereGeometry(0.1, 16, 12), x, 0.42, -0.045);
+    backe.scale.set(0.95, 1.05, 1.05);
+    figur.add(backe);
+  }
+  // Beine: zwei Stämme, leicht gespreizt, unten gerade abgesägt
+  for (const x of [-0.065, 0.065]) {
+    figur.add(holz(new THREE.CylinderGeometry(0.075, 0.065, 0.36, 14), x * 1.15, 0.19, 0.0, 0, 0, x > 0 ? -0.06 : 0.06));
+    figur.add(setze(zylinder(0.062, 0.062, 0.006, 0x9a8a3a, { umriss: false }, 14), x * 1.3, 0.004, 0));
+  }
+  // Schnitzspuren
+  for (let i = 0; i < 6; i++) figur.add(setze(quader(0.004, 0.08, 0.004, 0x8a5a2a, { umriss: false }), Math.sin(i) * 0.1, 0.55 + (i % 3) * 0.04, Math.cos(i) * 0.1 + 0.01));
+  setze(figur, -4.6, 0, 1.62, 0, -Math.PI / 2, 0);
+  scene.add(figur);
+  merke(figur, 'figur', 'Holzfigur', null);
+  objekte.figur = figur;
+  hindernis(-4.8, -4.4, 1.42, 1.82);
+
+  // Mülleimer neben der Werkbank (kann durch Funken Feuer fangen)
+  const eimerM = new THREE.Group();
+  eimerM.add(teil(new THREE.CylinderGeometry(0.2, 0.17, 0.5, 18, 1, true), 0x5f666e, { mat: { side: THREE.DoubleSide }, umriss: 0.005 }));
+  eimerM.children[0].position.y = 0.25;
+  eimerM.add(setze(zylinder(0.17, 0.17, 0.01, 0x2a2a2a, { umriss: false }, 18), 0, 0.01, 0));
+  eimerM.add(setze(zylinder(0.18, 0.18, 0.02, 0x3a2e22, { umriss: false }, 18), 0, 0.42, 0));
+  for (let i = 0; i < 4; i++) eimerM.add(setze(quader(0.08, 0.06, 0.05, 0xc9b48a, { umriss: 0.002 }), Math.sin(i * 1.7) * 0.08, 0.45, Math.cos(i * 1.7) * 0.08, i, i * 0.7, 0.3));
+  setze(eimerM, 1.55, 0, -3.3);
+  scene.add(eimerM);
+  merke(eimerM, 'muelleimer', 'Mülleimer', null);
+  hindernis(1.32, 1.78, -3.55, -3.05);
+
+  // Feuer: flackernde Flammen + Licht
+  const feuer = new THREE.Group();
+  const flammen = [];
+  const flammenMats = [0xff5a1f, 0xff9a1f, 0xffd23a].map((c) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.9, depthWrite: false }));
+  for (let i = 0; i < 9; i++) {
+    const f = new THREE.Mesh(new THREE.ConeGeometry(0.06 + (i % 3) * 0.02, 0.35, 8), flammenMats[i % 3]);
+    f.userData.phase = i * 1.3;
+    f.userData.x = Math.sin(i * 2.1) * 0.09;
+    f.userData.z = Math.cos(i * 2.1) * 0.09;
+    feuer.add(f);
+    flammen.push(f);
+  }
+  const feuerLicht = new THREE.PointLight(0xff7a2a, 0, 4, 1.5);
+  feuerLicht.position.y = 0.4;
+  feuer.add(feuerLicht);
+  feuer.position.set(1.55, 0.45, -3.3);
+  feuer.scale.setScalar(1.7);
+  feuer.visible = false;
+  scene.add(feuer);
+  let feuerZeit = 0;
+  animiert.push((dt) => {
+    if (!feuer.visible) return;
+    feuerZeit += dt;
+    for (const f of flammen) {
+      const p = f.userData.phase;
+      const h = 0.8 + Math.sin(feuerZeit * 9 + p) * 0.25 + Math.sin(feuerZeit * 17 + p * 2) * 0.12;
+      f.scale.set(1, h, 1);
+      f.position.set(f.userData.x + Math.sin(feuerZeit * 5 + p) * 0.02, 0.17 * h, f.userData.z);
+    }
+    feuerLicht.intensity = 4 + Math.sin(feuerZeit * 23) * 1.2;
+  });
+
+  // Löschpulver-Wolke
+  const wolkenTex = leinwandTextur(64, 64, (g) => {
+    const gr = g.createRadialGradient(32, 32, 2, 32, 32, 30);
+    gr.addColorStop(0, 'rgba(255,255,255,0.95)');
+    gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr;
+    g.fillRect(0, 0, 64, 64);
+  });
+  const wolken = [];
+  function pulver(von, nach) {
+    for (let i = 0; i < 26; i++) {
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: wolkenTex, transparent: true, depthWrite: false }));
+      sp.position.copy(von);
+      const d = new THREE.Vector3().subVectors(nach, von);
+      sp.userData = { v: d.multiplyScalar(0.9 + Math.random() * 0.6).add(new THREE.Vector3((Math.random() - 0.5) * 0.8, Math.random() * 0.6, (Math.random() - 0.5) * 0.8)), t: -i * 0.04 };
+      sp.scale.setScalar(0.1);
+      sp.visible = false;
+      scene.add(sp);
+      wolken.push(sp);
+    }
+  }
+  animiert.push((dt) => {
+    for (let i = wolken.length - 1; i >= 0; i--) {
+      const w = wolken[i];
+      w.userData.t += dt;
+      if (w.userData.t < 0) continue;
+      w.visible = true;
+      w.position.addScaledVector(w.userData.v, dt);
+      w.userData.v.multiplyScalar(0.94);
+      const s = 0.15 + w.userData.t * 1.2;
+      w.scale.set(s, s, s);
+      w.material.opacity = Math.max(0, 1 - w.userData.t / 1.6);
+      if (w.userData.t > 1.6) { scene.remove(w); wolken.splice(i, 1); }
+    }
+  });
 
   // Licht an/aus
   const lichtWerte = { himmel: himmel.intensity, sonne: sonne.intensity, fuell: fuell.intensity };
@@ -868,6 +1043,28 @@ export function baueWelt(scene) {
     BESEN: { x: -4.35, z: 2.05 },
     get dreck() { return dreck.length; },
     KLO: { x: 1.4, z: 3.55 },
+    FEUER: { x: 1.55, z: -3.3, vorX: 1.55, vorZ: -2.45 },
+    LOESCHER: { x: -2.3, z: 3.35 },
+    feuer(an) { feuer.visible = an; feuerLicht.intensity = an ? 4 : 0; },
+    get brennt() { return feuer.visible; },
+    pulver,
+    loescherSichtbar(an) { loescher.visible = an; },
+    // Ding wieder an seinen festen Platz (Wandhalter) hängen
+    zurueckAnDieWand(obj) {
+      scene.add(obj);
+      obj.position.copy(obj.userData.wand.pos);
+      obj.rotation.copy(obj.userData.wand.rot);
+      if (obj.userData.ruhe) obj.scale.copy(obj.userData.ruhe.skala);
+      obj.visible = true;
+    },
+    flaschenOrtBei(p, mitBeinen) {
+      if (p.x > -1.25 && p.x < 1.25 && p.z > -3.4 && p.z < -2.4 && p.y > 0.8) return 'werkbank';
+      if (p.x > 2.25 && p.x < 3.95 && p.z > -3.5 && p.z < -2.4 && p.y > 0.75) return mitBeinen ? 'schweiss' : 'schweiss';
+      if (mitBeinen && p.x > 2.3 && p.x < 4.0 && p.z > -2.5 && p.z < -1.4) return 'schweiss';
+      if (p.x > 3.2 && p.z > 0.6 && p.z < 2.9) return 'wasch';
+      return null;
+    },
+    SOFA: { x: -3.2, z: RAUM.zMax - 0.45, sitzZ: RAUM.zMax - 0.5, vorneZ: RAUM.zMax - 1.15 },
     update(dt) {
       for (const a of animiert) a(dt);
     },
@@ -919,9 +1116,9 @@ function baueFlasche() {
   const tY = -0.1;
   const markTex = leinwandTextur(256, 256, (g, b, h) => {
     g.clearRect(0, 0, b, h);
-    g.strokeStyle = '#ffffff';
-    g.lineWidth = 12;
-    g.setLineDash([26, 14]);
+    g.strokeStyle = '#1f4fd1';
+    g.lineWidth = 9;
+    g.setLineDash([]);
     g.strokeRect(10, 10, b - 20, h - 20);
   });
   const markierung = new THREE.Mesh(

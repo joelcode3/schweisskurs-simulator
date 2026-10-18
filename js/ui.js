@@ -40,7 +40,7 @@ export function wutWackeln() {
 
 export function ausruestungZeigen(ppe) {
   const teile = [['brille', 'Schutzbrille'], ['handschuhe', 'Handschuhe'], ['helm', 'Schweißhelm']];
-  $('ausruestung').innerHTML = teile.map(([k, name]) => `<div class="ausr ${ppe[k] ? 'an' : ''}" title="${name}${ppe[k] ? ' (an)' : ' (fehlt)'}">${SYMBOL[k]}</div>`).join('');
+  $('ausruestung').innerHTML = teile.map(([k, name]) => `<div class="ausr ${ppe[k] ? 'an' : ''}" ${ppe[k] ? `data-k="${k}"` : ''} title="${name}${ppe[k] ? ' (an, klicken zum Abnehmen)' : ' (fehlt)'}">${SYMBOL[k]}</div>`).join('');
 }
 
 export function stationenZeigen(aktuell, beiWahl) {
@@ -177,32 +177,42 @@ export function infoDialog(titel, html, knoepfe = [{ text: 'Alles klar' }]) {
   });
 }
 
-let sprechTimer = null;
-let sprechAktiv = false;
-export function sprechzeile(text, ms, sauer = false) {
-  const el = $('sprechzeile');
-  el.querySelector('span').textContent = text;
-  el.classList.toggle('sauer', sauer);
-  sprechAktiv = true;
-  clearTimeout(sprechTimer);
-  sprechTimer = setTimeout(() => { sprechAktiv = false; el.classList.remove('sichtbar'); }, ms);
-}
-// Jedes Bild: Blase an die Bildschirmposition über Dennis' Kopf setzen (x, y in Pixeln, sichtbar = vor der Kamera)
-export function sprechzeileFolgen(x, y, sichtbar) {
-  const el = $('sprechzeile');
-  if (!sprechAktiv) return;
-  el.classList.toggle('sichtbar', sichtbar);
-  const b = el.offsetWidth, h = el.offsetHeight;
-  const px = Math.max(8, Math.min(window.innerWidth - b - 8, x - b / 2));
-  const py = Math.max(8, Math.min(window.innerHeight - h - 8, y - h - 14));
-  el.style.transform = `translate(${px}px, ${py}px)`;
-}
-
-export function lobZeigen(text) {
+// Eine Sprechblase rechts für alles, was Dennis nebenbei sagt (verschwindet von selbst)
+let blasenTimer = null;
+export function blaseRechts(text, ms = 4000, art = 'normal') {
   const el = $('lobblase');
   el.querySelector('span').textContent = text;
-  $('lob-gesicht').innerHTML = dennisMini('froh');
-  el.classList.remove('versteckt', 'neu');
+  el.querySelector('b').textContent = art === 'lob' ? 'DENNIS (zufrieden)' : 'DENNIS';
+  el.className = art;
+  $('lob-gesicht').innerHTML = dennisMini(art === 'lob' ? 'froh' : art === 'sauer' ? 'sauer' : 'ruhig');
   void el.offsetWidth;
   el.classList.add('neu');
+  clearTimeout(blasenTimer);
+  blasenTimer = setTimeout(() => el.classList.add('versteckt'), ms);
+}
+export function sprechzeile(text, ms, sauer = false) { blaseRechts(text, ms, sauer ? 'sauer' : 'normal'); }
+export function lobZeigen(text) { blaseRechts(text, 5000, 'lob'); }
+
+// Lautstärke-Leiste unten links
+export function lautstaerkeLeiste(beiAenderung) {
+  const el = $('ton');
+  const knopf = el.querySelector('button');
+  const regler = el.querySelector('input');
+  let stumm = false;
+  let wert = 0.8;
+  try {
+    const g = JSON.parse(localStorage.getItem('ton') || 'null');
+    if (g) { stumm = !!g.stumm; wert = g.wert ?? 0.8; }
+  } catch { /* egal */ }
+  function zeigen() {
+    regler.value = Math.round(wert * 100);
+    knopf.innerHTML = stumm || wert === 0 ? SYMBOL.stumm : SYMBOL.laut;
+    knopf.title = stumm ? 'Ton an' : 'Ton aus';
+    beiAenderung(stumm ? 0 : wert);
+    try { localStorage.setItem('ton', JSON.stringify({ stumm, wert })); } catch { /* egal */ }
+  }
+  knopf.addEventListener('click', () => { stumm = !stumm; zeigen(); });
+  regler.addEventListener('input', () => { wert = regler.value / 100; stumm = false; zeigen(); });
+  for (const e of ['pointerdown', 'keydown']) el.addEventListener(e, (ev) => ev.stopPropagation());
+  zeigen();
 }

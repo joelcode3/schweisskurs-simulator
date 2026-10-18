@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=20261018-1">
+  <link rel="stylesheet" href="css/style.css?v=20261018-3">
   <script type="importmap">
     { "imports": { "three": "./vendor/three.module.min.js" } }
   </script>
@@ -44,10 +44,11 @@
     <div id="fadenkreuz"></div>
     <div id="hover-name"></div>
     <div id="hinweis"></div>
-    <div id="sprechzeile"><b>DENNIS</b><span></span></div>
     <div id="lobblase" class="versteckt"><svg viewBox="0 0 40 40" class="dennis-mini" id="lob-gesicht"></svg><div><b>DENNIS</b><span></span></div></div>
 
+    <div id="handleiste" class="panel versteckt"></div>
     <nav id="stationen"></nav>
+    <div id="ton" class="panel"><button type="button"></button><input type="range" min="0" max="100" aria-label="Lautstärke"></div>
   </div>
 
   <!-- Aktionsmenü -->
@@ -89,7 +90,7 @@
         <button id="start-archiv" class="knopf leise" type="button">Dennis-Archiv</button>
       </div>
       <div class="steuerung">
-        <div><b>Computer:</b> Maus ziehen = umschauen, WASD = gehen, Klick = benutzen</div>
+        <div><b>Computer:</b> Maus ziehen = umschauen, WASD = gehen, Klick = benutzen/aufheben/ablegen, E = benutzen, Q = werfen, G = fallen lassen</div>
         <div><b>Handy:</b> Wischen = umschauen, Tippen = benutzen, unten Stationen wählen</div>
       </div>
       <div class="warnstreifen"></div>
@@ -98,6 +99,6 @@
 
   <div id="hochkant">Handy quer halten, dann passt die Werkstatt besser aufs Bild.</div>
 
-  <script type="module" src="js/main.js?v=20261018-1"></script>
+  <script type="module" src="js/main.js?v=20261018-3"></script>
 </body>
 </html>

@@ -396,8 +396,8 @@ export function pfadSpiel({ art, form, titel, text, strom = 80, helm = true }) {
     ctx.drawImage(hintergrund, 0, 0, m.b, m.h);
 
     if (!schweissen) {
-      // Kreidelinie
-      ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+      // Edding-Linie
+      ctx.strokeStyle = 'rgba(40,90,230,0.95)';
       ctx.lineWidth = 4;
       ctx.setLineDash([14, 9]);
       zeichnePfad(ctx, pkt);

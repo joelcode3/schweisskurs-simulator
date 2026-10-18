@@ -4,6 +4,30 @@
 export const DENNIS = {
   begruessung: 'Moin! Heute baust du einen Ofen aus der alten Gasflasche da drüben. Was zu tun ist, steht auf deinem Zettel. Und halt dich an meine Regeln an der Wand. Wenn du Mist baust, merk ich das. Ich merk alles.',
   klo: 'Warte kurz!',
+  kloZurueck: 'Ahh. Jetzt geht’s mir besser.',
+  feuer: {
+    ruf: 'FEUER!! Im Mülleimer! Wer hat da Funken reinfliegen lassen?!',
+    sauer: 'Wer passt hier eigentlich auf?! Beim Flexen guckt man, wo die Funken hinfliegen!',
+    selbst: 'Gut reagiert! Genau so.',
+    duHastIhn: 'Lösch das! Du hast doch den Feuerlöscher!',
+  },
+  besenInDerHand: 'Fegst du jetzt, oder hältst du den Besen nur fest?',
+  hand: {
+    handy: 'Handy weg! Hier wird gearbeitet, nicht gedaddelt!',
+    handyWerfen: 'Na super. Display kaputt? Selber schuld.',
+    handyNochmal: 'Schon wieder das Handy?! Das kriegst du nach Feierabend wieder!',
+    figur: 'Finger weg von meiner Skulptur! Die hat drei Wochenenden gedauert!',
+    werfen: 'Werkzeug wird nicht geworfen! Hast du sie noch alle?',
+    figurWerfen: 'MEINE SKULPTUR! Bist du wahnsinnig?!',
+    flascheWerfen: 'Wirf bloß nicht mit der Gasflasche!',
+    getroffen: 'AUA! Hast du mich gerade abgeworfen?! Raus hier!',
+    gespruehrt: 'HÖR SOFORT AUF! Ich bin doch kein Feuer!',
+    flexLaeuft: 'Mach die Flex aus, wenn du nix schneidest!',
+    flexAufDennis: 'Zeig nicht mit der laufenden Flex auf mich!',
+    loeschen: 'Gut reagiert! Genau so.',
+    loescherSpielen: 'Der Feuerlöscher ist kein Spielzeug! Den muss ich jetzt neu befüllen lassen!',
+  },
+  geweckt: 'Hä? Was is’n?! Ich hab Pause!',
 
   fehler: {
     brille: [
@@ -69,7 +93,8 @@ export const DENNIS = {
   kaffee: {
     danke: 'Danke, den hab ich jetzt gebraucht.',
     nochmal: 'Noch einer? Na gut. Aber dann ist Schluss.',
-    genug: 'Willst du mich vergiften? Ich hab genug Kaffee, ich zitter schon!',
+    genug: 'Drei Kaffee?! Oh nein ... ich muss SOFORT aufs Klo!',
+    milch: 'Ist da Milch drin? GIFT!!',
     nichtsInDerHand: 'Und wo ist der Kaffee?',
   },
   kiwi: {
@@ -88,7 +113,7 @@ export const DENNIS = {
       'Meine Hüfte! Hilf mir doch mal hoch!',
       'Das ist das Wetter. Immer hinten links. Hilf mir mal!',
     ],
-    danke: 'Danke. ... Und erzähl das keinem.',
+    danke: 'Danke dir! Ohne dich läg ich da noch. Und erzähl das keinem.',
   },
   fegen: 'Na guck. Ordnung ist das halbe Schweißen.',
 
@@ -105,7 +130,7 @@ export const DENNIS = {
     ventil: 'Erst mal das Restgas ablassen. Ventil an der Flasche aufdrehen, die steht am Waschplatz.',
     spuelen: 'Jetzt die Flasche mit Wasser spülen. Schlauch hängt an der Wand. Ohne Spülen fasst die keiner an!',
     werkbank: 'Flasche rüber auf die Werkbank.',
-    anzeichnen: 'Mit dem Speckstein die Tür anzeichnen. Liegt auf der Werkbank.',
+    anzeichnen: 'Mit dem blauen Edding die Tür anzeichnen. Liegt auf der Werkbank.',
     schneiden: 'Jetzt mit der Flex die Tür ausschneiden. Sauber auf der Linie!',
     schneidenAusruestung: 'Tür ausschneiden. Aber vorher Brille und Handschuhe aus dem Regal, klar?',
     schweissplatz: 'Ab zum Schweißplatz mit dem Ding.',
