@@ -24,9 +24,16 @@
   2. skeptisch, ab 3. sauer), Brotdose (abbeißen = Ausraster), große Soundbox (Techno, Dennis tanzt),
   Lichtschalter (Dennis meckert), Besen (Dreck nach Schneiden/Schweißen, zählt in die Note),
   Hüfte (Dennis legt sich einmal pro Spiel hin und jammert, bis man ihm aufhilft),
-  Einweisung mit Klo-Pause (WC-Tür vorne rechts). Neben Dennis stehen bleiben: „Was los??“ (stimme/baustellenfeeling.mp3,
-  1 s, nicht im Liegen, max. alle 40 s). Mittagspause: einmal pro Spiel kommt er mit Brotdose und isst eine Tomate
-  (stimme/tomate.mp3). Kiwis liegen lose auf dem Kaffeetisch. Poster (assets/poster.jpg) mit Klebeband über der Kaffeeecke.
+  Klo-Pause zwischendurch (frühestens nach 100 s, „Warte kurz!“, WC-Tür vorne rechts). Geht man zu Dennis hin und bleibt
+  stehen: „Was los??“ (stimme/baustellenfeeling.mp3, 1 s, nicht im Liegen, nicht wenn er selbst kommt, max. alle 40 s). Mittagspause: einmal pro Spiel kommt er mit Brotdose und isst eine Tomate
+  (stimme/tomate.mp3). Kiwis liegen lose auf dem Kaffeetisch.
+  Liegt Dreck > 45 s, holt Dennis den Besen und fegt selbst (stimme/muell.mp3, Note -2).
+  Murmeln: stimme/murmeln-1..10.mp3 (Originaltöne aus den Videos), zufällig alle 15–35 s, nur Ton, Lautstärke nach Abstand.
+  Alle Töne mit kurzem Ein- und Ausblenden. Poster (assets/poster.jpg) mit Klebeband über der Kaffeeecke.
+- Anzeige-Regeln (Betreiber): Videos nur für Arbeitssicherheit und Aufgaben, rechts am Rand, ohne Wegklicken,
+  verschwinden von selbst. Nebensachen (Kaffee, Kiwi, Licht, Hüfte, Klo, „Was los??“) nur als kleine Sprechblase
+  über Dennis' Kopf (folgt ihm). Lob ohne Video als feste Sprechblase rechts (bleibt stehen bis zum nächsten Lob).
+  Begrüßung am Anfang bleibt als großes Fenster. Stations-Knöpfe nur auf Touch-Geräten.
 - Fokus: Desktop-Version (Betreiber-Wunsch), Handy-Ansicht erstmal zweitrangig.
 - Fehlerstufen: leicht (Ermahnung, Dennis guckt), mittel (kommt rüber, sauer), voll (rennt rüber, Ausraster).
 

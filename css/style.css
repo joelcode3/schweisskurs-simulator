@@ -758,3 +758,86 @@ button { font: inherit; color: inherit; }
   .aktion { padding: 7px 10px; margin-top: 4px; }
   #dennis-buehne.leicht { padding-top: calc(var(--rand-oben) + 100px); }
 }
+
+/* Kleine Sprechblase über Dennis' Kopf (Nebensachen, ohne Video) */
+#sprechzeile {
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-width: min(320px, 70vw);
+  padding: 6px 12px;
+  background: #fff;
+  color: #111;
+  border: 3px solid #111;
+  border-radius: 14px;
+  box-shadow: 3px 3px 0 #111;
+  font-family: var(--comic);
+  font-size: 19px;
+  letter-spacing: 0.5px;
+  line-height: 1.15;
+  text-align: center;
+  pointer-events: none !important;
+  opacity: 0;
+  transition: opacity 0.15s;
+  will-change: transform;
+}
+#sprechzeile::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -14px;
+  margin-left: -9px;
+  border: 9px solid transparent;
+  border-top: 12px solid #111;
+}
+#sprechzeile b { display: none; }
+#sprechzeile.sichtbar { opacity: 1; }
+#sprechzeile.sauer span { color: #b3170d; }
+
+/* Stations-Knöpfe nur auf Touch-Geräten */
+@media (pointer: fine) {
+  #stationen { display: none; }
+  #hinweis { bottom: calc(var(--rand-unten) + 24px); }
+}
+
+/* Fehler-Auftritte: rechts am Rand, ohne Wegklicken, verdeckt Dennis nicht */
+#dennis-buehne.seite {
+  background: none;
+  pointer-events: none;
+  justify-content: center;
+  align-items: flex-end;
+  padding: 90px calc(var(--rand-rechts) + 8px) 24px 16px;
+}
+#dennis-buehne.seite #dennis-weiter { display: none; }
+#dennis-buehne.seite #dennis-rahmen { width: min(420px, 32vw); transform: rotate(1.5deg); }
+#dennis-buehne.seite.hochkant #dennis-rahmen { width: min(300px, 22vw, 42dvh); }
+#dennis-buehne.seite .sprechblase { font-size: 19px; }
+#dennis-buehne.seite.voll .sprechblase { font-size: 21px; }
+#dennis-buehne.seite.voll #dennis-rahmen { animation: reinknallen 0.4s cubic-bezier(.3,1.8,.5,1), zittern 0.12s 0.4s 6; }
+
+/* Feste Lob-Sprechblase rechts (letztes Lob bleibt stehen) */
+#lobblase {
+  position: absolute;
+  right: var(--rand-rechts);
+  top: 50%;
+  transform: translateY(-50%) rotate(1deg);
+  width: min(240px, 26vw);
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  background: #fff;
+  color: #111;
+  border: 3px solid #111;
+  border-radius: 14px;
+  box-shadow: 4px 4px 0 #111;
+  font-family: var(--comic);
+  font-size: 19px;
+  line-height: 1.15;
+  letter-spacing: 0.5px;
+  pointer-events: none !important;
+}
+#lobblase b { display: block; font-weight: 400; font-size: 14px; color: #2b7a2b; }
+#lobblase .dennis-mini { width: 40px; height: 40px; }
+#lobblase.neu { animation: lobPop 0.35s cubic-bezier(.3,1.8,.5,1); }
+@keyframes lobPop { from { transform: translateY(-50%) scale(0.6); } }

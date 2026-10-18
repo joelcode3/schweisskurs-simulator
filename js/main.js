@@ -65,6 +65,12 @@ function schleife(jetzt) {
       ui.stationenZeigen(st, (id) => spiel.stationWaehlen(id));
     }
   }
+  // Sprechblase über Dennis' Kopf mitführen
+  const kopf = dennis.kopfPosition();
+  kopf.y += 0.28;
+  const vorKamera = kopf.clone().applyMatrix4(kamera.matrixWorldInverse).z < 0;
+  kopf.project(kamera);
+  ui.sprechzeileFolgen((kopf.x + 1) / 2 * window.innerWidth, (1 - kopf.y) / 2 * window.innerHeight, vorKamera && dennis.wurzel.visible);
   renderer.render(scene, kamera);
   requestAnimationFrame(schleife);
 }

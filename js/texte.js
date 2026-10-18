@@ -2,9 +2,8 @@
 // Die Schlüssel sind die IDs für die Sprachaufnahmen in stimme/stimme.json – beim Umformulieren beibehalten.
 
 export const DENNIS = {
-  begruessung: 'Moin! Heute baust du einen Ofen aus der alten Gasflasche da drüben. Was zu tun ist, steht auf deinem Zettel. Und halt dich an meine Regeln an der Wand ...',
-  klo: 'Ähm ... Moment. Geht gleich weiter. Ich muss mal ganz dringend!',
-  zurueck: 'So. Wo war ich? Ach ja: Wenn du Mist baust, merk ich das. Ich merk alles.',
+  begruessung: 'Moin! Heute baust du einen Ofen aus der alten Gasflasche da drüben. Was zu tun ist, steht auf deinem Zettel. Und halt dich an meine Regeln an der Wand. Wenn du Mist baust, merk ich das. Ich merk alles.',
+  klo: 'Warte kurz!',
 
   fehler: {
     brille: [
@@ -68,7 +67,7 @@ export const DENNIS = {
   },
 
   kaffee: {
-    danke: 'Oh. Für mich? ... Danke. Du darfst bleiben.',
+    danke: 'Danke, den hab ich jetzt gebraucht.',
     nochmal: 'Noch einer? Na gut. Aber dann ist Schluss.',
     genug: 'Willst du mich vergiften? Ich hab genug Kaffee, ich zitter schon!',
     nichtsInDerHand: 'Und wo ist der Kaffee?',
@@ -81,7 +80,6 @@ export const DENNIS = {
   baustellenfeeling: 'Was los??',
   tomate: '*mampf* ... Mittagspause. Tomate muss sein.',
   licht: 'Hallo?! Wer hat das Licht ausgemacht? Ich seh nix!',
-  musikAus: 'Ey! Das war mein Lied!',
   huefte: {
     start: 'Aaah! Meine Hüfte! Hinten links! Ich muss mich kurz hinlegen ...',
     jammern: [
@@ -95,6 +93,7 @@ export const DENNIS = {
   fegen: 'Na guck. Ordnung ist das halbe Schweißen.',
 
   lob: [
+    'Gute Arbeit.',
     'Jo. Passt.',
     'Sauber. Geht doch.',
     'Na also. Da kann man nicht meckern.',

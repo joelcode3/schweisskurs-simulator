@@ -176,3 +176,33 @@ export function infoDialog(titel, html, knoepfe = [{ text: 'Alles klar' }]) {
     d.querySelectorAll('[data-i]').forEach((b) => b.addEventListener('click', () => { dialogZu(); fertig(Number(b.dataset.i)); }));
   });
 }
+
+let sprechTimer = null;
+let sprechAktiv = false;
+export function sprechzeile(text, ms, sauer = false) {
+  const el = $('sprechzeile');
+  el.querySelector('span').textContent = text;
+  el.classList.toggle('sauer', sauer);
+  sprechAktiv = true;
+  clearTimeout(sprechTimer);
+  sprechTimer = setTimeout(() => { sprechAktiv = false; el.classList.remove('sichtbar'); }, ms);
+}
+// Jedes Bild: Blase an die Bildschirmposition über Dennis' Kopf setzen (x, y in Pixeln, sichtbar = vor der Kamera)
+export function sprechzeileFolgen(x, y, sichtbar) {
+  const el = $('sprechzeile');
+  if (!sprechAktiv) return;
+  el.classList.toggle('sichtbar', sichtbar);
+  const b = el.offsetWidth, h = el.offsetHeight;
+  const px = Math.max(8, Math.min(window.innerWidth - b - 8, x - b / 2));
+  const py = Math.max(8, Math.min(window.innerHeight - h - 8, y - h - 14));
+  el.style.transform = `translate(${px}px, ${py}px)`;
+}
+
+export function lobZeigen(text) {
+  const el = $('lobblase');
+  el.querySelector('span').textContent = text;
+  $('lob-gesicht').innerHTML = dennisMini('froh');
+  el.classList.remove('versteckt', 'neu');
+  void el.offsetWidth;
+  el.classList.add('neu');
+}
