@@ -1,19 +1,8 @@
 {
   "begruessung": [],
   "tipp": [],
-  "ermahnung": [
-    {
-      "datei": "ermahnung-1.mp4"
-    },
-    {
-      "datei": "ermahnung-2.mp4"
-    }
-  ],
-  "sauer": [
-    {
-      "datei": "sauer-1.mp4"
-    }
-  ],
+  "ermahnung": [],
+  "sauer": [],
   "ausraster": [
     {
       "datei": "ausraster-1.mp4"
@@ -28,11 +17,7 @@
       "datei": "ausraster-4.mp4"
     }
   ],
-  "lob": [
-    {
-      "datei": "lob-1.mp4"
-    }
-  ],
+  "lob": [],
   "fehler_brille": [],
   "fehler_handschuhe": [],
   "fehler_gasflasche": [],
@@ -52,14 +37,7 @@
       "datei": "rausgeflogen-1.mp4"
     }
   ],
-  "fehler_brotdose": [
-    {
-      "datei": "zwischendurch-1.mp4"
-    },
-    {
-      "datei": "zwischendurch-2.mp4"
-    }
-  ],
+  "fehler_brotdose": [],
   "fehler_kiwi": [],
   "klo": []
 }

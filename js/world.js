@@ -257,13 +257,28 @@ export function baueWelt(scene) {
     g.fillText('SICHERHEIT ZUERST', b / 2, h - 18);
   }, 2.0, 1.9, RAUM.zMin + 0.01, 0);
 
-  // Rohrzange an der Werkzeugwand (rote Griffe) – zum Reparieren des Wasserhahns
+  // Rohrzange an der Werkzeugwand: roter Doppel-T-Griff, Hakenbacke oben, Rändelmutter zum Verstellen, Zähne
   const zange = new THREE.Group();
-  zange.add(setze(quader(0.035, 0.3, 0.02, FARBE.rot), 0, -0.05, 0));
-  zange.add(setze(quader(0.03, 0.26, 0.02, FARBE.rot), 0.05, -0.03, 0, 0, 0, -0.12));
-  zange.add(setze(quader(0.09, 0.05, 0.03, FARBE.stahl), 0.005, 0.13, 0));
-  zange.add(setze(quader(0.03, 0.08, 0.03, FARBE.stahl), -0.03, 0.18, 0));
-  setze(zange, 1.32, 1.62, RAUM.zMin + 0.06, 0, 0, 0.25);
+  const rot = 0xc8352a;
+  zange.add(setze(quader(0.045, 0.34, 0.02, rot), 0, -0.1, 0));
+  zange.add(setze(quader(0.02, 0.34, 0.035, rot), 0, -0.1, 0));
+  zange.add(setze(quader(0.05, 0.05, 0.04, 0x8a1f17), 0, -0.29, 0));
+  zange.add(setze(zylinder(0.012, 0.012, 0.03, 0x222222, {}, 8), 0, -0.26, 0, Math.PI / 2, 0, 0));
+  // feste Backe mit Gehäuse
+  zange.add(setze(quader(0.07, 0.08, 0.045, FARBE.stahl), 0.005, 0.1, 0));
+  zange.add(setze(quader(0.05, 0.03, 0.04, FARBE.stahlHell), -0.03, 0.155, 0));
+  // Hakenbacke (beweglich) mit Schaft und Zähnen
+  zange.add(setze(zylinder(0.012, 0.012, 0.14, FARBE.stahlHell, {}, 8), 0.025, 0.17, 0));
+  zange.add(setze(quader(0.08, 0.035, 0.04, FARBE.stahlHell), -0.005, 0.24, 0));
+  for (let i = 0; i < 4; i++) zange.add(setze(quader(0.008, 0.01, 0.042, 0x555a60, { umriss: false }), -0.035 + i * 0.016, 0.222, 0));
+  for (let i = 0; i < 3; i++) zange.add(setze(quader(0.008, 0.01, 0.042, 0x555a60, { umriss: false }), -0.04 + i * 0.016, 0.172, 0));
+  // Rändelmutter
+  const mutter = teil(new THREE.CylinderGeometry(0.022, 0.022, 0.03, 14), 0x9aa0a6, { umriss: 0.003 });
+  mutter.position.set(0.025, 0.135, 0);
+  zange.add(mutter);
+  for (let i = 0; i < 6; i++) zange.add(setze(quader(0.004, 0.03, 0.006, 0x555a60, { umriss: false }), 0.025 + Math.cos(i) * 0.022, 0.135, Math.sin(i) * 0.022));
+  setze(zange, 1.32, 1.6, RAUM.zMin + 0.06, 0, 0, 0.25);
+  zange.scale.setScalar(1.15);
   scene.add(zange);
   merke(zange, 'rohrzange', 'Rohrzange', null);
   objekte.rohrzange = zange;
@@ -465,7 +480,20 @@ export function baueWelt(scene) {
   setze(becken, 4.67, 0, 1.6);
   scene.add(becken);
   // Rohr unter dem Hahn (hier platzt es bei Frost)
-  const hahnRohr = setze(zylinder(0.025, 0.025, 0.5, FARBE.stahlHell, {}, 10), 4.93, 0.95, 1.6);
+  const hahnRohr = new THREE.Group();
+  hahnRohr.add(zylinder(0.025, 0.025, 0.5, FARBE.stahlHell, {}, 10));
+  // dicke Messing-Verschraubung: hier platzt es und hier wird repariert
+  hahnRohr.add(setze(zylinder(0.055, 0.055, 0.1, FARBE.messing, {}, 6), 0, -0.05, 0));
+  hahnRohr.add(setze(zylinder(0.045, 0.045, 0.03, 0x8a6a22, {}, 6), 0, 0.02, 0));
+  const leckRing = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.015, 8, 32), new THREE.MeshBasicMaterial({ color: 0xffc81e }));
+  leckRing.rotation.y = Math.PI / 2;
+  leckRing.position.set(-0.04, -0.05, 0);
+  leckRing.visible = false;
+  hahnRohr.add(leckRing);
+  const rohrKlick = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.6, 0.45), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
+  rohrKlick.position.set(-0.1, -0.02, 0);
+  hahnRohr.add(rohrKlick);
+  hahnRohr.position.set(4.93, 0.95, 1.6);
   scene.add(hahnRohr);
   merke(hahnRohr, 'wasserhahn', 'Wasserrohr am Hahn', null);
   objekte.wasserhahn = hahnRohr;
@@ -500,6 +528,7 @@ export function baueWelt(scene) {
   pistole.add(setze(quader(0.015, 0.06, 0.03, 0x111111), 0, -0.1, 0.04));
   setze(pistole, 0.2, -0.62, 0.1);
   schlauch.add(pistole);
+  schlauch.userData.pistole = pistole;
   // unsichtbare Klickfläche über dem ganzen Schlauch (sonst trifft man durch die Schlaufen die Wand)
   const klickFlaeche = new THREE.Mesh(new THREE.BoxGeometry(0.55, 1.25, 0.2), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
   klickFlaeche.position.set(0.05, -0.15, 0.06);
@@ -1078,35 +1107,52 @@ export function baueWelt(scene) {
   });
   // Pfützen: entstehen, wo Wasser auf den Boden fällt, wachsen schnell, trocknen langsam
   const pfuetzen = [];
-  const pfuetzenMat = new THREE.MeshBasicMaterial({ color: 0x5aa6e6, transparent: true, opacity: 0.5, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
+  // unregelmäßige Pfützen: ein paar Klecks-Formen als Textur, zufällig gedreht
+  const pfuetzenMats = [1, 2, 3].map((saat) => {
+    const z = zufall(saat * 7);
+    const t = leinwandTextur(128, 128, (g) => {
+      g.clearRect(0, 0, 128, 128);
+      g.fillStyle = 'rgba(90,166,230,1)';
+      g.filter = 'blur(3px)';
+      for (let i = 0; i < 7; i++) {
+        const w = z() * Math.PI * 2;
+        const r = 14 + z() * 28;
+        g.beginPath();
+        g.ellipse(64 + Math.cos(w) * z() * 30, 64 + Math.sin(w) * z() * 30, r, r * (0.5 + z() * 0.5), z() * 3, 0, Math.PI * 2);
+        g.fill();
+      }
+    });
+    return new THREE.MeshBasicMaterial({ map: t, transparent: true, opacity: 0.6, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
+  });
   function nass(x, z) {
     if (x < RAUM.xMin || x > RAUM.xMax || z < RAUM.zMin || z > RAUM.zMax) return;
     let p = pfuetzen.find((q) => Math.hypot(q.position.x - x, q.position.z - z) < q.userData.r + 0.25);
     if (!p && pfuetzen.length < 30) {
-      p = new THREE.Mesh(new THREE.CircleGeometry(1, 24), pfuetzenMat);
-      p.rotation.x = -Math.PI / 2;
+      p = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 2.4), pfuetzenMats[pfuetzen.length % 3]);
+      p.rotation.set(-Math.PI / 2, 0, Math.random() * Math.PI * 2);
       p.position.set(x, 0.004 + pfuetzen.length * 0.0002, z);
       p.userData.r = 0.05;
       p.scale.setScalar(0.05);
-      p.scale.y *= 0.8;
       scene.add(p);
       pfuetzen.push(p);
     }
     if (!p) return;
     p.userData.r = Math.min(1.1, Math.sqrt(p.userData.r * p.userData.r + 0.0035));
-    p.scale.set(p.userData.r, p.userData.r * 0.8, 1);
+    p.scale.set(p.userData.r, p.userData.r, 1);
   }
   animiert.push((dt) => {
     for (let i = pfuetzen.length - 1; i >= 0; i--) {
       const p = pfuetzen[i];
       p.userData.r -= dt * 0.006;
       if (p.userData.r < 0.03) { scene.remove(p); pfuetzen.splice(i, 1); continue; }
-      p.scale.set(p.userData.r, p.userData.r * 0.8, 1);
+      p.scale.set(p.userData.r, p.userData.r, 1);
     }
   });
   let leckAn = false;
   let leckTakt = 0;
   animiert.push((dt) => {
+    leckRing.visible = leckAn;
+    if (leckAn) leckRing.scale.setScalar(1 + Math.sin(performance.now() / 150) * 0.15);
     if (leckAn) {
       leckTakt += dt;
       while (leckTakt > 0.03) {
