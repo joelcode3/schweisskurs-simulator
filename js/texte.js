@@ -39,6 +39,11 @@ export const DENNIS = {
     besen: ['Den Besen nimmt man zum Fegen, nicht als Speer!', 'Besen werfen? Das ist hier kein Hexentreffen!'],
     loescher: ['Den Feuerlöscher wirft man nicht! Und wenn’s dann brennt, was dann?!', 'Der Löscher fliegt nicht! Der rettet hier Leben!'],
   },
+  musikPause: [
+    'Ey! Ich mach Pause! Mach die Mucke aus!',
+    'Geht’s noch?! Ich will hier in Ruhe liegen!',
+    'Techno in meiner Mittagspause? Du hast sie doch nicht mehr alle!',
+  ],
   schlauch: {
     nass: ['EY! Spinnst du?! Jetzt bin ich nass!', 'Hör auf mich nasszuspritzen! Sofort!', 'Ich hab schon geduscht, danke!'],
     rumspritzen: ['Hör auf hier rumzuspritzen! Das ist eine Werkstatt, kein Freibad!', 'Wasser ist zum Spülen da, nicht zum Spielen!', 'Jetzt ist alles nass. Super gemacht.'],
