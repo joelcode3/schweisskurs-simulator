@@ -42,13 +42,15 @@
   Wasserschlauch (lange Schlaufen mit Spritzpistole, unsichtbare Klickfläche drüber): in die Hand nehmen, E gedrückt halten = Dauerstrahl, Pfützen wo das Wasser landet (Dennis treffen = sauer, sonst meckert er; löscht auch Feuer),
   G = zurückhängen, reicht nur ca. 5 m vom Waschplatz.
   Wasserrohrbruch (Frost): einmal pro Spiel nach ca. 3–5 min spritzt das Rohr am Waschplatz (Pfütze, Wasser-Symbol unten
-  rechts). Rohrzange (detailliert: rote Griffe, Hakenbacke, Rändelmutter) von der Werkzeugwand holen,
+  rechts). Rohrzange von der Werkzeugwand holen,
   auf das Rohr klicken (Leckstelle: Messing-Verschraubung mit pulsierendem gelbem Ring, große Klickfläche) (oder E in der Nähe), festziehen. Nach ca. 22 s
-  macht Dennis es selbst und ist stinkig (+12 Wut).
+  macht Dennis es selbst und ist stinkig (+12 Wut). Rohrzange detailliert (roter Doppel-T-Griff, Gehäuse mit Stellmutter,
+  Hakenbacke mit Zähnen), wird flach hingelegt (userData.liegend). Leckstelle: Messing-Verschraubung mit pulsierendem gelbem Ring.
   Dennis steht nicht immer vor dem Sofa: alle 30–55 s wechselt er zu einem anderen Platz (PLAETZE in dennis.js).
   Tanzen (Box an): nur dann und immer wieder stimme/murmeln-8.mp3 (95281C52…), sonst sagt er beim Tanzen nichts.
   Hüfte: erster Hilferuf beim Hinlegen, Hilferuf-Blasen bleiben ca. 8 s.
-  Kein zufälliges Murmeln mehr: ansprechen2 (stimme/naehe-2a.mp3) kommt nur, wenn man die Holzfigur anfasst.
+  Holzfigur anfassen: Ton stimme/murmeln-9.mp3 (= ansprechen2.MOV vom 17.10., Betreiber-Wunsch; naehe-2a.mp3 ist ein anderer
+  Clip gleichen Namens und wird nicht mehr benutzt).
   Sprach-Reihenfolge: Dennis spricht nie gleichzeitig. Warteschlange mit Wichtigkeit: von uns provoziert (2) vor Ereignis
   (Klo, Feuer, Hüfte = 1) vor nebenbei (Was los, Jammern, Nähe-Sprüche, Tanz-Spruch = 0); Nebensächliches wird für
   Wichtiges ausgeblendet. Lautstärke: je näher, desto lauter, aber überall noch hörbar.
@@ -58,8 +60,8 @@
   bringt ihn: Reifen in die Hand, auf Dennis klicken), macht Hula-Hoop und sagt dabei stimme/murmeln-10.mp3 (hello_fresh,
   nur noch dafür), hängt ihn danach zurück. Minispiel am Reifen: „Dennis’ Rekord knacken“ (A/D bzw. links/rechts tippen im Takt,
   Rekord 47 Runden, eigener Rekord im Browser gespeichert; Dennis kommentiert, wenn er zuguckt). Spielprinzip: so schnell
-  wie möglich abwechselnd A/D (zu langsam = Reifen fällt; Schwierigkeit: +10 je richtiger Taste, -14 bei falscher,
-  Abfall 28 + 0,4 je Runde pro Sekunde in minispiele.js). Schlacke-Minispiel auf rotem Ofen-Untergrund, Flexen großzügiger.
+  wie möglich abwechselnd A/D (zu langsam = Reifen fällt; +7 je richtiger Taste, -22 bei falscher, Abrutschen
+  32 + 1,2 je Runde pro Sekunde nach echter Zeit; für Dennis' 47 braucht man über 8 Tasten pro Sekunde). Schlacke-Minispiel auf rotem Ofen-Untergrund, Flexen großzügiger.
   Nähe-Sprüche: kommt man in Dennis' Nähe, sagt er ab und zu etwas (stimme/naehe-1a/1b = ansprechen1/11 wenn entspannt,
   naehe-2b/2c = ansprechen22/22222 ab Wut 35, dann auch weiter weg hörbar). Je näher, desto lauter.
   Ärgern (Kaffee, Kiwi, Brotdose): Ton stimme/aergern-1 (ärgernleicht1), dann aergern-2, dann abwechselnd.
@@ -77,7 +79,7 @@
 - Dennis' Klemmbrett (liegt auf dem Sofa): Klick = in die Hand, dann liest man es (kein Menü, kein „Lesen“). Notizen in NOTIZEN (world.js): Lydia anrufen, Hüfte hinten
   links, Heringe essen, Arzttermine, TK-Pizza einkaufen, Sexy abmelden, Fußmatte waschen.
 - Erste-Hilfe-Kasten neben dem Feuerlöscher. Klospülung = assets/klospuelung.mp3 (Ton aus dem Video vom Betreiber, mit Ausblenden).
-- Feuer: einmal pro Spiel (nach dem Flexen bald) brennt der Mülleimer neben der Werkbank, Feuer-Symbol unten rechts,
+- Feuer (Comic-Flammen, Flammenzungen, Glut, Rauch zur Decke; Rußfleck an Decke und Wand wächst und bleibt): einmal pro Spiel (nach dem Flexen bald) brennt der Mülleimer neben der Werkbank, Feuer-Symbol unten rechts,
   Dennis wartet ca. 16 s, bevor er selbst löscht. Vor dem Flexen nur mit
   anderem Grund: Johnny hat seine Kippe reingeschnippt (eigene Sprüche). Dennis ruft (Blase rechts),
   holt den Feuerlöscher (rechte Wand zwischen Schweißplatz und Waschplatz) und löscht selbst, wird sauer. Löscht man selbst: Lob, Wut sinkt. Hält man den Löscher
@@ -92,6 +94,11 @@
 - Bedienung: Hat ein Ding nur eine Aktion, wird sie beim Klick direkt ausgeführt (kein Menü). Box und Licht schalten
   sofort beim Klick (ohne Hinlaufen). Abbrechen-Knöpfe hell mit dunkler Schrift.
 - Dennis hält seinen Becher immer aufrecht, Schuhsohlen rund (keine eckigen Platten).
+- Ofen abgeben: fertigen Ofen anklicken = hochheben (HALTUNG ofen), zu Dennis tragen, auf Dennis klicken; er wird neben Dennis
+  abgestellt, dann Bewertung. Ohne Ofen in der Hand sagt Dennis „bring ihn her“.
+- Note: Arbeit (Verarbeitung) max. 75 Punkte + Dennis' Laune max. 25 (100 minus Mittel aus höchster Wut und Wut am Ende)
+  - 1,5 je Fehler (max. 15) - Werkstatt (dreckig 4, Dennis gefegt 2). Note 1 ab 85, 2 ab 72, 3 ab 58, 4 ab 45, 5 ab 30.
+  Die Aufschlüsselung steht im Ende-Fenster.
 - clips.json enthält nur noch ausraster-1..4 und rausgeflogen-1 (alle anderen Listen leer, Betreiber-Wunsch).
 - Hüfte: erst still hinlegen, dann rufen und jammern. Schlauch: nur die Spritzpistole kommt in die Hand (Wasser aus der Düse),
   Pfützen unregelmäßig (Klecks-Texturen).
