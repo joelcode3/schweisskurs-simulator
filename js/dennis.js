@@ -357,6 +357,25 @@ export function baueDennis(scene) {
   umrissLocken.raycast = () => {};
   kopf.add(umrissLocken);
   kopf.add(locken);
+  // Schlaf-Zeichen (Z Z Z), steigen über dem Kopf auf
+  const zTex = leinwandTextur(64, 64, (g) => {
+    g.clearRect(0, 0, 64, 64);
+    g.font = '400 56px Bangers, Impact, sans-serif';
+    g.textAlign = 'center';
+    g.lineWidth = 6;
+    g.strokeStyle = '#111';
+    g.strokeText('Z', 32, 54);
+    g.fillStyle = '#ffffff';
+    g.fillText('Z', 32, 54);
+  });
+  const zzz = [0, 1, 2].map(() => {
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: zTex, transparent: true, depthTest: false }));
+    sp.visible = false;
+    sp.renderOrder = 10;
+    scene.add(sp);
+    return sp;
+  });
+
   // ---------- Verhalten ----------
   let blickZiel = null;
   let ziel = null;
@@ -371,6 +390,7 @@ export function baueDennis(scene) {
   let schrittPhase = 0;
   let blinzeln = 2 + Math.random() * 3;
   let liegenAnteil = 0;
+  let sitzAnteil = 0;
   let essen = false;
   const hautFarbe = new THREE.Color(HAUT);
   const zielFarbe = new THREE.Color(HAUT);
@@ -404,6 +424,21 @@ export function baueDennis(scene) {
       if (beat !== undefined) takt = beat;
     },
     sichtbar(an) { wurzel.visible = an; },
+    // Auf Sofa setzen/legen: Position und Blickrichtung direkt setzen
+    platziere(x, y, z, drehung) {
+      ziel = null;
+      if (zielAufloesen) { const r = zielAufloesen; zielAufloesen = null; r(false); }
+      wurzel.position.set(x, y, z);
+      wurzel.rotation.y = drehung;
+    },
+    aufstehen(x, z) {
+      modus = 'normal';
+      wurzel.position.y = 0;
+      if (x !== undefined) wurzel.position.set(x, 0, z);
+      essen = false;
+      dose.visible = false;
+      tomate.visible = false;
+    },
     besen(an) { besenInHand.visible = an; },
     mittagspause(an) { dose.visible = an; tomate.visible = an; essen = an; },
     // Löst mit true auf, wenn er ankommt, mit false, wenn ein neues Ziel dazwischenkommt
@@ -435,7 +470,8 @@ export function baueDennis(scene) {
       // Blinzeln
       blinzeln -= dt;
       const zu = blinzeln < 0.12 && blinzeln > 0;
-      for (const a of augen) a.scale.y = zu ? 0.15 : 1;
+      for (const a of augen) a.scale.y = zu || modus === 'schlafen' ? 0.12 : 1;
+      rucksack.visible = modus !== 'schlafen';
       if (blinzeln <= 0) blinzeln = 2.5 + Math.random() * 4;
 
       // Laufen (nicht im Liegen)
@@ -460,9 +496,22 @@ export function baueDennis(scene) {
       }
 
       // Hinlegen: Körper kippt auf den Rücken, Kopf Richtung -z
-      liegenAnteil = naeher(liegenAnteil, modus === 'liegen' ? 1 : 0, Math.min(1, dt * 3));
+      const liegt = modus === 'liegen' || modus === 'schlafen';
+      liegenAnteil = naeher(liegenAnteil, liegt ? 1 : 0, Math.min(1, dt * 3));
+      sitzAnteil = naeher(sitzAnteil, modus === 'sitzen' ? 1 : 0, Math.min(1, dt * 4));
       koerper.rotation.x = -Math.PI / 2 * liegenAnteil;
-      koerper.position.set(0, 0.16 * liegenAnteil, 0.9 * liegenAnteil);
+      koerper.position.set(0, 0.16 * liegenAnteil - 0.32 * sitzAnteil, 0.9 * liegenAnteil);
+      // Schlafen: Z Z Z über dem Kopf
+      const kp = api.kopfPosition();
+      zzz.forEach((sp, i) => {
+        sp.visible = modus === 'schlafen' && wurzel.visible;
+        if (!sp.visible) return;
+        const t = ((zeit * 0.45 + i / 3) % 1);
+        sp.position.set(kp.x + 0.1 + t * 0.25, kp.y + 0.15 + t * 0.55, kp.z + Math.sin(t * 6 + i) * 0.05);
+        const g = 0.12 + t * 0.14;
+        sp.scale.set(g, g, g);
+        sp.material.opacity = t < 0.15 ? t / 0.15 : 1 - (t - 0.15) / 0.85;
+      });
 
       const beat = modus === 'tanzen' && takt ? takt() : null;
       const tanzt = beat !== null && !laeuft && modus === 'tanzen';
@@ -476,6 +525,18 @@ export function baueDennis(scene) {
         knie[0].rotation.x = Math.max(0, -s) * 0.7;
         knie[1].rotation.x = Math.max(0, s) * 0.7;
         rumpf.position.y = 0.9 + Math.abs(Math.cos(schrittPhase)) * 0.04;
+      } else if (modus === 'sitzen') {
+        for (let i = 0; i < 2; i++) {
+          beine[i].rotation.x = naeher(beine[i].rotation.x, -1.5, k);
+          knie[i].rotation.x = naeher(knie[i].rotation.x, 1.5, k);
+        }
+        rumpf.position.y = 0.9 + Math.sin(zeit * 1.8) * 0.004;
+      } else if (modus === 'schlafen') {
+        for (let i = 0; i < 2; i++) {
+          beine[i].rotation.x = naeher(beine[i].rotation.x, i ? -0.1 : -0.35, k);
+          knie[i].rotation.x = naeher(knie[i].rotation.x, i ? 0.15 : 0.6, k);
+        }
+        rumpf.position.y = 0.9 + Math.sin(zeit * 1.3) * 0.01;
       } else if (modus === 'liegen') {
         // linkes Knie angewinkelt, Hand an der Hüfte
         beine[0].rotation.x = naeher(beine[0].rotation.x, -0.9, k);
@@ -505,7 +566,7 @@ export function baueDennis(scene) {
       // Kopf zum Blickziel drehen
       let kopfSoll = 0;
       let kopfNick = 0;
-      if (blickZiel && modus !== 'liegen') {
+      if (blickZiel && modus !== 'liegen' && modus !== 'schlafen') {
         const kp = api.kopfPosition();
         const dx = blickZiel.x - wurzel.position.x;
         const dz = blickZiel.z - wurzel.position.z;
@@ -513,12 +574,15 @@ export function baueDennis(scene) {
         const rel = winkelDiff(welt, wurzel.rotation.y);
         kopfSoll = THREE.MathUtils.clamp(rel, -1.1, 1.1);
         // Körper mitdrehen, wenn der Kopf nicht reicht
-        if (!laeuft && Math.abs(rel) > 1.0) wurzel.rotation.y += Math.sign(rel) * Math.min(Math.abs(rel) - 1.0, dt * 2.5);
+        if (!laeuft && (modus === 'normal' || modus === 'tanzen') && Math.abs(rel) > 1.0) wurzel.rotation.y += Math.sign(rel) * Math.min(Math.abs(rel) - 1.0, dt * 2.5);
         const horiz = Math.hypot(dx, dz);
         kopfNick = THREE.MathUtils.clamp(-Math.atan2(blickZiel.y - kp.y, horiz), -0.4, 0.4);
       } else if (modus === 'liegen') {
         kopfSoll = Math.sin(zeit * 0.7) * 0.5;
         kopfNick = -0.5;
+      } else if (modus === 'schlafen') {
+        kopfSoll = 0.5;
+        kopfNick = -0.3;
       }
       if (tanzt) kopfNick += Math.pow(Math.abs(Math.cos((beat % 1) * Math.PI)), 3) * 0.3 - 0.1;
       kopf.rotation.y += (kopfSoll - kopf.rotation.y) * Math.min(1, dt * 6);
@@ -526,9 +590,14 @@ export function baueDennis(scene) {
 
       // Arme und Kaffee
       const wuetend = stimmung === 'wut';
-      becher.visible = !wuetend && !tanzt && !essen && !besenInHand.visible && modus !== 'liegen';
+      becher.visible = !wuetend && !tanzt && !essen && !besenInHand.visible && modus !== 'liegen' && modus !== 'schlafen' && modus !== 'sitzen';
       if (!besenInHand.visible) rumpf.rotation.y = 0;
-      if (modus === 'liegen') {
+      if (modus === 'schlafen') {
+        links.schulter.rotation.set(-0.15, 0, 0.05);
+        links.ellbogen.rotation.set(-0.5, 0, 0);
+        rechts.schulter.rotation.set(-0.15, 0, -0.05);
+        rechts.ellbogen.rotation.set(-0.5, 0, 0);
+      } else if (modus === 'liegen') {
         links.schulter.rotation.set(-0.3, 0, -0.9);
         links.ellbogen.rotation.set(-1.9, 0, 0);
         rechts.schulter.rotation.set(-0.2 + Math.sin(zeit * 3) * 0.6, 0, 0.6);
@@ -594,12 +663,13 @@ export function baueDennis(scene) {
 
       // Gesicht
       const leidet = modus === 'liegen';
+      const schlaeft = modus === 'schlafen';
       const brauWinkel = leidet ? -0.35 : ({ ruhig: 0, skeptisch: 0.25, sauer: 0.45, wut: 0.6, froh: -0.2 }[stimmung] ?? 0);
       brauen[0].rotation.z = -brauWinkel;
       brauen[1].rotation.z = brauWinkel;
       brauen[0].position.y = brauen[1].position.y = 0.205 - Math.abs(brauWinkel) * 0.02 + (stimmung === 'froh' ? 0.01 : 0);
       if (stimmung === 'skeptisch' && !leidet) brauen[1].position.y += 0.015;
-      const mundAuf = essen ? 0.014 + Math.max(0, Math.sin(zeit * 9)) * 0.02 : leidet ? 0.02 + Math.abs(Math.sin(zeit * 5)) * 0.03
+      const mundAuf = schlaeft ? 0.014 + Math.max(0, Math.sin(zeit * 1.3)) * 0.012 : essen ? 0.014 + Math.max(0, Math.sin(zeit * 9)) * 0.02 : leidet ? 0.02 + Math.abs(Math.sin(zeit * 5)) * 0.03
         : tanzt ? 0.025
           : wuetend ? 0.03 + Math.abs(Math.sin(zeit * 14)) * 0.035 : stimmung === 'sauer' ? 0.02 + Math.abs(Math.sin(zeit * 10)) * 0.02 : 0.014;
       mund.scale.set(stimmung === 'froh' || tanzt ? 1.3 : 1, mundAuf / 0.014, 1);

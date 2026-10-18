@@ -68,8 +68,16 @@ const FEHLER = {
     texte: DENNIS.fehler.brotdose,
   },
   kaffeeZuviel: {
-    stufe: 'leicht', wut: 5, nebensache: true, clip: 'fehler_kaffee', name: 'Dennis mit Kaffee abgefüllt',
+    stufe: 'leicht', wut: 8, nebensache: true, clip: 'fehler_kaffee', name: 'Dennis mit Kaffee abgefüllt',
     texte: [DENNIS.kaffee.genug],
+  },
+  milch: {
+    stufe: 'leicht', wut: 10, nebensache: true, clip: 'fehler_kaffee', name: 'Milch in Dennis’ Kaffee',
+    texte: [DENNIS.kaffee.milch],
+  },
+  geweckt: {
+    stufe: 'leicht', wut: 6, nebensache: true, clip: 'ermahnung', name: 'Dennis aus dem Mittagsschlaf geweckt',
+    texte: [DENNIS.geweckt],
   },
   licht: {
     stufe: 'leicht', wut: 4, nebensache: true, clip: 'licht', nurZeichnung: true, name: 'Licht ausgemacht',
@@ -118,6 +126,9 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
     start: performance.now(),
     beschaeftigt: false,
     kaffeeInHand: false,
+    kaffeeMilch: false,
+    kaffeesSeitKlo: 0,
+    aufKlo: false,
     kaffees: 0,
     kiwisGegessen: 0,
     musik: false,
@@ -235,6 +246,12 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
     if (!dennis.wurzel.visible) {
       dennis.springZu(welt.KLO.x, welt.KLO.z);
       dennis.sichtbar(true);
+    }
+    if ((dennis.modus === 'sitzen' || dennis.modus === 'schlafen') && id !== 'geweckt') {
+      mittagGeweckt = true;
+      dennis.aufstehen(welt.SOFA.x, welt.SOFA.vorneZ);
+      welt.objekte.brotdose.visible = true;
+      z.mittag = 'erledigt';
     }
     if (f.stufe !== 'leicht') await dennisKommt(f.stufe === 'voll' ? 3.6 : 2.4);
     const text = extraText || zufallAus(f.texte);
@@ -481,18 +498,47 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
     const ok = await ui.haltenDialog({ titel: 'Kaffee kochen', text: 'Schwarz, stark, in Dennis’ Becher. So wie er ihn mag.', knopf: 'Brühen (halten)', sekunden: 2, geraeusch: 'wasser' });
     if (!ok) return;
     z.kaffeeInHand = true;
+    z.kaffeeMilch = false;
     ui.hinweis('Kaffee in der Hand. Ab zu Dennis damit.');
   }
 
+  function milchRein() {
+    z.kaffeeMilch = true;
+    blip(500, 0.06);
+    ui.hinweis('Schuss Milch rein. Sieht gleich viel freundlicher aus.');
+  }
+
+  async function wutPlus(f) {
+    z.wut = Math.min(100, z.wut + f.wut * multi);
+    z.wutMax = Math.max(z.wutMax, z.wut);
+    z.fehler.push(f.name);
+    ui.wutZeigen(z.wut, stimmungAusWut());
+    ui.wutWackeln();
+    if (z.wut >= 100) { z.beschaeftigt = true; await rausgeflogen(); return true; }
+    return false;
+  }
+
   async function kaffeeGeben() {
+    const milch = z.kaffeeMilch;
     z.kaffeeInHand = false;
+    z.kaffeeMilch = false;
     z.kaffees++;
-    if (z.kaffees >= 3) return fehler('kaffeeZuviel');
-    z.wut = Math.max(0, z.wut - (z.kaffees === 1 ? 20 : 13));
+    z.kaffeesSeitKlo++;
+    if (milch) {
+      if (await wutPlus(FEHLER.milch)) return;
+      kloPause(DENNIS.kaffee.milch, false);
+      return;
+    }
+    if (z.kaffeesSeitKlo >= 3) {
+      if (await wutPlus(FEHLER.kaffeeZuviel)) return;
+      kloPause(DENNIS.kaffee.genug, false);
+      return;
+    }
+    if (z.kaffees === 1) z.wut = Math.max(0, z.wut - 20);
     dennis.stimmung('froh');
     jingle(true);
     aktualisieren();
-    ui.lobZeigen(z.kaffees === 1 ? DENNIS.kaffee.danke : DENNIS.kaffee.nochmal);
+    ui.lobZeigen(z.kaffeesSeitKlo === 1 ? DENNIS.kaffee.danke : DENNIS.kaffee.nochmal);
     dennis.stimmung('ruhig');
   }
 
@@ -536,6 +582,8 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
     if (!ok) return;
     welt.dreckWeg();
     z.gefegt = true;
+    z.wut = Math.max(0, z.wut - 8);
+    aktualisieren();
     ui.hinweis('Boden ist sauber.');
     ui.lobZeigen(DENNIS.fegen);
   }
@@ -571,7 +619,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
   }
 
   // ---------- Murmeln: Originaltöne, lauter je näher man ist ----------
-  const MURMELN = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => `stimme/murmeln-${n}.mp3`);
+  const MURMELN = [8, 9, 10].map((n) => `stimme/murmeln-${n}.mp3`);
   let murmelTon = null;
   let naechstesMurmeln = 20;
   let letzterMurmel = -1;
@@ -594,13 +642,14 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
     await ortsTon(MURMELN[n]);
   }
 
-  // Mittagspause: Dennis kommt mit Brotdose rüber und isst eine Tomate. Nur Ton, blockiert nichts.
-  // Zwischendurch: "Warte kurz!" und ab aufs Klo. Blockiert nichts.
-  async function kloPause() {
-    z.klo = 'gerade';
-    dennisSagt(DENNIS.klo, true);
+  // Klo: regulär ("Warte kurz!", danach entspannter) oder von uns ausgelöst (Kaffee, Milch). Blockiert nichts.
+  async function kloPause(text = DENNIS.klo, regulaer = true) {
+    z.aufKlo = true;
+    if (regulaer) z.klo = 'erledigt';
+    if (dennis.modus !== 'normal') dennis.aufstehen();
+    dennisSagt(text, !regulaer);
     await warte(700);
-    await Promise.race([dennis.gehZu(welt.KLO.x, welt.KLO.z, 3.4), warte(6000)]);
+    await Promise.race([dennis.gehZu(welt.KLO.x, welt.KLO.z, regulaer ? 3.4 : 4.2), warte(6000)]);
     dennis.sichtbar(false);
     await warte(6000 + Math.random() * 4000);
     if (!dennis.wurzel.visible) {
@@ -611,22 +660,61 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
       dennis.springZu(welt.KLO.x, welt.KLO.z);
       dennis.sichtbar(true);
     }
-    z.klo = 'erledigt';
+    z.aufKlo = false;
+    z.kaffeesSeitKlo = 0;
+    if (regulaer) {
+      z.wut = Math.max(0, z.wut - 10);
+      aktualisieren();
+      dennisSagt(DENNIS.kloZurueck);
+    }
     await Promise.race([dennis.heim(), warte(9000)]);
   }
 
+  // Mittagspause: aufs Sofa, Brotdose, Tomate, dann kurzer Mittagsschlaf. Blockiert nichts.
+  let mittagGeweckt = false;
   async function mittagspause() {
     z.mittag = 'gerade';
+    mittagGeweckt = false;
+    const S = welt.SOFA;
     welt.objekte.brotdose.visible = false;
     dennis.mittagspause(true);
-    const ziel = platzVorSpieler(1.4);
-    await Promise.race([dennis.gehZu(ziel.x, ziel.z, 1.1), warte(4000)]);
-    const t = await ortsTon('stimme/tomate.mp3');
-    await warte(t ? t.dauer * 1000 + 300 : 5000);
-    z.mittag = 'erledigt';
-    await Promise.race([dennis.heim(), warte(8000)]);
+    const angekommen = await Promise.race([dennis.gehZu(S.x, S.vorneZ, 1.2), warte(7000).then(() => false)]);
+    const abbruch = () => {
+      dennis.aufstehen(S.x, S.vorneZ);
+      welt.objekte.brotdose.visible = true;
+      z.mittag = 'erledigt';
+      dennis.heim();
+    };
+    if (z.mittag !== 'gerade') return;
+    if (!angekommen && dennis.position.distanceTo(new THREE.Vector3(S.x, 0, S.vorneZ)) > 0.3) dennis.springZu(S.x, S.vorneZ);
+    dennis.platziere(S.x, 0, S.sitzZ, Math.PI);
+    dennis.setzeModus('sitzen');
+    const essStart = performance.now();
+    await warte(800);
+    await dennisSagt(DENNIS.tomate);
+    await warte(Math.max(1500, 8000 - (performance.now() - essStart)));
+    if (z.mittag !== 'gerade' || mittagGeweckt) return;
     dennis.mittagspause(false);
     welt.objekte.brotdose.visible = true;
+    // hinlegen und schlafen
+    dennis.platziere(S.x + 0.1, 0.36, S.z + 0.05, Math.PI / 2);
+    dennis.setzeModus('schlafen');
+    const schlafStart = performance.now();
+    while (performance.now() - schlafStart < 22000) {
+      await warte(300);
+      if (mittagGeweckt || z.mittag !== 'gerade') return;
+    }
+    abbruch();
+  }
+
+  async function wecken() {
+    mittagGeweckt = true;
+    const S = welt.SOFA;
+    dennis.aufstehen(S.x, S.vorneZ);
+    welt.objekte.brotdose.visible = true;
+    z.mittag = 'erledigt';
+    await fehler('geweckt');
+    dennis.heim();
   }
 
   async function aufhelfen() {
@@ -634,8 +722,11 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
     z.beschaeftigt = true;
     dennis.setzeModus('normal');
     await new Promise((r) => setTimeout(r, 900));
-    z.wut = Math.max(0, z.wut - 5);
+    z.wut = Math.max(0, z.wut - 12);
+    dennis.stimmung('froh');
+    jingle(true);
     ui.lobZeigen(DENNIS.huefte.danke);
+    setTimeout(() => { if (!z.beschaeftigt) dennis.stimmung('ruhig'); }, 4000);
     z.beschaeftigt = false;
     aktualisieren();
     dennis.heim();
@@ -696,8 +787,12 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
         return ['Schlackenhammer', 'Für die Schlacke auf den Nähten.', irgendeineNaht() && !z.schlackeWeg ? [A('Schlacke abklopfen', 'hammer', schlackeKlopfen)] : []];
       case 'kaffee':
         return ['Kaffeetasse', 'Steht CHEF drauf. Riecht gut.', [A('Einen Schluck nehmen', 'tasse', () => fehler('kaffee'))]];
+      case 'figur':
+        return ['Holzfigur', 'Handgeschnitzt. Dennis’ ganzer Stolz. Frag besser nicht.', []];
       case 'feuerloescher':
         return ['Feuerlöscher', 'Gut zu wissen, wo der hängt.', []];
+      case 'milch':
+        return ['Milch', z.kaffeeInHand ? (z.kaffeeMilch ? 'Ist schon Milch drin.' : 'Dennis trinkt schwarz. Oder?') : 'Erst einen Kaffee kochen.', z.kaffeeInHand && !z.kaffeeMilch ? [A('Milch in den Kaffee', 'tasse', milchRein)] : []];
       case 'kaffeemaschine':
         return ['Kaffeemaschine', z.kaffeeInHand ? 'Du hast schon einen Kaffee in der Hand.' : 'Dennis’ ganzer Stolz.', z.kaffeeInHand ? [] : [A('Kaffee für Dennis kochen', 'tasse', kaffeeKochen)]];
       case 'kiwi':
@@ -715,6 +810,8 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
         return ['Besen', welt.dreck ? 'Der Boden könnte es vertragen.' : 'Alles sauber.', [A('Fegen', 'hand', fegen)]];
       case 'dennis': {
         if (dennis.modus === 'liegen') return ['Dennis', 'Liegt auf dem Boden und hält sich die Hüfte.', [A('Dennis aufhelfen', 'hand', aufhelfen)]];
+        if (dennis.modus === 'schlafen') return ['Dennis', 'Schläft. Schnarcht leise.', [A('Wecken', 'hand', wecken)]];
+        if (dennis.modus === 'sitzen') return ['Dennis', 'Isst gerade. Lass ihn.', []];
         const a = [A('Fragen, was als Nächstes dran ist', 'frage', dennisFragen)];
         if (alleNaehte()) a.unshift(A('Ofen abgeben', 'abgeben', abgeben));
         if (z.kaffeeInHand) a.unshift(A('Kaffee geben', 'tasse', kaffeeGeben));
@@ -730,6 +827,10 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
     if (ui.menueOffen()) { ui.schliesseMenue(); return; }
     if (!treffer) return;
     const { info, obj } = treffer;
+    if (!obj.visible) {
+      if (info.id === 'dennis') ui.hinweis('Dennis ist gerade auf dem Klo.');
+      return;
+    }
     steuerung.sperre(true);
     await hinZu(info, obj);
     steuerung.sperre(false);
@@ -737,6 +838,8 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
     if (!m) return;
     const [titel, text, aktionen] = m;
     if (!aktionen.length) { ui.hinweis(`${titel}: ${text || 'Gerade nichts zu tun.'}`); return; }
+    // Nur eine Möglichkeit: direkt ausführen, kein Menü
+    if (aktionen.length === 1) { aktionen[0].tun(); return; }
     ui.aktionsMenue(titel, text, aktionen);
   }
 
@@ -869,7 +972,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
       if (!dennisSteht) dennisZuletztGelaufen = sekundenSeitStart();
       // nur wenn wir hingegangen sind (gerade noch gelaufen) und Dennis schon eine Weile stand
       const hingegangen = sekundenSeitStart() - zuletztGelaufen < 4 && zuletztGelaufen - dennisZuletztGelaufen > 1.5;
-      const passt = abstand < 1.9 && steht && hingegangen && dennis.modus !== 'liegen' && !z.beschaeftigt;
+      const passt = abstand < 1.9 && steht && hingegangen && (dennis.modus === 'normal' || dennis.modus === 'tanzen') && dennis.wurzel.visible && !z.beschaeftigt;
       if (!passt) z.nebenDennis = 0;
       else if (!z.nebenDennis) z.nebenDennis = sekundenSeitStart();
       if (z.nebenDennis && sekundenSeitStart() - z.nebenDennis > 1.0 && sekundenSeitStart() - z.baustelleZuletzt > 40 && !buehneBelegt()) {
@@ -884,16 +987,16 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, dennisModus }) {
       // Murmeln in der Nähe (nicht während Dennis spricht oder weg ist)
       if (murmelTon) {
         if (buehneBelegt() && !z.dennisFegt) { murmelTon.stopp(); murmelTon = null; } else murmelTon.lautstaerke(lautstaerkeNachAbstand());
-      } else if (sekundenSeitStart() > naechstesMurmeln && !z.beschaeftigt && !buehneBelegt() && dennis.wurzel.visible && lautstaerkeNachAbstand() > 0.15) {
+      } else if (sekundenSeitStart() > naechstesMurmeln && !z.beschaeftigt && !buehneBelegt() && dennis.wurzel.visible && (dennis.modus === 'normal' || dennis.modus === 'tanzen') && lautstaerkeNachAbstand() > 0.15) {
         naechstesMurmeln = sekundenSeitStart() + 15 + Math.random() * 20;
         murmeln();
       }
       // Klo-Pause: einmal pro Spiel, nicht gleich am Anfang
-      if (z.klo === 'nie' && sekundenSeitStart() > 100 && !z.beschaeftigt && !z.dennisFegt && z.mittag !== 'gerade' && dennis.modus === 'normal' && dennis.istDaheim() && !buehneBelegt() && Math.random() < dt * 0.03) {
+      if (z.klo === 'nie' && !z.aufKlo && sekundenSeitStart() > 100 && !z.beschaeftigt && !z.dennisFegt && z.mittag !== 'gerade' && dennis.modus === 'normal' && dennis.istDaheim() && !buehneBelegt() && Math.random() < dt * 0.03) {
         kloPause();
       }
       // Mittagspause: Dennis kommt mit Brotdose rüber und isst eine Tomate (einmal pro Spiel)
-      if (z.mittag === 'nie' && sekundenSeitStart() > 140 && !z.beschaeftigt && !z.dennisFegt && z.klo !== 'gerade' && dennis.modus === 'normal' && dennis.istDaheim() && !buehneBelegt() && Math.random() < dt * 0.03) {
+      if (z.mittag === 'nie' && sekundenSeitStart() > 140 && !z.beschaeftigt && !z.dennisFegt && !z.aufKlo && dennis.modus === 'normal' && dennis.istDaheim() && !buehneBelegt() && Math.random() < dt * 0.03) {
         mittagspause();
       }
       // Hüfte: einmal pro Spiel legt sich Dennis hin und jammert, bis man ihm aufhilft

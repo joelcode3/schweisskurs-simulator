@@ -4,6 +4,8 @@
 export const DENNIS = {
   begruessung: 'Moin! Heute baust du einen Ofen aus der alten Gasflasche da drüben. Was zu tun ist, steht auf deinem Zettel. Und halt dich an meine Regeln an der Wand. Wenn du Mist baust, merk ich das. Ich merk alles.',
   klo: 'Warte kurz!',
+  kloZurueck: 'Ahh. Jetzt geht’s mir besser.',
+  geweckt: 'Hä? Was is’n?! Ich hab Pause!',
 
   fehler: {
     brille: [
@@ -69,7 +71,8 @@ export const DENNIS = {
   kaffee: {
     danke: 'Danke, den hab ich jetzt gebraucht.',
     nochmal: 'Noch einer? Na gut. Aber dann ist Schluss.',
-    genug: 'Willst du mich vergiften? Ich hab genug Kaffee, ich zitter schon!',
+    genug: 'Drei Kaffee?! Oh nein ... ich muss SOFORT aufs Klo!',
+    milch: 'Ist da Milch drin? GIFT!!',
     nichtsInDerHand: 'Und wo ist der Kaffee?',
   },
   kiwi: {
@@ -88,7 +91,7 @@ export const DENNIS = {
       'Meine Hüfte! Hilf mir doch mal hoch!',
       'Das ist das Wetter. Immer hinten links. Hilf mir mal!',
     ],
-    danke: 'Danke. ... Und erzähl das keinem.',
+    danke: 'Danke dir! Ohne dich läg ich da noch. Und erzähl das keinem.',
   },
   fegen: 'Na guck. Ordnung ist das halbe Schweißen.',
 

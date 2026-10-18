@@ -25,11 +25,16 @@
   Lichtschalter (Dennis meckert), Besen (Dreck nach Schneiden/Schweißen, zählt in die Note),
   Hüfte (Dennis legt sich einmal pro Spiel hin und jammert, bis man ihm aufhilft),
   Klo-Pause zwischendurch (frühestens nach 100 s, „Warte kurz!“, WC-Tür vorne rechts). Geht man zu Dennis hin und bleibt
-  stehen: „Was los??“ (stimme/baustellenfeeling.mp3, 1 s, nicht im Liegen, nicht wenn er selbst kommt, max. alle 40 s). Mittagspause: einmal pro Spiel kommt er mit Brotdose und isst eine Tomate
-  (stimme/tomate.mp3). Kiwis liegen lose auf dem Kaffeetisch.
+  stehen: „Was los??“ (stimme/baustellenfeeling.mp3, 1 s, nicht im Liegen, nicht wenn er selbst kommt, max. alle 40 s). Mittagspause: einmal pro Spiel setzt er sich aufs Sofa (vorne links), isst aus der Brotdose eine Tomate
+  (stimme/tomate.mp3), legt sich dann ~22 s schlafen (Z Z Z). Wecken = Wut. Kiwis liegen lose auf dem Kaffeetisch.
   Liegt Dreck > 45 s, holt Dennis den Besen und fegt selbst (stimme/muell.mp3, Note -2).
-  Murmeln: stimme/murmeln-1..10.mp3 (Originaltöne aus den Videos), zufällig alle 15–35 s, nur Ton, Lautstärke nach Abstand.
+  Murmeln: nur stimme/murmeln-8..10.mp3 (vom Betreiber extra dafür geschickt: 95281C52…, ansprechen2, hello_fresh), zufällig alle 15–35 s, nur Ton, Lautstärke nach Abstand.
   Alle Töne mit kurzem Ein- und Ausblenden. Poster (assets/poster.jpg) mit Klebeband über der Kaffeeecke.
+- Kaffee: 1. senkt Wut (-20), 3 hintereinander (seit letztem Klo) = sofort aufs Klo + etwas Wut. Milch (Tüte auf dem
+  Kaffeetisch) = „Ist da Milch drin? GIFT!!“ + Klo + Wut. Reguläres Klo (nicht ausgelöst) senkt die Wut (-10).
+  Fegen senkt Wut (-8), Aufhelfen nach Hüfte (-12, Dennis freut sich).
+- Holzfigur (Baumstamm mit geschnitztem Hintern, ~70 cm) steht zwischen Box und Besen.
+- Bedienung: Hat ein Ding nur eine Aktion, wird sie beim Klick direkt ausgeführt (kein Menü).
 - Anzeige-Regeln (Betreiber): Videos nur für Arbeitssicherheit und Aufgaben, rechts am Rand, ohne Wegklicken,
   verschwinden von selbst. Nebensachen (Kaffee, Kiwi, Licht, Hüfte, Klo, „Was los??“) nur als kleine Sprechblase
   über Dennis' Kopf (folgt ihm). Lob ohne Video als feste Sprechblase rechts (bleibt stehen bis zum nächsten Lob).

@@ -182,9 +182,9 @@ export function baueWelt(scene) {
   loescher.add(setze(kugel(0.09, FARBE.rot), 0, 0.5, 0));
   loescher.add(setze(zylinder(0.025, 0.025, 0.08, FARBE.schwarz), 0, 0.6, 0));
   loescher.add(setze(quader(0.12, 0.025, 0.03, FARBE.schwarz), 0.04, 0.65, 0));
-  setze(loescher, -2.55, 0.9, RAUM.zMax - 0.14);
+  setze(loescher, -2.3, 0.9, RAUM.zMax - 0.14);
   scene.add(loescher);
-  scene.add(setze(quader(0.22, 0.04, 0.14, 0x444444), -2.55, 0.88, RAUM.zMax - 0.1));
+  scene.add(setze(quader(0.22, 0.04, 0.14, 0x444444), -2.3, 0.88, RAUM.zMax - 0.1));
   merke(loescher, 'feuerloescher', 'Feuerlöscher', null);
 
   // ---------- Plakate ----------
@@ -796,6 +796,71 @@ export function baueWelt(scene) {
     }
   }
 
+  // Altes Sofa neben der Kaffeeecke (Dennis' Mittagspause)
+  const sofa = new THREE.Group();
+  const SOFA_STOFF = 0x6b5a3a;
+  sofa.add(setze(quader(1.6, 0.25, 0.75, 0x4a3d28), 0, 0.2, 0));
+  for (const x of [-0.39, 0.39]) {
+    const kissen = quader(0.76, 0.14, 0.62, SOFA_STOFF);
+    kissen.position.set(x, 0.39, 0.04);
+    sofa.add(kissen);
+  }
+  sofa.add(setze(quader(1.6, 0.5, 0.18, SOFA_STOFF), 0, 0.55, -0.3, -0.12, 0, 0));
+  for (const x of [-0.86, 0.86]) sofa.add(setze(quader(0.14, 0.42, 0.75, 0x5a4a30), x, 0.42, 0));
+  for (const [x, z] of [[-0.75, -0.3], [0.75, -0.3], [-0.75, 0.3], [0.75, 0.3]]) sofa.add(setze(zylinder(0.03, 0.025, 0.08, 0x2a2018, {}, 8), x, 0.04, z));
+  // Flicken und Decke
+  sofa.add(setze(quader(0.18, 0.012, 0.16, 0x8a3a2a, { umriss: 0.002 }), 0.45, 0.466, 0.1, 0, 0.3, 0));
+  const sofaDecke = teil(new THREE.BoxGeometry(0.5, 0.04, 0.55), 0x2f5f86, { umriss: 0.003 });
+  sofaDecke.position.set(-0.55, 0.48, 0.0);
+  sofaDecke.rotation.y = 0.2;
+  sofa.add(sofaDecke);
+  setze(sofa, -3.2, 0, RAUM.zMax - 0.45);
+  sofa.rotation.y = Math.PI;
+  scene.add(sofa);
+  hindernis(-4.05, -2.35, 3.15, 4.0);
+
+  // Milchtüte auf dem Kaffeetisch
+  const milchTex = leinwandTextur(64, 128, (g, b, h) => {
+    g.fillStyle = '#ffffff'; g.fillRect(0, 0, b, h);
+    g.fillStyle = '#2f5fa8'; g.fillRect(0, 0, b, 34);
+    g.fillStyle = '#2f5fa8'; g.font = 'bold 18px Arial'; g.textAlign = 'center'; g.fillText('MILCH', b / 2, 80);
+  });
+  const milch = new THREE.Group();
+  milch.add(teil(new THREE.BoxGeometry(0.07, 0.17, 0.07), 0, { material: toon(0xffffff, { map: milchTex }), umriss: 0.003 }));
+  const giebel = teil(new THREE.CylinderGeometry(0.0001, 0.05, 0.05, 4, 1), 0xffffff, { umriss: 0.003 });
+  giebel.rotation.y = Math.PI / 4;
+  giebel.position.y = 0.11;
+  milch.add(giebel);
+  setze(milch, -4.6, 0.89, 3.62);
+  scene.add(milch);
+  merke(milch, 'milch', 'Milch', null);
+
+  // Holzschnitzfigur: Baumstamm mit geschnitztem Hintern (ca. 70 cm), steht auf dem Boden in Dennis' Ecke
+  const figur = new THREE.Group();
+  const HOLZ = 0xc08a4a;
+  const holzMat = toon(HOLZ);
+  const holz = (geo, x, y, z, rx = 0, ry = 0, rz = 0) => setze(teil(geo, 0, { material: holzMat, umriss: 0.005 }), x, y, z, rx, ry, rz);
+  // Oberteil (Rücken, oben gerade abgesägt)
+  figur.add(holz(new THREE.CylinderGeometry(0.115, 0.125, 0.26, 18), 0, 0.57, 0));
+  figur.add(setze(zylinder(0.112, 0.112, 0.006, 0xd9b27a, { umriss: false }, 18), 0, 0.703, 0));
+  // Hintern: zwei Backen nach hinten (lokal -z)
+  for (const x of [-0.06, 0.06]) {
+    const backe = holz(new THREE.SphereGeometry(0.1, 16, 12), x, 0.42, -0.045);
+    backe.scale.set(0.95, 1.05, 1.05);
+    figur.add(backe);
+  }
+  // Beine: zwei Stämme, leicht gespreizt, unten gerade abgesägt
+  for (const x of [-0.065, 0.065]) {
+    figur.add(holz(new THREE.CylinderGeometry(0.075, 0.065, 0.36, 14), x * 1.15, 0.19, 0.0, 0, 0, x > 0 ? -0.06 : 0.06));
+    figur.add(setze(zylinder(0.062, 0.062, 0.006, 0x9a8a3a, { umriss: false }, 14), x * 1.3, 0.004, 0));
+  }
+  // Schnitzspuren
+  for (let i = 0; i < 6; i++) figur.add(setze(quader(0.004, 0.08, 0.004, 0x8a5a2a, { umriss: false }), Math.sin(i) * 0.1, 0.55 + (i % 3) * 0.04, Math.cos(i) * 0.1 + 0.01));
+  setze(figur, -4.6, 0, 1.62, 0, -Math.PI / 2, 0);
+  scene.add(figur);
+  merke(figur, 'figur', 'Holzfigur', null);
+  hindernis(-4.8, -4.4, 1.42, 1.82);
+
   // Licht an/aus
   const lichtWerte = { himmel: himmel.intensity, sonne: sonne.intensity, fuell: fuell.intensity };
   function licht(an) {
@@ -868,6 +933,7 @@ export function baueWelt(scene) {
     BESEN: { x: -4.35, z: 2.05 },
     get dreck() { return dreck.length; },
     KLO: { x: 1.4, z: 3.55 },
+    SOFA: { x: -3.2, z: RAUM.zMax - 0.45, sitzZ: RAUM.zMax - 0.5, vorneZ: RAUM.zMax - 1.15 },
     update(dt) {
       for (const a of animiert) a(dt);
     },
