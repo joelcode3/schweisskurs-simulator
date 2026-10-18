@@ -99,7 +99,7 @@ const FEHLER = {
     texte: [DENNIS.hand.handy],
   },
   figur: {
-    stufe: 'leicht', wut: 5, nebensache: true, ton: 'stimme/naehe-2a.mp3', clip: 'ermahnung', name: 'Dennis’ Skulptur angefasst',
+    stufe: 'leicht', wut: 5, nebensache: true, ton: 'stimme/murmeln-9.mp3', clip: 'ermahnung', name: 'Dennis’ Skulptur angefasst',
     texte: DENNIS.hand.figur,
   },
   werfen: {
@@ -239,7 +239,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     ui.ausruestungZeigen(z.ppe);
     ui.wutZeigen(z.wut, stimmungAusWut());
     welt.objekte.flasche.zeige(z);
-    if (z.ort !== 'hand') welt.setzeFlasche(z.ort, z.naehte.beine !== null);
+    if (z.ort !== 'hand' && z.ort !== 'abgegeben') welt.setzeFlasche(z.ort, z.naehte.beine !== null);
     hand.handschuhe(z.ppe.handschuhe);
     handleisteZeigen();
   }
@@ -352,7 +352,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
   async function stimmenLaden() {
     if (stimmen) return;
     try { stimmen = (await (await fetch('stimme/stimme.json')).json()).saetze || {}; } catch { stimmen = {}; }
-    stimmenVorladen([...Object.values(stimmen).map((d) => `stimme/${d}`), ...MURMELN, TANZ_RUF, HULA_TON, ...ARGERN_TOENE, ...KLO_TOENE, ...NAEHE_1, ...NAEHE_2, 'stimme/naehe-2a.mp3', 'stimme/hand.handy.mp3', 'stimme/hand.handyNochmal.mp3', 'stimme/abwerfen-1.mp3', 'stimme/muell.mp3', 'assets/klospuelung.mp3']);
+    stimmenVorladen([...Object.values(stimmen).map((d) => `stimme/${d}`), ...MURMELN, TANZ_RUF, HULA_TON, ...ARGERN_TOENE, ...KLO_TOENE, ...NAEHE_1, ...NAEHE_2, 'stimme/murmeln-9.mp3', 'stimme/hand.handy.mp3', 'stimme/hand.handyNochmal.mp3', 'stimme/abwerfen-1.mp3', 'stimme/muell.mp3', 'assets/klospuelung.mp3']);
   }
   let stimmeJetzt = null;
   function sprechLautstaerke() {
@@ -626,7 +626,39 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
       await dennisSagt(sag(DENNIS.nichtLackiert));
       return;
     }
+    if (hand.item?.id !== 'ofen') {
+      await dennisSagt(sag(DENNIS.ofenBringen));
+      return;
+    }
+    await ofenUebergeben();
     await ende();
+  }
+
+  // Fertigen Ofen hochheben und zu Dennis tragen
+  function ofenHochheben() {
+    if (hand.item) { ui.hinweis('Für den Ofen brauchst du beide Hände. Erst ablegen.'); return; }
+    hand.nimm('ofen', welt.objekte.flasche.gruppe);
+    z.ortVorher = z.ort;
+    z.ort = 'hand';
+    klonk(0.3);
+    aktualisieren();
+    ui.hinweis('Schwer! Jetzt zu Dennis tragen und auf ihn klicken.', 3200);
+  }
+
+  // Ofen vor Dennis auf den Boden stellen
+  async function ofenUebergeben() {
+    const ofen = hand.loslassen();
+    z.ort = 'abgegeben';
+    const d = dennis.wurzel.position;
+    const p = kamera.position;
+    const r = Math.hypot(p.x - d.x, p.z - d.z) || 1;
+    // Neben Dennis abstellen (leicht zum Spieler hin), damit er nicht verdeckt wird
+    const vx = (p.x - d.x) / r, vz = (p.z - d.z) / r;
+    ofen.position.set(d.x + vx * 0.35 - vz * 0.75, 0.335 + 0.56, d.z + vz * 0.35 + vx * 0.75);
+    ofen.rotation.set(0, Math.atan2(p.x - d.x, p.z - d.z), 0);
+    klonk(0.6);
+    handleisteZeigen();
+    await warte(500);
   }
 
   // ---------- Klicks auf Objekte ----------
@@ -1097,9 +1129,10 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     if (ANZIEHBAR.includes(it.id)) knoepfe.push(['anziehen', cfg.tragen || 'Anziehen', 'E']);
     else if (cfg.benutzen) knoepfe.push(['benutzen', cfg.benutzen, 'E']);
     if (it.id === 'flasche') knoepfe.push(['', 'Klick auf Werkbank, Schweißtisch oder Waschplatz = abstellen', '']);
+    else if (it.id === 'ofen') knoepfe.push(['', 'Klick auf Dennis = abgeben, Klick auf Schweißplatz = abstellen', '']);
     else if (!cfg.nichtAblegen) knoepfe.push(['', 'Klick auf Fläche = ablegen', '']);
     if (!cfg.nichtWerfen) knoepfe.push(['werfen', 'Werfen', 'Q']);
-    if (!cfg.nichtAblegen && it.id !== 'flasche') knoepfe.push(['fallen', 'Fallen lassen', 'G']);
+    if (!cfg.nichtAblegen && it.id !== 'flasche' && it.id !== 'ofen') knoepfe.push(['fallen', 'Fallen lassen', 'G']);
     if (it.id === 'schlauch') knoepfe.push(['fallen', 'Zurückhängen', 'G']);
     el.innerHTML = `<div class="hand-name">${SYMBOL.hand}<span>${cfg.name}</span></div>${knoepfe.map(([k, t, taste]) => (k
       ? `<button type="button" data-k="${k}">${taste ? `<kbd>${taste}</kbd>` : ''}${t}</button>`
@@ -1357,7 +1390,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
   function werfen() {
     const it = hand.item;
     if (it.cfg.nichtWerfen) {
-      if (it.id === 'flasche') dennisSagt(sag(DENNIS.hand.flascheWerfen), true);
+      if (it.id === 'flasche' || it.id === 'ofen') dennisSagt(sag(DENNIS.hand.flascheWerfen), true);
       else ui.hinweis('Den Kaffee wirfst du besser nicht.');
       return;
     }
@@ -1382,6 +1415,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     const it = hand.item;
     if (it.id === 'schlauch') return schlauchZurueck();
     if (it.cfg.nichtAblegen) { ui.hinweis('Den bringst du besser Dennis.'); return; }
+    if (it.id === 'ofen') { ui.hinweis('Den Ofen nicht fallen lassen! Zu Dennis bringen oder am Schweißplatz abstellen.'); return; }
     if (it.id === 'flasche') { ui.hinweis('Die Flasche nicht einfach fallen lassen. Auf Werkbank, Schweißtisch oder Waschplatz klicken.'); return; }
     hand.fallenLassen(steuerung.blickRichtung());
     klonk(0.3);
@@ -1416,6 +1450,20 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
   async function klickMitHand(treffer) {
     const it = hand.item;
     const info = treffer.info;
+    if (it.id === 'ofen') {
+      if (info?.id === 'dennis') {
+        if (dennis.modus !== 'normal' || z.aufKlo || z.dennisLoescht || z.dennisFegt) { ui.hinweis('Dennis hat gerade keine Hand frei. Gleich nochmal.'); return true; }
+        steuerung.sperre(true);
+        await hinZu(info, treffer.obj);
+        steuerung.sperre(false);
+        await abgeben();
+        return true;
+      }
+      if (treffer.abstand > 4) { ui.hinweis('Zu weit weg. Geh näher ran.'); return true; }
+      if (welt.flaschenOrtBei(treffer.punkt || kamera.position, true) !== 'schweiss') { ui.hinweis('Bring den Ofen zu Dennis. Oder stell ihn am Schweißplatz wieder ab.'); return true; }
+      await flascheAbstellen(treffer.punkt);
+      return true;
+    }
     if (it.id === 'flasche') {
       if (treffer.abstand > 4) { ui.hinweis('Zu weit weg. Geh näher ran.'); return true; }
       await flascheAbstellen(treffer.punkt);
@@ -1511,11 +1559,13 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
           if (irgendeineNaht() && !z.schlackeWeg) a.push(A('Schlacke abklopfen', 'hammer', schlackeKlopfen));
           if (alleNaehte() && z.schlackeWeg && !z.lackiert) a.push(A('Mit Ofenlack schwarz lackieren', 'funke', lackieren));
           if (!irgendeineNaht()) a.push(A('Hochheben und tragen', 'tragen', flascheHochheben));
+          if (z.lackiert) a.push(A('Hochheben und zu Dennis bringen', 'tragen', ofenHochheben));
         }
         const info = z.ort === 'wasch'
           ? `Propanflasche 11 kg, angeblich leer. ${z.ventilAuf ? 'Ventil offen.' : 'Ventil zu.'} ${z.gespuelt ? 'Gespült.' : 'Nicht gespült.'}`
-          : z.ort === 'werkbank' ? (z.geschnitten ? 'Tür ist raus.' : z.angezeichnet ? 'Tür ist angezeichnet.' : 'Liegt bereit.') : 'Liegt auf dem Schweißtisch.';
-        return ['Gasflasche', info, a];
+          : z.ort === 'werkbank' ? (z.geschnitten ? 'Tür ist raus.' : z.angezeichnet ? 'Tür ist angezeichnet.' : 'Liegt bereit.') : z.lackiert ? 'Fertig lackiert. Bring ihn zu Dennis.'
+            : z.naehte.beine !== null ? 'Steht auf seinen Beinen vor dem Schweißtisch.' : 'Liegt auf dem Schweißtisch.';
+        return [irgendeineNaht() ? 'Ofen' : 'Gasflasche', info, a];
       }
       case 'flex':
         return ['Winkelschleifer', 'Mit Trennscheibe. Dreht mit 11.000 Umdrehungen.', [A('In die Hand nehmen', 'hand', () => aufnehmen('flex', welt.objekte.flex))]];
@@ -1654,9 +1704,17 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
   function note() {
     const qs = [z.schnittQ ?? 0, ...Object.values(z.naehte).map((q) => q ?? 0)];
     const qualitaet = qs.reduce((a, b) => a + b, 0) / qs.length;
-    const punkte = qualitaet * 0.65 + (100 - z.wutMax) * 0.35 - z.fehler.length * 2 - (welt.dreck ? 4 : 0) - (z.dennisHatGefegt ? 2 : 0);
-    const n = punkte >= 88 ? 1 : punkte >= 76 ? 2 : punkte >= 63 ? 3 : punkte >= 50 ? 4 : punkte >= 35 ? 5 : 6;
-    return { n, qualitaet: Math.round(qualitaet), punkte: Math.round(punkte) };
+    // Arbeit zählt 75 Punkte, Dennis' Laune 25 (Mittel aus höchster Wut und Wut am Ende), dazu Abzüge
+    const wut = (z.wutMax + z.wut) / 2;
+    const teile = {
+      arbeit: qualitaet * 0.75,
+      laune: (100 - wut) * 0.25,
+      fehler: -Math.min(15, z.fehler.length * 1.5),
+      werkstatt: -((welt.dreck ? 4 : 0) + (z.dennisHatGefegt ? 2 : 0)),
+    };
+    const punkte = teile.arbeit + teile.laune + teile.fehler + teile.werkstatt;
+    const n = punkte >= 85 ? 1 : punkte >= 72 ? 2 : punkte >= 58 ? 3 : punkte >= 45 ? 4 : punkte >= 30 ? 5 : 6;
+    return { n, qualitaet: Math.round(qualitaet), punkte: Math.round(punkte), teile, wut: Math.round(wut) };
   }
 
   async function ende() {
@@ -1664,12 +1722,13 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     z.beschaeftigt = true;
     steuerung.sperre(true);
     aktualisieren();
-    const { n, qualitaet } = note();
+    const { n, qualitaet, punkte, teile, wut } = note();
+    const pkt = (x) => `${x > 0 ? '+' : ''}${Math.round(x)}`;
     const kat = n <= 2 ? 'ende_gut' : n <= 4 ? 'ende_mittel' : 'ende_schlecht';
     const texte = { ende_gut: DENNIS.ende.gut, ende_mittel: DENNIS.ende.mittel, ende_schlecht: DENNIS.ende.schlecht };
     const stimmung = n <= 2 ? 'froh' : n <= 4 ? 'skeptisch' : 'sauer';
     dennis.stimmung(stimmung);
-    await dennisKommt(1.6);
+    if (z.ort !== 'abgegeben') await dennisKommt(1.6);
     jingle(n <= 4);
     if (n >= 5) await auftritt({ schluessel: [kat, 'rausgeflogen', 'ausraster'], text: texte[kat], stufe: 'voll', stimmung, seite: true });
     else await dennisSagt(texte[kat], false, { minMs: 4500 });
@@ -1682,10 +1741,19 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
       <ul class="wertung-liste">
         <li><span>Schnitt</span><b>${z.schnittQ} %</b></li>${naehte}
         <li><span>Verarbeitung gesamt</span><b>${qualitaet} %</b></li>
+        <li><span>Dennis-Wut am Ende</span><b>${Math.round(z.wut)} %</b></li>
         <li><span>Höchste Dennis-Wut</span><b>${Math.round(z.wutMax)} %</b></li>
         <li><span>Werkstatt</span><b>${welt.dreck ? 'dreckig' : z.dennisHatGefegt ? 'Dennis musste fegen' : 'gefegt'}</b></li>
         <li><span>Zeit</span><b>${minuten} Min.</b></li>
       </ul>
+      <p><b>So kommt die Note zustande (${punkte} von 100 Punkten):</b></p>
+      <ul class="wertung-liste">
+        <li><span>Arbeit (${qualitaet} % Verarbeitung, max. 75)</span><b>${pkt(teile.arbeit)}</b></li>
+        <li><span>Dennis’ Laune (Wut im Schnitt ${wut} %, max. 25)</span><b>${pkt(teile.laune)}</b></li>
+        <li><span>Fehler (je 1,5, höchstens 15)</span><b>${pkt(teile.fehler)}</b></li>
+        <li><span>Werkstatt</span><b>${pkt(teile.werkstatt)}</b></li>
+      </ul>
+      <p class="klein">Note 1 ab 85, 2 ab 72, 3 ab 58, 4 ab 45 Punkten (bestanden), 5 ab 30, darunter 6.</p>
       ${z.fehler.length ? `<p><b>Fehler (${z.fehler.length}):</b></p><ul class="fehler-liste">${z.fehler.map((f) => `<li>${f}</li>`).join('')}</ul>` : '<p><b>Kein einziger Fehler. Dennis ist sprachlos.</b></p>'}`,
     [{ text: 'Nochmal' }]);
     location.reload();

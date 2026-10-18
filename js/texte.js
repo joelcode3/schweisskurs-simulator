@@ -181,6 +181,7 @@ export const DENNIS = {
     fertig: 'Fertig? Dann gib her, ich guck mir das an.',
   },
   nichtFertig: ['Das ist doch noch kein Ofen. Mach erst fertig!', 'Fertig? Da fehlt ja noch die Hälfte!', 'Nee nee. Erst alles anschweißen, dann reden wir.'],
+  ofenBringen: ['Schön! Dann bring ihn mal her, ich will ihn in die Hand nehmen.', 'Na dann her damit! Hochheben und zu mir bringen.', 'Bring ihn rüber, dann gucken wir.'],
   nichtLackiert: ['Und lackieren? So rostet der dir doch weg. Ofenlack drauf, dann reden wir.', 'Ohne Lack nehm ich den nicht. Schwarz muss er sein!', 'Lackieren fehlt noch. Ofenlack, mattschwarz!'],
 
   ende: {

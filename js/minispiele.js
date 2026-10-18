@@ -844,13 +844,13 @@ export function hulaSpiel() {
     gestartet = true;
     if (erwartet === null || taste === erwartet) {
       schlaege++;
-      halt = Math.min(100, halt + 10);
+      halt = Math.min(100, halt + 7);
       schwung = schwung * 0.7 + 3;
       erwartet = taste === 'a' ? 'd' : 'a';
       blip(taste === 'a' ? 520 : 620, 0.04, 0.1);
       blitz = { seite: taste, gut: true, t: 0.12 };
     } else {
-      halt -= 14;
+      halt -= 22;
       blitz = { seite: taste, gut: false, t: 0.2 };
     }
   }
@@ -884,12 +884,14 @@ export function hulaSpiel() {
   function schleife(jetzt) {
     if (!laeuft) return;
     const dt = Math.min(0.05, (jetzt - letzte) / 1000);
+    // Abrutschen nach echter Zeit, sonst wird es bei ruckelnder Grafik zu leicht
+    const dtEcht = Math.min(0.3, (jetzt - letzte) / 1000);
     letzte = jetzt;
     if (!gefallen) {
       schwung = Math.max(0, schwung - dt * 2.5);
       phase += (2 + schwung * 2.2) * dt;
       // wird mit jeder Runde anstrengender
-      if (gestartet) halt -= dt * (28 + runden() * 0.4);
+      if (gestartet) halt -= dtEcht * (32 + runden() * 1.2);
       if (halt <= 0) {
         gefallen = true;
         klonk(0.6);

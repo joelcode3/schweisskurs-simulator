@@ -257,32 +257,95 @@ export function baueWelt(scene) {
     g.fillText('SICHERHEIT ZUERST', b / 2, h - 18);
   }, 2.0, 1.9, RAUM.zMin + 0.01, 0);
 
-  // Rohrzange an der Werkzeugwand: roter Doppel-T-Griff, Hakenbacke oben, Rändelmutter zum Verstellen, Zähne
+  // Rohrzange an der Werkzeugwand: roter, schmaler werdender Doppel-T-Griff mit Aufhängeloch,
+  // Stahlgehäuse mit Fenster für die gerändelte Stellmutter, feste Backe unten, Hakenbacke oben, beide mit Zähnen
   const zange = new THREE.Group();
   const rot = 0xc8352a;
-  zange.add(setze(quader(0.045, 0.34, 0.02, rot), 0, -0.1, 0));
-  zange.add(setze(quader(0.02, 0.34, 0.035, rot), 0, -0.1, 0));
-  zange.add(setze(quader(0.05, 0.05, 0.04, 0x8a1f17), 0, -0.29, 0));
-  zange.add(setze(zylinder(0.012, 0.012, 0.03, 0x222222, {}, 8), 0, -0.26, 0, Math.PI / 2, 0, 0));
-  // feste Backe mit Gehäuse
-  zange.add(setze(quader(0.07, 0.08, 0.045, FARBE.stahl), 0.005, 0.1, 0));
-  zange.add(setze(quader(0.05, 0.03, 0.04, FARBE.stahlHell), -0.03, 0.155, 0));
-  // Hakenbacke (beweglich) mit Schaft und Zähnen
-  zange.add(setze(zylinder(0.012, 0.012, 0.14, FARBE.stahlHell, {}, 8), 0.025, 0.17, 0));
-  zange.add(setze(quader(0.08, 0.035, 0.04, FARBE.stahlHell), -0.005, 0.24, 0));
-  for (let i = 0; i < 4; i++) zange.add(setze(quader(0.008, 0.01, 0.042, 0x555a60, { umriss: false }), -0.035 + i * 0.016, 0.222, 0));
-  for (let i = 0; i < 3; i++) zange.add(setze(quader(0.008, 0.01, 0.042, 0x555a60, { umriss: false }), -0.04 + i * 0.016, 0.172, 0));
-  // Rändelmutter
-  const mutter = teil(new THREE.CylinderGeometry(0.022, 0.022, 0.03, 14), 0x9aa0a6, { umriss: 0.003 });
-  mutter.position.set(0.025, 0.135, 0);
-  zange.add(mutter);
-  for (let i = 0; i < 6; i++) zange.add(setze(quader(0.004, 0.03, 0.006, 0x555a60, { umriss: false }), 0.025 + Math.cos(i) * 0.022, 0.135, Math.sin(i) * 0.022));
+  const ext = (form, tiefe, farbe, fase = 0.003) => {
+    const geo = new THREE.ExtrudeGeometry(form, { depth: tiefe, bevelEnabled: fase > 0, bevelThickness: fase, bevelSize: fase, bevelSegments: 2, curveSegments: 10 });
+    geo.translate(0, 0, -tiefe / 2);
+    return teil(geo, farbe, { umriss: 0.003 });
+  };
+  // Griff
+  const griff = new THREE.Shape();
+  griff.moveTo(-0.016, -0.29);
+  griff.quadraticCurveTo(-0.017, -0.312, 0, -0.313);
+  griff.quadraticCurveTo(0.017, -0.312, 0.016, -0.29);
+  griff.lineTo(0.021, 0.05);
+  griff.lineTo(-0.021, 0.05);
+  griff.closePath();
+  const loch = new THREE.Path();
+  loch.absarc(0, -0.292, 0.006, 0, Math.PI * 2, true);
+  griff.holes.push(loch);
+  zange.add(ext(griff, 0.014, rot));
+  // Doppel-T: vertiefte Mittelstege auf beiden Seiten
+  for (const sz of [-1, 1]) {
+    const steg = quader(0.016, 0.3, 0.004, 0x8a1f17, { umriss: false });
+    zange.add(setze(steg, 0, -0.12, sz * 0.0095));
+  }
+  // Gehäuse mit Fenster
+  const geh = new THREE.Shape();
+  geh.moveTo(-0.028, 0.04);
+  geh.lineTo(0.036, 0.04);
+  geh.lineTo(0.036, 0.135);
+  geh.lineTo(-0.048, 0.135);
+  geh.lineTo(-0.048, 0.118);
+  geh.quadraticCurveTo(-0.03, 0.105, -0.028, 0.04);
+  const zFenster = new THREE.Path();
+  zFenster.moveTo(-0.004, 0.058);
+  zFenster.lineTo(0.03, 0.058);
+  zFenster.lineTo(0.03, 0.117);
+  zFenster.lineTo(-0.004, 0.117);
+  zFenster.closePath();
+  geh.holes.push(zFenster);
+  zange.add(ext(geh, 0.026, FARBE.stahl));
+  // Zähne (Sägezahn-Leiste), dir = 1 nach oben, -1 nach unten
+  const zaehne = (x0, x1, y, dir) => {
+    const f = new THREE.Shape();
+    const n = 7;
+    const w = (x1 - x0) / n;
+    f.moveTo(x0, y);
+    for (let i = 0; i < n; i++) {
+      f.lineTo(x0 + i * w + w * 0.75, y + dir * 0.007);
+      f.lineTo(x0 + (i + 1) * w, y);
+    }
+    f.lineTo(x1, y - dir * 0.004);
+    f.lineTo(x0, y - dir * 0.004);
+    f.closePath();
+    return ext(f, 0.024, 0x6c7178, 0);
+  };
+  zange.add(zaehne(-0.048, 0.0, 0.137, 1));
+  // Gewindeschaft der Hakenbacke
+  zange.add(setze(zylinder(0.0075, 0.0075, 0.2, FARBE.stahlHell, { umriss: 0.002 }, 10), 0.013, 0.15, 0));
+  for (let i = 0; i < 11; i++) zange.add(setze(zylinder(0.0092, 0.0092, 0.0025, 0x7b8188, { umriss: false }, 10), 0.013, 0.14 + i * 0.0085, 0));
+  // Hakenbacke
+  const haken = new THREE.Shape();
+  haken.moveTo(0.004, 0.2);
+  haken.lineTo(0.026, 0.2);
+  haken.lineTo(0.026, 0.262);
+  haken.quadraticCurveTo(0.026, 0.27, 0.016, 0.27);
+  haken.lineTo(-0.052, 0.27);
+  haken.quadraticCurveTo(-0.058, 0.262, -0.052, 0.236);
+  haken.lineTo(0.004, 0.236);
+  haken.closePath();
+  zange.add(ext(haken, 0.024, FARBE.stahlHell));
+  zange.add(zaehne(-0.052, 0.002, 0.234, -1));
+  // Stellmutter (gerändelt) im Fenster
+  zange.add(setze(zylinder(0.016, 0.016, 0.05, 0x9aa0a6, { umriss: 0.002 }, 16), 0.013, 0.0875, 0));
+  for (let i = 0; i < 14; i++) {
+    const a = (i / 14) * Math.PI * 2;
+    zange.add(setze(quader(0.003, 0.05, 0.004, 0x5d6268, { umriss: false }), 0.013 + Math.cos(a) * 0.016, 0.0875, Math.sin(a) * 0.016, 0, -a, 0));
+  }
+  // Niete und Feder am Gehäuse
+  for (const [x, y] of [[-0.016, 0.05], [0.026, 0.05]]) for (const sz of [-1, 1]) zange.add(setze(zylinder(0.004, 0.004, 0.003, 0x4a4e54, { umriss: false }, 8), x, y, sz * 0.0165, Math.PI / 2, 0, 0));
+  zange.add(setze(zylinder(0.003, 0.003, 0.05, 0x3a3d42, { umriss: false }, 6), 0.033, 0.0875, 0.01));
   setze(zange, 1.32, 1.6, RAUM.zMin + 0.06, 0, 0, 0.25);
   zange.scale.setScalar(1.15);
   scene.add(zange);
   merke(zange, 'rohrzange', 'Rohrzange', null);
   objekte.rohrzange = zange;
   zange.userData.wand = { pos: zange.position.clone(), rot: zange.rotation.clone() };
+  zange.userData.liegend = true; // abgelegt flach hinlegen, nicht aufrecht hinstellen
 
   // ---------- Werkbank ----------
   const werkbank = new THREE.Group();
@@ -1032,18 +1095,65 @@ export function baueWelt(scene) {
   merke(eimerM, 'muelleimer', 'Mülleimer', null);
   hindernis(1.32, 1.78, -3.55, -3.05);
 
-  // Feuer: flackernde Flammen + Licht
+  // Feuer: flackernde Comic-Flammen, leuchtende Zungen, Glut, Rauch zur Decke, Ruß bleibt danach
   const feuer = new THREE.Group();
   const flammen = [];
-  const flammenMats = [0xff5a1f, 0xff9a1f, 0xffd23a].map((c) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.9, depthWrite: false }));
-  for (let i = 0; i < 9; i++) {
-    const f = new THREE.Mesh(new THREE.ConeGeometry(0.06 + (i % 3) * 0.02, 0.35, 8), flammenMats[i % 3]);
+  const flammenMats = [0xd8321a, 0xff5a1f, 0xff9a1f, 0xffd23a].map((c) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.92, depthWrite: false }));
+  for (let i = 0; i < 14; i++) {
+    const innen = i >= 9;
+    const geo = new THREE.ConeGeometry(innen ? 0.04 : 0.055 + (i % 3) * 0.018, innen ? 0.24 : 0.38, 7);
+    geo.translate(0, innen ? 0.12 : 0.19, 0);
+    const f = new THREE.Mesh(geo, flammenMats[innen ? 3 : i % 3]);
     f.userData.phase = i * 1.3;
-    f.userData.x = Math.sin(i * 2.1) * 0.09;
-    f.userData.z = Math.cos(i * 2.1) * 0.09;
+    const r = innen ? 0.03 : 0.07 + (i % 2) * 0.04;
+    f.userData.x = Math.sin(i * 2.1) * r;
+    f.userData.z = Math.cos(i * 2.1) * r;
+    f.userData.neig = innen ? 0.05 : 0.18;
     feuer.add(f);
     flammen.push(f);
   }
+  // weiche Flammenzungen (Sprites, additiv)
+  const zungenTex = leinwandTextur(64, 128, (g) => {
+    const gr = g.createRadialGradient(32, 92, 2, 32, 80, 60);
+    gr.addColorStop(0, 'rgba(255,250,200,1)');
+    gr.addColorStop(0.25, 'rgba(255,200,60,0.95)');
+    gr.addColorStop(0.55, 'rgba(255,100,20,0.6)');
+    gr.addColorStop(1, 'rgba(200,30,10,0)');
+    g.fillStyle = gr;
+    g.beginPath();
+    g.moveTo(32, 2);
+    g.bezierCurveTo(56, 50, 62, 90, 32, 126);
+    g.bezierCurveTo(2, 90, 8, 50, 32, 2);
+    g.fill();
+  });
+  const zungen = [];
+  for (let i = 0; i < 10; i++) {
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: zungenTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    sp.userData = { t: i / 10, x: Math.sin(i * 2.7) * 0.08, z: Math.cos(i * 2.7) * 0.08 };
+    feuer.add(sp);
+    zungen.push(sp);
+  }
+  // Glut: kleine Funken, die hochfliegen
+  const punktTex = leinwandTextur(32, 32, (g) => {
+    const gr = g.createRadialGradient(16, 16, 1, 16, 16, 15);
+    gr.addColorStop(0, 'rgba(255,255,255,1)');
+    gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr;
+    g.fillRect(0, 0, 32, 32);
+  });
+  const glut = [];
+  for (let i = 0; i < 14; i++) {
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: punktTex, color: i % 2 ? 0xffb030 : 0xff6a20, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    sp.userData = { t: i / 14, x: 0, z: 0, wx: Math.sin(i * 1.9) * 0.15, wz: Math.cos(i * 3.1) * 0.15 };
+    sp.scale.setScalar(0.025);
+    feuer.add(sp);
+    glut.push(sp);
+  }
+  // Glühende Pappe oben im Eimer
+  const glutBett = new THREE.Mesh(new THREE.CircleGeometry(0.16, 16), new THREE.MeshBasicMaterial({ color: 0xff7a1a, transparent: true, opacity: 0.9 }));
+  glutBett.rotation.x = -Math.PI / 2;
+  glutBett.position.y = -0.02;
+  feuer.add(glutBett);
   const feuerLicht = new THREE.PointLight(0xff7a2a, 0, 4, 1.5);
   feuerLicht.position.y = 0.4;
   feuer.add(feuerLicht);
@@ -1051,17 +1161,91 @@ export function baueWelt(scene) {
   feuer.scale.setScalar(1.7);
   feuer.visible = false;
   scene.add(feuer);
+  // Rauch steigt zur Decke (in Weltkoordinaten)
+  const rauch = new THREE.Group();
+  rauch.visible = false;
+  scene.add(rauch);
+  const rauchTex = leinwandTextur(64, 64, (g) => {
+    const gr = g.createRadialGradient(32, 32, 4, 32, 32, 30);
+    gr.addColorStop(0, 'rgba(255,255,255,0.9)');
+    gr.addColorStop(0.6, 'rgba(255,255,255,0.45)');
+    gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr;
+    g.fillRect(0, 0, 64, 64);
+  });
+  const qualm = [];
+  for (let i = 0; i < 12; i++) {
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: rauchTex, color: 0x3a3634, transparent: true, depthWrite: false }));
+    sp.userData = { t: i / 12, wx: Math.sin(i * 2.3) * 0.25, wz: Math.cos(i * 1.7) * 0.15 };
+    rauch.add(sp);
+    qualm.push(sp);
+  }
+  // Ruß: wächst, solange es brennt, und bleibt danach (Decke und Wand über dem Eimer)
+  const russTex = leinwandTextur(128, 128, (g) => {
+    const r = zufall(77);
+    for (let i = 0; i < 26; i++) {
+      const x = 64 + (r() - 0.5) * 50, y = 64 + (r() - 0.5) * 50, rad = 18 + r() * 34;
+      const gr = g.createRadialGradient(x, y, 1, x, y, rad);
+      gr.addColorStop(0, 'rgba(20,16,14,0.35)');
+      gr.addColorStop(1, 'rgba(20,16,14,0)');
+      g.fillStyle = gr;
+      g.fillRect(0, 0, 128, 128);
+    }
+  });
+  const russMat = new THREE.MeshBasicMaterial({ map: russTex, transparent: true, opacity: 0, depthWrite: false });
+  const russDecke = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 2.2), russMat);
+  russDecke.rotation.x = Math.PI / 2;
+  russDecke.position.set(1.55, RAUM.hoehe - 0.012, -3.15);
+  scene.add(russDecke);
+  const russWand = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 2.4), russMat);
+  russWand.position.set(1.55, RAUM.hoehe - 1.0, RAUM.zMin + 0.015);
+  scene.add(russWand);
+  let russ = 0;
   let feuerZeit = 0;
   animiert.push((dt) => {
+    if (rauch.visible) {
+      // Rauch zieht nach dem Löschen noch kurz ab
+      let sichtbar = false;
+      for (const sp of qualm) {
+        const u = sp.userData;
+        u.t += dt * 0.22;
+        if (u.t >= 1) { if (feuer.visible) u.t -= 1; else { sp.material.opacity = 0; continue; } }
+        sichtbar = true;
+        const h = 0.9 + u.t * (RAUM.hoehe - 1.0);
+        const breit = u.t > 0.8 ? (u.t - 0.8) * 4 : 0;
+        sp.position.set(1.55 + u.wx * u.t + Math.sin(feuerZeit + u.t * 6) * 0.05 + breit * u.wx * 2, h, -3.3 + u.wz * u.t + breit * 0.3);
+        sp.scale.setScalar(0.35 + u.t * 1.1);
+        sp.material.opacity = Math.sin(Math.min(1, u.t) * Math.PI) * 0.55;
+      }
+      if (!sichtbar) rauch.visible = false;
+    }
     if (!feuer.visible) return;
     feuerZeit += dt;
+    russ = Math.min(1, russ + dt * 0.035);
+    russMat.opacity = russ * 0.9;
     for (const f of flammen) {
       const p = f.userData.phase;
       const h = 0.8 + Math.sin(feuerZeit * 9 + p) * 0.25 + Math.sin(feuerZeit * 17 + p * 2) * 0.12;
-      f.scale.set(1, h, 1);
-      f.position.set(f.userData.x + Math.sin(feuerZeit * 5 + p) * 0.02, 0.17 * h, f.userData.z);
+      f.scale.set(1 + Math.sin(feuerZeit * 13 + p) * 0.08, h, 1);
+      f.position.set(f.userData.x + Math.sin(feuerZeit * 5 + p) * 0.02, 0, f.userData.z);
+      f.rotation.set(Math.sin(feuerZeit * 4 + p) * f.userData.neig, 0, Math.cos(feuerZeit * 3 + p) * f.userData.neig);
     }
-    feuerLicht.intensity = 4 + Math.sin(feuerZeit * 23) * 1.2;
+    for (const sp of zungen) {
+      const u = sp.userData;
+      u.t = (u.t + dt * 1.6) % 1;
+      sp.position.set(u.x * (1 - u.t) + Math.sin(feuerZeit * 7 + u.x * 40) * 0.02, 0.08 + u.t * 0.42, u.z * (1 - u.t));
+      sp.scale.set(0.18 * (1 - u.t * 0.6), 0.34 * (1 - u.t * 0.4), 1);
+      sp.material.opacity = Math.sin(u.t * Math.PI) * 0.85;
+    }
+    for (const sp of glut) {
+      const u = sp.userData;
+      u.t += dt * 0.7;
+      if (u.t >= 1) u.t -= 1;
+      sp.position.set(u.wx * u.t + Math.sin(feuerZeit * 11 + u.wz * 30) * 0.03, 0.1 + u.t * 0.9, u.wz * u.t);
+      sp.material.opacity = 1 - u.t;
+    }
+    glutBett.material.opacity = 0.75 + Math.sin(feuerZeit * 15) * 0.2;
+    feuerLicht.intensity = 4 + Math.sin(feuerZeit * 23) * 1.2 + Math.sin(feuerZeit * 7.3) * 0.6;
   });
 
   // Löschpulver-Wolke
@@ -1289,7 +1473,7 @@ export function baueWelt(scene) {
     KLO: { x: 1.4, z: 3.55 },
     FEUER: { x: 1.55, z: -3.3, vorX: 1.55, vorZ: -2.45 },
     LOESCHER: { x: 4.35, z: -1.0 },
-    feuer(an) { feuer.visible = an; feuerLicht.intensity = an ? 4 : 0; },
+    feuer(an) { feuer.visible = an; feuerLicht.intensity = an ? 4 : 0; if (an) rauch.visible = true; },
     get brennt() { return feuer.visible; },
     pulver,
     wasser,
