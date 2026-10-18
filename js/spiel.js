@@ -1102,7 +1102,12 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     el.innerHTML = `<div class="hand-name">${SYMBOL.hand}<span>${cfg.name}</span></div>${knoepfe.map(([k, t, taste]) => (k
       ? `<button type="button" data-k="${k}">${taste ? `<kbd>${taste}</kbd>` : ''}${t}</button>`
       : `<span class="hand-tipp">${t}</span>`)).join('')}`;
-    el.querySelectorAll('[data-k]').forEach((b) => b.addEventListener('click', () => handAktion(b.dataset.k)));
+    el.querySelectorAll('[data-k]').forEach((b) => {
+      if (it.id === 'schlauch' && b.dataset.k === 'benutzen') {
+        b.addEventListener('pointerdown', (e) => { e.preventDefault(); handAktion('benutzen'); });
+        for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) b.addEventListener(ev, spritzStopp);
+      } else b.addEventListener('click', () => handAktion(b.dataset.k));
+    });
     el.classList.remove('versteckt');
   }
 
@@ -1198,33 +1203,50 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     if (obj) welt.zurueckAnDieWand(obj);
     handleisteZeigen();
   }
-  async function spritzen() {
-    if (z.spritzt) return;
-    z.spritzt = true;
+  // Dauerstrahl, solange E (oder der Knopf unten) gedrückt ist
+  let spritzLauf = null;
+  function spritzen() {
+    if (spritzLauf || hand.item?.id !== 'schlauch') return;
+    spritzLauf = { ton: dauerTon('wasser', 0.7), dauer: 0, feuer: 0, takt: 0 };
+  }
+  function spritzStopp() {
+    if (!spritzLauf) return;
+    spritzLauf.ton.stopp();
+    spritzLauf = null;
+  }
+  function spritzUpdate(dt) {
+    if (!spritzLauf) return;
+    if (hand.item?.id !== 'schlauch' || z.beschaeftigt || z.vorbei) { spritzStopp(); return; }
+    const sl = spritzLauf;
+    sl.dauer += dt;
     const vorne = steuerung.blickRichtung();
     const von = kamera.position.clone().add(vorne.clone().multiplyScalar(0.5));
     von.y -= 0.3;
-    const ton = dauerTon('wasser', 0.7);
-    for (let i = 0; i < 12; i++) {
-      welt.wasser(von, von.clone().add(vorne.clone().multiplyScalar(3)), 4, 0.25);
-      await warte(70);
+    sl.takt += dt;
+    while (sl.takt > 0.012) {
+      sl.takt -= 0.012;
+      welt.wasser(von, von.clone().add(vorne.clone().multiplyScalar(3.2)), 2, 0.2);
     }
-    ton.stopp();
-    z.spritzt = false;
+    // Feuer: kurz draufhalten löscht es
     const F = welt.FEUER;
     const zumFeuer = new THREE.Vector3(F.x, 0.6, F.z).sub(kamera.position);
-    if (z.feuer === 'brennt' && Math.hypot(zumFeuer.x, zumFeuer.z) < 4 && zumFeuer.normalize().dot(vorne) > 0.7) {
-      feuerAus();
-      z.wut = Math.max(0, z.wut - 5);
-      aktualisieren();
-      jingle(true);
-      ui.lobZeigen(sag(DENNIS.hand.loeschen));
+    if (z.feuer === 'brennt' && Math.hypot(zumFeuer.x, zumFeuer.z) < 4.5 && zumFeuer.normalize().dot(vorne) > 0.7) {
+      sl.feuer += dt;
+      if (sl.feuer > 0.8) {
+        feuerAus();
+        z.wut = Math.max(0, z.wut - 5);
+        aktualisieren();
+        jingle(true);
+        ui.lobZeigen(sag(DENNIS.hand.loeschen));
+      }
       return;
     }
-    if (blickAufDennis(4.5)) return fehler('nassgespritzt');
-    if (dennisSiehts() && sekundenSeitStart() - (z.spritzGemeckert || -99) > 8) {
+    if (blickAufDennis(4.5)) { spritzStopp(); fehler('nassgespritzt'); return; }
+    if (sl.dauer > 1.5 && dennisSiehts() && sekundenSeitStart() - (z.spritzGemeckert || -99) > 10) {
       z.spritzGemeckert = sekundenSeitStart();
-      await fehler('rumspritzen');
+      // meckern, ohne den Strahl zu unterbrechen
+      wutPlus(FEHLER.rumspritzen);
+      dennisSagt(sag(DENNIS.schlauch.rumspritzen), false);
     }
   }
 
@@ -1441,6 +1463,8 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     else if (k === 'q') handAktion('werfen');
     else if (k === 'g') handAktion('fallen');
   });
+  window.addEventListener('keyup', (e) => { if (e.key.toLowerCase() === 'e') spritzStopp(); });
+  window.addEventListener('blur', spritzStopp);
 
   function menueFuer(id) {
     const A = (text, symbol, tun) => ({ text, symbol, tun });
@@ -1694,6 +1718,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     aktualisieren,
     update(dt) {
       beobachten();
+      spritzUpdate(dt);
       if (z.vorbei) return;
       // Tanzen, wenn die Box läuft und Dennis Zeit hat
       const sollTanzen = z.musik && !z.beschaeftigt && !z.dennisFegt && !z.dennisLoescht && dennis.istDaheim() && dennis.modus !== 'liegen';
@@ -1773,7 +1798,8 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
       if (!z.leck && sekundenSeitStart() > z.leckAb && !z.beschaeftigt && !z.aufKlo && z.feuer !== 'brennt' && !z.hula && dennis.modus === 'normal' && !buehneBelegt()) leckStart();
       // Der Schlauch reicht nicht durch die ganze Werkstatt
       if (hand.item?.id === 'schlauch' && Math.hypot(kamera.position.x - 4.6, kamera.position.z - 1.8) > 5.2) {
-        schlauchZurueck();
+        spritzStopp();
+    schlauchZurueck();
         ui.hinweis(DENNIS.schlauch.zuKurz);
       }
       // Klo-Pause: einmal pro Spiel, nicht gleich am Anfang

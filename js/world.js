@@ -1073,7 +1073,35 @@ export function baueWelt(scene) {
       w.userData.t += dt;
       w.userData.v.y -= 9.81 * dt;
       w.position.addScaledVector(w.userData.v, dt);
-      if (w.position.y < 0.02 || w.userData.t > 2) { scene.remove(w); tropfen.splice(i, 1); }
+      if (w.position.y < 0.02) { nass(w.position.x, w.position.z); scene.remove(w); tropfen.splice(i, 1); } else if (w.userData.t > 2) { scene.remove(w); tropfen.splice(i, 1); }
+    }
+  });
+  // Pfützen: entstehen, wo Wasser auf den Boden fällt, wachsen schnell, trocknen langsam
+  const pfuetzen = [];
+  const pfuetzenMat = new THREE.MeshBasicMaterial({ color: 0x5aa6e6, transparent: true, opacity: 0.5, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
+  function nass(x, z) {
+    if (x < RAUM.xMin || x > RAUM.xMax || z < RAUM.zMin || z > RAUM.zMax) return;
+    let p = pfuetzen.find((q) => Math.hypot(q.position.x - x, q.position.z - z) < q.userData.r + 0.25);
+    if (!p && pfuetzen.length < 30) {
+      p = new THREE.Mesh(new THREE.CircleGeometry(1, 24), pfuetzenMat);
+      p.rotation.x = -Math.PI / 2;
+      p.position.set(x, 0.004 + pfuetzen.length * 0.0002, z);
+      p.userData.r = 0.05;
+      p.scale.setScalar(0.05);
+      p.scale.y *= 0.8;
+      scene.add(p);
+      pfuetzen.push(p);
+    }
+    if (!p) return;
+    p.userData.r = Math.min(1.1, Math.sqrt(p.userData.r * p.userData.r + 0.0035));
+    p.scale.set(p.userData.r, p.userData.r * 0.8, 1);
+  }
+  animiert.push((dt) => {
+    for (let i = pfuetzen.length - 1; i >= 0; i--) {
+      const p = pfuetzen[i];
+      p.userData.r -= dt * 0.006;
+      if (p.userData.r < 0.03) { scene.remove(p); pfuetzen.splice(i, 1); continue; }
+      p.scale.set(p.userData.r, p.userData.r * 0.8, 1);
     }
   });
   let leckAn = false;
