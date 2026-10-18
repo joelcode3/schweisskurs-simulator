@@ -200,7 +200,7 @@ export function brummeln(silben = 8, wut = 0) {
     const lang = (0.14 + Math.random() * 0.12) * (1 - wut * 0.2);
     const o = ctx.createOscillator();
     o.type = 'sawtooth';
-    const grund = (195 + wut * 50) * (0.86 + Math.random() * 0.28);
+    const grund = (140 + wut * 45) * (0.86 + Math.random() * 0.28);
     o.frequency.setValueAtTime(grund, t);
     o.frequency.linearRampToValueAtTime(grund * 1.12, t + lang * 0.5);
     o.frequency.linearRampToValueAtTime(grund * 0.92, t + lang);
