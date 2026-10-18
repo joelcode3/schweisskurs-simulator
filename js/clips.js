@@ -38,7 +38,12 @@ export const KATEGORIEN = {
 };
 
 let clips = {};
-let laufend = null; // schliessen() des gerade gezeigten Auftritts
+let laufend = null;
+let videoLautstaerke = 0.8;
+export function setzeVideoLautstaerke(v) {
+  videoLautstaerke = v;
+  if (video) video.volume = Math.min(1, v);
+} // schliessen() des gerade gezeigten Auftritts
 let stimme = { aktiv: false, saetze: {} };
 let video = null;
 const ARCHIV_KEY = 'dennis-archiv-v1';
@@ -59,6 +64,7 @@ export async function ladeClips() {
   video.setAttribute('playsinline', '');
   video.setAttribute('webkit-playsinline', '');
   video.preload = 'auto';
+  video.volume = Math.min(1, videoLautstaerke);
 }
 
 // Muss in einem Klick aufgerufen werden, damit iPhone später Videos mit Ton abspielt.

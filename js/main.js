@@ -5,7 +5,8 @@ import { baueDennis } from './dennis.js';
 import { baueSteuerung } from './steuerung.js';
 import { baueSpiel } from './spiel.js';
 import { ladeClips, videoFreischalten, archivListe, spieleKategorie } from './clips.js';
-import { audioStart } from './audio.js';
+import { audioStart, setzeLautstaerke } from './audio.js';
+import { setzeVideoLautstaerke } from './clips.js';
 import { SYMBOL } from './gesicht.js';
 import * as ui from './ui.js';
 
@@ -65,12 +66,6 @@ function schleife(jetzt) {
       ui.stationenZeigen(st, (id) => spiel.stationWaehlen(id));
     }
   }
-  // Sprechblase über Dennis' Kopf mitführen
-  const kopf = dennis.kopfPosition();
-  kopf.y += 0.28;
-  const vorKamera = kopf.clone().applyMatrix4(kamera.matrixWorldInverse).z < 0;
-  kopf.project(kamera);
-  ui.sprechzeileFolgen((kopf.x + 1) / 2 * window.innerWidth, (1 - kopf.y) / 2 * window.innerHeight, vorKamera && dennis.wurzel.visible);
   renderer.render(scene, kamera);
   requestAnimationFrame(schleife);
 }
@@ -78,6 +73,7 @@ requestAnimationFrame(schleife);
 
 // ---------- Start ----------
 const clipsGeladen = ladeClips();
+ui.lautstaerkeLeiste((v) => { setzeLautstaerke(v); setzeVideoLautstaerke(v); });
 
 document.getElementById('start-los').addEventListener('click', async () => {
   audioStart();

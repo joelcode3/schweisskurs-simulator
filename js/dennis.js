@@ -217,7 +217,7 @@ export function baueDennis(scene) {
   // Brotdose mit Tomate (für die Mittagspause), liegt sonst auf der Getränkekiste
   const dose = new THREE.Group();
   dose.add(teil(new THREE.BoxGeometry(0.2, 0.07, 0.14), 0, { material: toon(0xf0f4f6, { transparent: true, opacity: 0.6 }), umriss: 0.004 }));
-  dose.add(setze(quader(0.11, 0.025, 0.1, 0x8a5a2e, { umriss: 0.002 }), -0.035, -0.01, 0));
+  dose.add(setze(teil(new THREE.TorusGeometry(0.06, 0.016, 6, 12, 2.2), 0xf2d23c, { umriss: 0.002 }), -0.03, -0.01, 0, Math.PI / 2, 0, 0.5));
   dose.position.set(0.02, -0.33, 0.12);
   dose.rotation.set(1.2, 0, 0);
   dose.visible = false;
@@ -240,6 +240,14 @@ export function baueDennis(scene) {
   besenInHand.position.y = 0.4;
   besenInHand.visible = false;
   rumpf.add(besenInHand);
+
+  // Feuerlöscher in der Hand (wenn er löscht)
+  const loescherHand = new THREE.Group();
+  loescherHand.add(setze(zylinder(0.07, 0.07, 0.4, 0xc8352a, {}, 14), 0, -0.2, 0.05));
+  loescherHand.add(setze(zylinder(0.012, 0.012, 0.2, 0x1d1d1f, {}, 6), 0.05, -0.05, 0.15, 1.2, 0, 0));
+  loescherHand.visible = false;
+  rechts.ellbogen.add(loescherHand);
+  loescherHand.position.y = -0.3;
 
   // Kopf: schmal, Schnauzer, goldene Pilotenbrille, Locken
   const kopf = new THREE.Group();
@@ -440,6 +448,7 @@ export function baueDennis(scene) {
       tomate.visible = false;
     },
     besen(an) { besenInHand.visible = an; },
+    feuerloescher(an) { loescherHand.visible = an; },
     mittagspause(an) { dose.visible = an; tomate.visible = an; essen = an; },
     // Löst mit true auf, wenn er ankommt, mit false, wenn ein neues Ziel dazwischenkommt
     gehZu(x, z, schnell = 1.3) {
@@ -590,7 +599,7 @@ export function baueDennis(scene) {
 
       // Arme und Kaffee
       const wuetend = stimmung === 'wut';
-      becher.visible = !wuetend && !tanzt && !essen && !besenInHand.visible && modus !== 'liegen' && modus !== 'schlafen' && modus !== 'sitzen';
+      becher.visible = !wuetend && !tanzt && !essen && !besenInHand.visible && !loescherHand.visible && modus !== 'liegen' && modus !== 'schlafen' && modus !== 'sitzen';
       if (!besenInHand.visible) rumpf.rotation.y = 0;
       if (modus === 'schlafen') {
         links.schulter.rotation.set(-0.15, 0, 0.05);

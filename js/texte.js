@@ -5,6 +5,12 @@ export const DENNIS = {
   begruessung: 'Moin! Heute baust du einen Ofen aus der alten Gasflasche da drüben. Was zu tun ist, steht auf deinem Zettel. Und halt dich an meine Regeln an der Wand. Wenn du Mist baust, merk ich das. Ich merk alles.',
   klo: 'Warte kurz!',
   kloZurueck: 'Ahh. Jetzt geht’s mir besser.',
+  feuer: {
+    ruf: 'FEUER!! Im Mülleimer! Wer hat da Funken reinfliegen lassen?!',
+    sauer: 'Wer passt hier eigentlich auf?! Beim Flexen guckt man, wo die Funken hinfliegen!',
+    selbst: 'Gut reagiert! Genau so.',
+    duHastIhn: 'Lösch das! Du hast doch den Feuerlöscher!',
+  },
   geweckt: 'Hä? Was is’n?! Ich hab Pause!',
 
   fehler: {
@@ -108,7 +114,7 @@ export const DENNIS = {
     ventil: 'Erst mal das Restgas ablassen. Ventil an der Flasche aufdrehen, die steht am Waschplatz.',
     spuelen: 'Jetzt die Flasche mit Wasser spülen. Schlauch hängt an der Wand. Ohne Spülen fasst die keiner an!',
     werkbank: 'Flasche rüber auf die Werkbank.',
-    anzeichnen: 'Mit dem Speckstein die Tür anzeichnen. Liegt auf der Werkbank.',
+    anzeichnen: 'Mit dem blauen Edding die Tür anzeichnen. Liegt auf der Werkbank.',
     schneiden: 'Jetzt mit der Flex die Tür ausschneiden. Sauber auf der Linie!',
     schneidenAusruestung: 'Tür ausschneiden. Aber vorher Brille und Handschuhe aus dem Regal, klar?',
     schweissplatz: 'Ab zum Schweißplatz mit dem Ding.',

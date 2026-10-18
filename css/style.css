@@ -759,41 +759,6 @@ button { font: inherit; color: inherit; }
   #dennis-buehne.leicht { padding-top: calc(var(--rand-oben) + 100px); }
 }
 
-/* Kleine Sprechblase über Dennis' Kopf (Nebensachen, ohne Video) */
-#sprechzeile {
-  position: absolute;
-  left: 0;
-  top: 0;
-  max-width: min(320px, 70vw);
-  padding: 6px 12px;
-  background: #fff;
-  color: #111;
-  border: 3px solid #111;
-  border-radius: 14px;
-  box-shadow: 3px 3px 0 #111;
-  font-family: var(--comic);
-  font-size: 19px;
-  letter-spacing: 0.5px;
-  line-height: 1.15;
-  text-align: center;
-  pointer-events: none !important;
-  opacity: 0;
-  transition: opacity 0.15s;
-  will-change: transform;
-}
-#sprechzeile::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  bottom: -14px;
-  margin-left: -9px;
-  border: 9px solid transparent;
-  border-top: 12px solid #111;
-}
-#sprechzeile b { display: none; }
-#sprechzeile.sichtbar { opacity: 1; }
-#sprechzeile.sauer span { color: #b3170d; }
-
 /* Stations-Knöpfe nur auf Touch-Geräten */
 @media (pointer: fine) {
   #stationen { display: none; }
@@ -837,7 +802,31 @@ button { font: inherit; color: inherit; }
   letter-spacing: 0.5px;
   pointer-events: none !important;
 }
-#lobblase b { display: block; font-weight: 400; font-size: 14px; color: #2b7a2b; }
+#lobblase b { display: block; font-weight: 400; font-size: 14px; color: #555; }
+#lobblase.lob b { color: #2b7a2b; }
+#lobblase.sauer b, #lobblase.sauer span { color: #b3170d; }
 #lobblase .dennis-mini { width: 40px; height: 40px; }
 #lobblase.neu { animation: lobPop 0.35s cubic-bezier(.3,1.8,.5,1); }
 @keyframes lobPop { from { transform: translateY(-50%) scale(0.6); } }
+
+/* Ton: Stumm-Knopf und Lautstärke unten links */
+#ton {
+  position: absolute;
+  left: var(--rand-links);
+  bottom: var(--rand-unten);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+}
+#ton button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  border: 2px solid #111;
+  background: #34373d;
+  cursor: pointer;
+}
+#ton input { width: 110px; accent-color: var(--gelb); cursor: pointer; }

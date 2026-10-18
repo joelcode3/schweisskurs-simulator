@@ -130,5 +130,7 @@ export const SYMBOL = {
   auge: '<svg viewBox="0 0 24 24" class="ico"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
   ort: '<svg viewBox="0 0 24 24" class="ico"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
   haken: '<svg viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7"/></svg>',
+  laut: '<svg viewBox="0 0 24 24" class="ico"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>',
+  stumm: '<svg viewBox="0 0 24 24" class="ico"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9l5 6M21 9l-5 6"/></svg>',
   play: '<svg viewBox="0 0 24 24" class="ico"><path d="M7 5l12 7-12 7z"/></svg>',
 };

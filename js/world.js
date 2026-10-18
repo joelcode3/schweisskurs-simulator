@@ -296,11 +296,15 @@ export function baueWelt(scene) {
   merke(flex, 'flex', 'Winkelschleifer', 'werkbank');
   objekte.flex = flex;
 
-  // Speckstein
-  const stein = quader(0.08, 0.02, 0.025, 0xf4f1e6);
-  setze(stein, -0.5, 0.915, -2.65, 0, 0.3, 0);
-  scene.add(stein);
-  merke(stein, 'speckstein', 'Speckstein (Anzeichnen)', 'werkbank');
+  // Blauer Edding zum Anzeichnen
+  const edding = new THREE.Group();
+  edding.add(setze(zylinder(0.011, 0.011, 0.11, 0x1f4fd1, { umriss: 0.003 }, 10), 0, 0, 0, 0, 0, Math.PI / 2));
+  edding.add(setze(zylinder(0.012, 0.012, 0.04, 0x163a9c, { umriss: 0.003 }, 10), 0.07, 0, 0, 0, 0, Math.PI / 2));
+  edding.add(setze(quader(0.03, 0.012, 0.004, 0xffffff, { umriss: false }), -0.01, 0, 0.011));
+  setze(edding, -0.5, 0.913, -2.65, 0, 0.3, 0);
+  scene.add(edding);
+  merke(edding, 'edding', 'Blauer Edding (Anzeichnen)', 'werkbank');
+  objekte.edding = edding;
 
   // ---------- Regal ----------
   const regal = new THREE.Group();
@@ -681,8 +685,8 @@ export function baueWelt(scene) {
   const brotdose = new THREE.Group();
   brotdose.add(teil(new THREE.BoxGeometry(0.2, 0.07, 0.14), 0, { material: toon(0xf0f4f6, { transparent: true, opacity: 0.6 }), umriss: 0.004 }));
   brotdose.add(setze(quader(0.21, 0.015, 0.15, 0xc8352a, { umriss: 0.003 }), 0, 0.042, 0));
-  brotdose.add(setze(quader(0.11, 0.025, 0.1, 0x8a5a2e, { umriss: 0.002 }), -0.035, -0.01, 0));
-  brotdose.add(setze(kugel(0.03, 0xc0392b, { umriss: 0.002 }, 10), 0.06, -0.005, 0.02));
+  brotdose.add(setze(kugel(0.03, 0xd8352a, { umriss: 0.002 }, 10), 0.06, -0.005, 0.02));
+  brotdose.add(setze(teil(new THREE.TorusGeometry(0.06, 0.016, 6, 12, 2.2), 0xf2d23c, { umriss: 0.002 }), -0.03, -0.02, 0, Math.PI / 2, 0, 0.5));
   setze(brotdose, -4.62, 0.43, 2.55, 0, 0.4, 0);
   scene.add(brotdose);
   merke(brotdose, 'brotdose', 'Dennis’ Brotdose', null);
@@ -861,6 +865,86 @@ export function baueWelt(scene) {
   merke(figur, 'figur', 'Holzfigur', null);
   hindernis(-4.8, -4.4, 1.42, 1.82);
 
+  // Mülleimer neben der Werkbank (kann durch Funken Feuer fangen)
+  const eimerM = new THREE.Group();
+  eimerM.add(teil(new THREE.CylinderGeometry(0.2, 0.17, 0.5, 18, 1, true), 0x5f666e, { mat: { side: THREE.DoubleSide }, umriss: 0.005 }));
+  eimerM.children[0].position.y = 0.25;
+  eimerM.add(setze(zylinder(0.17, 0.17, 0.01, 0x2a2a2a, { umriss: false }, 18), 0, 0.01, 0));
+  eimerM.add(setze(zylinder(0.18, 0.18, 0.02, 0x3a2e22, { umriss: false }, 18), 0, 0.42, 0));
+  for (let i = 0; i < 4; i++) eimerM.add(setze(quader(0.08, 0.06, 0.05, 0xc9b48a, { umriss: 0.002 }), Math.sin(i * 1.7) * 0.08, 0.45, Math.cos(i * 1.7) * 0.08, i, i * 0.7, 0.3));
+  setze(eimerM, 1.55, 0, -3.3);
+  scene.add(eimerM);
+  merke(eimerM, 'muelleimer', 'Mülleimer', null);
+  hindernis(1.32, 1.78, -3.55, -3.05);
+
+  // Feuer: flackernde Flammen + Licht
+  const feuer = new THREE.Group();
+  const flammen = [];
+  const flammenMats = [0xff5a1f, 0xff9a1f, 0xffd23a].map((c) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.9, depthWrite: false }));
+  for (let i = 0; i < 9; i++) {
+    const f = new THREE.Mesh(new THREE.ConeGeometry(0.06 + (i % 3) * 0.02, 0.35, 8), flammenMats[i % 3]);
+    f.userData.phase = i * 1.3;
+    f.userData.x = Math.sin(i * 2.1) * 0.09;
+    f.userData.z = Math.cos(i * 2.1) * 0.09;
+    feuer.add(f);
+    flammen.push(f);
+  }
+  const feuerLicht = new THREE.PointLight(0xff7a2a, 0, 4, 1.5);
+  feuerLicht.position.y = 0.4;
+  feuer.add(feuerLicht);
+  feuer.position.set(1.55, 0.45, -3.3);
+  feuer.scale.setScalar(1.7);
+  feuer.visible = false;
+  scene.add(feuer);
+  let feuerZeit = 0;
+  animiert.push((dt) => {
+    if (!feuer.visible) return;
+    feuerZeit += dt;
+    for (const f of flammen) {
+      const p = f.userData.phase;
+      const h = 0.8 + Math.sin(feuerZeit * 9 + p) * 0.25 + Math.sin(feuerZeit * 17 + p * 2) * 0.12;
+      f.scale.set(1, h, 1);
+      f.position.set(f.userData.x + Math.sin(feuerZeit * 5 + p) * 0.02, 0.17 * h, f.userData.z);
+    }
+    feuerLicht.intensity = 4 + Math.sin(feuerZeit * 23) * 1.2;
+  });
+
+  // Löschpulver-Wolke
+  const wolkenTex = leinwandTextur(64, 64, (g) => {
+    const gr = g.createRadialGradient(32, 32, 2, 32, 32, 30);
+    gr.addColorStop(0, 'rgba(255,255,255,0.95)');
+    gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr;
+    g.fillRect(0, 0, 64, 64);
+  });
+  const wolken = [];
+  function pulver(von, nach) {
+    for (let i = 0; i < 26; i++) {
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: wolkenTex, transparent: true, depthWrite: false }));
+      sp.position.copy(von);
+      const d = new THREE.Vector3().subVectors(nach, von);
+      sp.userData = { v: d.multiplyScalar(0.9 + Math.random() * 0.6).add(new THREE.Vector3((Math.random() - 0.5) * 0.8, Math.random() * 0.6, (Math.random() - 0.5) * 0.8)), t: -i * 0.04 };
+      sp.scale.setScalar(0.1);
+      sp.visible = false;
+      scene.add(sp);
+      wolken.push(sp);
+    }
+  }
+  animiert.push((dt) => {
+    for (let i = wolken.length - 1; i >= 0; i--) {
+      const w = wolken[i];
+      w.userData.t += dt;
+      if (w.userData.t < 0) continue;
+      w.visible = true;
+      w.position.addScaledVector(w.userData.v, dt);
+      w.userData.v.multiplyScalar(0.94);
+      const s = 0.15 + w.userData.t * 1.2;
+      w.scale.set(s, s, s);
+      w.material.opacity = Math.max(0, 1 - w.userData.t / 1.6);
+      if (w.userData.t > 1.6) { scene.remove(w); wolken.splice(i, 1); }
+    }
+  });
+
   // Licht an/aus
   const lichtWerte = { himmel: himmel.intensity, sonne: sonne.intensity, fuell: fuell.intensity };
   function licht(an) {
@@ -933,6 +1017,12 @@ export function baueWelt(scene) {
     BESEN: { x: -4.35, z: 2.05 },
     get dreck() { return dreck.length; },
     KLO: { x: 1.4, z: 3.55 },
+    FEUER: { x: 1.55, z: -3.3, vorX: 1.55, vorZ: -2.45 },
+    LOESCHER: { x: -2.3, z: 3.35 },
+    feuer(an) { feuer.visible = an; feuerLicht.intensity = an ? 4 : 0; },
+    get brennt() { return feuer.visible; },
+    pulver,
+    loescherSichtbar(an) { loescher.visible = an; },
     SOFA: { x: -3.2, z: RAUM.zMax - 0.45, sitzZ: RAUM.zMax - 0.5, vorneZ: RAUM.zMax - 1.15 },
     update(dt) {
       for (const a of animiert) a(dt);
@@ -985,9 +1075,9 @@ function baueFlasche() {
   const tY = -0.1;
   const markTex = leinwandTextur(256, 256, (g, b, h) => {
     g.clearRect(0, 0, b, h);
-    g.strokeStyle = '#ffffff';
-    g.lineWidth = 12;
-    g.setLineDash([26, 14]);
+    g.strokeStyle = '#1f4fd1';
+    g.lineWidth = 9;
+    g.setLineDash([]);
     g.strokeRect(10, 10, b - 20, h - 20);
   });
   const markierung = new THREE.Mesh(
