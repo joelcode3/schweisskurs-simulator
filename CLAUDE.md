@@ -37,7 +37,7 @@
   Dreck: nach 18 s meckert Dennis (+4 Wut), nach 32 s holt er den Besen und fegt selbst (stimme/muell.mp3, +8 Wut, Note -2).
   Sprüche haben meist mehrere Varianten (Listen in texte.js, `sag()` wählt zufällig).
   Beim Hula-Hoop sagt Dennis nur „hello fresh“, sonst nichts (Wichtiges wartet, Nebensächliches fällt weg).
-  Wasserschlauch (lange Schlaufen mit Spritzpistole, unsichtbare Klickfläche drüber): in die Hand nehmen, E = spritzen (Dennis treffen = sauer, sonst meckert er; löscht auch Feuer),
+  Wasserschlauch (lange Schlaufen mit Spritzpistole, unsichtbare Klickfläche drüber): in die Hand nehmen, E gedrückt halten = Dauerstrahl, Pfützen wo das Wasser landet (Dennis treffen = sauer, sonst meckert er; löscht auch Feuer),
   G = zurückhängen, reicht nur ca. 5 m vom Waschplatz.
   Wasserrohrbruch (Frost): einmal pro Spiel nach ca. 3–5 min spritzt das Rohr am Waschplatz (Pfütze, Wasser-Symbol unten
   rechts). Rohrzange von der Werkzeugwand holen, auf das Rohr klicken (oder E in der Nähe), festziehen. Nach ca. 22 s
