@@ -222,14 +222,17 @@ export function auftritt({ schluessel, text, stufe = 'mittel', stimmung = 'sauer
       const automatischZu = automatisch;
       const brummelnStatt = () => {
         const silben = Math.max(4, Math.round(anzeigeText.length / 5));
-        const dauer = brummeln(silben, stufe === 'voll' ? 1 : stufe === 'mittel' ? 0.4 : 0);
+        const b = brummeln(silben, stufe === 'voll' ? 1 : stufe === 'mittel' ? 0.4 : 0);
+        const dauer = b.dauer;
+        // Fenster zu = Gebrabbel hört auf (blendet kurz aus)
+        sprecher = b;
         let auf = false;
         mundTimer = setInterval(() => {
           auf = !auf;
           if (mund) mund.style.transform = auf ? 'scaleY(1.35)' : 'scaleY(0.8)';
         }, 110);
         setTimeout(() => { clearInterval(mundTimer); if (mund) mund.style.transform = ''; }, (dauer || 1) * 1000);
-        if (automatischZu) timer = setTimeout(schliessen, Math.max(2600, anzeigeText.length * 55 + 1200));
+        if (automatischZu) timer = setTimeout(schliessen, Math.max(2600, anzeigeText.length * 55 + 1200, dauer * 1000 + 700));
       };
       if (datei) {
         // Aufgenommene Stimme, der Mund folgt der Lautstärke

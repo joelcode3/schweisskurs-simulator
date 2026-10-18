@@ -283,7 +283,7 @@ button { font: inherit; color: inherit; }
 .knopf:active { transform: translateY(3px); box-shadow: 0 1px 0 #111; }
 .knopf.gross { font-size: 30px; padding: 12px 34px; }
 .knopf.klein { font-size: 18px; padding: 6px 16px; }
-.knopf.leise { background: #3a3d44; color: var(--text); }
+.knopf.leise { background: #ffffff; color: #111; }
 .knopf.rot { background: var(--rot); color: #fff; }
 .knopf:disabled { opacity: 0.45; cursor: default; }
 
@@ -329,7 +329,7 @@ button { font: inherit; color: inherit; }
 }
 .aktion:hover { background: #fff3c4; }
 .aktion .ico { color: #b5641b; }
-.aktion.abbrechen { background: none; border-style: dashed; justify-content: center; font-weight: 600; }
+.aktion.abbrechen { background: #e2dccd; color: #111; justify-content: center; font-weight: 800; }
 
 /* ---------- Dialog ---------- */
 #dialog {

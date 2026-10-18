@@ -189,9 +189,14 @@ export function dauer(art) {
 
 // Platzhalter-Stimme für Dennis, solange keine echten Clips da sind: Brummeln in Silben.
 // Gebrabbel ohne Aufnahme: gedämpfte Posaune wie die Erwachsenen bei den Peanuts ("wah-wah-wah")
-export function brummeln(silben = 8, wut = 0) {
-  if (!ctx) return 0;
-  let t = ctx.currentTime + 0.05;
+// Rückgabe: { dauer, stopp(ausblenden), lautstaerke(v) }
+export function brummeln(silben = 8, wut = 0, lautst = 1) {
+  if (!ctx) return { dauer: 0, stopp() {}, lautstaerke() {} };
+  const bus = ctx.createGain();
+  bus.gain.value = lautst;
+  bus.connect(master);
+  const quellen = [];
+  let t = ctx.currentTime + 0.02;
   const start = t;
   const woerter = Math.max(2, Math.ceil(silben * 0.7));
   // Wah-Kurve: Dämpfer geht auf und wieder zu
@@ -214,12 +219,27 @@ export function brummeln(silben = 8, wut = 0) {
     }
     const g = ctx.createGain();
     huelle(g, t, 0.025, lang - 0.05, 0.04, 0.55 + wut * 0.35);
-    o.connect(f1).connect(f2).connect(g).connect(master);
+    o.connect(f1).connect(f2).connect(g).connect(bus);
     o.start(t);
     o.stop(t + lang + 0.06);
+    quellen.push(o);
     t += lang + (0.03 + Math.random() * 0.1) * (1 - wut * 0.5);
   }
-  return t - start;
+  const dauer = t - start;
+  let aus = false;
+  return {
+    dauer,
+    lautstaerke(v) { if (!aus) bus.gain.setTargetAtTime(v, ctx.currentTime, 0.05); },
+    stopp(ausblenden = 0.25) {
+      if (aus) return;
+      aus = true;
+      const j = ctx.currentTime;
+      bus.gain.cancelScheduledValues(j);
+      bus.gain.setValueAtTime(bus.gain.value, j);
+      bus.gain.linearRampToValueAtTime(0, j + ausblenden);
+      for (const o of quellen) { try { o.stop(j + ausblenden + 0.05); } catch { /* schon aus */ } }
+    },
+  };
 }
 
 export function rumms() {
@@ -263,7 +283,7 @@ async function ladeStimme(url) {
   }
   return stimmPuffer.get(url);
 }
-export async function stimmeAbspielen(url) {
+export async function stimmeAbspielen(url, lautst = 1.1) {
   if (!ctx) return null;
   let puffer;
   try {
@@ -277,7 +297,7 @@ export async function stimmeAbspielen(url) {
   const analyse = ctx.createAnalyser();
   analyse.fftSize = 512;
   const g = ctx.createGain();
-  g.gain.value = 1.1;
+  g.gain.value = lautst;
   quelle.connect(analyse).connect(g).connect(master);
   const daten = new Uint8Array(analyse.fftSize);
   const fertig = new Promise((res) => { quelle.onended = res; });
@@ -292,8 +312,19 @@ export async function stimmeAbspielen(url) {
       for (const v of daten) summe += ((v - 128) / 128) ** 2;
       return Math.sqrt(summe / daten.length);
     },
-    stopp() { try { quelle.stop(); } catch { /* schon zu Ende */ } },
+    stopp(ausblenden = 0.2) {
+      const j = ctx.currentTime;
+      g.gain.cancelScheduledValues(j);
+      g.gain.setValueAtTime(g.gain.value, j);
+      g.gain.linearRampToValueAtTime(0, j + ausblenden);
+      try { quelle.stop(j + ausblenden + 0.02); } catch { /* schon zu Ende */ }
+    },
   };
+}
+// Aufnahmen vorab laden, damit Ton und Sprechblase gleichzeitig kommen
+export function stimmenVorladen(urls) {
+  if (!ctx) return;
+  for (const u of urls) ladeStimme(u).catch(() => stimmPuffer.delete(u));
 }
 
 // Techno aus der Box: 128 BPM, Kick, Offbeat-Hihat, Clap, Bass. Wird live erzeugt.
@@ -371,19 +402,73 @@ export function technoBeat() {
   return Math.max(0, (ctx.currentTime - techno.start) / techno.spb);
 }
 
-export function klospuelung() {
+// Klospülung: Hebel, rauschendes Wasser mit Gluckern, danach leises Nachlaufen
+export function klospuelung(lautst = 1) {
   if (!ctx) return;
-  const t = ctx.currentTime;
-  const q = rauschQuelle();
-  const f = ctx.createBiquadFilter();
-  f.type = 'lowpass';
-  f.frequency.setValueAtTime(2500, t);
-  f.frequency.exponentialRampToValueAtTime(300, t + 2.5);
-  const g = ctx.createGain();
-  huelle(g, t, 0.15, 1.2, 1.4, 0.35);
-  q.connect(f).connect(g).connect(master);
-  q.start(t);
-  q.stop(t + 3);
+  const t = ctx.currentTime + 0.02;
+  const bus = ctx.createGain();
+  bus.gain.value = 0.5 * lautst;
+  bus.connect(master);
+  // Hebel: kurzes Klacken
+  const k = rauschQuelle();
+  const kf = ctx.createBiquadFilter();
+  kf.type = 'bandpass';
+  kf.frequency.value = 2500;
+  kf.Q.value = 3;
+  const kg = ctx.createGain();
+  huelle(kg, t, 0.002, 0.01, 0.05, 0.6);
+  k.connect(kf).connect(kg).connect(bus);
+  k.start(t);
+  k.stop(t + 0.1);
+  // Wasserschwall: Rauschen, tiefer werdend, schwankende Lautstärke (Strudel)
+  const w = rauschQuelle();
+  const wf = ctx.createBiquadFilter();
+  wf.type = 'bandpass';
+  wf.Q.value = 0.8;
+  wf.frequency.setValueAtTime(1400, t + 0.15);
+  wf.frequency.exponentialRampToValueAtTime(500, t + 3.2);
+  const wg = ctx.createGain();
+  wg.gain.setValueAtTime(0.0001, t + 0.1);
+  wg.gain.exponentialRampToValueAtTime(0.9, t + 0.45);
+  wg.gain.setValueAtTime(0.9, t + 2.0);
+  wg.gain.exponentialRampToValueAtTime(0.0001, t + 3.6);
+  const strudel = ctx.createOscillator();
+  strudel.frequency.value = 6;
+  const sg = ctx.createGain();
+  sg.gain.value = 0.25;
+  const mod = ctx.createGain();
+  mod.gain.value = 0.75;
+  strudel.connect(sg).connect(mod.gain);
+  w.connect(wf).connect(wg).connect(mod).connect(bus);
+  w.start(t + 0.1);
+  w.stop(t + 3.7);
+  strudel.start(t + 0.1);
+  strudel.stop(t + 3.7);
+  // Gluckern: kurze steigende Blubber-Töne
+  for (let i = 0; i < 14; i++) {
+    const b = t + 0.8 + Math.random() * 2.6;
+    const o = ctx.createOscillator();
+    o.type = 'sine';
+    const f0 = 220 + Math.random() * 260;
+    o.frequency.setValueAtTime(f0, b);
+    o.frequency.exponentialRampToValueAtTime(f0 * 2.4, b + 0.06);
+    const g = ctx.createGain();
+    huelle(g, b, 0.005, 0.02, 0.05, 0.12 + Math.random() * 0.1);
+    o.connect(g).connect(bus);
+    o.start(b);
+    o.stop(b + 0.1);
+  }
+  // Spülkasten läuft nach: leises hohes Zischen
+  const n = rauschQuelle();
+  const nf = ctx.createBiquadFilter();
+  nf.type = 'bandpass';
+  nf.frequency.value = 3200;
+  nf.Q.value = 1.5;
+  const ng = ctx.createGain();
+  huelle(ng, t + 2.8, 0.4, 1.6, 0.8, 0.12);
+  n.connect(nf).connect(ng).connect(bus);
+  n.start(t + 2.8);
+  n.stop(t + 5.8);
 }
 
 export function mampfen() {

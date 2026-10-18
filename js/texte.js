@@ -105,7 +105,7 @@ export const DENNIS = {
     leer: 'Alle weg?! Das waren meine Kiwis für die ganze Woche!',
   },
   baustellenfeeling: 'Was los??',
-  tomate: '*mampf* ... Mittagspause. Tomate muss sein.',
+  tomate: 'Mittagspause! Brotdose, Tomaten, Bananen ... *mampf*',
   licht: 'Hallo?! Wer hat das Licht ausgemacht? Ich seh nix!',
   huefte: {
     start: 'Aaah! Meine Hüfte! Hinten links! Ich muss mich kurz hinlegen ...',
