@@ -877,3 +877,30 @@ button { font: inherit; color: inherit; }
   #handleiste .hand-tipp, #handleiste kbd { display: none; }
   #hinweis { bottom: calc(var(--rand-unten) + 150px); }
 }
+
+/* Arbeitspause, solange Dennis auf dem Klo ist */
+#pause {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--rand-oben) + 4px);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--gelb);
+  color: #111;
+  border: 3px solid #111;
+  border-radius: 10px;
+  box-shadow: 0 4px 0 #111;
+  font-weight: 800;
+  font-size: 16px;
+  pointer-events: none !important;
+  animation: lobPop 0.3s;
+}
+#pause .ico { width: 20px; height: 20px; }
+
+/* Dennis' Notizen (Klemmbrett) */
+.notizen { list-style: none; padding: 12px 16px; margin: 6px 0; background: #fbfaf3; border: 2px solid #111; border-radius: 6px;
+  background-image: repeating-linear-gradient(#fbfaf3 0 30px, #9ec3e6 30px 32px);
+  font: 22px "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive; color: #1f3f8a; line-height: 32px; }

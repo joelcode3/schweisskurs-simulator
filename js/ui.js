@@ -218,3 +218,11 @@ export function lautstaerkeLeiste(beiAenderung) {
   for (const e of ['pointerdown', 'keydown']) el.addEventListener(e, (ev) => ev.stopPropagation());
   zeigen();
 }
+
+// Band oben: Arbeitspause, solange Dennis auf dem Klo ist
+export function pauseZeigen(an, text = '') {
+  const el = $('pause');
+  if (!el) return;
+  el.querySelector('span').textContent = text;
+  el.classList.toggle('versteckt', !an);
+}

@@ -65,6 +65,25 @@ export async function ladeClips() {
   video.setAttribute('webkit-playsinline', '');
   video.preload = 'auto';
   video.volume = Math.min(1, videoLautstaerke);
+  vorladen();
+}
+
+// Clips im Hintergrund laden (dann starten sie sofort) und Hoch-/Querformat vorher merken (kein Rahmen-Springen)
+function vorladen() {
+  const alle = new Map();
+  for (const liste of Object.values(clips)) if (Array.isArray(liste)) for (const c of liste) alle.set(c.datei, c);
+  let i = 0;
+  for (const [datei] of alle) {
+    setTimeout(() => {
+      const v = document.createElement('video');
+      v.preload = 'auto';
+      v.muted = true;
+      v.onloadedmetadata = () => {
+        for (const liste of Object.values(clips)) if (Array.isArray(liste)) for (const c of liste) if (c.datei === datei) c.hochkant = v.videoHeight > v.videoWidth;
+      };
+      v.src = `clips/${datei}`;
+    }, 300 * i++);
+  }
 }
 
 // Muss in einem Klick aufgerufen werden, damit iPhone später Videos mit Ton abspielt.
@@ -171,6 +190,10 @@ export function auftritt({ schluessel, text, stufe = 'mittel', stimmung = 'sauer
 
     const anzeigeText = clip?.text || text || '';
     if (clip) {
+      // Altes Bild nicht kurz aufblitzen lassen: Video erst zeigen, wenn es wirklich läuft
+      if (clip.hochkant !== undefined) el.classList.toggle('hochkant', clip.hochkant);
+      video.style.visibility = 'hidden';
+      video.onplaying = () => { video.style.visibility = ''; };
       video.onloadedmetadata = () => el.classList.toggle('hochkant', video.videoHeight > video.videoWidth);
       // Kann das Gerät den Clip nicht abspielen, zeigt es den gezeichneten Dennis
       video.onerror = () => {

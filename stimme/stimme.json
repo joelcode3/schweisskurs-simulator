@@ -1,6 +1,8 @@
 {
   "aktiv": true,
   "saetze": {
+    "hand.handy": "hand.handy.mp3",
+    "hand.handyNochmal": "hand.handyNochmal.mp3",
     "baustellenfeeling": "baustellenfeeling.mp3",
     "tomate": "tomate.mp3"
   }

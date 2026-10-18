@@ -223,6 +223,17 @@ export function baueDennis(scene) {
   rechts.ellbogen.add(becher);
   const becherQ = new THREE.Quaternion();
 
+  // Hula-Hoop-Reifen (nur beim Hula-Hoop sichtbar), kreist um die Hüfte
+  const reifen = new THREE.Group();
+  reifen.add(teil(new THREE.TorusGeometry(0.45, 0.016, 8, 48), 0xe84a9a, { umriss: 0.004 }));
+  for (let i = 0; i < 8; i++) {
+    const st = teil(new THREE.TorusGeometry(0.45, 0.0175, 8, 6, 0.12), 0xffffff, { umriss: false });
+    st.rotation.z = (i / 8) * Math.PI * 2;
+    reifen.add(st);
+  }
+  reifen.visible = false;
+  wurzel.add(reifen);
+
   // Brotdose mit Tomate (für die Mittagspause), steht sonst auf dem Kaffeetisch
   const dose = new THREE.Group();
   dose.add(teil(new THREE.BoxGeometry(0.2, 0.07, 0.14), 0, { material: toon(0xf0f4f6, { transparent: true, opacity: 0.6 }), umriss: 0.004 }));
@@ -538,6 +549,16 @@ export function baueDennis(scene) {
       // Auf dem Sofa: in der Hüfte eingeknickt, Hintern auf dem Polster (Wurzel = Hintern),
       // Oberkörper schräg hoch zur einen Lehne, Beine schräg hoch zur anderen
       const sofaLiegen = aufSofa && modus === 'schlafen';
+      // Hula-Hoop: Hüfte kreist, Reifen läuft mit
+      const hula = modus === 'hula';
+      reifen.visible = hula;
+      if (hula) {
+        const w = zeit * 11;
+        koerper.position.x += Math.cos(w) * 0.035;
+        koerper.position.z += Math.sin(w) * 0.035;
+        reifen.position.set(Math.cos(w) * 0.09, 0.98 + Math.sin(w * 0.5) * 0.02, Math.sin(w) * 0.09);
+        reifen.rotation.set(Math.PI / 2 + Math.sin(w) * 0.12, 0, Math.cos(w) * 0.12);
+      }
       if (sofaLiegen) {
         koerper.rotation.x = -Math.PI / 2 + SOFA_OBEN;
         koerper.position.set(0, SOFA_HUEFTE - 0.88 * Math.sin(SOFA_OBEN), 0.88 * Math.cos(SOFA_OBEN));
@@ -572,6 +593,12 @@ export function baueDennis(scene) {
           knie[i].rotation.x = naeher(knie[i].rotation.x, 1.5, k);
         }
         rumpf.position.y = 0.9 + Math.sin(zeit * 1.8) * 0.004;
+      } else if (hula) {
+        for (let i = 0; i < 2; i++) {
+          beine[i].rotation.x = -0.12;
+          knie[i].rotation.x = 0.22;
+        }
+        rumpf.position.y = 0.9;
       } else if (sofaLiegen) {
         for (let i = 0; i < 2; i++) {
           beine[i].rotation.x = -(SOFA_OBEN + SOFA_BEINE);
@@ -637,7 +664,7 @@ export function baueDennis(scene) {
 
       // Arme und Kaffee
       const wuetend = stimmung === 'wut';
-      becher.visible = !wuetend && !tanzt && !essen && !besenInHand.visible && !loescherHand.visible && modus !== 'liegen' && modus !== 'schlafen' && modus !== 'sitzen';
+      becher.visible = !wuetend && !tanzt && !essen && !besenInHand.visible && !loescherHand.visible && modus !== 'liegen' && modus !== 'schlafen' && modus !== 'sitzen' && modus !== 'hula';
       if (!besenInHand.visible) rumpf.rotation.y = 0;
       if (modus === 'schlafen') {
         links.schulter.rotation.set(-0.15, 0, 0.05);
@@ -666,6 +693,13 @@ export function baueDennis(scene) {
         links.ellbogen.rotation.set(-0.5, 0, 0);
         rechts.schulter.rotation.set(-0.5, 0, 0.1);
         rechts.ellbogen.rotation.set(-0.7, 0, 0);
+      } else if (modus === 'hula') {
+        // Arme locker zur Seite, Hände wackeln mit
+        const w = zeit * 11;
+        links.schulter.rotation.set(-0.4, 0, -1.25 + Math.sin(w) * 0.1);
+        links.ellbogen.rotation.set(-0.9, 0, 0);
+        rechts.schulter.rotation.set(-0.4, 0, 1.25 - Math.sin(w) * 0.1);
+        rechts.ellbogen.rotation.set(-0.9, 0, 0);
       } else if (essen) {
         // Brotdose links vor dem Bauch, Tomate rechts zum Mund
         const biss = Math.max(0, Math.sin(zeit * 2.2));
