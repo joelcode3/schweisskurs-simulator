@@ -188,33 +188,36 @@ export function dauer(art) {
 }
 
 // Platzhalter-Stimme für Dennis, solange keine echten Clips da sind: Brummeln in Silben.
+// Gebrabbel ohne Aufnahme: gedämpfte Posaune wie die Erwachsenen bei den Peanuts ("wah-wah-wah")
 export function brummeln(silben = 8, wut = 0) {
   if (!ctx) return 0;
   let t = ctx.currentTime + 0.05;
   const start = t;
-  for (let i = 0; i < silben; i++) {
-    const lang = 0.09 + Math.random() * 0.12;
+  const woerter = Math.max(2, Math.ceil(silben * 0.7));
+  // Wah-Kurve: Dämpfer geht auf und wieder zu
+  const kurve = (lo, hi) => Float32Array.from({ length: 24 }, (_, i) => lo + (hi - lo) * Math.pow(Math.sin(Math.PI * i / 23), 1.5));
+  for (let i = 0; i < woerter; i++) {
+    const lang = (0.14 + Math.random() * 0.12) * (1 - wut * 0.2);
     const o = ctx.createOscillator();
     o.type = 'sawtooth';
-    const grund = 105 + wut * 70 + Math.random() * 30;
+    const grund = (195 + wut * 50) * (0.86 + Math.random() * 0.28);
     o.frequency.setValueAtTime(grund, t);
-    o.frequency.linearRampToValueAtTime(grund * (0.85 + Math.random() * 0.3), t + lang);
+    o.frequency.linearRampToValueAtTime(grund * 1.12, t + lang * 0.5);
+    o.frequency.linearRampToValueAtTime(grund * 0.92, t + lang);
+    const offen = kurve(500, 2400 + wut * 800);
     const f1 = ctx.createBiquadFilter();
-    f1.type = 'bandpass';
-    f1.frequency.value = 500 + Math.random() * 500;
-    f1.Q.value = 4;
     const f2 = ctx.createBiquadFilter();
-    f2.type = 'bandpass';
-    f2.frequency.value = 1100 + Math.random() * 900;
-    f2.Q.value = 5;
+    for (const f of [f1, f2]) {
+      f.type = 'lowpass';
+      f.Q.value = 2.5 + wut * 2;
+      f.frequency.setValueCurveAtTime(offen, t, lang);
+    }
     const g = ctx.createGain();
-    huelle(g, t, 0.015, lang * 0.6, lang * 0.4, 0.5 + wut * 0.4);
-    o.connect(f1).connect(g);
-    o.connect(f2).connect(g);
-    g.connect(master);
+    huelle(g, t, 0.025, lang - 0.05, 0.04, 0.55 + wut * 0.35);
+    o.connect(f1).connect(f2).connect(g).connect(master);
     o.start(t);
-    o.stop(t + lang + 0.05);
-    t += lang + (Math.random() < 0.2 ? 0.12 : 0.03);
+    o.stop(t + lang + 0.06);
+    t += lang + (0.03 + Math.random() * 0.1) * (1 - wut * 0.5);
   }
   return t - start;
 }

@@ -64,7 +64,8 @@
 ## Technik
 - Statische Seite, GitHub Pages. Lokal testen: `python3 -m http.server` im Projektordner.
 - Versionsnummer `?v=JJJJMMTT-n` an `css/style.css` und `js/main.js` in `index.html` bei jeder Änderung hochzählen.
-- Fehlt ein Clip, zeigt das Spiel ein gezeichnetes Dennis-Gesicht mit Brummelstimme und Sprechblase.
+- Fehlt ein Clip, zeigt das Spiel ein gezeichnetes Dennis-Gesicht mit Gebrabbel und Sprechblase.
+- Gebrabbel (Sätze ohne Aufnahme, `brummeln` in audio.js): gedämpfte Posaune wie bei den Peanuts (Betreiber-Wahl C).
 - `window.__werkstatt` ist nur für Tests (Playwright) gedacht.
 
 ## Clips
@@ -85,7 +86,6 @@
 ## Offene Themen
 - Für später gemerkt (Betreiber, 18.10.):
   - Bug: Man steckt fest, wenn man zwischen Dennis und Sofa steht.
-  - Gebrabbel (Brummelstimme) soll anders klingen – Vorschläge gemacht, Antwort abwarten.
   - Hüfte: Dennis soll sich auf freien Boden legen (liegt meist halb unterm Sofa).
   - Kein Gemurmel, solange Dennis anders beschäftigt ist (schlafen, Feuer löschen, Hüfte, Mittagspause).
 - Handy-Video von Dennis einbauen (Betreiber hat Video), sobald geschickt.
