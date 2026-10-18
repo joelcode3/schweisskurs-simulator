@@ -257,6 +257,18 @@ export function baueWelt(scene) {
     g.fillText('SICHERHEIT ZUERST', b / 2, h - 18);
   }, 2.0, 1.9, RAUM.zMin + 0.01, 0);
 
+  // Rohrzange an der Werkzeugwand (rote Griffe) – zum Reparieren des Wasserhahns
+  const zange = new THREE.Group();
+  zange.add(setze(quader(0.035, 0.3, 0.02, FARBE.rot), 0, -0.05, 0));
+  zange.add(setze(quader(0.03, 0.26, 0.02, FARBE.rot), 0.05, -0.03, 0, 0, 0, -0.12));
+  zange.add(setze(quader(0.09, 0.05, 0.03, FARBE.stahl), 0.005, 0.13, 0));
+  zange.add(setze(quader(0.03, 0.08, 0.03, FARBE.stahl), -0.03, 0.18, 0));
+  setze(zange, 1.32, 1.62, RAUM.zMin + 0.06, 0, 0, 0.25);
+  scene.add(zange);
+  merke(zange, 'rohrzange', 'Rohrzange', null);
+  objekte.rohrzange = zange;
+  zange.userData.wand = { pos: zange.position.clone(), rot: zange.rotation.clone() };
+
   // ---------- Werkbank ----------
   const werkbank = new THREE.Group();
   werkbank.add(setze(quader(2.3, 0.08, 0.8, FARBE.holz), 0, 0.86, 0));
@@ -452,6 +464,18 @@ export function baueWelt(scene) {
   becken.add(setze(zylinder(0.03, 0.03, 0.03, FARBE.rot, {}, 10), 0.24, 1.2, 0));
   setze(becken, 4.67, 0, 1.6);
   scene.add(becken);
+  // Rohr unter dem Hahn (hier platzt es bei Frost)
+  const hahnRohr = setze(zylinder(0.025, 0.025, 0.5, FARBE.stahlHell, {}, 10), 4.93, 0.95, 1.6);
+  scene.add(hahnRohr);
+  merke(hahnRohr, 'wasserhahn', 'Wasserrohr am Hahn', null);
+  objekte.wasserhahn = hahnRohr;
+  // Pfütze (wächst, solange es spritzt)
+  const pfuetze = new THREE.Mesh(new THREE.CircleGeometry(1, 32), new THREE.MeshBasicMaterial({ color: 0x5aa6e6, transparent: true, opacity: 0.55, depthWrite: false }));
+  pfuetze.rotation.x = -Math.PI / 2;
+  pfuetze.position.set(4.3, 0.006, 1.6);
+  pfuetze.scale.setScalar(0.01);
+  pfuetze.visible = false;
+  scene.add(pfuetze);
   hindernis(4.35, 5, 1.1, 2.1);
 
   // Schlauch an der Wand
@@ -462,6 +486,8 @@ export function baueWelt(scene) {
   setze(schlauch, RAUM.xMax - 0.06, 1.45, 2.45, 0, Math.PI / 2, 0);
   scene.add(schlauch);
   merke(schlauch, 'schlauch', 'Wasserschlauch', 'wasch');
+  objekte.schlauch = schlauch;
+  schlauch.userData.wand = { pos: schlauch.position.clone(), rot: schlauch.rotation.clone() };
 
   // Eimer
   const eimer = new THREE.Group();
@@ -997,6 +1023,55 @@ export function baueWelt(scene) {
     g.fillRect(0, 0, 64, 64);
   });
   const wolken = [];
+  // Wasser: blaue Tropfen von a nach b (Schlauch, Leck)
+  const tropfenTex = leinwandTextur(32, 32, (g) => {
+    const v = g.createRadialGradient(16, 16, 2, 16, 16, 15);
+    v.addColorStop(0, 'rgba(220,240,255,1)');
+    v.addColorStop(0.5, 'rgba(110,180,255,0.9)');
+    v.addColorStop(1, 'rgba(110,180,255,0)');
+    g.fillStyle = v;
+    g.beginPath(); g.arc(16, 16, 15, 0, Math.PI * 2); g.fill();
+  });
+  const tropfenMat = new THREE.SpriteMaterial({ map: tropfenTex, transparent: true, depthWrite: false });
+  const tropfen = [];
+  function wasser(von, nach, anzahl = 8, streuung = 0.4) {
+    for (let i = 0; i < anzahl; i++) {
+      const sp = new THREE.Sprite(tropfenMat);
+      sp.position.copy(von);
+      const v = new THREE.Vector3().subVectors(nach, von).multiplyScalar(1.6 + Math.random() * 0.4);
+      v.add(new THREE.Vector3((Math.random() - 0.5) * streuung, Math.random() * streuung * 0.5 + 1.2, (Math.random() - 0.5) * streuung));
+      sp.userData = { v, t: 0 };
+      sp.scale.setScalar(0.035 + Math.random() * 0.03);
+      scene.add(sp);
+      tropfen.push(sp);
+    }
+  }
+  animiert.push((dt) => {
+    for (let i = tropfen.length - 1; i >= 0; i--) {
+      const w = tropfen[i];
+      w.userData.t += dt;
+      w.userData.v.y -= 9.81 * dt;
+      w.position.addScaledVector(w.userData.v, dt);
+      if (w.position.y < 0.02 || w.userData.t > 2) { scene.remove(w); tropfen.splice(i, 1); }
+    }
+  });
+  let leckAn = false;
+  let leckTakt = 0;
+  animiert.push((dt) => {
+    if (leckAn) {
+      leckTakt += dt;
+      while (leckTakt > 0.03) {
+        leckTakt -= 0.03;
+        wasser(new THREE.Vector3(4.9, 0.9, 1.6), new THREE.Vector3(4.2 + (Math.random() - 0.5) * 0.4, 1.0, 1.6 + (Math.random() - 0.5) * 0.9), 2, 0.6);
+      }
+      pfuetze.visible = true;
+      pfuetze.scale.setScalar(Math.min(1.5, pfuetze.scale.x + dt * 0.05));
+    } else if (pfuetze.visible) {
+      pfuetze.scale.setScalar(Math.max(0.01, pfuetze.scale.x - dt * 0.02));
+      if (pfuetze.scale.x <= 0.011) pfuetze.visible = false;
+    }
+  });
+
   function pulver(von, nach) {
     for (let i = 0; i < 26; i++) {
       const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: wolkenTex, transparent: true, depthWrite: false }));
@@ -1122,6 +1197,11 @@ export function baueWelt(scene) {
     feuer(an) { feuer.visible = an; feuerLicht.intensity = an ? 4 : 0; },
     get brennt() { return feuer.visible; },
     pulver,
+    wasser,
+    leck(an) { leckAn = an; },
+    get leckt() { return leckAn; },
+    LECK: { x: 4.93, z: 1.6, vorX: 4.05, vorZ: 1.6 },
+    ROHRZANGE: { x: 1.32, z: -3.3 },
     loescherSichtbar(an) { loescher.visible = an; },
     // Ding wieder an seinen festen Platz (Wandhalter) hängen
     zurueckAnDieWand(obj) {

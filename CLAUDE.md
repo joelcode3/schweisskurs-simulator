@@ -34,7 +34,14 @@
   stehen: „Was los??“ (stimme/baustellenfeeling.mp3, 1 s, nicht im Liegen, nicht wenn er selbst kommt, max. alle 40 s). Mittagspause: einmal pro Spiel setzt er sich aufs Sofa (vorne links), isst aus der Brotdose eine Tomate
   (stimme/tomate.mp3), legt sich dann ~22 s schlafen (Z Z Z). Wecken = Wut. Kiwis liegen lose auf dem Kaffeetisch.
   (stimme/tomate.mp3 kommt sofort, wenn er die Brotdose auspackt). Auf dem Sofa liegt er mit Kopf und Waden auf den Lehnen.
-  Liegt Dreck > 45 s, holt Dennis den Besen und fegt selbst (stimme/muell.mp3, Note -2).
+  Dreck: nach 18 s meckert Dennis (+4 Wut), nach 32 s holt er den Besen und fegt selbst (stimme/muell.mp3, +8 Wut, Note -2).
+  Sprüche haben meist mehrere Varianten (Listen in texte.js, `sag()` wählt zufällig).
+  Beim Hula-Hoop sagt Dennis nur „hello fresh“, sonst nichts (Wichtiges wartet, Nebensächliches fällt weg).
+  Wasserschlauch: in die Hand nehmen, E = spritzen (Dennis treffen = sauer, sonst meckert er; löscht auch Feuer),
+  G = zurückhängen, reicht nur ca. 5 m vom Waschplatz.
+  Wasserrohrbruch (Frost): einmal pro Spiel nach ca. 3–5 min spritzt das Rohr am Waschplatz (Pfütze, Wasser-Symbol unten
+  rechts). Rohrzange von der Werkzeugwand holen, auf das Rohr klicken (oder E in der Nähe), festziehen. Nach ca. 22 s
+  macht Dennis es selbst und ist stinkig (+12 Wut).
   Dennis steht nicht immer vor dem Sofa: alle 30–55 s wechselt er zu einem anderen Platz (PLAETZE in dennis.js).
   Tanzen (Box an): nur dann und immer wieder stimme/murmeln-8.mp3 (95281C52…), sonst sagt er beim Tanzen nichts.
   Hüfte: erster Hilferuf beim Hinlegen, Hilferuf-Blasen bleiben ca. 8 s.
@@ -47,7 +54,8 @@
   Hula-Hoop: Reifen hängt an der Rückwand zwischen Regal und Werkbank. Dennis holt ihn sich alle 1,5–2,5 min (oder man
   bringt ihn: Reifen in die Hand, auf Dennis klicken), macht Hula-Hoop und sagt dabei stimme/murmeln-10.mp3 (hello_fresh,
   nur noch dafür), hängt ihn danach zurück. Minispiel am Reifen: „Dennis’ Rekord knacken“ (A/D bzw. links/rechts tippen im Takt,
-  Rekord 47 Runden, eigener Rekord im Browser gespeichert; Dennis kommentiert, wenn er zuguckt).
+  Rekord 47 Runden, eigener Rekord im Browser gespeichert; Dennis kommentiert, wenn er zuguckt). Spielprinzip: so schnell
+  wie möglich abwechselnd A/D (zu langsam = Reifen fällt). Schlacke-Minispiel auf rotem Ofen-Untergrund, Flexen großzügiger.
   Nähe-Sprüche: kommt man in Dennis' Nähe, sagt er ab und zu etwas (stimme/naehe-1a/1b = ansprechen1/11 wenn entspannt,
   naehe-2b/2c = ansprechen22/22222 ab Wut 35, dann auch weiter weg hörbar). Je näher, desto lauter.
   Ärgern (Kaffee, Kiwi, Brotdose): Ton stimme/aergern-1 (ärgernleicht1), dann aergern-2, dann abwechselnd.
@@ -64,7 +72,8 @@
 - Dennis' Klemmbrett (liegt auf dem Sofa): Klick = in die Hand, dann liest man es (kein Menü, kein „Lesen“). Notizen in NOTIZEN (world.js): Lydia anrufen, Hüfte hinten
   links, Heringe essen, Arzttermine, TK-Pizza einkaufen, Sexy abmelden, Fußmatte waschen.
 - Erste-Hilfe-Kasten neben dem Feuerlöscher. Klospülung = assets/klospuelung.mp3 (Ton aus dem Video vom Betreiber, mit Ausblenden).
-- Feuer: einmal pro Spiel (nach dem Flexen bald) brennt der Mülleimer neben der Werkbank. Vor dem Flexen nur mit
+- Feuer: einmal pro Spiel (nach dem Flexen bald) brennt der Mülleimer neben der Werkbank, Feuer-Symbol unten rechts,
+  Dennis wartet ca. 16 s, bevor er selbst löscht. Vor dem Flexen nur mit
   anderem Grund: Johnny hat seine Kippe reingeschnippt (eigene Sprüche). Dennis ruft (Blase rechts),
   holt den Feuerlöscher (rechte Wand zwischen Schweißplatz und Waschplatz) und löscht selbst, wird sauer. Löscht man selbst: Lob, Wut sinkt. Hält man den Löscher
   und tut nichts, drängelt Dennis (Wut steigt).
@@ -78,8 +87,8 @@
 - Bedienung: Hat ein Ding nur eine Aktion, wird sie beim Klick direkt ausgeführt (kein Menü). Box und Licht schalten
   sofort beim Klick (ohne Hinlaufen). Abbrechen-Knöpfe hell mit dunkler Schrift.
 - Dennis hält seinen Becher immer aufrecht, Schuhsohlen rund (keine eckigen Platten).
-- Anzeige-Regeln (Betreiber): Videos nur für Arbeitssicherheit und Aufgaben, rechts am Rand, ohne Wegklicken,
-  verschwinden von selbst. Alle Sprechblasen (Nebensachen, Lob) rechts am Rand, verschwinden von selbst.
+- Anzeige-Regeln (Betreiber): Videos NUR bei Ausrastern (Fehlerstufe voll, Rausschmiss, schlechte Note am Ende = Rausschmiss-Video),
+  rechts am Rand, ohne Wegklicken. Alles andere (auch Tipps, Abgabe, Lob, Ende gut) nur als Sprechblase. „Was los??“ nur Ton, keine Blase. Alle Sprechblasen (Nebensachen, Lob) rechts am Rand, verschwinden von selbst.
   Mute-Knopf und Lautstärkeregler unten links (gespeichert im Browser).
   Begrüßung am Anfang bleibt als großes Fenster. Stations-Knöpfe nur auf Touch-Geräten.
 - Fokus: Desktop-Version (Betreiber-Wunsch), Handy-Ansicht erstmal zweitrangig.

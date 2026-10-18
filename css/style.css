@@ -988,3 +988,20 @@ button { font: inherit; color: inherit; }
   filter: drop-shadow(5px 5px 0 rgba(0,0,0,0.35));
   shape-outside: margin-box;
 }
+
+/* Warnsymbole unten rechts (Feuer, Wasser) */
+#warnungen { position: absolute; right: var(--rand-rechts); bottom: var(--rand-unten); display: flex; gap: 8px; pointer-events: none !important; }
+.warnung {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border: 3px solid #111;
+  border-radius: 12px;
+  box-shadow: 3px 3px 0 #111;
+  animation: warnBlinken 0.8s infinite alternate;
+}
+.warnung .ico { width: 34px; height: 34px; stroke: #fff; stroke-width: 2.2; fill: none; }
+.warnung.feuer { background: #e2531e; }
+.warnung.wasser { background: #2f7fd1; }
+@keyframes warnBlinken { from { transform: scale(1); } to { transform: scale(1.12); filter: brightness(1.25); } }
