@@ -1064,6 +1064,8 @@ export function baueWelt(scene) {
       if (p.x > 3.2 && p.z > 0.6 && p.z < 2.9) return 'wasch';
       return null;
     },
+    // Freier Boden für die Hüfte (liegend ca. 2,3 m lang, Kopf Richtung Werkstattmitte)
+    HUEFTE_PLATZ: { x: -1.6, z: 1.1, dreh: -Math.PI / 2 },
     SOFA: { x: -3.2, z: RAUM.zMax - 0.45, sitzZ: RAUM.zMax - 0.5, vorneZ: RAUM.zMax - 1.15 },
     update(dt) {
       for (const a of animiert) a(dt);

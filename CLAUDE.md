@@ -23,18 +23,19 @@
 - Nebenbei-Interaktionen: Kaffee kochen und Dennis bringen (Wut sinkt, ab dem 3. meckert er), Kiwis (1. ok,
   2. skeptisch, ab 3. sauer), Brotdose (abbeißen = Ausraster), große Soundbox (Techno, Dennis tanzt),
   Lichtschalter (Dennis meckert), Besen (Dreck nach Schneiden/Schweißen, zählt in die Note),
-  Hüfte (Dennis legt sich einmal pro Spiel hin und jammert, bis man ihm aufhilft),
+  Hüfte (Dennis humpelt einmal pro Spiel auf freien Boden in der Raummitte, legt sich hin und jammert, bis man ihm aufhilft),
   Klo-Pause zwischendurch (frühestens nach 100 s, „Warte kurz!“, WC-Tür vorne rechts). Geht man zu Dennis hin und bleibt
   stehen: „Was los??“ (stimme/baustellenfeeling.mp3, 1 s, nicht im Liegen, nicht wenn er selbst kommt, max. alle 40 s). Mittagspause: einmal pro Spiel setzt er sich aufs Sofa (vorne links), isst aus der Brotdose eine Tomate
   (stimme/tomate.mp3), legt sich dann ~22 s schlafen (Z Z Z). Wecken = Wut. Kiwis liegen lose auf dem Kaffeetisch.
   Liegt Dreck > 45 s, holt Dennis den Besen und fegt selbst (stimme/muell.mp3, Note -2).
-  Murmeln: nur stimme/murmeln-8..10.mp3 (vom Betreiber extra dafür geschickt: 95281C52…, ansprechen2, hello_fresh), zufällig alle 15–35 s, nur Ton, Lautstärke nach Abstand.
+  Murmeln (nur wenn Dennis frei ist, nicht beim Schlafen/Löschen/Hüfte/Mittag/Klo/Fegen): nur stimme/murmeln-8..10.mp3 (vom Betreiber extra dafür geschickt: 95281C52…, ansprechen2, hello_fresh), zufällig alle 15–35 s, nur Ton, Lautstärke nach Abstand.
   Alle Töne mit kurzem Ein- und Ausblenden. Poster (assets/poster.jpg) mit Klebeband über der Kaffeeecke.
 - Kaffee: 1. senkt Wut (-20), 3 hintereinander (seit letztem Klo) = sofort aufs Klo + etwas Wut. Milch (Tüte auf dem
   Kaffeetisch) = „Ist da Milch drin? GIFT!!“ + Klo + Wut. Reguläres Klo (nicht ausgelöst) senkt die Wut (-10).
   Fegen senkt Wut (-8), Aufhelfen nach Hüfte (-12, Dennis freut sich).
 - Holzfigur (Baumstamm mit geschnitztem Hintern, ~70 cm) steht zwischen Box und Besen.
-- Feuer: einmal pro Spiel (nach dem Flexen bald) brennt der Mülleimer neben der Werkbank. Dennis ruft (Blase rechts),
+- Feuer: einmal pro Spiel (nach dem Flexen bald) brennt der Mülleimer neben der Werkbank. Vor dem Flexen nur mit
+  anderem Grund: Johnny hat seine Kippe reingeschnippt (eigene Sprüche). Dennis ruft (Blase rechts),
   holt den Feuerlöscher und löscht selbst, wird sauer. Löscht man selbst: Lob, Wut sinkt. Hält man den Löscher
   und tut nichts, drängelt Dennis (Wut steigt).
 - Hand-System (`js/hand.js`): Werkzeug, Ausrüstung, Feuerlöscher, Besen, Figur, Handy kann man aufheben (Hand im Bild),
@@ -84,10 +85,6 @@
 - KI-Stimmklon ist in dieser Umgebung nicht möglich (huggingface.co gesperrt). Stimmproben nie ins Repo (öffentlich).
 
 ## Offene Themen
-- Für später gemerkt (Betreiber, 18.10.):
-  - Bug: Man steckt fest, wenn man zwischen Dennis und Sofa steht.
-  - Hüfte: Dennis soll sich auf freien Boden legen (liegt meist halb unterm Sofa).
-  - Kein Gemurmel, solange Dennis anders beschäftigt ist (schlafen, Feuer löschen, Hüfte, Mittagspause).
 - Handy-Video von Dennis einbauen (Betreiber hat Video), sobald geschickt.
 - Weitere Clips von Dennis (Begrüßung, Lob, Tipps, Ende, spezielle Fehler).
 - Weitere Projekte (Grill, Werkzeugwagen), weitere Fehler, ggf. MAG-Schweißen.

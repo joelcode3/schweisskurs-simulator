@@ -10,6 +10,8 @@ export const DENNIS = {
     sauer: 'Wer passt hier eigentlich auf?! Beim Flexen guckt man, wo die Funken hinfliegen!',
     selbst: 'Gut reagiert! Genau so.',
     duHastIhn: 'Lösch das! Du hast doch den Feuerlöscher!',
+    rufJohnny: 'FEUER!! Johnny, hast du schon wieder deine Kippe in den Mülleimer geschnippt?!',
+    sauerJohnny: 'Johnny! Geraucht wird DRAUSSEN! Und du stehst daneben und guckst zu, oder was?!',
   },
   besenInDerHand: 'Fegst du jetzt, oder hältst du den Besen nur fest?',
   hand: {

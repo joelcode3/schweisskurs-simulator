@@ -125,14 +125,21 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
   window.addEventListener('keyup', (e) => tasten.delete(e.key.toLowerCase()));
   window.addEventListener('blur', () => tasten.clear());
 
+  // Neue Position gesperrt? Steckt man schon in etwas drin (z. B. Dennis ist dicht herangekommen),
+  // darf man sich trotzdem bewegen, solange man nicht noch tiefer hineinläuft.
   function kollidiert(x, z) {
     const r = 0.3;
+    const p = kamera.position;
     if (x < RAUM.xMin + r || x > RAUM.xMax - r || z < RAUM.zMin + r || z > RAUM.zMax - r) return true;
+    const drin = (h, px, pz) => px > h.xMin - r && px < h.xMax + r && pz > h.zMin - r && pz < h.zMax + r;
     for (const h of welt.hindernisse) {
-      if (x > h.xMin - r && x < h.xMax + r && z > h.zMin - r && z < h.zMax + r) return true;
+      if (drin(h, x, z) && !drin(h, p.x, p.z)) return true;
     }
     const dp = welt.dennisPosition();
-    if (dp && Math.hypot(x - dp.x, z - dp.z) < 0.55) return true;
+    if (dp) {
+      const neu = Math.hypot(x - dp.x, z - dp.z);
+      if (neu < 0.55 && neu < Math.hypot(p.x - dp.x, p.z - dp.z)) return true;
+    }
     return false;
   }
 

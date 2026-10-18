@@ -154,8 +154,7 @@ button { font: inherit; color: inherit; }
 #wut-fuellung {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, #5cbf4a, #ffc81e 50%, #e23b2e);
-  background-size: 300px 100%;
+  background: linear-gradient(90deg, #5cbf4a, #ffc81e 50%, #e23b2e) no-repeat;
   transition: width 0.6s cubic-bezier(.3,1.6,.5,1);
 }
 #wut.wackelt { animation: wackeln 0.5s; }
