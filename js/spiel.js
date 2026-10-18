@@ -9,6 +9,8 @@ import { DENNIS, satzId } from './texte.js';
 import { SYMBOL } from './gesicht.js';
 
 const zufallAus = (liste) => liste[Math.floor(Math.random() * liste.length)];
+// Text aus einer Liste zufällig wählen (oder den einzelnen Text nehmen): mehr Abwechslung bei Dennis
+const sag = (x) => (Array.isArray(x) ? zufallAus(x) : x);
 
 // Fehler: Stufe, Wutpunkte, Clip-Kategorie, Platzhalter-Sprüche
 const FEHLER = {
@@ -78,15 +80,15 @@ const FEHLER = {
   },
   feuer: {
     stufe: 'mittel', wut: 12, nebensache: true, clip: 'ermahnung', name: 'Feuer im Mülleimer nicht gelöscht',
-    texte: [DENNIS.feuer.sauer, DENNIS.feuer.sauerJohnny],
+    texte: [...DENNIS.feuer.sauer, ...DENNIS.feuer.sauerJohnny],
   },
   geweckt: {
     stufe: 'leicht', wut: 6, nebensache: true, clip: 'ermahnung', name: 'Dennis aus dem Mittagsschlaf geweckt',
-    texte: [DENNIS.geweckt],
+    texte: DENNIS.geweckt,
   },
   licht: {
     stufe: 'leicht', wut: 4, nebensache: true, clip: 'licht', nurZeichnung: true, name: 'Licht ausgemacht',
-    texte: [DENNIS.licht],
+    texte: DENNIS.licht,
   },
   huefte: {
     stufe: 'leicht', wut: 3, nebensache: true, clip: 'huefte', nurZeichnung: true, name: 'Dennis am Boden liegen lassen',
@@ -98,7 +100,7 @@ const FEHLER = {
   },
   figur: {
     stufe: 'leicht', wut: 5, nebensache: true, ton: 'stimme/naehe-2a.mp3', clip: 'ermahnung', name: 'Dennis’ Skulptur angefasst',
-    texte: [DENNIS.hand.figur],
+    texte: DENNIS.hand.figur,
   },
   werfen: {
     stufe: 'leicht', wut: 6, nebensache: true, clip: 'ermahnung', name: 'Mit Werkzeug geworfen',
@@ -106,7 +108,7 @@ const FEHLER = {
   },
   figurWerfen: {
     stufe: 'mittel', wut: 20, nebensache: true, clip: 'sauer', name: 'Dennis’ Skulptur durch die Gegend geworfen',
-    texte: [DENNIS.hand.figurWerfen],
+    texte: DENNIS.hand.figurWerfen,
   },
   getroffen: {
     stufe: 'voll', wut: 35, nebensache: true, ton: 'stimme/abwerfen-1.mp3', clip: 'ausraster', name: 'Dennis abgeworfen',
@@ -114,15 +116,23 @@ const FEHLER = {
   },
   gespruehrt: {
     stufe: 'voll', wut: 30, clip: 'ausraster', name: 'Dennis mit dem Feuerlöscher eingesprüht',
-    texte: [DENNIS.hand.gespruehrt],
+    texte: DENNIS.hand.gespruehrt,
   },
   loescherSpielen: {
     stufe: 'leicht', wut: 8, nebensache: true, clip: 'ermahnung', name: 'Feuerlöscher sinnlos leer gesprüht',
-    texte: [DENNIS.hand.loescherSpielen],
+    texte: DENNIS.hand.loescherSpielen,
   },
   flexAufDennis: {
     stufe: 'mittel', wut: 15, clip: 'sauer', name: 'Mit laufender Flex auf Dennis gezeigt',
-    texte: [DENNIS.hand.flexAufDennis],
+    texte: DENNIS.hand.flexAufDennis,
+  },
+  nassgespritzt: {
+    stufe: 'mittel', wut: 15, nebensache: true, clip: 'sauer', name: 'Dennis nassgespritzt',
+    texte: DENNIS.schlauch.nass,
+  },
+  rumspritzen: {
+    stufe: 'leicht', wut: 4, nebensache: true, clip: 'ermahnung', name: 'Mit dem Schlauch rumgespritzt',
+    texte: DENNIS.schlauch.rumspritzen,
   },
   nerven: {
     stufe: 'leicht', wut: 6, clip: 'fehler_nerven', name: 'Dennis zu oft gefragt',
@@ -132,7 +142,7 @@ const FEHLER = {
 const ARGERN_BEI = ['kaffee', 'kiwi', 'brotdose'];
 // Was Dennis sagt, wenn man etwas wirft (je nach Ding)
 const WURF_ART = {
-  flex: 'werkzeug', hammer: 'werkzeug', edding: 'edding',
+  flex: 'werkzeug', hammer: 'werkzeug', rohrzange: 'werkzeug', edding: 'edding',
   brille: 'ausruestung', handschuhe: 'ausruestung', helm: 'ausruestung',
   hulahup: 'reifen', klemmbrett: 'notizen', besen: 'besen', feuerloescher: 'loescher',
 };
@@ -314,7 +324,8 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     if (tonVorgabe) ton = tonVorgabe;
     else if (ARGERN_BEI.includes(id)) ton = ARGERN_TOENE[z.aergern++ % ARGERN_TOENE.length];
     else if (f.ton) ton = f.ton;
-    if (f.nebensache) await Promise.all([kommt, dennisSagt(text, f.stufe !== 'leicht', { ton })]);
+    // Video nur beim richtigen Ausraster, sonst Sprechblase mit Ton
+    if (f.nebensache || f.stufe !== 'voll') await Promise.all([kommt, dennisSagt(text, f.stufe !== 'leicht', { ton })]);
     else {
       nebenbeiStoppen();
       await Promise.all([kommt, auftritt({ schluessel: f.nurZeichnung ? [f.clip] : [f.clip, STUFEN_CLIP[f.stufe]], text, stufe: f.stufe, stimmung: STUFEN_STIMMUNG[f.stufe], seite: true })]);
@@ -349,7 +360,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
   let sprechAktiv = null;
   let sprichtGerade = false;
   function nebenbeiStoppen() {
-    if (murmelTon) { murmelTon.stopp(0.2); murmelTon = null; }
+    if (murmelTon && !murmelTon.hula) { murmelTon.stopp(0.2); murmelTon = null; }
     if (sprechAktiv && sprechAktiv.prio === 0) { if (stimmeJetzt) stimmeJetzt.stopp(0.2); sprechAktiv.abbrechen(); }
   }
   function dennisSagt(text, sauer = false, optionen = {}) {
@@ -383,9 +394,14 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     const { text, sauer } = e;
     const { minMs = 0, beimTanzen = false, ton = null } = e.optionen;
     if (dennis.modus === 'tanzen' && !beimTanzen) return;
+    // Beim Hula-Hoop nur „hello fresh“: Nebensächliches fällt weg, Wichtiges wartet
+    if (z.hula) {
+      if (e.prio < 2) return;
+      for (let i = 0; i < 60 && z.hula; i++) await warte(200);
+    }
     await stimmenLaden();
     // Gemurmel (Nähe, Tanz, Fegen): Wichtiges blendet es aus, Nebensächliches wartet
-    if (murmelTon && e.prio > 0) { murmelTon.stopp(0.2); murmelTon = null; }
+    if (murmelTon && e.prio > 0 && !murmelTon.hula) { murmelTon.stopp(0.2); murmelTon = null; }
     if (murmelTon) await Promise.race([murmelTon.fertig, warte(7000)]);
     // Läuft gerade ein Video von Dennis (mit Ton), erst danach sprechen
     for (let i = 0; i < 60 && buehneBelegt(); i++) await warte(200);
@@ -401,7 +417,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
       t.fertig = warte(t.dauer * 1000 + 100);
     }
     stimmeJetzt = t;
-    ui.sprechzeile(text, dauer, sauer);
+    if (e.optionen.blase !== false) ui.sprechzeile(text, dauer, sauer);
     await Promise.race([t.fertig, warte(15000), e.abbruch]);
     if (stimmeJetzt === t) stimmeJetzt = null;
     await warte(250);
@@ -485,7 +501,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     if (z.feuer === 'nie') z.feuerAb = Math.min(z.feuerAb, sekundenSeitStart() + 15 + Math.random() * 25);
     aktualisieren();
     if (e.qualitaet < 55) await fehler('schnitt');
-    else if (e.qualitaet >= 88) await lob(DENNIS.lobSchnitt);
+    else if (e.qualitaet >= 88) await lob(sag(DENNIS.lobSchnitt));
   }
 
   async function stromEinstellen() {
@@ -589,12 +605,12 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     z.fragen++;
     if (z.fragen > 3 && z.fragen % 3 === 1) return fehler('nerven');
     dennis.stimmung('ruhig');
-    await auftritt({ schluessel: ['tipp'], text: naechsterTipp(), stufe: 'info', stimmung: 'ruhig' });
+    await dennisSagt(naechsterTipp(), false, { minMs: 6000 });
   }
 
   async function abgeben() {
     if (!alleNaehte()) {
-      await auftritt({ schluessel: ['tipp'], text: DENNIS.nichtFertig, stufe: 'info', stimmung: 'skeptisch' });
+      await dennisSagt(sag(DENNIS.nichtFertig));
       return;
     }
     if (!z.schlackeWeg) {
@@ -602,7 +618,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
       return;
     }
     if (!z.lackiert) {
-      await auftritt({ schluessel: ['tipp'], text: DENNIS.nichtLackiert, stufe: 'info', stimmung: 'skeptisch' });
+      await dennisSagt(sag(DENNIS.nichtLackiert));
       return;
     }
     await ende();
@@ -675,7 +691,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     dennis.stimmung('froh');
     jingle(true);
     aktualisieren();
-    ui.lobZeigen(z.kaffeesSeitKlo === 1 ? DENNIS.kaffee.danke : DENNIS.kaffee.nochmal);
+    ui.lobZeigen(z.kaffeesSeitKlo === 1 ? sag(DENNIS.kaffee.danke) : sag(DENNIS.kaffee.nochmal));
     dennis.stimmung('ruhig');
   }
 
@@ -728,7 +744,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     z.wut = Math.max(0, z.wut - 8);
     aktualisieren();
     ui.hinweis('Boden ist sauber.');
-    ui.lobZeigen(DENNIS.fegen);
+    ui.lobZeigen(sag(DENNIS.fegen));
   }
 
   // ---------- Dennis fegt selbst, wenn der Dreck zu lange liegt ----------
@@ -742,7 +758,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     const besen = welt.objekte.besen;
     if (hand.item?.id === 'besen') {
       z.dreckSeit = sekundenSeitStart();
-      dennisSagt(DENNIS.besenInDerHand, false, { prio: 1 });
+      dennisSagt(sag(DENNIS.besenInDerHand), false, { prio: 1 });
       return;
     }
     z.dennisFegt = true;
@@ -768,6 +784,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     if (dennis.modus !== 'fegen') return abbruch();
     welt.dreckWeg();
     z.dennisHatGefegt = true;
+    if (!(await wutPlus({ wut: 8, name: 'Dennis musste selbst fegen' }))) dennisSagt(sag(DENNIS.dreck.selbst), true, { prio: 1 });
     dennis.setzeModus('normal');
     if (!(await dennis.gehZu(welt.BESEN.x, welt.BESEN.z, 1.3))) return abbruch();
     abbruch();
@@ -836,7 +853,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     if (regulaer) {
       z.wut = Math.max(0, z.wut - 10);
       aktualisieren();
-      dennisSagt(DENNIS.kloZurueck, false, { prio: 1 });
+      dennisSagt(sag(DENNIS.kloZurueck), false, { prio: 1 });
     }
     await Promise.race([dennis.heim(), warte(9000)]);
   }
@@ -909,10 +926,10 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     z.beschaeftigt = false;
     if (e.runden > DENNIS_HULA_REKORD) {
       jingle(true);
-      if (dennisSiehts()) { z.wut = Math.max(0, z.wut - 5); aktualisieren(); dennisSagt(DENNIS.hula.gebrochen); }
+      if (dennisSiehts()) { z.wut = Math.max(0, z.wut - 5); aktualisieren(); dennisSagt(sag(DENNIS.hula.gebrochen)); }
       else ui.hinweis(`${e.runden} Runden! Neuer Rekord. Schade, dass Dennis es nicht gesehen hat.`, 3500);
     } else if (dennisSiehts() && e.runden > 0) {
-      dennisSagt(e.runden >= 30 ? DENNIS.hula.knapp : DENNIS.hula.schwach);
+      dennisSagt(e.runden >= 30 ? sag(DENNIS.hula.knapp) : sag(DENNIS.hula.schwach));
     } else {
       ui.hinweis(`${e.runden} Runden. Dein Rekord: ${e.bester}.`);
     }
@@ -955,17 +972,20 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     feuerTon = dauerTon('schweissen');
     feuerTon.staerke(0.35);
     ui.hinweis('Es brennt! Der Mülleimer neben der Werkbank!');
-    setTimeout(() => { if (z.feuer === 'brennt') dennisLoescht(); }, 3500);
+    ui.warnung('feuer', true);
+    // Dennis lässt es eine Weile brennen, bevor er selbst löscht (ist trotzdem nicht begeistert)
+    setTimeout(() => { if (z.feuer === 'brennt') dennisLoescht(); }, 16000);
   }
   function feuerAus() {
     z.feuer = 'aus';
+    ui.warnung('feuer', false);
     welt.feuer(false);
     if (feuerTon) { feuerTon.stopp(); feuerTon = null; }
   }
   async function dennisLoescht() {
     if (z.dennisLoescht || z.feuer !== 'brennt') return;
     z.dennisLoescht = true;
-    dennisSagt(z.feuerGrund === 'kippe' ? DENNIS.feuer.rufJohnny : DENNIS.feuer.ruf, true, { prio: 1 });
+    dennisSagt(z.feuerGrund === 'kippe' ? sag(DENNIS.feuer.rufJohnny) : sag(DENNIS.feuer.ruf), true, { prio: 1 });
     // aus Pause, Klo, Schlaf oder Liegen raus
     if (dennis.modus === 'sitzen' || dennis.modus === 'schlafen') { mittagGeweckt = true; z.mittag = 'erledigt'; welt.objekte.brotdose.visible = true; }
     if (dennis.modus !== 'normal') dennis.aufstehen(dennis.position.x, dennis.position.z);
@@ -975,12 +995,12 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     const loescher = welt.objekte.feuerloescher;
     if (hand.item?.id === 'feuerloescher') {
       // Spieler hält den Löscher: Dennis drängelt, die Wut steigt, bis gelöscht ist
-      dennisSagt(DENNIS.feuer.duHastIhn, true);
+      dennisSagt(sag(DENNIS.feuer.duHastIhn), true);
       while (z.feuer === 'brennt' && hand.item?.id === 'feuerloescher') {
         await warte(9000);
         if (z.feuer !== 'brennt') break;
         if (await wutPlus({ wut: 5, name: 'Feuer brennen lassen' })) return;
-        dennisSagt(DENNIS.feuer.duHastIhn, true);
+        dennisSagt(sag(DENNIS.feuer.duHastIhn), true);
       }
       if (z.feuer !== 'brennt') { z.dennisLoescht = false; dennis.heim(); return; }
     }
@@ -1000,7 +1020,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     feuerAus();
     await warte(800);
     dennis.stimmung('sauer');
-    if (!(await wutPlus(FEHLER.feuer))) dennisSagt(z.feuerGrund === 'kippe' ? DENNIS.feuer.sauerJohnny : DENNIS.feuer.sauer, true);
+    if (!(await wutPlus(FEHLER.feuer))) dennisSagt(z.feuerGrund === 'kippe' ? sag(DENNIS.feuer.sauerJohnny) : sag(DENNIS.feuer.sauer), true);
     await warte(2500);
     const W = welt.LOESCHER;
     await Promise.race([dennis.gehZu(W.x, W.z, 1.6), warte(9000)]);
@@ -1014,7 +1034,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
   // Hüfte: Dennis humpelt auf freien Boden und legt sich dort hin (nicht unters Sofa)
   async function hueftePlatt() {
     z.huefte = 'geht';
-    dennisSagt(DENNIS.huefte.start, true, { prio: 1 });
+    dennisSagt(sag(DENNIS.huefte.start), true, { prio: 1 });
     const P = welt.HUEFTE_PLATZ;
     const da = await Promise.race([dennis.gehZu(P.x, P.z, 0.8), warte(9000).then(() => null)]);
     if (z.huefte !== 'geht') return;
@@ -1035,7 +1055,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     z.wut = Math.max(0, z.wut - 12);
     dennis.stimmung('froh');
     jingle(true);
-    ui.lobZeigen(DENNIS.huefte.danke);
+    ui.lobZeigen(sag(DENNIS.huefte.danke));
     setTimeout(() => { if (!z.beschaeftigt) dennis.stimmung('ruhig'); }, 4000);
     z.beschaeftigt = false;
     aktualisieren();
@@ -1043,7 +1063,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
   }
 
   // ---------- Dinge in der Hand ----------
-  const AUFNEHMBAR = ['brille', 'handschuhe', 'helm', 'flex', 'edding', 'hammer', 'feuerloescher', 'besen', 'figur', 'handy', 'klemmbrett', 'hulahup'];
+  const AUFNEHMBAR = ['brille', 'handschuhe', 'helm', 'flex', 'edding', 'hammer', 'feuerloescher', 'besen', 'figur', 'handy', 'klemmbrett', 'hulahup', 'rohrzange', 'schlauch'];
   const ANZIEHBAR = ['brille', 'handschuhe', 'helm'];
   let handyMal = 0;
 
@@ -1061,6 +1081,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     else if (!cfg.nichtAblegen) knoepfe.push(['', 'Klick auf Fläche = ablegen', '']);
     if (!cfg.nichtWerfen) knoepfe.push(['werfen', 'Werfen', 'Q']);
     if (!cfg.nichtAblegen && it.id !== 'flasche') knoepfe.push(['fallen', 'Fallen lassen', 'G']);
+    if (it.id === 'schlauch') knoepfe.push(['fallen', 'Zurückhängen', 'G']);
     el.innerHTML = `<div class="hand-name">${SYMBOL.hand}<span>${cfg.name}</span></div>${knoepfe.map(([k, t, taste]) => (k
       ? `<button type="button" data-k="${k}">${taste ? `<kbd>${taste}</kbd>` : ''}${t}</button>`
       : `<span class="hand-tipp">${t}</span>`)).join('')}`;
@@ -1136,17 +1157,122 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     if (id === 'besen') return fegen();
     if (id === 'handy') { ui.hinweis('3 neue Nachrichten. Alle unwichtig.'); return handyReaktion(); }
     if (id === 'hulahup') { ui.hinweis('Klick auf Dennis, dann gibst du ihm den Reifen.'); return; }
+    if (id === 'schlauch') return spritzen();
+    if (id === 'rohrzange') {
+      const L = welt.LECK;
+      if (z.leck === 'spritzt' && Math.hypot(kamera.position.x - L.x, kamera.position.z - L.z) < 3) return reparieren();
+      ui.hinweis(z.leck === 'spritzt' ? 'Geh näher an den Waschplatz, dann kannst du das Rohr abdichten.' : 'Hier ist nichts zu reparieren.');
+      return;
+    }
     if (id === 'flex') {
       if (ohneAufsicht()) return;
       const ton = dauerTon('flex');
       await warte(1300);
       ton.stopp();
       if (blickAufDennis(3.5)) return fehler('flexAufDennis');
-      if (dennisSiehts()) dennisSagt(DENNIS.hand.flexLaeuft);
+      if (dennisSiehts()) dennisSagt(sag(DENNIS.hand.flexLaeuft));
     }
   }
 
   // ziel: 'feuer', 'dennis' oder leer (dann zählt, wohin man guckt)
+  // ---------- Wasserschlauch: rumspritzen ----------
+  function schlauchZurueck() {
+    const obj = hand.weg();
+    if (obj) welt.zurueckAnDieWand(obj);
+    handleisteZeigen();
+  }
+  async function spritzen() {
+    if (z.spritzt) return;
+    z.spritzt = true;
+    const vorne = steuerung.blickRichtung();
+    const von = kamera.position.clone().add(vorne.clone().multiplyScalar(0.5));
+    von.y -= 0.3;
+    const ton = dauerTon('wasser', 0.7);
+    for (let i = 0; i < 12; i++) {
+      welt.wasser(von, von.clone().add(vorne.clone().multiplyScalar(3)), 4, 0.25);
+      await warte(70);
+    }
+    ton.stopp();
+    z.spritzt = false;
+    const F = welt.FEUER;
+    const zumFeuer = new THREE.Vector3(F.x, 0.6, F.z).sub(kamera.position);
+    if (z.feuer === 'brennt' && Math.hypot(zumFeuer.x, zumFeuer.z) < 4 && zumFeuer.normalize().dot(vorne) > 0.7) {
+      feuerAus();
+      z.wut = Math.max(0, z.wut - 5);
+      aktualisieren();
+      jingle(true);
+      ui.lobZeigen(sag(DENNIS.hand.loeschen));
+      return;
+    }
+    if (blickAufDennis(4.5)) return fehler('nassgespritzt');
+    if (dennisSiehts() && sekundenSeitStart() - (z.spritzGemeckert || -99) > 8) {
+      z.spritzGemeckert = sekundenSeitStart();
+      await fehler('rumspritzen');
+    }
+  }
+
+  // ---------- Wasserrohrbruch (Frost): Rohrzange holen und abdichten ----------
+  let leckTon = null;
+  function leckStart() {
+    z.leck = 'spritzt';
+    welt.leck(true);
+    ui.warnung('wasser', true);
+    leckTon = dauerTon('wasser', 0.35);
+    ui.hinweis('Wasserrohrbruch am Waschplatz! Rohrzange von der Werkzeugwand holen!', 4000);
+    dennisSagt(sag(DENNIS.leck.ruf), true, { prio: 1 });
+    setTimeout(() => { if (z.leck === 'spritzt') dennisRepariert(); }, 22000);
+  }
+  function leckAus() {
+    z.leck = 'dicht';
+    welt.leck(false);
+    ui.warnung('wasser', false);
+    if (leckTon) { leckTon.stopp(); leckTon = null; }
+  }
+  async function reparieren() {
+    if (ohneAufsicht()) return;
+    const ok = await ui.haltenDialog({ titel: 'Rohr abdichten', text: 'Rohrzange ansetzen und die Verschraubung festziehen.', knopf: 'Festziehen (halten)', sekunden: 2 });
+    if (!ok || z.leck !== 'spritzt') return;
+    klonk(0.6);
+    leckAus();
+    z.wut = Math.max(0, z.wut - 5);
+    aktualisieren();
+    jingle(true);
+    ui.lobZeigen(sag(DENNIS.leck.gut));
+  }
+  async function dennisRepariert() {
+    if (z.dennisRepariert || z.leck !== 'spritzt') return;
+    z.dennisRepariert = true;
+    if (dennis.modus === 'sitzen' || dennis.modus === 'schlafen') { mittagGeweckt = true; z.mittag = 'erledigt'; welt.objekte.brotdose.visible = true; }
+    if (dennis.modus !== 'normal') dennis.aufstehen(dennis.position.x, dennis.position.z);
+    if (!dennis.wurzel.visible) { dennis.springZu(welt.KLO.x, welt.KLO.z); dennis.sichtbar(true); }
+    const zange = welt.objekte.rohrzange;
+    // Spieler hält die Zange: Dennis drängelt, bis abgedichtet ist
+    while (z.leck === 'spritzt' && hand.item?.id === 'rohrzange') {
+      dennisSagt(sag(DENNIS.leck.duHastSie), true);
+      await warte(9000);
+      if (z.leck !== 'spritzt') break;
+      if (await wutPlus({ wut: 4, name: 'Wasser laufen lassen' })) return;
+    }
+    if (z.leck !== 'spritzt') { z.dennisRepariert = false; dennis.heim(); return; }
+    const Z = nebenDing(zange);
+    await Promise.race([dennis.gehZu(Z.x, Z.z, 3), warte(8000)]);
+    if (hand.item?.id === 'rohrzange') { z.dennisRepariert = false; return dennisRepariert(); }
+    if (z.leck !== 'spritzt') { z.dennisRepariert = false; dennis.heim(); return; }
+    zange.visible = false;
+    const L = welt.LECK;
+    await Promise.race([dennis.gehZu(L.vorX, L.vorZ, 3), warte(8000)]);
+    dennis.wurzel.rotation.y = Math.PI / 2;
+    for (let i = 0; i < 4; i++) { klonk(0.4); await warte(600); }
+    leckAus();
+    if (!(await wutPlus({ wut: 12, name: 'Wasserrohrbruch Dennis überlassen' }))) dennisSagt(sag(DENNIS.leck.stinkig), true);
+    await warte(2500);
+    const W = welt.ROHRZANGE;
+    await Promise.race([dennis.gehZu(W.x, W.z, 1.6), warte(9000)]);
+    welt.zurueckAnDieWand(zange);
+    z.dennisRepariert = false;
+    dennis.heim();
+  }
+
   async function spruehen(ziel) {
     const F = welt.FEUER;
     const feuerPos = new THREE.Vector3(F.x, 0.6, F.z);
@@ -1170,7 +1296,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
       aktualisieren();
       dennis.stimmung('froh');
       jingle(true);
-      ui.lobZeigen(DENNIS.hand.loeschen);
+      ui.lobZeigen(sag(DENNIS.hand.loeschen));
       return;
     }
     welt.pulver(von, von.clone().add(vorne.multiplyScalar(2.5)));
@@ -1180,7 +1306,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
   function werfen() {
     const it = hand.item;
     if (it.cfg.nichtWerfen) {
-      if (it.id === 'flasche') dennisSagt(DENNIS.hand.flascheWerfen, true);
+      if (it.id === 'flasche') dennisSagt(sag(DENNIS.hand.flascheWerfen), true);
       else ui.hinweis('Den Kaffee wirfst du besser nicht.');
       return;
     }
@@ -1196,13 +1322,14 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     setTimeout(() => {
       if (getroffen || !dennisSiehts() || z.vorbei) return;
       if (id === 'figur') fehler('figurWerfen');
-      else if (id === 'handy') dennisSagt(DENNIS.hand.handyWerfen);
-      else fehler('werfen', DENNIS.wurf[WURF_ART[id]] || DENNIS.wurf.werkzeug);
+      else if (id === 'handy') dennisSagt(sag(DENNIS.hand.handyWerfen));
+      else fehler('werfen', sag(DENNIS.wurf[WURF_ART[id]] || DENNIS.wurf.werkzeug));
     }, 700);
   }
 
   function fallenLassen() {
     const it = hand.item;
+    if (it.id === 'schlauch') return schlauchZurueck();
     if (it.cfg.nichtAblegen) { ui.hinweis('Den bringst du besser Dennis.'); return; }
     if (it.id === 'flasche') { ui.hinweis('Die Flasche nicht einfach fallen lassen. Auf Werkbank, Schweißtisch oder Waschplatz klicken.'); return; }
     hand.fallenLassen(steuerung.blickRichtung());
@@ -1251,6 +1378,11 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
         await steuerung.dreheZu(ziel === 'dennis' ? dennis.kopfPosition() : new THREE.Vector3(welt.FEUER.x, 0.6, welt.FEUER.z), 0.3);
         steuerung.sperre(false);
         await spruehen(ziel === 'dennis' ? 'dennis' : 'feuer');
+        return true;
+      }
+      if (it.id === 'rohrzange' && ziel === 'wasserhahn') {
+        await hinZu(info, treffer.obj);
+        if (z.leck === 'spritzt') await reparieren(); else ui.hinweis('Das Rohr ist dicht.');
         return true;
       }
       if (it.id === 'kaffee' && ziel === 'dennis' && dennis.modus === 'normal') { await hinZu(info, treffer.obj); await kaffeeGeben(); return true; }
@@ -1337,7 +1469,14 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
       case 'edding':
         return ['Edding', 'Blau, wasserfest.', [A('In die Hand nehmen', 'hand', () => aufnehmen('edding', welt.objekte.edding))]];
       case 'schlauch':
-        return ['Wasserschlauch', '', z.ort === 'wasch' && !z.gespuelt ? [A('Flasche spülen', 'wasser', spuelen)] : []];
+        return ['Wasserschlauch', 'Gartenschlauch mit Spritzdüse.', [
+          ...(z.ort === 'wasch' && !z.gespuelt ? [A('Flasche spülen', 'wasser', spuelen)] : []),
+          A('In die Hand nehmen', 'hand', () => aufnehmen('schlauch', welt.objekte.schlauch)),
+        ]];
+      case 'rohrzange':
+        return ['Rohrzange', 'Für Wasserrohre und alles, was klemmt.', [A('In die Hand nehmen', 'hand', () => aufnehmen('rohrzange', welt.objekte.rohrzange))]];
+      case 'wasserhahn':
+        return ['Wasserrohr', z.leck === 'spritzt' ? 'Es spritzt! Hol die Rohrzange von der Werkzeugwand.' : 'Hält hoffentlich. Im Winter friert es gern mal ein.', []];
       case 'geraet':
         return ['Schweißgerät', `Elektrodenschweißen. Eingestellt: ${z.strom} A.`, [A('Stromstärke einstellen', 'regler', stromEinstellen)]];
       case 'masse':
@@ -1479,7 +1618,8 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     dennis.stimmung(stimmung);
     await dennisKommt(1.6);
     jingle(n <= 4);
-    await auftritt({ schluessel: [kat], text: texte[kat], stufe: n >= 5 ? 'voll' : 'mittel', stimmung });
+    if (n >= 5) await auftritt({ schluessel: [kat, 'rausgeflogen', 'ausraster'], text: texte[kat], stufe: 'voll', stimmung, seite: true });
+    else await dennisSagt(texte[kat], false, { minMs: 4500 });
     const minuten = Math.round((performance.now() - z.start) / 60000);
     const naehte = Object.entries(NAEHTE).map(([k, nn]) => `<li><span>${nn.name}</span><b>${z.naehte[k]} %</b></li>`).join('');
     const bestanden = n <= 4;
@@ -1548,7 +1688,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
         if (z.lichtAusSeit > 2.5 && !z.beschaeftigt && !buehneBelegt()) {
           z.lichtAusSeit = -8;
           z.lichtGemeckert++;
-          if (z.lichtGemeckert === 1) dennisSagt(DENNIS.licht, true);
+          if (z.lichtGemeckert === 1) dennisSagt(sag(DENNIS.licht), true);
           else fehler('licht');
         }
       }
@@ -1568,10 +1708,16 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
       if (z.nebenDennis && sekundenSeitStart() - z.nebenDennis > 1.0 && sekundenSeitStart() - z.baustelleZuletzt > 40 && !buehneBelegt() && ruhig() && !murmelTon) {
         z.baustelleZuletzt = sekundenSeitStart();
         z.nebenDennis = 0;
-        dennisSagt(DENNIS.baustellenfeeling, false, { prio: 0 });
+        dennisSagt(DENNIS.baustellenfeeling, false, { prio: 0, blase: false });
       }
-      // Dennis fegt selbst, wenn der Dreck über 45 s liegen bleibt
-      if (welt.dreck && !z.dennisFegt && !z.dennisLoescht && sekundenSeitStart() - z.dreckSeit > 45 && !z.beschaeftigt && dennis.modus === 'normal' && dennis.istDaheim() && !buehneBelegt()) {
+      // Dreck: nach 18 s meckert Dennis (etwas Wut), nach 32 s fegt er selbst und ist sauer
+      if (welt.dreck && !z.dreckGemeckert && sekundenSeitStart() - z.dreckSeit > 18 && dennisSiehts() && !z.beschaeftigt && !z.hula) {
+        z.dreckGemeckert = true;
+        wutPlus({ wut: 4, name: 'Dreck liegen lassen' });
+        dennisSagt(sag(DENNIS.dreck.meckern), true, { prio: 1 });
+      }
+      if (!welt.dreck) z.dreckGemeckert = false;
+      if (welt.dreck && !z.dennisFegt && !z.dennisLoescht && sekundenSeitStart() - z.dreckSeit > 32 && !z.beschaeftigt && dennis.modus === 'normal' && dennis.istDaheim() && !buehneBelegt()) {
         dennisFegt();
       }
       // Murmeln in der Nähe (nicht während Dennis spricht oder weg ist)
@@ -1605,6 +1751,14 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
       }
       // Feuer im Mülleimer: einmal pro Spiel, nach dem Flexen bald, sonst irgendwann
       if (z.feuer === 'nie' && sekundenSeitStart() > z.feuerAb && !z.beschaeftigt && !z.aufKlo && !z.dennisFegt && z.mittag !== 'gerade' && dennis.modus === 'normal' && !buehneBelegt()) feuerStart();
+      // Wasserrohrbruch (Frost): einmal pro Spiel, irgendwann
+      if (!z.leckAb) z.leckAb = 160 + Math.random() * 140;
+      if (!z.leck && sekundenSeitStart() > z.leckAb && !z.beschaeftigt && !z.aufKlo && z.feuer !== 'brennt' && !z.hula && dennis.modus === 'normal' && !buehneBelegt()) leckStart();
+      // Der Schlauch reicht nicht durch die ganze Werkstatt
+      if (hand.item?.id === 'schlauch' && Math.hypot(kamera.position.x - 4.6, kamera.position.z - 1.8) > 5.2) {
+        schlauchZurueck();
+        ui.hinweis(DENNIS.schlauch.zuKurz);
+      }
       // Klo-Pause: einmal pro Spiel, nicht gleich am Anfang
       if (z.klo === 'nie' && !z.aufKlo && sekundenSeitStart() > 100 && !z.beschaeftigt && !z.dennisFegt && !z.dennisLoescht && z.mittag !== 'gerade' && dennis.modus === 'normal' && dennis.istDaheim() && !buehneBelegt() && Math.random() < dt * 0.03) {
         kloPause();

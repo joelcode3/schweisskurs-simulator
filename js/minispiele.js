@@ -172,7 +172,7 @@ export function pfadSpiel({ art, form, titel, text, strom = 80, helm = true }) {
   let hintergrund = schweissen ? stahlPlatte(m, f) : flaschenFlaeche(m, f);
   const L = pkt[pkt.length - 1].s;
   const idealTempo = L / (form === 'kreis' ? 7.5 : 6.5); // px pro Sekunde
-  const toleranz = schweissen ? 24 : 26;
+  const toleranz = schweissen ? 24 : 40; // Flexen: großzügiger
   const stromZustand = strom < STROM_OK[0] ? 'niedrig' : strom > STROM_OK[1] ? 'hoch' : 'ok';
 
   let idx = 0;
@@ -663,7 +663,8 @@ function urteil(e, schweissen) {
 export function schlackeSpiel() {
   const { el, canvas, ctx, unten, masse: m } = vorbereiten('Schlacke abklopfen', 'Tippe auf die grauen Krusten, bis die Nähte blank sind.');
   let f = flaeche(m);
-  let platte = stahlPlatte(m, f);
+  // Die Schlacke sitzt auf dem roten Ofen (Gasflasche), nicht auf einem Blech
+  let platte = flaschenFlaeche(m, f);
   const stuecke = [];
   const teilchen = [];
   const anzahl = 14;
@@ -722,7 +723,7 @@ export function schlackeSpiel() {
     ctx.setTransform(m.dpr, 0, 0, m.dpr, 0, 0);
     const alt = f;
     f = flaeche(m);
-    platte = stahlPlatte(m, f);
+    platte = flaschenFlaeche(m, f);
     for (const s of stuecke) { s.x = f.x + (s.x - alt.x) * (f.b / alt.b); s.y = f.y + (s.y - alt.y) * (f.h / alt.h); }
   }
   window.addEventListener('resize', neuGroesse);
@@ -815,48 +816,42 @@ export function schlackeSpiel() {
   return versprechen;
 }
 
-// Hula-Hoop: Der Reifen schwingt um die Hüfte. Im richtigen Moment abwechselnd A (links) und D (rechts) drücken
-// (Handy: links/rechts tippen). Treffer halten den Reifen oben, Fehler lassen ihn sinken. Gezählt werden Runden.
+// Hula-Hoop: so schnell wie möglich abwechselnd A und D drücken (Handy: links/rechts tippen).
+// Jeder Wechsel hält den Reifen oben, wird man zu langsam, rutscht er runter. Zwei Wechsel = eine Runde.
 export const DENNIS_HULA_REKORD = 47;
 export function hulaSpiel() {
-  const { el, canvas, ctx, oben, unten, masse: m } = vorbereiten('Hula-Hoop: Knackst du Dennis’ Rekord?',
-    'Drücke A, wenn der Reifen links ist, und D, wenn er rechts ist. Immer abwechselnd. Handy: links/rechts tippen.');
+  const { el, canvas, ctx, unten, masse: m } = vorbereiten('Hula-Hoop: Knackst du Dennis’ Rekord?',
+    'Abwechselnd A und D drücken, so schnell du kannst! Handy: abwechselnd links und rechts tippen. Wirst du langsam, fällt der Reifen.');
   let bester = 0;
   try { bester = Number(localStorage.getItem('hula-rekord') || 0); } catch { /* egal */ }
-  let phase = -Math.PI / 2; // sin(phase) = -1 links, +1 rechts
-  let tempo = 4.6; // rad/s
-  let halt = 80; // 0..100, bei 0 fällt der Reifen
+  let phase = 0;
+  let schwung = 0; // Wechsel pro Sekunde (geglättet), bestimmt wie schnell der Reifen kreist
+  let halt = 100; // 0..100, bei 0 fällt der Reifen
   let schlaege = 0;
-  let erwartet = null; // 'a' oder 'd', welche Seite als Nächstes dran ist
-  let fensterGetroffen = false;
-  let letzteSeite = 0;
+  let erwartet = null; // 'a' oder 'd'
   let laeuft = true;
   let gefallen = false;
+  let gestartet = false;
   let fall = 0;
   let blitz = { seite: null, gut: false, t: 0 };
   let fertigAufloesen;
   const versprechen = new Promise((res) => { fertigAufloesen = res; });
   const runden = () => Math.floor(schlaege / 2);
 
-  function seiteJetzt() {
-    const s = Math.sin(phase);
-    return s < -0.45 ? 'a' : s > 0.45 ? 'd' : null;
-  }
+  function seiteJetzt() { return erwartet; }
   function druck(taste) {
     if (!laeuft || gefallen) return;
-    const s = seiteJetzt();
-    if (s === taste && (erwartet === null || erwartet === taste) && !fensterGetroffen) {
-      fensterGetroffen = true;
+    gestartet = true;
+    if (erwartet === null || taste === erwartet) {
       schlaege++;
-      halt = Math.min(100, halt + 9);
-      tempo = Math.min(8.5, tempo + 0.04);
+      halt = Math.min(100, halt + 11);
+      schwung = schwung * 0.7 + 3;
       erwartet = taste === 'a' ? 'd' : 'a';
-      blip(taste === 'a' ? 520 : 620, 0.05, 0.12);
-      blitz = { seite: taste, gut: true, t: 0.25 };
+      blip(taste === 'a' ? 520 : 620, 0.04, 0.1);
+      blitz = { seite: taste, gut: true, t: 0.12 };
     } else {
-      halt -= 9;
-      klonk(0.25);
-      blitz = { seite: taste, gut: false, t: 0.25 };
+      halt -= 6;
+      blitz = { seite: taste, gut: false, t: 0.2 };
     }
   }
   function taste(e) {
@@ -891,17 +886,9 @@ export function hulaSpiel() {
     const dt = Math.min(0.05, (jetzt - letzte) / 1000);
     letzte = jetzt;
     if (!gefallen) {
-      phase += tempo * dt;
-      // Fenster verpasst? (Seite vorbei, ohne gedrückt zu haben)
-      const s = seiteJetzt();
-      if (s === null && letzteSeite) {
-        if (!fensterGetroffen && (erwartet === null || erwartet === letzteSeite)) {
-          if (erwartet !== null) { halt -= 8; blitz = { seite: letzteSeite, gut: false, t: 0.25 }; }
-        }
-        fensterGetroffen = false;
-      }
-      letzteSeite = s || 0;
-      halt -= dt * 1.2;
+      schwung = Math.max(0, schwung - dt * 2.5);
+      phase += (2 + schwung * 2.2) * dt;
+      if (gestartet) halt -= dt * 22;
       if (halt <= 0) {
         gefallen = true;
         klonk(0.6);
@@ -965,7 +952,7 @@ export function hulaSpiel() {
     // Tasten-Hinweise links/rechts
     const seite = seiteJetzt();
     for (const [k, x] of [['a', b * 0.18], ['d', b * 0.82]]) {
-      const aktiv = !gefallen && seite === k && (erwartet === null || erwartet === k);
+      const aktiv = !gefallen && (seite === null || seite === k);
       const bl = blitz.t > 0 && blitz.seite === k;
       ctx.fillStyle = bl ? (blitz.gut ? '#6cbf5a' : '#e23b2e') : aktiv ? '#ffc81e' : '#3a3d44';
       ctx.strokeStyle = '#111';

@@ -95,13 +95,13 @@ export function kratzen() {
 }
 
 // Dauergeräusche: Flex, Schweißen, Gas, Wasser. Rückgabe: { stopp(), staerke(x) }
-export function dauer(art) {
+export function dauer(art, lautst = 1) {
   if (!ctx) return { stopp() {}, staerke() {} };
   const t = ctx.currentTime;
   const aus = ctx.createGain();
   // sofort da (sehr kurzes Einblenden, kein Verzögerungsgefühl)
   aus.gain.setValueAtTime(0, t);
-  aus.gain.linearRampToValueAtTime(1, t + 0.02);
+  aus.gain.linearRampToValueAtTime(lautst, t + 0.02);
   aus.connect(master);
   const knoten = [];
   let staerkeGain = null;

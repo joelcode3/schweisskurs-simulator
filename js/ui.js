@@ -227,3 +227,21 @@ export function pauseZeigen(an, text = '') {
   el.querySelector('span').textContent = text;
   el.classList.toggle('versteckt', !an);
 }
+
+// Warnsymbole unten rechts (Feuer, Wasser), blinken, solange etwas los ist
+const WARN_SYMBOL = {
+  feuer: '<svg viewBox="0 0 24 24" class="ico"><path d="M12 2c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 2-5 3-7 0 3 2 4 3 4-1-3 0-6 0-9z"/></svg>',
+  wasser: '<svg viewBox="0 0 24 24" class="ico"><path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/><path d="M9 14a3 3 0 0 0 3 3"/></svg>',
+};
+export function warnung(art, an) {
+  const el = $('warnungen');
+  if (!el) return;
+  let w = el.querySelector(`[data-art="${art}"]`);
+  if (an && !w) {
+    w = document.createElement('div');
+    w.className = `warnung ${art}`;
+    w.dataset.art = art;
+    w.innerHTML = WARN_SYMBOL[art] || '';
+    el.appendChild(w);
+  } else if (!an && w) w.remove();
+}
