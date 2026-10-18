@@ -18,7 +18,9 @@ const HALTUNG = {
   handy: { pos: [0.15, -0.14, -0.38], rot: [0.9, 0, 0], skala: 1.2, name: 'Dein Handy', benutzen: 'Aufs Handy gucken' },
   flasche: { pos: [0, -0.5, -1.05], rot: [0.3, 0, 0], name: 'Gasflasche', beidhaendig: true, schwer: true, nichtWerfen: true },
   ofen: { pos: [0.4, -0.8, -1.2], rot: [-0.2, Math.PI / 2, 0], name: 'Fertiger Ofen', beidhaendig: true, schwer: true, nichtWerfen: true, benutzen: 'Zu Dennis bringen (auf Dennis klicken)' },
-  klemmbrett: { pos: [0.06, -0.1, -0.4], rot: [Math.PI / 2 - 0.3, 0, 0], name: 'Dennis’ Klemmbrett' },
+  klemmbrett: { pos: [-0.03, 0.0, -0.4], rot: [Math.PI / 2 - 0.08, 0, 0], griff: [0.15, -0.17, 0.02], name: 'Dennis’ Klemmbrett' },
+  waeschetasche: { pos: [0.38, -0.62, -0.85], rot: [0.15, 0.5, 0], name: 'Dennis’ Wäschetasche', nichtWerfen: true, nichtAblegen: true, ablegenHinweis: 'Die Wäsche kommt in die Maschine (oder zu Dennis).' },
+  sieb: { pos: [0.16, -0.18, -0.48], rot: [0.2, 1.3, 0.2], skala: 1.3, name: 'Flusensieb', nichtWerfen: true, nichtAblegen: true, ablegenHinweis: 'Das Sieb gehört in den Trockner. Dreckig erst am Kompressor ausblasen.' },
   hulahup: { pos: [0.3, -0.5, -1.05], rot: [0.35, 1.1, 0], skala: 0.85, name: 'Hula-Hoop-Reifen', benutzen: 'Dennis bringen' },
   rohrzange: { pos: [0.24, -0.22, -0.52], rot: [0.4, 0.3, -0.9], name: 'Rohrzange', benutzen: 'Reparieren' },
   schlauch: { pos: [0.2, -0.2, -0.55], rot: [0.1, 0.12, 0], skala: 1.2, name: 'Wasserschlauch', benutzen: 'Spritzen (halten)', nichtWerfen: true, nichtAblegen: true },
@@ -199,7 +201,8 @@ export function baueHand(scene, kamera) {
         const b = gehtGerade ? Math.sin(t * 9) * 0.012 : Math.sin(t * 1.6) * 0.004;
         const cfg = item.cfg;
         item.obj.position.set(cfg.pos[0], cfg.pos[1] + b - wackel * 0.3, cfg.pos[2]);
-        rechts.position.set(cfg.beidhaendig ? 0.22 : cfg.pos[0] + 0.02, cfg.pos[1] - 0.04 + b - wackel * 0.3, cfg.pos[2] + 0.08);
+        const gr = cfg.griff || [0, 0, 0]; // wo die Hand anfasst (z. B. Klemmbrett unten rechts, damit man alles lesen kann)
+        rechts.position.set((cfg.beidhaendig ? 0.22 : cfg.pos[0] + 0.02) + gr[0], cfg.pos[1] - 0.04 + gr[1] + b - wackel * 0.3, cfg.pos[2] + 0.08 + gr[2]);
         rechts.rotation.set(0.2, -0.2, 0.3);
         links.position.set(-0.22, cfg.pos[1] - 0.04 + b - wackel * 0.3, cfg.pos[2] + 0.08);
         links.rotation.set(0.2, 0.2, -0.3);

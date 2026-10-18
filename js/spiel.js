@@ -98,6 +98,14 @@ const FEHLER = {
     stufe: 'leicht', wut: 6, nebensache: true, clip: 'ermahnung', name: 'Am Handy gedaddelt',
     texte: [DENNIS.hand.handy],
   },
+  waescheHeiss: {
+    stufe: 'leicht', wut: 10, nebensache: true, name: 'Dennis’ Wäsche zu heiß gewaschen',
+    texte: DENNIS.waesche.heiss,
+  },
+  waescheSieb: {
+    stufe: 'leicht', wut: 5, nebensache: true, name: 'Trockner mit dreckigem Flusensieb',
+    texte: DENNIS.waesche.sieb,
+  },
   figur: {
     stufe: 'leicht', wut: 5, nebensache: true, ton: 'stimme/murmeln-9.mp3', clip: 'ermahnung', name: 'Dennis’ Skulptur angefasst',
     texte: DENNIS.hand.figur,
@@ -209,6 +217,10 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     dreckSeit: 0,
     baustelleZuletzt: -999,
     jammerTimer: 0,
+    waesche: 'nie', // nie, tasche, laeuft, gewaschen, nass, trocknet, trocken, zuDennis, erledigt
+    waescheGrad: 40,
+    waescheZeit: 0,
+    sieb: 'drin', // drin (dreckig), hand, sauber (in der Hand), eingesetzt
     vorbei: false,
   };
   const multi = 1;
@@ -231,6 +243,11 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
       { text: 'Schlacke abklopfen', fertig: alleNaehte() && z.schlackeWeg },
       { text: 'Ofen schwarz lackieren', fertig: z.lackiert },
       { text: 'Ofen bei Dennis abgeben', fertig: z.vorbei },
+      ...(z.waesche === 'nie' ? [] : [
+        { text: 'Für Dennis: Wäsche bei 40 Grad waschen', fertig: !['tasche', 'laeuft'].includes(z.waesche), neben: true },
+        { text: 'Flusensieb ausblasen (Kompressor) und wieder einsetzen', fertig: z.sieb === 'eingesetzt', neben: true },
+        { text: 'Wäsche trocknen und Dennis bringen', fertig: z.waesche === 'erledigt', neben: true },
+      ]),
     ];
   }
 
@@ -659,6 +676,163 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     klonk(0.6);
     handleisteZeigen();
     await warte(500);
+  }
+
+
+  // ---------- Nebenaufgabe: Dennis' 40-Grad-Wäsche ----------
+  const WASCH_DAUER = 50;
+  const TROCKEN_DAUER = 35;
+  function wm() { return welt.objekte.waschmaschine; }
+  function tr() { return welt.objekte.trockner; }
+  function klemmbrettZurueck() {
+    const kb = hand.loslassen();
+    if (!kb) return;
+    kb.position.copy(kb.userData.start.pos);
+    kb.rotation.copy(kb.userData.start.rot);
+  }
+  async function waescheUebernehmen() {
+    if (z.waesche !== 'nie') { ui.hinweis('Die Wäsche machst du schon.'); return; }
+    if (!dennisSiehts() || dennis.modus !== 'normal' || z.dennisLoescht || z.dennisFegt || z.hula) { ui.hinweis('Dennis ist gerade beschäftigt. Gleich nochmal.'); return; }
+    z.beschaeftigt = true;
+    steuerung.sperre(true);
+    klemmbrettZurueck();
+    handleisteZeigen();
+    await dennisKommt(1.6);
+    dennis.stimmung('froh');
+    z.waesche = 'tasche';
+    hand.nimm('waeschetasche', welt.objekte.waeschetasche);
+    welt.objekte.waeschetasche.userData.waesche.visible = true;
+    klonk(0.3);
+    aktualisieren();
+    steuerung.sperre(false);
+    z.beschaeftigt = false;
+    for (const satz of DENNIS.waesche.anleitung) await dennisSagt(satz, false, { prio: 1, minMs: 5200 });
+    dennis.stimmung('ruhig');
+    dennis.heim();
+  }
+  async function waescheStarten(grad) {
+    if (hand.item?.id !== 'waeschetasche' || z.waesche !== 'tasche') return;
+    ui.schliesseMenue();
+    hand.weg();
+    welt.objekte.waeschetasche.visible = false;
+    z.waesche = 'laeuft';
+    z.waescheGrad = grad;
+    z.waescheZeit = WASCH_DAUER;
+    wm().laeuft = true;
+    wm().waesche.visible = true;
+    wm().knopf.rotation.x = (grad - 40) / 30;
+    blip(700, 0.08);
+    aktualisieren();
+    ui.hinweis(`Waschmaschine läuft (${grad} Grad). Dauert ein bisschen.`, 3200);
+    if (grad > 40) {
+      await warte(1200);
+      if (dennisSiehts()) await fehler('waescheHeiss');
+      else z.waescheHeimlich = true;
+    } else if (grad < 40 && dennisSiehts()) dennisSagt(sag(DENNIS.waesche.kalt), false, { prio: 1 });
+  }
+  function waescheRaus() {
+    if (hand.item) { ui.hinweis('Für die nasse Wäsche brauchst du beide Hände frei.'); return; }
+    z.waesche = 'nass';
+    wm().waesche.visible = false;
+    wm().anzeige.zeig('--:--');
+    hand.nimm('waeschetasche', welt.objekte.waeschetasche);
+    welt.objekte.waeschetasche.userData.waesche.visible = true;
+    klonk(0.3);
+    aktualisieren();
+    ui.hinweis('Nasse Wäsche in der Tasche. Ab in den Trockner obendrauf.', 3000);
+  }
+  function siebRaus() {
+    if (hand.item) { ui.hinweis('Erst die Hände frei machen.'); return; }
+    hand.nimm('sieb', tr().sieb);
+    z.sieb = 'hand';
+    blip(480, 0.05);
+    aktualisieren();
+    ui.hinweis('Voller Fusseln! Am Kompressor (rechte Wand) mit Druckluft ausblasen.', 3200);
+  }
+  function siebRein() {
+    const sieb = hand.weg();
+    tr().g.add(sieb);
+    sieb.position.set(-0.29, 0.13, 0);
+    sieb.rotation.set(0, 0, 0);
+    sieb.scale.set(1, 1, 1);
+    z.sieb = 'eingesetzt';
+    klonk(0.25);
+    aktualisieren();
+    ui.hinweis('Sieb sitzt. Jetzt kann der Trockner laufen.');
+  }
+  async function siebAusblasen() {
+    if (hand.item?.id !== 'sieb' || z.sieb !== 'hand') return;
+    const ok = await ui.haltenDialog({ titel: 'Flusensieb ausblasen', text: 'Druckluftpistole ansetzen und die Fusseln rauspusten. Nicht in Richtung Gesicht!', knopf: 'Pusten (halten)', sekunden: 2.5, geraeusch: 'gas' });
+    if (!ok) return;
+    const k = welt.objekte.kompressor.position;
+    welt.pulver(new THREE.Vector3(k.x - 0.4, 1.0, k.z), new THREE.Vector3(k.x - 1.6, 1.4, k.z + 0.3));
+    hand.item.obj.userData.sauber(true);
+    z.sieb = 'sauber';
+    aktualisieren();
+    ui.hinweis('Blitzsauber. Zurück in den Trockner damit.');
+  }
+  async function trocknerStarten() {
+    if (hand.item?.id !== 'waeschetasche' || z.waesche !== 'nass') return;
+    if (z.sieb !== 'eingesetzt') {
+      if (!z.siebGemeckert && dennisSiehts()) { z.siebGemeckert = true; await fehler('waescheSieb'); }
+      else ui.hinweis('Erst das Flusensieb ausbauen, am Kompressor ausblasen und wieder einsetzen.', 3200);
+      return;
+    }
+    hand.weg();
+    welt.objekte.waeschetasche.visible = false;
+    z.waesche = 'trocknet';
+    z.waescheZeit = TROCKEN_DAUER;
+    tr().laeuft = true;
+    tr().waesche.visible = true;
+    blip(700, 0.08);
+    aktualisieren();
+    ui.hinweis('Trockner läuft.', 2500);
+  }
+  function trockenRaus() {
+    if (hand.item) { ui.hinweis('Erst die Hände frei machen.'); return; }
+    z.waesche = 'zuDennis';
+    tr().waesche.visible = false;
+    tr().anzeige.zeig('--:--');
+    hand.nimm('waeschetasche', welt.objekte.waeschetasche);
+    welt.objekte.waeschetasche.userData.waesche.visible = true;
+    klonk(0.3);
+    aktualisieren();
+    ui.hinweis('Warm und trocken. Jetzt zu Dennis bringen.', 3000);
+  }
+  async function waescheGeben() {
+    hand.weg();
+    welt.objekte.waeschetasche.visible = false;
+    z.waesche = 'erledigt';
+    handleisteZeigen();
+    const heiss = z.waescheGrad > 40;
+    z.wut = Math.max(0, z.wut - (heiss ? 5 : 15));
+    dennis.stimmung('froh');
+    jingle(true);
+    aktualisieren();
+    await dennisSagt(sag(heiss ? DENNIS.waesche.dankeHalb : DENNIS.waesche.danke), false, { prio: 1, minMs: 4000 });
+    dennis.stimmung('ruhig');
+  }
+  function waescheUpdate(dt) {
+    for (const [d, lauf, fertig, text] of [[wm(), 'laeuft', 'gewaschen', 'Waschmaschine ist fertig! Wäsche raus und in den Trockner.'], [tr(), 'trocknet', 'trocken', 'Trockner ist fertig! Wäsche raus und zu Dennis bringen.']]) {
+      if (z.waesche !== lauf) continue;
+      z.waescheZeit -= dt;
+      const sek = Math.max(0, Math.ceil(z.waescheZeit));
+      const anzeige = `0:${String(sek).padStart(2, '0')}`;
+      if (d.anzeige.letzte !== anzeige) { d.anzeige.letzte = anzeige; d.anzeige.zeig(anzeige); }
+      if (z.waescheZeit <= 0) {
+        z.waesche = fertig;
+        d.laeuft = false;
+        d.anzeige.zeig('ENDE', '#ffd23a');
+        d.anzeige.letzte = '';
+        blip(988, 0.15, 0.3);
+        setTimeout(() => blip(988, 0.15, 0.3), 260);
+        setTimeout(() => blip(1318, 0.25, 0.3), 520);
+        ui.hinweis(text, 4000);
+        aktualisieren();
+        // zu heiß gewaschen, ohne dass Dennis es gesehen hat: merkt er beim Rausholen
+        if (fertig === 'gewaschen' && z.waescheHeimlich) { z.waescheHeimlich = false; fehler('waescheHeiss'); }
+      }
+    }
   }
 
   // ---------- Klicks auf Objekte ----------
@@ -1127,9 +1301,12 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     const cfg = it.cfg;
     const knoepfe = [];
     if (ANZIEHBAR.includes(it.id)) knoepfe.push(['anziehen', cfg.tragen || 'Anziehen', 'E']);
+    else if (it.id === 'klemmbrett') { if (z.waesche === 'nie') knoepfe.push(['benutzen', 'Aufgabe übernehmen: 40-Grad-Wäsche', 'E']); }
+    else if (it.id === 'sieb') knoepfe.push(['benutzen', z.sieb === 'hand' ? 'Am Kompressor ausblasen' : 'In den Trockner (Klick auf Trockner)', 'E']);
     else if (cfg.benutzen) knoepfe.push(['benutzen', cfg.benutzen, 'E']);
     if (it.id === 'flasche') knoepfe.push(['', 'Klick auf Werkbank, Schweißtisch oder Waschplatz = abstellen', '']);
     else if (it.id === 'ofen') knoepfe.push(['', 'Klick auf Dennis = abgeben, Klick auf Schweißplatz = abstellen', '']);
+    else if (it.id === 'waeschetasche') knoepfe.push(['', z.waesche === 'tasche' ? 'Klick auf Waschmaschine' : z.waesche === 'nass' ? 'Klick auf Trockner' : 'Klick auf Dennis = abgeben', '']);
     else if (!cfg.nichtAblegen) knoepfe.push(['', 'Klick auf Fläche = ablegen', '']);
     if (!cfg.nichtWerfen) knoepfe.push(['werfen', 'Werfen', 'Q']);
     if (!cfg.nichtAblegen && it.id !== 'flasche' && it.id !== 'ofen') knoepfe.push(['fallen', 'Fallen lassen', 'G']);
@@ -1170,6 +1347,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     handleisteZeigen();
     if (id === 'figur' && dennisSiehts()) fehler('figur');
     if (id === 'handy') handyReaktion();
+    if (id === 'klemmbrett' && z.waesche === 'nie') ui.hinweis('Ganz unten: 40-Grad-Wäsche. E drücken = Aufgabe übernehmen, Dennis erklärt dir alles.', 4500);
   }
 
   async function handyReaktion() {
@@ -1223,6 +1401,13 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     if (id === 'handy') { ui.hinweis('3 neue Nachrichten. Alle unwichtig.'); return handyReaktion(); }
     if (id === 'hulahup') { ui.hinweis('Klick auf Dennis, dann gibst du ihm den Reifen.'); return; }
     if (id === 'schlauch') return spritzen();
+    if (id === 'klemmbrett') return waescheUebernehmen();
+    if (id === 'sieb') {
+      const k = welt.objekte.kompressor.position;
+      if (z.sieb === 'hand' && Math.hypot(kamera.position.x - k.x, kamera.position.z - k.z) < 2.5) return siebAusblasen();
+      ui.hinweis(z.sieb === 'hand' ? 'Geh zum Kompressor an der rechten Wand.' : 'Klick auf den Trockner, dann setzt du das Sieb ein.');
+      return;
+    }
     if (id === 'rohrzange') {
       const L = welt.LECK;
       if (z.leck === 'spritzt' && Math.hypot(kamera.position.x - L.x, kamera.position.z - L.z) < 3) return reparieren();
@@ -1414,7 +1599,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
   function fallenLassen() {
     const it = hand.item;
     if (it.id === 'schlauch') return schlauchZurueck();
-    if (it.cfg.nichtAblegen) { ui.hinweis('Den bringst du besser Dennis.'); return; }
+    if (it.cfg.nichtAblegen) { ui.hinweis(it.cfg.ablegenHinweis || 'Den bringst du besser Dennis.'); return; }
     if (it.id === 'ofen') { ui.hinweis('Den Ofen nicht fallen lassen! Zu Dennis bringen oder am Schweißplatz abstellen.'); return; }
     if (it.id === 'flasche') { ui.hinweis('Die Flasche nicht einfach fallen lassen. Auf Werkbank, Schweißtisch oder Waschplatz klicken.'); return; }
     hand.fallenLassen(steuerung.blickRichtung());
@@ -1479,6 +1664,21 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
         await spruehen(ziel === 'dennis' ? 'dennis' : 'feuer');
         return true;
       }
+      if (it.id === 'sieb' && ziel === 'kompressor') { await hinZu(info, treffer.obj); await siebAusblasen(); return true; }
+      if (it.id === 'sieb' && ziel === 'trockner') {
+        await hinZu(info, treffer.obj);
+        if (z.sieb === 'sauber') siebRein();
+        else ui.hinweis('Das Sieb ist noch voller Fusseln. Erst am Kompressor ausblasen.', 3000);
+        return true;
+      }
+      if (it.id === 'waeschetasche' && (ziel === 'waschmaschine' || ziel === 'trockner')) return false;
+      if (it.id === 'waeschetasche' && ziel === 'dennis') {
+        if (z.waesche !== 'zuDennis') { ui.hinweis(z.waesche === 'nass' ? 'Die ist noch nass. Erst in den Trockner.' : 'Die Wäsche muss erst gewaschen werden.'); return true; }
+        if (dennis.modus !== 'normal' || z.aufKlo) { ui.hinweis('Dennis hat gerade keine Hand frei.'); return true; }
+        await hinZu(info, treffer.obj);
+        await waescheGeben();
+        return true;
+      }
       if (it.id === 'rohrzange' && ziel === 'wasserhahn') {
         await hinZu(info, treffer.obj);
         if (z.leck === 'spritzt') await reparieren(); else ui.hinweis('Das Rohr ist dicht.');
@@ -1505,7 +1705,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
       return false;
     }
     // Fläche: hinlegen
-    if (it.cfg.nichtAblegen) { ui.hinweis('Den Kaffee bringst du Dennis.'); return true; }
+    if (it.cfg.nichtAblegen) { ui.hinweis(it.cfg.ablegenHinweis || 'Den Kaffee bringst du Dennis.'); return true; }
     if (treffer.abstand > 3) { ui.hinweis('Zu weit weg zum Ablegen.'); return true; }
     if (!treffer.normale || treffer.normale.y < 0.6) { ui.hinweis('Da hält nichts. Leg es auf eine ebene Fläche.'); return true; }
     const r = steuerung.blickRichtung();
@@ -1597,6 +1797,26 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
         return ['Holzfigur', 'Handgeschnitzt. Dennis’ ganzer Stolz. Frag besser nicht.', [A('In die Hand nehmen', 'hand', () => aufnehmen('figur', welt.objekte.figur))]];
       case 'feuerloescher':
         return ['Feuerlöscher', 'Pulverlöscher, 6 kg.', [A('In die Hand nehmen', 'hand', () => aufnehmen('feuerloescher', welt.objekte.feuerloescher))]];
+      case 'waschmaschine': {
+        const a = [];
+        if (z.waesche === 'tasche' && hand.item?.id === 'waeschetasche') {
+          for (const g of [30, 40, 60, 90]) a.push(A(`Wäsche rein, ${g} Grad starten`, 'wasser', () => waescheStarten(g)));
+        }
+        if (z.waesche === 'gewaschen') a.push(A('Nasse Wäsche rausnehmen', 'hand', waescheRaus));
+        const info = z.waesche === 'laeuft' ? `Läuft noch (${z.waescheGrad} Grad).` : z.waesche === 'gewaschen' ? 'Fertig gewaschen.' : z.waesche === 'tasche' ? 'Tür auf, Wäsche rein, Temperatur wählen.' : 'Steht DENNIS drauf. Mit Edding.';
+        if (z.waesche === 'tasche' && hand.item?.id !== 'waeschetasche') return ['Waschmaschine', 'Hol erst die Wäschetasche.', []];
+        return ['Waschmaschine', info, a];
+      }
+      case 'trockner': {
+        const a = [];
+        if (z.sieb === 'drin' && !hand.item) a.push(A('Flusensieb ausbauen', 'hand', siebRaus));
+        if (z.waesche === 'nass' && hand.item?.id === 'waeschetasche') a.push(A('Wäsche rein, Trockner starten', 'funke', trocknerStarten));
+        if (z.waesche === 'trocken') a.push(A('Trockene Wäsche rausnehmen', 'hand', trockenRaus));
+        const info = z.waesche === 'trocknet' ? 'Läuft noch.' : z.sieb === 'drin' ? 'Das Flusensieb unten in der Tür ist voller Fusseln.' : z.sieb === 'eingesetzt' ? 'Flusensieb ist sauber.' : 'Das Flusensieb fehlt.';
+        return ['Trockner', info, a];
+      }
+      case 'kompressor':
+        return ['Kompressor', z.sieb === 'hand' ? 'Druckluft. Damit kriegst du das Sieb sauber.' : 'Druckluft, 8 bar. Brummt laut.', z.sieb === 'hand' && hand.item?.id === 'sieb' ? [A('Flusensieb ausblasen', 'funke', siebAusblasen)] : []];
       case 'klemmbrett':
         return ['Dennis’ Klemmbrett', 'Eine Liste in Dennis’ Handschrift.', [A('In die Hand nehmen', 'hand', () => aufnehmen('klemmbrett', welt.objekte.klemmbrett))]];
       case 'hulahup':
@@ -1800,6 +2020,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
       beobachten();
       spritzUpdate(dt);
       if (z.vorbei) return;
+      waescheUpdate(dt);
       // Tanzen, wenn die Box läuft und Dennis Zeit hat
       const sollTanzen = z.musik && !z.beschaeftigt && !z.dennisFegt && !z.dennisLoescht && dennis.istDaheim() && dennis.modus !== 'liegen';
       if (sollTanzen && dennis.modus === 'normal') dennis.setzeModus('tanzen', technoBeat);

@@ -13,10 +13,14 @@ export function zeigeHud(an) {
 export function aufgabenZeigen(liste) {
   const ol = $('aufgaben');
   let aktivGesetzt = false;
+  let nebenAktiv = false;
+  let nebenErster = true;
   ol.innerHTML = liste.map((a) => {
     let klasse = '';
     if (a.fertig) klasse = 'fertig';
-    else if (!aktivGesetzt) { klasse = 'aktiv'; aktivGesetzt = true; }
+    else if (a.neben ? !nebenAktiv : !aktivGesetzt) { klasse = 'aktiv'; if (a.neben) nebenAktiv = true; else aktivGesetzt = true; }
+    // Nebenaufgaben (z. B. Dennis' Wäsche) blau und mit Trennlinie
+    if (a.neben) { klasse += ' neben'; if (nebenErster) { klasse += ' neben-start'; nebenErster = false; } }
     return `<li class="${klasse}"><span class="box">${a.fertig ? SYMBOL.haken : ''}</span><span>${a.text}</span></li>`;
   }).join('');
 }

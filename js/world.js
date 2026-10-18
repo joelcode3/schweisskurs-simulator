@@ -610,6 +610,165 @@ export function baueWelt(scene) {
   scene.add(eimer);
   hindernis(4.2, 4.6, 0.55, 0.95);
 
+  // ---------- Waschmaschine mit Trockner obendrauf (rechts neben dem Waschplatz) ----------
+  function waschAnzeige() {
+    const c = document.createElement('canvas');
+    c.width = 128; c.height = 48;
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.userData = { c, zeig(text, farbe = '#7dff8a') {
+      const g = c.getContext('2d');
+      g.fillStyle = '#10161a'; g.fillRect(0, 0, 128, 48);
+      g.fillStyle = farbe; g.font = 'bold 30px monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillText(text, 64, 26);
+      t.needsUpdate = true;
+    } };
+    t.userData.zeig('--:--');
+    return t;
+  }
+  function waschGeraet(y, mitSieb) {
+    const g = new THREE.Group();
+    g.add(setze(quader(0.6, 0.84, 0.6, 0xf1f1ee), 0, 0.42, 0));
+    // Bedienblende oben
+    g.add(setze(quader(0.012, 0.13, 0.58, 0xdedfdc, { umriss: 0.002 }), -0.305, 0.76, 0));
+    const anzeige = waschAnzeige();
+    const display = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.06), new THREE.MeshBasicMaterial({ map: anzeige }));
+    display.rotation.y = -Math.PI / 2;
+    display.position.set(-0.313, 0.77, 0.05);
+    g.add(display);
+    const knopf = setze(zylinder(0.035, 0.035, 0.03, 0xb8bcc2, { umriss: 0.002 }, 16), -0.325, 0.77, -0.17, 0, 0, Math.PI / 2);
+    knopf.add(setze(quader(0.006, 0.032, 0.012, 0x333333, { umriss: false }), 0, 0.016, 0.018));
+    g.add(knopf);
+    for (let i = 0; i < 3; i++) g.add(setze(quader(0.012, 0.02, 0.035, 0x9aa0a6, { umriss: false }), -0.315, 0.77, 0.17 + i * 0.045));
+    // Bullauge mit Trommel
+    const ring = teil(new THREE.TorusGeometry(0.17, 0.028, 10, 32), 0xc9cdd2, { umriss: 0.003 });
+    ring.rotation.y = Math.PI / 2;
+    ring.position.set(-0.315, 0.38, 0);
+    g.add(ring);
+    const trommel = new THREE.Group();
+    trommel.position.set(-0.3, 0.38, 0);
+    const glas = new THREE.Mesh(new THREE.CircleGeometry(0.16, 28), new THREE.MeshBasicMaterial({ color: 0x223a4e }));
+    glas.rotation.y = -Math.PI / 2;
+    trommel.add(glas);
+    const waesche = new THREE.Group();
+    for (const [i, c] of [0x2f5fa8, 0x1d1d1f, 0x8a8f96, 0xc8352a, 0x3c7a3a].entries()) {
+      const k = new THREE.Mesh(new THREE.CircleGeometry(0.05 + (i % 2) * 0.02, 10), new THREE.MeshBasicMaterial({ color: c }));
+      k.rotation.y = -Math.PI / 2;
+      const w = i * 1.3;
+      k.position.set(-0.002 - i * 0.0005, Math.sin(w) * 0.08 - 0.04, Math.cos(w) * 0.08);
+      waesche.add(k);
+    }
+    waesche.visible = false;
+    trommel.add(waesche);
+    // Wasser (nur Waschmaschine)
+    const wasser = new THREE.Mesh(new THREE.CircleGeometry(0.155, 28, Math.PI, Math.PI), new THREE.MeshBasicMaterial({ color: 0x6fb5e8, transparent: true, opacity: 0.55 }));
+    wasser.rotation.y = -Math.PI / 2;
+    wasser.position.x = -0.004;
+    wasser.visible = false;
+    trommel.add(wasser);
+    g.add(trommel);
+    g.add(setze(quader(0.02, 0.07, 0.03, 0xb8bcc2, { umriss: 0.002 }), -0.33, 0.38, -0.2));
+    let sieb = null;
+    if (mitSieb) {
+      // Flusensieb unten in der Tür-Öffnung, schaut ein Stück raus
+      sieb = new THREE.Group();
+      sieb.add(setze(quader(0.04, 0.02, 0.24, 0x7c838b, { umriss: 0.002 }), 0, 0.06, 0));
+      const netzMat = new THREE.MeshBasicMaterial({ color: 0x8c8378 });
+      const netz = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.12, 0.2), netzMat);
+      sieb.add(netz);
+      const fussel = [];
+      for (let i = 0; i < 7; i++) {
+        const f = kugel(0.022 + (i % 3) * 0.008, 0x9b9389, { umriss: false }, 8);
+        f.scale.set(0.7, 0.8, 1.3);
+        f.position.set(-0.012, (i % 3 - 1) * 0.035, -0.08 + i * 0.027);
+        sieb.add(f);
+        fussel.push(f);
+      }
+      sieb.position.set(-0.29, 0.13, 0);
+      sieb.userData.sauber = (ja) => { netzMat.color.set(ja ? 0xe7e9ec : 0x8c8378); for (const f of fussel) f.visible = !ja; };
+      g.add(sieb);
+    }
+    g.position.set(4.66, y, 3.12);
+    scene.add(g);
+    return { g, trommel, waesche, wasser, anzeige: anzeige.userData, knopf, sieb };
+  }
+  const wm = waschGeraet(0, false);
+  const tr = waschGeraet(0.845, true);
+  wm.anzeige.zeig('40°');
+  merke(wm.g, 'waschmaschine', 'Waschmaschine', null);
+  merke(tr.g, 'trockner', 'Trockner', null);
+  objekte.waschmaschine = wm;
+  objekte.trockner = tr;
+  hindernis(4.3, 5, 2.78, 3.46);
+  let geraetZeit = 0;
+  animiert.push((dt) => {
+    geraetZeit += dt;
+    for (const d of [wm, tr]) {
+      if (!d.laeuft) { d.g.position.x = 4.66; continue; }
+      d.trommel.children[1].rotation.x += dt * (d === wm ? 5 : 3.5);
+      d.g.position.x = 4.66 + Math.sin(geraetZeit * 37) * 0.003;
+    }
+    wm.wasser.visible = !!wm.laeuft;
+  });
+
+  // Druckluft-Kompressor an der rechten Wand
+  const kompressor = new THREE.Group();
+  kompressor.add(setze(zylinder(0.17, 0.17, 0.6, 0xd03a2c, {}, 20), 0, 0.3, 0, 0, 0, Math.PI / 2));
+  for (const sx of [-1, 1]) {
+    const kappe = setze(kugel(0.17, 0xd03a2c, {}, 16), sx * 0.3, 0.3, 0);
+    kappe.scale.set(0.35, 1, 1);
+    kompressor.add(kappe);
+  }
+  kompressor.add(setze(quader(0.32, 0.16, 0.22, 0x2a2c30), -0.05, 0.54, 0));
+  kompressor.add(setze(zylinder(0.07, 0.07, 0.04, 0x9aa3ab, {}, 14), 0.18, 0.56, 0));
+  kompressor.add(setze(quader(0.08, 0.12, 0.2, 0x3a3d42), 0.18, 0.5, 0));
+  const manometer = setze(zylinder(0.04, 0.04, 0.02, 0xf4f0e6, { umriss: 0.002 }, 16), -0.08, 0.66, -0.04, Math.PI / 2, 0, 0);
+  kompressor.add(manometer);
+  for (const [x, z] of [[-0.22, -0.12], [-0.22, 0.12]]) kompressor.add(setze(zylinder(0.06, 0.06, 0.04, 0x1d1d1f, {}, 14), x, 0.06, z, Math.PI / 2, 0, 0));
+  kompressor.add(setze(quader(0.04, 0.12, 0.04, 0x3a3d42), 0.25, 0.06, 0));
+  kompressor.add(setze(quader(0.04, 0.04, 0.3, 0x3a3d42), -0.36, 0.62, 0, 0, 0, 0.3));
+  // Spiralschlauch mit Ausblaspistole
+  const spirale = [];
+  for (let i = 0; i <= 60; i++) { const w = i * 0.55; spirale.push(new THREE.Vector3(0.05 + Math.cos(w) * 0.05, 0.62 - i * 0.008, 0.2 + Math.sin(w) * 0.05)); }
+  kompressor.add(teil(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(spirale), 120, 0.008, 6, false), 0x2f6fd0, { umriss: 0.002 }));
+  const blaspistole = new THREE.Group();
+  blaspistole.add(setze(quader(0.03, 0.1, 0.03, 0xe2c21e), 0, 0, 0));
+  blaspistole.add(setze(zylinder(0.006, 0.006, 0.14, 0x9aa3ab, {}, 8), 0, 0.05, 0.06, Math.PI / 2, 0, 0));
+  setze(blaspistole, 0.05, 0.16, 0.22);
+  kompressor.add(blaspistole);
+  setze(kompressor, 4.55, 0, 0.0, 0, Math.PI / 2, 0);
+  scene.add(kompressor);
+  merke(kompressor, 'kompressor', 'Kompressor (Druckluft)', null);
+  objekte.kompressor = kompressor;
+  hindernis(4.25, 4.85, -0.42, 0.42);
+
+  // Dennis' blaue Einkaufstasche (wie die große von IKEA), mit Wäsche drin
+  const tasche = new THREE.Group();
+  const taschenBlau = 0x1f5fc0;
+  const korpus = teil(new THREE.CylinderGeometry(0.33, 0.27, 0.32, 4, 1, true), taschenBlau, { mat: { side: THREE.DoubleSide }, umriss: 0.004 });
+  korpus.rotation.y = Math.PI / 4;
+  korpus.scale.set(1, 1, 0.5);
+  korpus.position.y = 0.16;
+  tasche.add(korpus);
+  tasche.add(setze(quader(0.38, 0.01, 0.19, taschenBlau), 0, 0.005, 0));
+  for (const sz of [-1, 1]) {
+    tasche.add(setze(quader(0.05, 0.3, 0.008, 0xf2c21c, { umriss: 0.002 }), -0.12, 0.2, sz * 0.122));
+    tasche.add(setze(quader(0.05, 0.3, 0.008, 0xf2c21c, { umriss: 0.002 }), 0.12, 0.2, sz * 0.122));
+    tasche.add(setze(teil(new THREE.TorusGeometry(0.12, 0.012, 6, 16, Math.PI), 0xf2c21c, { umriss: 0.002 }), 0, 0.35, sz * 0.122));
+  }
+  const tWaesche = new THREE.Group();
+  for (const [i, c] of [0x2f5fa8, 0x1d1d1f, 0x8a8f96, 0xc8352a, 0x3c7a3a, 0xf4f0e6].entries()) {
+    const k = kugel(0.09, c, { umriss: 0.003 }, 10);
+    k.scale.set(1.3, 0.6, 0.9);
+    k.position.set(-0.16 + (i % 3) * 0.16, 0.3 + (i > 2 ? 0.03 : 0), (i > 2 ? 0.04 : -0.04));
+    tWaesche.add(k);
+  }
+  tasche.add(tWaesche);
+  tasche.userData.waesche = tWaesche;
+  tasche.visible = false;
+  scene.add(tasche);
+  objekte.waeschetasche = tasche;
+
   // ---------- Schweißplatz ----------
   const tisch = new THREE.Group();
   tisch.add(setze(quader(1.5, 0.06, 0.85, FARBE.stahlDunkel), 0, 0.82, 0));
@@ -1390,13 +1549,13 @@ export function baueWelt(scene) {
 
   // Dennis' Klemmbrett mit Notizen, liegt auf dem Sofa
   const klemmbrett = new THREE.Group();
-  const notizTex = leinwandTextur(256, 340, (g, b, h) => {
+  const notizTex = leinwandTextur(512, 680, (g, b, h) => {
     g.fillStyle = '#fbfaf3'; g.fillRect(0, 0, b, h);
-    g.strokeStyle = '#9ec3e6'; g.lineWidth = 2;
-    for (let y = 70; y < h; y += 27) { g.beginPath(); g.moveTo(10, y); g.lineTo(b - 10, y); g.stroke(); }
+    g.strokeStyle = '#9ec3e6'; g.lineWidth = 3;
+    for (let y = 104; y < h; y += 54) { g.beginPath(); g.moveTo(20, y); g.lineTo(b - 20, y); g.stroke(); }
     g.fillStyle = '#1f3f8a';
-    g.font = '24px "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive';
-    NOTIZEN.forEach((t, i) => g.fillText(t, 16, 64 + i * 27));
+    g.font = 'bold 40px "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive';
+    NOTIZEN.forEach((t, i) => g.fillText(t, 30, 96 + i * 54));
   });
   klemmbrett.add(quader(0.23, 0.012, 0.32, 0x8a5a2e));
   const blatt = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.27), new THREE.MeshBasicMaterial({ map: notizTex }));
@@ -1407,6 +1566,7 @@ export function baueWelt(scene) {
   setze(klemmbrett, -3.75, 0.49, 3.5, 0, 0.5, 0);
   scene.add(klemmbrett);
   merke(klemmbrett, 'klemmbrett', 'Dennis’ Klemmbrett', null);
+  klemmbrett.userData.start = { pos: klemmbrett.position.clone(), rot: klemmbrett.rotation.clone() };
   objekte.klemmbrett = klemmbrett;
 
   // ---------- Gasflasche ----------
@@ -1731,4 +1891,5 @@ export const NOTIZEN = [
   'TK-Pizza einkaufen',
   'Sexy abmelden',
   'Fußmatte waschen',
+  '40-Grad-Wäsche!!',
 ];
