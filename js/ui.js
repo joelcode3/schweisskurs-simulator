@@ -40,7 +40,7 @@ export function wutWackeln() {
 
 export function ausruestungZeigen(ppe) {
   const teile = [['brille', 'Schutzbrille'], ['handschuhe', 'Handschuhe'], ['helm', 'Schweißhelm']];
-  $('ausruestung').innerHTML = teile.map(([k, name]) => `<div class="ausr ${ppe[k] ? 'an' : ''}" title="${name}${ppe[k] ? ' (an)' : ' (fehlt)'}">${SYMBOL[k]}</div>`).join('');
+  $('ausruestung').innerHTML = teile.map(([k, name]) => `<div class="ausr ${ppe[k] ? 'an' : ''}" ${ppe[k] ? `data-k="${k}"` : ''} title="${name}${ppe[k] ? ' (an, klicken zum Abnehmen)' : ' (fehlt)'}">${SYMBOL[k]}</div>`).join('');
 }
 
 export function stationenZeigen(aktuell, beiWahl) {

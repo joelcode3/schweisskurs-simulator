@@ -186,6 +186,8 @@ export function baueWelt(scene) {
   scene.add(loescher);
   scene.add(setze(quader(0.22, 0.04, 0.14, 0x444444), -2.3, 0.88, RAUM.zMax - 0.1));
   merke(loescher, 'feuerloescher', 'Feuerlöscher', null);
+  objekte.feuerloescher = loescher;
+  loescher.userData.wand = { pos: loescher.position.clone(), rot: loescher.rotation.clone() };
 
   // ---------- Plakate ----------
   function plakat(b, h, malen, x, y, z, ry) {
@@ -305,6 +307,26 @@ export function baueWelt(scene) {
   scene.add(edding);
   merke(edding, 'edding', 'Blauer Edding (Anzeichnen)', 'werkbank');
   objekte.edding = edding;
+
+  // Dein Handy auf der Werkbank
+  const handyGr = new THREE.Group();
+  handyGr.add(quader(0.075, 0.009, 0.15, 0x1a1a1c, { umriss: 0.002 }));
+  const displayTex = leinwandTextur(64, 128, (g) => {
+    const gr = g.createLinearGradient(0, 0, 64, 128);
+    gr.addColorStop(0, '#2f5fa8'); gr.addColorStop(1, '#8a3fb0');
+    g.fillStyle = gr; g.fillRect(0, 0, 64, 128);
+    g.fillStyle = '#fff'; g.font = 'bold 16px Arial'; g.textAlign = 'center'; g.fillText('12:47', 32, 30);
+    g.fillStyle = '#5cbf4a'; g.beginPath(); g.arc(32, 80, 14, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#fff'; g.font = 'bold 14px Arial'; g.fillText('3', 32, 85);
+  });
+  const display = new THREE.Mesh(new THREE.PlaneGeometry(0.066, 0.135), new THREE.MeshBasicMaterial({ map: displayTex }));
+  display.rotation.x = -Math.PI / 2;
+  display.position.y = 0.0055;
+  handyGr.add(display);
+  setze(handyGr, 1.0, 0.905, -2.62, 0, -0.4, 0);
+  scene.add(handyGr);
+  merke(handyGr, 'handy', 'Dein Handy', 'werkbank');
+  objekte.handy = handyGr;
 
   // ---------- Regal ----------
   const regal = new THREE.Group();
@@ -601,6 +623,7 @@ export function baueWelt(scene) {
   setze(hammer, 2.68, 0.865, -2.7, 0, -0.3, 0);
   scene.add(hammer);
   merke(hammer, 'hammer', 'Schlackenhammer', 'schweiss');
+  objekte.hammer = hammer;
   const buerste = new THREE.Group();
   buerste.add(setze(quader(0.22, 0.02, 0.035, FARBE.holz), 0, 0, 0));
   buerste.add(setze(quader(0.12, 0.025, 0.03, 0xb0b0b0), -0.04, -0.02, 0));
@@ -731,6 +754,8 @@ export function baueWelt(scene) {
   setze(besen, -4.88, 0, 2.05, 0.18, Math.PI / 2, 0);
   scene.add(besen);
   merke(besen, 'besen', 'Besen', null);
+  objekte.besen = besen;
+  besen.userData.wand = { pos: besen.position.clone(), rot: besen.rotation.clone() };
 
   // Lichtschalter neben der Tür
   const schalter = new THREE.Group();
@@ -863,6 +888,7 @@ export function baueWelt(scene) {
   setze(figur, -4.6, 0, 1.62, 0, -Math.PI / 2, 0);
   scene.add(figur);
   merke(figur, 'figur', 'Holzfigur', null);
+  objekte.figur = figur;
   hindernis(-4.8, -4.4, 1.42, 1.82);
 
   // Mülleimer neben der Werkbank (kann durch Funken Feuer fangen)
@@ -1023,6 +1049,21 @@ export function baueWelt(scene) {
     get brennt() { return feuer.visible; },
     pulver,
     loescherSichtbar(an) { loescher.visible = an; },
+    // Ding wieder an seinen festen Platz (Wandhalter) hängen
+    zurueckAnDieWand(obj) {
+      scene.add(obj);
+      obj.position.copy(obj.userData.wand.pos);
+      obj.rotation.copy(obj.userData.wand.rot);
+      if (obj.userData.ruhe) obj.scale.copy(obj.userData.ruhe.skala);
+      obj.visible = true;
+    },
+    flaschenOrtBei(p, mitBeinen) {
+      if (p.x > -1.25 && p.x < 1.25 && p.z > -3.4 && p.z < -2.4 && p.y > 0.8) return 'werkbank';
+      if (p.x > 2.25 && p.x < 3.95 && p.z > -3.5 && p.z < -2.4 && p.y > 0.75) return mitBeinen ? 'schweiss' : 'schweiss';
+      if (mitBeinen && p.x > 2.3 && p.x < 4.0 && p.z > -2.5 && p.z < -1.4) return 'schweiss';
+      if (p.x > 3.2 && p.z > 0.6 && p.z < 2.9) return 'wasch';
+      return null;
+    },
     SOFA: { x: -3.2, z: RAUM.zMax - 0.45, sitzZ: RAUM.zMax - 0.5, vorneZ: RAUM.zMax - 1.15 },
     update(dt) {
       for (const a of animiert) a(dt);

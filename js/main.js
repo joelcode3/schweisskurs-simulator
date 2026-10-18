@@ -4,6 +4,7 @@ import { baueWelt, STATIONEN } from './world.js';
 import { baueDennis } from './dennis.js';
 import { baueSteuerung } from './steuerung.js';
 import { baueSpiel } from './spiel.js';
+import { baueHand } from './hand.js';
 import { ladeClips, videoFreischalten, archivListe, spieleKategorie } from './clips.js';
 import { audioStart, setzeLautstaerke } from './audio.js';
 import { setzeVideoLautstaerke } from './clips.js';
@@ -26,6 +27,7 @@ const dennis = baueDennis(scene);
 dennis.wurzel.userData.interaktiv = { id: 'dennis', name: 'Dennis', station: null };
 
 const zielListe = scene.children;
+const hand = baueHand(scene, kamera);
 const steuerung = baueSteuerung(kamera, canvas, {
   hindernisse: welt.hindernisse,
   alleZiele: () => zielListe,
@@ -45,6 +47,7 @@ function groesse() {
   // Auf schmalen Bildschirmen etwas weiter gucken
   kamera.fov = b / h < 1 ? 85 : 70;
   kamera.updateProjectionMatrix();
+  hand.groesse(b / h);
 }
 window.addEventListener('resize', groesse);
 groesse();
@@ -66,7 +69,9 @@ function schleife(jetzt) {
       ui.stationenZeigen(st, (id) => spiel.stationWaehlen(id));
     }
   }
+  hand.update(dt, steuerung.geht, dennis.position, welt.hindernisse);
   renderer.render(scene, kamera);
+  hand.render(renderer);
   requestAnimationFrame(schleife);
 }
 requestAnimationFrame(schleife);
@@ -80,7 +85,7 @@ document.getElementById('start-los').addEventListener('click', async () => {
   videoFreischalten();
   await clipsGeladen;
   document.getElementById('start').classList.add('versteckt');
-  spiel = baueSpiel({ welt, dennis, steuerung, kamera, dennisModus: document.getElementById('dennis-modus').checked });
+  spiel = baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus: document.getElementById('dennis-modus').checked });
   ui.zeigeHud(true);
   stationAlt = undefined;
   spiel.intro();
@@ -107,4 +112,4 @@ if (location.hash === '#archiv') {
 }
 
 // Für Tests im Browser
-window.__werkstatt = { kamera, steuerung, dennis, welt, get spiel() { return spiel; } };
+window.__werkstatt = { kamera, steuerung, dennis, welt, hand, get spiel() { return spiel; } };

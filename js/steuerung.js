@@ -7,6 +7,8 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
   let nick = -0.12;
   let fahrt = null;
   let gesperrt = false;
+  let tempoFaktor = 1;
+  let geht = false;
   const tasten = new Set();
   const zeiger = new Map();
   let zieh = null;
@@ -66,8 +68,11 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
       let o = h.object;
       while (o && !o.userData.interaktiv) o = o.parent;
       if (o) return { obj: o, info: o.userData.interaktiv, punkt: h.point, abstand: h.distance };
-      // Erstes nicht-interaktives Teil verdeckt alles dahinter
-      if (!h.object.userData.umriss) return null;
+      // Erstes nicht-interaktives Teil verdeckt alles dahinter: als Fläche zurückgeben (zum Ablegen)
+      if (!h.object.userData.umriss && !h.object.isSprite) {
+        const normale = h.face ? h.face.normal.clone().transformDirection(h.object.matrixWorld) : new THREE.Vector3(0, 1, 0);
+        return { obj: null, info: null, punkt: h.point, normale, abstand: h.distance };
+      }
     }
     return null;
   }
@@ -95,8 +100,8 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
       }
     } else if (e.pointerType === 'mouse' && !gesperrt) {
       const t = treffer(e.clientX, e.clientY);
-      beiHover(t, e.clientX, e.clientY);
-      canvas.classList.toggle('zeigt', !!t);
+      beiHover(t && t.info ? t : null, e.clientX, e.clientY);
+      canvas.classList.toggle('zeigt', !!(t && t.info));
     }
   });
   function ende(e) {
@@ -149,6 +154,8 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
       anwenden();
     },
     blickRichtung() { return richtungAus(gier, nick); },
+    set tempo(f) { tempoFaktor = f; },
+    get geht() { return geht || !!fahrt; },
     update(dt) {
       if (fahrt) {
         fahrt.t += dt;
@@ -172,8 +179,9 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
         if (tasten.has('s') || tasten.has('arrowdown')) vor -= 1;
         if (tasten.has('a') || tasten.has('arrowleft')) seit -= 1;
         if (tasten.has('d') || tasten.has('arrowright')) seit += 1;
+        geht = !!(vor || seit);
         if (vor || seit) {
-          const v = 2.4 * dt / Math.hypot(vor, seit);
+          const v = 2.4 * tempoFaktor * dt / Math.hypot(vor, seit);
           const fx = -Math.sin(gier);
           const fz = -Math.cos(gier);
           const dx = (fx * vor - fz * seit) * v;

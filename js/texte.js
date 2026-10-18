@@ -11,6 +11,22 @@ export const DENNIS = {
     selbst: 'Gut reagiert! Genau so.',
     duHastIhn: 'Lösch das! Du hast doch den Feuerlöscher!',
   },
+  besenInDerHand: 'Fegst du jetzt, oder hältst du den Besen nur fest?',
+  hand: {
+    handy: 'Handy weg! Hier wird gearbeitet, nicht gedaddelt!',
+    handyWerfen: 'Na super. Display kaputt? Selber schuld.',
+    handyNochmal: 'Schon wieder das Handy?! Das kriegst du nach Feierabend wieder!',
+    figur: 'Finger weg von meiner Skulptur! Die hat drei Wochenenden gedauert!',
+    werfen: 'Werkzeug wird nicht geworfen! Hast du sie noch alle?',
+    figurWerfen: 'MEINE SKULPTUR! Bist du wahnsinnig?!',
+    flascheWerfen: 'Wirf bloß nicht mit der Gasflasche!',
+    getroffen: 'AUA! Hast du mich gerade abgeworfen?! Raus hier!',
+    gespruehrt: 'HÖR SOFORT AUF! Ich bin doch kein Feuer!',
+    flexLaeuft: 'Mach die Flex aus, wenn du nix schneidest!',
+    flexAufDennis: 'Zeig nicht mit der laufenden Flex auf mich!',
+    loeschen: 'Gut reagiert! Genau so.',
+    loescherSpielen: 'Der Feuerlöscher ist kein Spielzeug! Den muss ich jetzt neu befüllen lassen!',
+  },
   geweckt: 'Hä? Was is’n?! Ich hab Pause!',
 
   fehler: {
