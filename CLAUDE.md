@@ -77,13 +77,17 @@
 - Holzfigur (Baumstamm mit geschnitztem Hintern, ~70 cm) steht zwischen Box und Besen.
 - Bemalte Holz-Skulptur (langer Penis, nach Foto vom Betreiber) hängt über dem Fenster über der Soundbox.
 - Dennis' Klemmbrett (liegt auf dem Sofa): Klick = in die Hand, groß vor dem Gesicht (Hand fasst unten rechts an, `griff` in HALTUNG),
-  alles lesbar. Notizen in NOTIZEN (world.js): Lydia anrufen, Hüfte hinten links, Heringe essen, Arzttermine, TK-Pizza einkaufen,
-  Sexy abmelden, Fußmatte waschen, 40-Grad-Wäsche!!
+  alles lesbar. Handschrift (Google Font Caveat, leicht schief, Kaffeefleck), Erledigtes durchgestrichen. NOTIZEN (world.js):
+  Lydia anrufen (durch, Haken), Hüfte hinten links!! (rot), Heringe essen (durch), Orthopäde, Zahnarzt (durch), Hautarzt,
+  TK-Pizza einkaufen, Sexy abmelden, neue Motorhaube für Benz organisieren, Konzerttickets verkaufen, Urlaub einreichen,
+  40-Grad-Wäsche!! (kein „Fußmatte waschen“ mehr).
 - Nebenaufgabe 40-Grad-Wäsche (Dennis helfen, freut ihn: Wut -15, bei zu heiß nur -5): Klemmbrett in der Hand, E = übernehmen.
-  Dennis kommt, gibt die blaue Einkaufstasche (wie IKEA) mit Wäsche und erklärt in 4 Blasen den Ablauf. Waschmaschine rechts
+  Dennis kommt, gibt die blaue Einkaufstasche (wie IKEA: gewebte Plane, gelbe Gurtbänder, flache Henkel; darin
+  grauer Hoodie mit raushängendem Ärmel, Jeans mit Hosenbein, schwarzes Shirt, Handtuch, rote Socke) mit Wäsche und erklärt in 4 Blasen den Ablauf. Waschmaschine rechts
   neben dem Waschplatz (Ecke vorne rechts), Trockner obendrauf, beide mit Anzeige (Restzeit/ENDE) und drehender Trommel.
   Temperatur wählbar 30/40/60/90 (über 40 = Fehler, Dennis merkt es spätestens beim Rausholen). Waschen 50 s, Trocknen 35 s.
-  Flusensieb (unten in der Trocknertür, voller Fusseln) ausbauen, am Kompressor (rechte Wand, rot) mit Druckluft ausblasen,
+  Flusensieb (unten in der Trocknertür, voller Fusseln) ausbauen, am Kompressor (Ecke rechts neben dem Regal, 50-l-Kessel mit
+  Motor, Kühlrippen, Manometern, Spiralschlauch und Ausblaspistole) mit Druckluft ausblasen,
   wieder einsetzen. Trockner mit dreckigem Sieb starten = Dennis meckert (+5). Trockene Wäsche zu Dennis bringen.
   In der Aufgabenliste als blaue Nebenaufgaben unter einer Trennlinie (`neben: true`).
 - Erste-Hilfe-Kasten neben dem Feuerlöscher. Klospülung = assets/klospuelung.mp3 (Ton aus dem Video vom Betreiber, mit Ausblenden).

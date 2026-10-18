@@ -747,7 +747,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     z.sieb = 'hand';
     blip(480, 0.05);
     aktualisieren();
-    ui.hinweis('Voller Fusseln! Am Kompressor (rechte Wand) mit Druckluft ausblasen.', 3200);
+    ui.hinweis('Voller Fusseln! Am Kompressor (Ecke rechts neben dem Regal) mit Druckluft ausblasen.', 3200);
   }
   function siebRein() {
     const sieb = hand.weg();
@@ -765,7 +765,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     const ok = await ui.haltenDialog({ titel: 'Flusensieb ausblasen', text: 'Druckluftpistole ansetzen und die Fusseln rauspusten. Nicht in Richtung Gesicht!', knopf: 'Pusten (halten)', sekunden: 2.5, geraeusch: 'gas' });
     if (!ok) return;
     const k = welt.objekte.kompressor.position;
-    welt.pulver(new THREE.Vector3(k.x - 0.4, 1.0, k.z), new THREE.Vector3(k.x - 1.6, 1.4, k.z + 0.3));
+    welt.pulver(new THREE.Vector3(k.x + 0.6, 1.0, k.z + 0.2), new THREE.Vector3(k.x + 1.8, 1.4, k.z + 0.6));
     hand.item.obj.userData.sauber(true);
     z.sieb = 'sauber';
     aktualisieren();
@@ -1405,7 +1405,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     if (id === 'sieb') {
       const k = welt.objekte.kompressor.position;
       if (z.sieb === 'hand' && Math.hypot(kamera.position.x - k.x, kamera.position.z - k.z) < 2.5) return siebAusblasen();
-      ui.hinweis(z.sieb === 'hand' ? 'Geh zum Kompressor an der rechten Wand.' : 'Klick auf den Trockner, dann setzt du das Sieb ein.');
+      ui.hinweis(z.sieb === 'hand' ? 'Geh zum Kompressor in der Ecke rechts neben dem Regal.' : 'Klick auf den Trockner, dann setzt du das Sieb ein.');
       return;
     }
     if (id === 'rohrzange') {

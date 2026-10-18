@@ -711,58 +711,230 @@ export function baueWelt(scene) {
     wm.wasser.visible = !!wm.laeuft;
   });
 
-  // Druckluft-Kompressor an der rechten Wand
+  // Druckluft-Kompressor (50 l) in der Ecke rechts neben dem Regal: liegender Kessel mit Schweißnähten, Motor mit Lüfterhaube,
+  // Zylinder mit Kühlrippen, Luftfilter, Druckschalter mit Ein/Aus, zwei Manometer, Druckminderer, Schnellkupplung,
+  // Spiralschlauch mit Ausblaspistole, Räder, Gummifüße, Ablassventil, Typenschild
   const kompressor = new THREE.Group();
-  kompressor.add(setze(zylinder(0.17, 0.17, 0.6, 0xd03a2c, {}, 20), 0, 0.3, 0, 0, 0, Math.PI / 2));
+  const kRot = 0xd03a2c;
+  const kessel = setze(zylinder(0.17, 0.17, 0.56, kRot, {}, 24), 0, 0.3, 0, 0, 0, Math.PI / 2);
+  kompressor.add(kessel);
   for (const sx of [-1, 1]) {
-    const kappe = setze(kugel(0.17, 0xd03a2c, {}, 16), sx * 0.3, 0.3, 0);
-    kappe.scale.set(0.35, 1, 1);
+    const kappe = setze(kugel(0.17, kRot, {}, 20), sx * 0.28, 0.3, 0);
+    kappe.scale.set(0.38, 1, 1);
     kompressor.add(kappe);
+    // Schweißnaht am Übergang
+    kompressor.add(setze(teil(new THREE.TorusGeometry(0.171, 0.006, 6, 28), 0xa82a20, { umriss: false }), sx * 0.27, 0.3, 0, 0, Math.PI / 2, 0));
   }
-  kompressor.add(setze(quader(0.32, 0.16, 0.22, 0x2a2c30), -0.05, 0.54, 0));
-  kompressor.add(setze(zylinder(0.07, 0.07, 0.04, 0x9aa3ab, {}, 14), 0.18, 0.56, 0));
-  kompressor.add(setze(quader(0.08, 0.12, 0.2, 0x3a3d42), 0.18, 0.5, 0));
-  const manometer = setze(zylinder(0.04, 0.04, 0.02, 0xf4f0e6, { umriss: 0.002 }, 16), -0.08, 0.66, -0.04, Math.PI / 2, 0, 0);
-  kompressor.add(manometer);
-  for (const [x, z] of [[-0.22, -0.12], [-0.22, 0.12]]) kompressor.add(setze(zylinder(0.06, 0.06, 0.04, 0x1d1d1f, {}, 14), x, 0.06, z, Math.PI / 2, 0, 0));
-  kompressor.add(setze(quader(0.04, 0.12, 0.04, 0x3a3d42), 0.25, 0.06, 0));
-  kompressor.add(setze(quader(0.04, 0.04, 0.3, 0x3a3d42), -0.36, 0.62, 0, 0, 0, 0.3));
-  // Spiralschlauch mit Ausblaspistole
+  // Typenschild
+  const schildTex = leinwandTextur(128, 64, (g) => {
+    g.fillStyle = '#e9e6dc'; g.fillRect(0, 0, 128, 64);
+    g.fillStyle = '#1d1d1f'; g.font = 'bold 18px Arial'; g.fillText('50 L', 8, 24);
+    g.font = '13px Arial'; g.fillText('max. 8 bar', 8, 44); g.fillText('230 V  1,5 kW', 8, 58);
+    g.fillStyle = '#d03a2c'; g.fillRect(96, 8, 24, 24);
+  });
+  const schild = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 0.06), new THREE.MeshBasicMaterial({ map: schildTex }));
+  schild.position.set(0.02, 0.3, 0.1715 + 0.001);
+  kompressor.add(schild);
+  // Räder mit Felge an einem Ende, Gummifüße am anderen, Schiebebügel
+  for (const sz of [-1, 1]) {
+    const rad = setze(zylinder(0.07, 0.07, 0.04, 0x1d1d1f, {}, 18), -0.24, 0.07, sz * 0.15, Math.PI / 2, 0, 0);
+    kompressor.add(rad);
+    kompressor.add(setze(zylinder(0.035, 0.035, 0.045, 0xb8bcc2, { umriss: 0.002 }, 12), -0.24, 0.07, sz * 0.15, Math.PI / 2, 0, 0));
+    kompressor.add(setze(quader(0.04, 0.14, 0.03, 0x3a3d42), 0.24, 0.07, sz * 0.09));
+    kompressor.add(setze(zylinder(0.025, 0.03, 0.02, 0x1d1d1f, {}, 10), 0.24, 0.01, sz * 0.09));
+  }
+  kompressor.add(setze(zylinder(0.012, 0.012, 0.32, 0x1d1d1f, {}, 8), -0.24, 0.07, 0, Math.PI / 2, 0, 0));
+  const buegel = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0.3, 0.42, -0.12), new THREE.Vector3(0.42, 0.62, -0.12), new THREE.Vector3(0.44, 0.66, 0), new THREE.Vector3(0.42, 0.62, 0.12), new THREE.Vector3(0.3, 0.42, 0.12),
+  ]);
+  kompressor.add(teil(new THREE.TubeGeometry(buegel, 24, 0.012, 8, false), 0x2a2c30, { umriss: 0.002 }));
+  // Grundplatte, Motor mit Lüfterhaube und Lüftungsschlitzen
+  kompressor.add(setze(quader(0.4, 0.02, 0.22, 0x3a3d42), -0.02, 0.475, 0));
+  const motor = setze(zylinder(0.075, 0.075, 0.2, 0x26282c, {}, 18), -0.12, 0.56, 0, 0, 0, Math.PI / 2);
+  kompressor.add(motor);
+  for (let i = 0; i < 6; i++) kompressor.add(setze(quader(0.012, 0.004, 0.11, 0x111214, { umriss: false }), -0.2 + i * 0.03, 0.637, 0));
+  const haube = setze(zylinder(0.085, 0.085, 0.05, 0x2f3236, {}, 18), -0.245, 0.56, 0, 0, 0, Math.PI / 2);
+  kompressor.add(haube);
+  for (let i = 0; i < 5; i++) kompressor.add(setze(quader(0.004, 0.11, 0.008, 0x111214, { umriss: false }), -0.271, 0.56, -0.04 + i * 0.02));
+  // Zylinder mit Kühlrippen und Zylinderkopf
+  kompressor.add(setze(zylinder(0.045, 0.05, 0.08, 0xa7adb3, {}, 14), 0.06, 0.53, 0));
+  for (let i = 0; i < 6; i++) kompressor.add(setze(zylinder(0.065, 0.065, 0.006, 0xc3c8cd, { umriss: 0.0015 }, 16), 0.06, 0.575 + i * 0.016, 0));
+  kompressor.add(setze(quader(0.11, 0.035, 0.11, 0x8d949b), 0.06, 0.68, 0));
+  // Luftfilter (schwarze Dose) und Druckrohr zum Kessel
+  kompressor.add(setze(zylinder(0.035, 0.035, 0.04, 0x1d1d1f, {}, 14), 0.06, 0.68, 0.085, Math.PI / 2, 0, 0));
+  const druckrohr = new THREE.CatmullRomCurve3([new THREE.Vector3(0.1, 0.68, -0.03), new THREE.Vector3(0.17, 0.62, -0.06), new THREE.Vector3(0.18, 0.5, -0.07), new THREE.Vector3(0.19, 0.47, -0.07)]);
+  kompressor.add(teil(new THREE.TubeGeometry(druckrohr, 16, 0.008, 6, false), 0xb87333, { umriss: 0.0015 }));
+  // Druckschalter-Kasten mit rotem Ein/Aus-Knopf
+  kompressor.add(setze(quader(0.08, 0.09, 0.07, 0x1d1d1f), 0.2, 0.53, 0.02));
+  kompressor.add(setze(zylinder(0.018, 0.018, 0.025, 0xe02b20, { umriss: 0.002 }, 12), 0.2, 0.585, 0.02));
+  // zwei Manometer (Kessel- und Arbeitsdruck) mit Zeigern
+  const manoTex = leinwandTextur(64, 64, (g) => {
+    g.fillStyle = '#f7f5ee'; g.beginPath(); g.arc(32, 32, 30, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = '#d03a2c'; g.lineWidth = 5; g.beginPath(); g.arc(32, 32, 24, -0.6, 0.4); g.stroke();
+    g.strokeStyle = '#1d1d1f'; g.lineWidth = 2;
+    for (let i = 0; i <= 8; i++) { const w = Math.PI * 0.75 + i * Math.PI * 1.5 / 8; g.beginPath(); g.moveTo(32 + Math.cos(w) * 22, 32 + Math.sin(w) * 22); g.lineTo(32 + Math.cos(w) * 27, 32 + Math.sin(w) * 27); g.stroke(); }
+    g.lineWidth = 3; g.beginPath(); g.moveTo(32, 32); g.lineTo(32 + Math.cos(-0.3) * 20, 32 + Math.sin(-0.3) * 20); g.stroke();
+  });
+  for (const [x, y] of [[0.29, 0.52], [0.29, 0.43]]) {
+    kompressor.add(setze(zylinder(0.032, 0.032, 0.02, 0xb8bcc2, { umriss: 0.002 }, 16), x, y, 0.0, 0, 0, Math.PI / 2));
+    const zifferblatt = new THREE.Mesh(new THREE.CircleGeometry(0.027, 20), new THREE.MeshBasicMaterial({ map: manoTex }));
+    zifferblatt.rotation.y = Math.PI / 2;
+    zifferblatt.position.set(x + 0.0105, y, 0);
+    kompressor.add(zifferblatt);
+  }
+  // Druckminderer (Drehknopf) und Messing-Schnellkupplung
+  kompressor.add(setze(zylinder(0.022, 0.022, 0.03, 0x1d1d1f, { umriss: 0.002 }, 10), 0.3, 0.475, -0.06, 0, 0, Math.PI / 2));
+  kompressor.add(setze(zylinder(0.012, 0.014, 0.05, FARBE.messing, { umriss: 0.002 }, 8), 0.31, 0.43, 0.06, 0, 0, Math.PI / 2));
+  // Ablassventil unten
+  kompressor.add(setze(zylinder(0.008, 0.008, 0.04, FARBE.messing, {}, 8), 0.1, 0.12, 0));
+  // Spiralschlauch (blau) hängt am Bügel, unten die gelbe Ausblaspistole
   const spirale = [];
-  for (let i = 0; i <= 60; i++) { const w = i * 0.55; spirale.push(new THREE.Vector3(0.05 + Math.cos(w) * 0.05, 0.62 - i * 0.008, 0.2 + Math.sin(w) * 0.05)); }
-  kompressor.add(teil(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(spirale), 120, 0.008, 6, false), 0x2f6fd0, { umriss: 0.002 }));
+  for (let i = 0; i <= 80; i++) { const w = i * 0.5; spirale.push(new THREE.Vector3(0.44 + Math.cos(w) * 0.045, 0.6 - i * 0.0055, 0.05 + Math.sin(w) * 0.045)); }
+  kompressor.add(teil(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(spirale), 200, 0.007, 6, false), 0x2f6fd0, { umriss: 0.0015 }));
+  const zuleitung = new THREE.CatmullRomCurve3([new THREE.Vector3(0.335, 0.43, 0.06), new THREE.Vector3(0.39, 0.5, 0.06), new THREE.Vector3(0.44, 0.6, 0.05)]);
+  kompressor.add(teil(new THREE.TubeGeometry(zuleitung, 12, 0.007, 6, false), 0x2f6fd0, { umriss: 0.0015 }));
   const blaspistole = new THREE.Group();
-  blaspistole.add(setze(quader(0.03, 0.1, 0.03, 0xe2c21e), 0, 0, 0));
-  blaspistole.add(setze(zylinder(0.006, 0.006, 0.14, 0x9aa3ab, {}, 8), 0, 0.05, 0.06, Math.PI / 2, 0, 0));
-  setze(blaspistole, 0.05, 0.16, 0.22);
+  blaspistole.add(setze(quader(0.03, 0.09, 0.025, 0xe2c21e, { umriss: 0.002 }), 0, 0, 0));
+  blaspistole.add(setze(quader(0.012, 0.03, 0.02, 0x1d1d1f, { umriss: false }), 0.018, 0.005, 0));
+  blaspistole.add(setze(zylinder(0.005, 0.005, 0.12, 0x9aa3ab, {}, 8), 0, 0.06, 0.05, Math.PI / 2 - 0.3, 0, 0));
+  setze(blaspistole, 0.44, 0.13, 0.05);
   kompressor.add(blaspistole);
-  setze(kompressor, 4.55, 0, 0.0, 0, Math.PI / 2, 0);
+  // in der Ecke rechts neben dem Regal, Bedienseite zum Raum
+  setze(kompressor, -4.45, 0, -2.3, 0, 0, 0);
   scene.add(kompressor);
   merke(kompressor, 'kompressor', 'Kompressor (Druckluft)', null);
   objekte.kompressor = kompressor;
-  hindernis(4.25, 4.85, -0.42, 0.42);
+  hindernis(-4.85, -3.95, -2.55, -2.05);
 
-  // Dennis' blaue Einkaufstasche (wie die große von IKEA), mit Wäsche drin
+  // Dennis' blaue Einkaufstasche (wie die große von IKEA): gewebte Plane, gelbe Gurtbänder, flache Henkel, Wäsche drin
   const tasche = new THREE.Group();
-  const taschenBlau = 0x1f5fc0;
-  const korpus = teil(new THREE.CylinderGeometry(0.33, 0.27, 0.32, 4, 1, true), taschenBlau, { mat: { side: THREE.DoubleSide }, umriss: 0.004 });
-  korpus.rotation.y = Math.PI / 4;
-  korpus.scale.set(1, 1, 0.5);
-  korpus.position.y = 0.16;
-  tasche.add(korpus);
-  tasche.add(setze(quader(0.38, 0.01, 0.19, taschenBlau), 0, 0.005, 0));
+  const gewebe = leinwandTextur(128, 128, (g, b, h) => {
+    g.fillStyle = '#1d5fc4'; g.fillRect(0, 0, b, h);
+    for (let i = 0; i < b; i += 4) {
+      g.fillStyle = i % 8 ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,40,0.12)';
+      g.fillRect(i, 0, 2, h);
+      g.fillRect(0, i, b, 2);
+    }
+  }, [3, 2]);
+  {
+    // Korpus: unten 55 x 37 cm, oben etwas weiter, 35 cm hoch, oben offen
+    const geo = new THREE.BoxGeometry(0.55, 0.35, 0.37, 2, 2, 2);
+    const pos = geo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const t = (pos.getY(i) + 0.175) / 0.35;
+      pos.setX(i, pos.getX(i) * (1 + t * 0.05));
+      pos.setZ(i, pos.getZ(i) * (1 + t * 0.07) + Math.sin(pos.getX(i) * 9) * 0.004 * t);
+    }
+    geo.translate(0, 0.175, 0);
+    geo.computeVertexNormals();
+    // Deckel-Flächen (Gruppe 2 = +y) weglassen: Tasche ist oben offen
+    const plane = toon(0xffffff, { map: gewebe });
+    const aussen = new THREE.Mesh(geo, [plane, plane, new THREE.MeshBasicMaterial({ visible: false }), plane, plane, plane]);
+    tasche.add(aussen);
+    const innenMat = new THREE.MeshBasicMaterial({ color: 0x0f2f66, side: THREE.BackSide });
+    const innen = new THREE.Mesh(geo, [innenMat, innenMat, new THREE.MeshBasicMaterial({ visible: false }), innenMat, innenMat, innenMat]);
+    innen.scale.setScalar(0.995);
+    tasche.add(innen);
+    // Comic-Kanten
+    const kanten = new THREE.LineSegments(new THREE.EdgesGeometry(geo, 30), new THREE.LineBasicMaterial({ color: 0x111111 }));
+    tasche.add(kanten);
+    // Saum oben
+    for (const sz of [-1, 1]) tasche.add(setze(quader(0.58, 0.02, 0.006, 0x174e9e, { umriss: 0.002 }), 0, 0.34, sz * 0.198));
+    for (const sx of [-1, 1]) tasche.add(setze(quader(0.006, 0.02, 0.4, 0x174e9e, { umriss: 0.002 }), sx * 0.289, 0.34, 0));
+  }
+  const gurtGelb = 0xf2c21c;
+  // flacher, gebogener Gurt-Henkel (Bogen aus Band)
+  function henkel(rx, ry, breite) {
+    const f = new THREE.Shape();
+    f.absellipse(0, 0, rx + breite / 2, ry + breite / 2, 0, Math.PI, false);
+    f.absellipse(0, 0, rx - breite / 2, ry - breite / 2, Math.PI, 0, true);
+    const geo = new THREE.ExtrudeGeometry(f, { depth: 0.004, bevelEnabled: false, curveSegments: 20 });
+    geo.translate(0, 0, -0.002);
+    return teil(geo, gurtGelb, { umriss: 0.0025 });
+  }
   for (const sz of [-1, 1]) {
-    tasche.add(setze(quader(0.05, 0.3, 0.008, 0xf2c21c, { umriss: 0.002 }), -0.12, 0.2, sz * 0.122));
-    tasche.add(setze(quader(0.05, 0.3, 0.008, 0xf2c21c, { umriss: 0.002 }), 0.12, 0.2, sz * 0.122));
-    tasche.add(setze(teil(new THREE.TorusGeometry(0.12, 0.012, 6, 16, Math.PI), 0xf2c21c, { umriss: 0.002 }), 0, 0.35, sz * 0.122));
+    const seite = new THREE.Group();
+    // senkrechte Gurtbänder mit Naht
+    for (const sx of [-0.13, 0.13]) {
+      seite.add(setze(quader(0.036, 0.34, 0.004, gurtGelb, { umriss: 0.002 }), sx, 0.17, 0));
+      seite.add(setze(quader(0.002, 0.33, 0.005, 0xb88a0a, { umriss: false }), sx - 0.011, 0.17, 0.0005));
+      seite.add(setze(quader(0.002, 0.33, 0.005, 0xb88a0a, { umriss: false }), sx + 0.011, 0.17, 0.0005));
+      seite.add(setze(quader(0.04, 0.012, 0.007, 0x2a2a2a, { umriss: 0.002 }), sx, 0.26, 0.002));
+    }
+    // kurzer Henkel und langer Schultergurt
+    const kurz = henkel(0.13, 0.15, 0.034);
+    kurz.position.y = 0.34;
+    kurz.rotation.x = -0.32;
+    seite.add(kurz);
+    const lang = henkel(0.13, 0.3, 0.03);
+    lang.position.set(0, 0.34, 0.006);
+    lang.rotation.x = -0.6;
+    seite.add(lang);
+    seite.position.z = sz * 0.2;
+    if (sz < 0) seite.rotation.y = Math.PI;
+    tasche.add(seite);
   }
+  // Gurt unter dem Boden
+  for (const sx of [-0.13, 0.13]) tasche.add(setze(quader(0.036, 0.004, 0.38, gurtGelb, { umriss: 0.002 }), sx, -0.002, 0));
+  // Wäsche: zerknautschte Kleidungsstücke, ein Ärmel und ein Hosenbein hängen raus
+  function knautsch(geo, staerke, saat) {
+    const p = geo.attributes.position;
+    const v = new THREE.Vector3();
+    for (let i = 0; i < p.count; i++) {
+      v.fromBufferAttribute(p, i);
+      const n = Math.sin(v.x * 31 + saat) * Math.cos(v.z * 27 + saat * 2) + Math.sin(v.y * 23 + saat * 3) * 0.6;
+      v.multiplyScalar(1 + n * staerke);
+      p.setXYZ(i, v.x, v.y, v.z);
+    }
+    geo.computeVertexNormals();
+    return geo;
+  }
+  const stoff = (geo, farbe) => teil(geo, farbe, { umriss: 0.003 });
   const tWaesche = new THREE.Group();
-  for (const [i, c] of [0x2f5fa8, 0x1d1d1f, 0x8a8f96, 0xc8352a, 0x3c7a3a, 0xf4f0e6].entries()) {
-    const k = kugel(0.09, c, { umriss: 0.003 }, 10);
-    k.scale.set(1.3, 0.6, 0.9);
-    k.position.set(-0.16 + (i % 3) * 0.16, 0.3 + (i > 2 ? 0.03 : 0), (i > 2 ? 0.04 : -0.04));
-    tWaesche.add(k);
-  }
+  // grauer Hoodie (Haufen + Kapuze + raushängender Ärmel mit Bündchen)
+  const hoodie = stoff(knautsch(new THREE.SphereGeometry(0.15, 20, 14), 0.12, 1), 0x8e939a);
+  hoodie.scale.set(1.35, 0.55, 1.0);
+  hoodie.position.set(-0.09, 0.33, 0.02);
+  tWaesche.add(hoodie);
+  const kapuze = stoff(knautsch(new THREE.SphereGeometry(0.07, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.6), 0.1, 4), 0x7f848b);
+  kapuze.position.set(-0.2, 0.38, -0.05);
+  kapuze.rotation.set(-0.8, 0.4, 0.3);
+  tWaesche.add(kapuze);
+  const aermelKurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(-0.05, 0.34, 0.08), new THREE.Vector3(-0.03, 0.38, 0.17), new THREE.Vector3(-0.02, 0.36, 0.215),
+    new THREE.Vector3(-0.01, 0.28, 0.235), new THREE.Vector3(0.0, 0.18, 0.235),
+  ]);
+  tWaesche.add(stoff(knautsch(new THREE.TubeGeometry(aermelKurve, 24, 0.034, 10, false), 0.06, 2), 0x8e939a));
+  tWaesche.add(setze(stoff(new THREE.CylinderGeometry(0.03, 0.03, 0.04, 12), 0x6f747a), 0.0, 0.175, 0.235));
+  // Jeans: Haufen + Hosenbein über die Schmalseite, mit Saum
+  const jeans = stoff(knautsch(new THREE.SphereGeometry(0.13, 18, 12), 0.13, 7), 0x35577f);
+  jeans.scale.set(1.0, 0.5, 1.0);
+  jeans.position.set(0.1, 0.35, -0.03);
+  tWaesche.add(jeans);
+  const beinKurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0.16, 0.36, 0.0), new THREE.Vector3(0.26, 0.4, 0.01), new THREE.Vector3(0.3, 0.36, 0.015),
+    new THREE.Vector3(0.315, 0.25, 0.02), new THREE.Vector3(0.315, 0.14, 0.02),
+  ]);
+  const bein = stoff(knautsch(new THREE.TubeGeometry(beinKurve, 24, 0.048, 10, false), 0.05, 3), 0x35577f);
+  tWaesche.add(bein);
+  tWaesche.add(setze(stoff(new THREE.CylinderGeometry(0.046, 0.046, 0.025, 12), 0x5a7aa3), 0.315, 0.135, 0.02));
+  tWaesche.add(setze(quader(0.004, 0.2, 0.006, 0xd8a24a, { umriss: false }), 0.318, 0.24, 0.068));
+  // schwarzes Shirt, weißes Handtuch mit Streifen, rote Socke
+  const shirt = stoff(knautsch(new THREE.SphereGeometry(0.11, 16, 10), 0.15, 9), 0x232326);
+  shirt.scale.set(1.3, 0.35, 0.9);
+  shirt.position.set(0.02, 0.38, -0.08);
+  tWaesche.add(shirt);
+  const tuch = stoff(knautsch(new THREE.BoxGeometry(0.2, 0.05, 0.14, 6, 2, 4), 0.06, 5), 0xf2efe6);
+  tuch.position.set(0.1, 0.39, 0.08);
+  tuch.rotation.set(0.15, 0.4, -0.12);
+  tWaesche.add(tuch);
+  tWaesche.add(setze(quader(0.205, 0.052, 0.018, 0x3a7ac2, { umriss: false }), 0.1, 0.39, 0.08, 0.15, 0.4, -0.12));
+  const sockeKurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(-0.2, 0.37, -0.12), new THREE.Vector3(-0.22, 0.39, -0.19), new THREE.Vector3(-0.23, 0.33, -0.215),
+    new THREE.Vector3(-0.23, 0.26, -0.215), new THREE.Vector3(-0.2, 0.235, -0.22),
+  ]);
+  tWaesche.add(stoff(new THREE.TubeGeometry(sockeKurve, 20, 0.022, 8, false), 0xc23a2e));
+  tWaesche.add(setze(stoff(new THREE.CylinderGeometry(0.023, 0.023, 0.02, 10), 0xf4f0e6), -0.205, 0.37, -0.12, 0.3, 0, 0));
   tasche.add(tWaesche);
   tasche.userData.waesche = tWaesche;
   tasche.visible = false;
@@ -1549,14 +1721,54 @@ export function baueWelt(scene) {
 
   // Dennis' Klemmbrett mit Notizen, liegt auf dem Sofa
   const klemmbrett = new THREE.Group();
-  const notizTex = leinwandTextur(512, 680, (g, b, h) => {
+  // Handschrift: Caveat (Google Font), leicht schief, wechselnde Stiftfarbe, Erledigtes durchgestrichen
+  function notizenMalen(g, b, h) {
+    const r = zufall(31);
     g.fillStyle = '#fbfaf3'; g.fillRect(0, 0, b, h);
-    g.strokeStyle = '#9ec3e6'; g.lineWidth = 3;
-    for (let y = 104; y < h; y += 54) { g.beginPath(); g.moveTo(20, y); g.lineTo(b - 20, y); g.stroke(); }
-    g.fillStyle = '#1f3f8a';
-    g.font = 'bold 40px "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive';
-    NOTIZEN.forEach((t, i) => g.fillText(t, 30, 96 + i * 54));
-  });
+    g.strokeStyle = '#9ec3e6'; g.lineWidth = 2;
+    for (let y = 92; y < h; y += 46) { g.beginPath(); g.moveTo(14, y); g.lineTo(b - 14, y); g.stroke(); }
+    g.strokeStyle = '#e8a0a0'; g.beginPath(); g.moveTo(52, 0); g.lineTo(52, h); g.stroke();
+    // Kaffeefleck
+    g.strokeStyle = 'rgba(140, 95, 50, 0.25)'; g.lineWidth = 5;
+    g.beginPath(); g.arc(430, 630, 34, 0.3, 5.6); g.stroke();
+    let zeile = 0;
+    for (const n of NOTIZEN) {
+      const teile = Array.isArray(n.t) ? n.t : [n.t];
+      teile.forEach((t, j) => {
+        const y = 84 + zeile * 46;
+        const x = 64 + (j ? 26 : 0) + (r() - 0.5) * 8;
+        g.save();
+        g.translate(x, y);
+        g.rotate((r() - 0.5) * 0.05);
+        g.fillStyle = n.rot ? '#b3261e' : r() < 0.25 ? '#16306e' : '#1f3f8a';
+        g.font = `${n.fett ? 700 : 500} ${46 + Math.round((r() - 0.5) * 4)}px Caveat, "Segoe Print", "Bradley Hand", cursive`;
+        g.fillText(t, 0, 0);
+        const breite = g.measureText(t).width;
+        if (n.durch) {
+          // krakelig durchgestrichen
+          g.strokeStyle = '#1f3f8a'; g.lineWidth = 3;
+          g.beginPath();
+          g.moveTo(-6, -13);
+          for (let i = 1; i <= 6; i++) g.lineTo(-6 + (breite + 12) * i / 6, -13 + (r() - 0.5) * 6);
+          g.stroke();
+        }
+        g.restore();
+        zeile++;
+      });
+      if (n.haken) {
+        g.strokeStyle = '#2b7a2b'; g.lineWidth = 4;
+        const y = 84 + (zeile - 1) * 46;
+        g.beginPath(); g.moveTo(22, y - 14); g.lineTo(30, y - 4); g.lineTo(44, y - 26); g.stroke();
+      }
+    }
+  }
+  const notizTex = leinwandTextur(512, 692, notizenMalen);
+  // Schrift kommt erst aus dem Netz: danach neu malen
+  if (document.fonts?.load) {
+    Promise.all([document.fonts.load('500 46px Caveat'), document.fonts.load('700 46px Caveat')])
+      .then(() => { notizenMalen(notizTex.userData.ctx, 512, 692); notizTex.needsUpdate = true; })
+      .catch(() => {});
+  }
   klemmbrett.add(quader(0.23, 0.012, 0.32, 0x8a5a2e));
   const blatt = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.27), new THREE.MeshBasicMaterial({ map: notizTex }));
   blatt.rotation.x = -Math.PI / 2;
@@ -1882,14 +2094,16 @@ export function baueReifen() {
 }
 
 export const NOTIZEN = [
-  'Lydia anrufen',
-  'Hüfte hinten links!!',
-  'Heringe essen',
-  'Orthopäde Di 8:15',
-  'Zahnarzt Mi 14:30',
-  'Hautarzt Fr 9:00',
-  'TK-Pizza einkaufen',
-  'Sexy abmelden',
-  'Fußmatte waschen',
-  '40-Grad-Wäsche!!',
-];
+  { t: 'Lydia anrufen', durch: true, haken: true },
+  { t: 'Hüfte hinten links!!', rot: true, fett: true },
+  { t: 'Heringe essen', durch: true },
+  { t: 'Orthopäde Di 8:15' },
+  { t: 'Zahnarzt Mi 14:30', durch: true },
+  { t: 'Hautarzt Fr 9:00' },
+  { t: 'TK-Pizza einkaufen' },
+  { t: 'Sexy abmelden' },
+  { t: ['neue Motorhaube für Benz', 'organisieren'] },
+  { t: 'Konzerttickets verkaufen' },
+  { t: 'Urlaub einreichen' },
+  { t: '40-Grad-Wäsche!!', fett: true },
+]
