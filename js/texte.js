@@ -30,6 +30,15 @@ export const DENNIS = {
     loeschen: 'Gut reagiert! Genau so.',
     loescherSpielen: 'Der Feuerlöscher ist kein Spielzeug! Den muss ich jetzt neu befüllen lassen!',
   },
+  wurf: {
+    werkzeug: 'Werkzeug wird nicht geworfen! Hast du sie noch alle?',
+    edding: 'Ey! Der Edding fliegt nicht, der malt!',
+    ausruestung: 'Die Schutzausrüstung schmeißt man nicht durch die Gegend! Die brauchst du noch!',
+    reifen: 'Mein Hula-Hoop-Reifen! Der ist fürs Training, nicht zum Werfen!',
+    notizen: 'Ey man, meine Notizen! Ohne die kann ich nicht leben!',
+    besen: 'Den Besen nimmt man zum Fegen, nicht als Speer!',
+    loescher: 'Den Feuerlöscher wirft man nicht! Und wenn’s dann brennt, was dann?!',
+  },
   hula: {
     gebrochen: 'WAS?! Mehr als 47?! ... Das zählt nicht, ich hatte heute Hüfte!',
     knapp: 'Nicht schlecht. Aber an meine 47 kommst du nicht ran.',

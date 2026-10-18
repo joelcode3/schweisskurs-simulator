@@ -99,8 +99,9 @@ export function dauer(art) {
   if (!ctx) return { stopp() {}, staerke() {} };
   const t = ctx.currentTime;
   const aus = ctx.createGain();
-  aus.gain.setValueAtTime(0.0001, t);
-  aus.gain.exponentialRampToValueAtTime(1, t + 0.15);
+  // sofort da (sehr kurzes Einblenden, kein Verzögerungsgefühl)
+  aus.gain.setValueAtTime(0, t);
+  aus.gain.linearRampToValueAtTime(1, t + 0.02);
   aus.connect(master);
   const knoten = [];
   let staerkeGain = null;
@@ -180,7 +181,7 @@ export function dauer(art) {
       const j = ctx.currentTime;
       aus.gain.cancelScheduledValues(j);
       aus.gain.setValueAtTime(aus.gain.value, j);
-      aus.gain.exponentialRampToValueAtTime(0.0001, j + 0.12);
+      aus.gain.linearRampToValueAtTime(0, j + 0.1);
       for (const k of knoten) k.stop(j + 0.15);
       if (knoten.intervall) clearInterval(knoten.intervall);
     },
@@ -229,7 +230,7 @@ export function brummeln(silben = 8, wut = 0, lautst = 1) {
   let aus = false;
   return {
     dauer,
-    lautstaerke(v) { if (!aus) bus.gain.setTargetAtTime(v, ctx.currentTime, 0.05); },
+    lautstaerke(v) { if (!aus) bus.gain.setTargetAtTime(v, ctx.currentTime, 0.02); },
     stopp(ausblenden = 0.25) {
       if (aus) return;
       aus = true;
@@ -305,7 +306,7 @@ export async function stimmeAbspielen(url, lautst = 1.1) {
   return {
     dauer: puffer.duration,
     fertig,
-    lautstaerke(v) { g.gain.setTargetAtTime(v, ctx.currentTime, 0.05); },
+    lautstaerke(v) { g.gain.setTargetAtTime(v, ctx.currentTime, 0.02); },
     pegel() {
       analyse.getByteTimeDomainData(daten);
       let summe = 0;

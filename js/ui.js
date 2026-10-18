@@ -208,6 +208,7 @@ export function lautstaerkeLeiste(beiAenderung) {
   } catch { /* egal */ }
   function zeigen() {
     regler.value = Math.round(wert * 100);
+    regler.style.setProperty('--wert', `${stumm ? 0 : Math.round(wert * 100)}%`);
     knopf.innerHTML = stumm || wert === 0 ? SYMBOL.stumm : SYMBOL.laut;
     knopf.title = stumm ? 'Ton an' : 'Ton aus';
     beiAenderung(stumm ? 0 : wert);

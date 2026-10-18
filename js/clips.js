@@ -82,6 +82,7 @@ function vorladen() {
         for (const liste of Object.values(clips)) if (Array.isArray(liste)) for (const c of liste) if (c.datei === datei) c.hochkant = v.videoHeight > v.videoWidth;
       };
       v.src = `clips/${datei}`;
+      new Image().src = `clips/${datei.replace(/\.mp4$/, '.jpg')}`;
     }, 300 * i++);
   }
 }
@@ -192,8 +193,8 @@ export function auftritt({ schluessel, text, stufe = 'mittel', stimmung = 'sauer
     if (clip) {
       // Altes Bild nicht kurz aufblitzen lassen: Video erst zeigen, wenn es wirklich läuft
       if (clip.hochkant !== undefined) el.classList.toggle('hochkant', clip.hochkant);
-      video.style.visibility = 'hidden';
-      video.onplaying = () => { video.style.visibility = ''; };
+      // Erstes Bild als Vorschau (vorgeladen): kein gelber Rahmen, kein altes Bild, bis das Video läuft
+      video.poster = `clips/${clip.datei.replace(/\.mp4$/, '.jpg')}`;
       video.onloadedmetadata = () => el.classList.toggle('hochkant', video.videoHeight > video.videoWidth);
       // Kann das Gerät den Clip nicht abspielen, zeigt es den gezeichneten Dennis
       video.onerror = () => {

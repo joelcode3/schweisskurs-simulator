@@ -5,10 +5,10 @@ import { baueDennis } from './dennis.js';
 import { baueSteuerung } from './steuerung.js';
 import { baueSpiel } from './spiel.js';
 import { baueHand } from './hand.js';
-import { ladeClips, videoFreischalten, archivListe, spieleKategorie } from './clips.js';
-import { audioStart, setzeLautstaerke } from './audio.js';
+import { ladeClips, videoFreischalten } from './clips.js';
+import { audioStart, setzeLautstaerke, klick, jingle } from './audio.js';
 import { setzeVideoLautstaerke } from './clips.js';
-import { SYMBOL } from './gesicht.js';
+import { dennisMini } from './gesicht.js';
 import * as ui from './ui.js';
 
 const canvas = document.getElementById('welt');
@@ -80,36 +80,40 @@ requestAnimationFrame(schleife);
 const clipsGeladen = ladeClips();
 ui.lautstaerkeLeiste((v) => { setzeLautstaerke(v); setzeVideoLautstaerke(v); });
 
-document.getElementById('start-los').addEventListener('click', async () => {
+let gestartet = false;
+async function spielStarten() {
+  if (gestartet) return;
+  gestartet = true;
   audioStart();
   videoFreischalten();
-  await clipsGeladen;
+  document.getElementById('tuer').classList.add('offen');
+  await Promise.all([clipsGeladen, new Promise((r) => setTimeout(r, 1200))]);
   document.getElementById('start').classList.add('versteckt');
-  spiel = baueSpiel({ welt, dennis, steuerung, kamera, hand, dennisModus: document.getElementById('dennis-modus').checked });
+  spiel = baueSpiel({ welt, dennis, steuerung, kamera, hand });
   ui.zeigeHud(true);
   stationAlt = undefined;
   spiel.intro();
-});
+}
 
-async function archivZeigen() {
+// Zahlenschloss an der Werkstatttür: nur mit dem richtigen Code geht sie auf
+const CODE = '1312';
+const raeder = [...document.querySelectorAll('#schloss .rad')];
+document.getElementById('plakat-gesicht').innerHTML = dennisMini('ruhig');
+raeder.forEach((rad) => rad.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  if (gestartet) return;
   audioStart();
-  videoFreischalten();
-  await clipsGeladen;
-  const liste = archivListe();
-  const html = `<p class="klein">Alle Dennis-Momente. Gesehene sind freigeschaltet.</p><ul class="archiv-liste">${liste.map((e) => `
-    <li class="${e.gesehen ? '' : 'gesperrt'}"><span>${e.gesehen ? e.name : 'Noch nicht gesehen'}</span>
-    ${e.gesehen ? `<button type="button" class="knopf klein leise" data-k="${e.k}" title="Abspielen">${SYMBOL.play}</button>` : ''}</li>`).join('')}</ul>`;
-  const d = document.getElementById('dialog');
-  d.innerHTML = `<div class="dialog-karte"><h2>Dennis-Archiv</h2>${html}<div class="dialog-knoepfe"><button type="button" class="knopf" id="archiv-zu">Zurück</button></div></div>`;
-  d.classList.remove('versteckt');
-  d.querySelector('#archiv-zu').addEventListener('click', () => ui.dialogZu());
-  d.querySelectorAll('[data-k]').forEach((b) => b.addEventListener('click', () => spieleKategorie(b.dataset.k)));
-}
-document.getElementById('start-archiv').addEventListener('click', archivZeigen);
-if (location.hash === '#archiv') {
-  history.replaceState(null, '', location.pathname);
-  archivZeigen();
-}
+  const r = rad.getBoundingClientRect();
+  const hoch = e.clientY < r.top + r.height / 2;
+  rad.textContent = String((Number(rad.textContent) + (hoch ? 1 : 9)) % 10);
+  klick();
+  if (raeder.map((x) => x.textContent).join('') === CODE) {
+    document.getElementById('schloss').classList.add('auf');
+    document.getElementById('schloss-tipp').textContent = 'Klick! Die Tür geht auf ...';
+    jingle(true);
+    spielStarten();
+  }
+}));
 
 // Für Tests im Browser
 window.__werkstatt = { kamera, steuerung, dennis, welt, hand, get spiel() { return spiel; } };

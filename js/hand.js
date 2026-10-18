@@ -17,7 +17,7 @@ const HALTUNG = {
   figur: { pos: [0, -0.6, -0.9], rot: [0.05, Math.PI, 0], name: 'Holzfigur', beidhaendig: true, schwer: true },
   handy: { pos: [0.15, -0.14, -0.38], rot: [0.9, 0, 0], skala: 1.2, name: 'Dein Handy', benutzen: 'Aufs Handy gucken' },
   flasche: { pos: [0, -0.5, -1.05], rot: [0.3, 0, 0], name: 'Gasflasche', beidhaendig: true, schwer: true, nichtWerfen: true },
-  klemmbrett: { pos: [0.1, -0.14, -0.5], rot: [Math.PI / 2 - 0.35, 0, 0], name: 'Dennis’ Klemmbrett', benutzen: 'Lesen' },
+  klemmbrett: { pos: [0.06, -0.1, -0.4], rot: [Math.PI / 2 - 0.3, 0, 0], name: 'Dennis’ Klemmbrett' },
   hulahup: { pos: [0.3, -0.5, -1.05], rot: [0.35, 1.1, 0], skala: 0.85, name: 'Hula-Hoop-Reifen', benutzen: 'Dennis bringen' },
   kaffee: { pos: [0.2, -0.17, -0.45], rot: [0.1, 2.2, 0], skala: 1.3, name: 'Kaffee für Dennis', nichtWerfen: true, nichtAblegen: true },
 };
