@@ -653,7 +653,8 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
 
   // Fertigen Ofen hochheben und zu Dennis tragen
   function ofenHochheben() {
-    if (hand.item) { ui.hinweis('Für den Ofen brauchst du beide Hände. Erst ablegen.'); return; }
+    // Mit Werkzeug in der Hand geht das nicht. Nur Dinge, die man nicht einfach hinlegen kann (Kaffee, Wäsche, Sieb), darf man halten.
+    if (hand.item && !['kaffee', 'waeschetasche', 'sieb'].includes(hand.item.id)) { ui.hinweis('Für den Ofen brauchst du beide Hände. Erst ablegen.'); return; }
     hand.nimm('ofen', welt.objekte.flasche.gruppe);
     z.ortVorher = z.ort;
     z.ort = 'hand';
@@ -1273,6 +1274,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
   }
 
   async function aufhelfen() {
+    if (hand.item) { ui.hinweis(`Mit ${hand.item.cfg.name} in der Hand? Erst ablegen (auf eine Fläche klicken) oder fallen lassen (G), dann Dennis aufhelfen.`, 3800); return; }
     z.huefte = 'erledigt';
     z.beschaeftigt = true;
     dennis.setzeModus('normal');

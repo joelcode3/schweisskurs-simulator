@@ -1,4 +1,5 @@
-// Ich-Perspektive: Umschauen per Ziehen, Gehen per WASD, Stationen per Knopf, Klick = benutzen.
+// Ich-Perspektive: Computer = Umschauen, indem man die Maus an den Bildrand fährt (ohne Klicken), Ziehen geht auch;
+// Touch = Wischen. Gehen per WASD, Stationen per Knopf, Klick = benutzen.
 import * as THREE from 'three';
 import { RAUM, AUGENHOEHE, STATIONEN } from './world.js';
 
@@ -75,6 +76,48 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
       }
     }
     return null;
+  }
+
+  // ---------- Umschauen mit der Maus am Bildrand ----------
+  // Mitte = Maus frei zum Anklicken, äußerer Rand = Sicht dreht sich (je näher am Rand, desto schneller)
+  const mitMaus = window.matchMedia('(pointer: fine)').matches;
+  const RAND_X = 0.16;
+  const RAND_Y = 0.13;
+  let maus = null;
+  window.addEventListener('mousemove', (e) => { maus = { x: e.clientX, y: e.clientY, aufBild: e.target === canvas }; });
+  document.addEventListener('mouseleave', () => { maus = null; });
+  window.addEventListener('blur', () => { maus = null; });
+  function fensterOffen() {
+    for (const id of ['aktionen', 'dialog', 'minispiel', 'start-einfach', 'start']) {
+      const el = document.getElementById(id);
+      if (el && !el.classList.contains('versteckt')) return true;
+    }
+    const b = document.getElementById('dennis-buehne');
+    return !!(b && !b.classList.contains('versteckt') && document.getElementById('dennis-weiter')?.offsetParent);
+  }
+  function randDrehen(dt) {
+    let richtung = '';
+    if (mitMaus && maus && maus.aufBild && !gesperrt && !fahrt && !zieh && !fensterOffen()) {
+      const r = canvas.getBoundingClientRect();
+      const rx = (maus.x - r.left) / r.width;
+      const ry = (maus.y - r.top) / r.height;
+      const staerke = (w, rand) => Math.min(1, Math.max(0, (rand - w) / rand)) ** 1.5;
+      const links = staerke(rx, RAND_X);
+      const rechts = staerke(1 - rx, RAND_X);
+      const oben = staerke(ry, RAND_Y);
+      const unten = staerke(1 - ry, RAND_Y);
+      if (links || rechts) gier += (links - rechts) * 2.2 * dt;
+      if (oben || unten) nick = THREE.MathUtils.clamp(nick + (oben - unten) * 1.2 * dt, -1.25, 1.1);
+      richtung = links ? 'w' : rechts ? 'e' : '';
+      if (oben) richtung = 'n' + richtung;
+      else if (unten) richtung = 's' + richtung;
+      if (richtung) {
+        // beim Drehen wandert die Welt unter dem Zeiger durch: Name unter dem Zeiger aktualisieren
+        const t = treffer(maus.x, maus.y);
+        beiHover(t && t.info ? t : null, maus.x, maus.y);
+      }
+    }
+    canvas.style.cursor = richtung ? `${richtung}-resize` : '';
   }
 
   // ---------- Zeiger ----------
@@ -164,6 +207,7 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
     set tempo(f) { tempoFaktor = f; },
     get geht() { return geht || !!fahrt; },
     update(dt) {
+      randDrehen(dt);
       if (fahrt) {
         fahrt.t += dt;
         const k = Math.min(1, fahrt.t / fahrt.d);
