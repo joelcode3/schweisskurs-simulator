@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { toon, teil, quader, zylinder, kugel, setze, leinwandTextur, zufall, umriss } from './toon.js';
 
-export const RAUM = { xMin: -5, xMax: 5, zMin: -4, zMax: 4, hoehe: 3.2 };
+export const RAUM = { xMin: -5, xMax: 5, zMin: -4, zMax: 4, hoehe: 4.8 };
 export const AUGENHOEHE = 1.65;
 
 // Stationen: Kameraposition und Blickziel
@@ -112,31 +112,76 @@ export function baueWelt(scene) {
   streifen(3.0, 0.1, 3.5, -1.9, 0);
   streifen(2.1, 0.1, 2.05, -2.95, Math.PI / 2);
 
-  const wand = leinwandTextur(512, 256, (g, b, h) => {
-    g.fillStyle = '#e8dcc2';
-    g.fillRect(0, 0, b, h);
-    g.fillStyle = '#6f7b77';
-    g.fillRect(0, h * 0.62, b, h * 0.38);
-    g.fillStyle = '#3a3f3d';
-    g.fillRect(0, h * 0.62 - 4, b, 6);
-    const r = zufall(3);
-    for (let i = 0; i < 900; i++) {
+  // Wände: alter Putz, unten grüngrau gestrichen, Putz bröckelt stellenweise (Ziegel schauen raus),
+  // Risse, Wasserflecken. Jede Wand hat ihre eigene Leinwand (ca. 160 Pixel pro Meter).
+  const PX = 160;
+  const SOCKEL = 1.25; // Höhe des gestrichenen Sockels in Metern
+  function wandMalen(g, b, h, saat) {
+    const r = zufall(saat);
+    const m = (y) => h - y * PX; // Meter über Boden -> Pixel-Zeile
+    g.fillStyle = '#e3d6ba'; g.fillRect(0, 0, b, h);
+    g.fillStyle = '#6f7b77'; g.fillRect(0, m(SOCKEL), b, SOCKEL * PX);
+    g.fillStyle = '#3a3f3d'; g.fillRect(0, m(SOCKEL) - 4, b, 6);
+    for (let i = 0; i < b * h / 260; i++) {
       g.fillStyle = `rgba(90,80,60,${r() * 0.07})`;
       g.fillRect(r() * b, r() * h, 3 + r() * 8, 3 + r() * 8);
     }
-  }, [3, 1]);
-  const wandMat = toon(0xffffff, { map: wand });
-  const wandStueck = (b, x, z, ry) => {
-    const w = new THREE.Mesh(new THREE.PlaneGeometry(b, RAUM.hoehe), wandMat);
+    // Wasserflecken von oben
+    for (let i = 0; i < 3; i++) {
+      const x = r() * b, lang = (0.8 + r() * 1.6) * PX;
+      const gr = g.createLinearGradient(0, 0, 0, lang);
+      gr.addColorStop(0, 'rgba(120,95,60,0.28)'); gr.addColorStop(1, 'rgba(120,95,60,0)');
+      g.fillStyle = gr; g.fillRect(x, 0, 30 + r() * 60, lang);
+    }
+    // Putzschäden: Ziegel und Mörtel unter abgebröckeltem Putz
+    for (let i = 0; i < Math.round(b / PX * 0.7); i++) {
+      const cx = r() * b, cy = m(0.4 + r() * (RAUM.hoehe - 0.8));
+      const rx = 30 + r() * 70, ry = 20 + r() * 45;
+      const pkt = [];
+      for (let k = 0; k < 11; k++) { const w = (k / 11) * Math.PI * 2; const f = 0.6 + r() * 0.5; pkt.push([cx + Math.cos(w) * rx * f, cy + Math.sin(w) * ry * f]); }
+      const pfad = () => { g.beginPath(); pkt.forEach(([x, y], k) => (k ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); };
+      // heller Rand vom Putz
+      g.save(); g.translate(2, 3); pfad(); g.fillStyle = '#f2e9d6'; g.fill(); g.restore();
+      g.save(); pfad(); g.clip();
+      g.fillStyle = '#b9b2a2'; g.fillRect(cx - rx * 1.2, cy - ry * 1.2, rx * 2.4, ry * 2.4);
+      const zh = 11, zb = 38;
+      for (let y = Math.floor((cy - ry * 1.2) / zh) * zh; y < cy + ry * 1.2; y += zh) {
+        const versatz = (Math.floor(y / zh) % 2) * zb / 2;
+        for (let x = Math.floor((cx - rx * 1.2) / zb) * zb - versatz; x < cx + rx * 1.2; x += zb) {
+          const t = 150 + r() * 40;
+          g.fillStyle = `rgb(${t},${t * 0.48},${t * 0.36})`;
+          g.fillRect(x + 1.5, y + 1.5, zb - 3, zh - 3);
+        }
+      }
+      // Schatten unter der Putzkante oben
+      g.fillStyle = 'rgba(0,0,0,0.25)'; g.fillRect(cx - rx * 1.2, cy - ry * 1.2, rx * 2.4, 6);
+      g.restore();
+      pfad(); g.strokeStyle = 'rgba(60,50,40,0.75)'; g.lineWidth = 2.5; g.stroke();
+      // ein paar lose Bröckchen drumherum
+      g.fillStyle = 'rgba(150,140,120,0.8)';
+      for (let k = 0; k < 6; k++) g.fillRect(cx + (r() - 0.5) * rx * 2.6, cy + (r() - 0.5) * ry * 2.6, 3 + r() * 5, 3 + r() * 4);
+    }
+    // Risse
+    g.strokeStyle = 'rgba(55,48,40,0.55)'; g.lineWidth = 1.6;
+    for (let i = 0; i < Math.round(b / PX * 0.8); i++) {
+      let x = r() * b, y = r() * h;
+      g.beginPath(); g.moveTo(x, y);
+      for (let k = 0; k < 7; k++) { x += (r() - 0.5) * 40; y += 8 + r() * 22; g.lineTo(x, y); }
+      g.stroke();
+    }
+  }
+  const wandStueck = (b, x, z, ry, saat) => {
+    const tex = leinwandTextur(Math.round(b * PX), Math.round(RAUM.hoehe * PX), (g, bb, hh) => wandMalen(g, bb, hh, saat));
+    const w = new THREE.Mesh(new THREE.PlaneGeometry(b, RAUM.hoehe), toon(0xffffff, { map: tex }));
     w.position.set(x, RAUM.hoehe / 2, z);
     w.rotation.y = ry;
     w.receiveShadow = true;
     scene.add(w);
   };
-  wandStueck(10, 0, RAUM.zMin, 0);
-  wandStueck(10, 0, RAUM.zMax, Math.PI);
-  wandStueck(8, RAUM.xMin, 0, Math.PI / 2);
-  wandStueck(8, RAUM.xMax, 0, -Math.PI / 2);
+  wandStueck(10, 0, RAUM.zMin, 0, 11);
+  wandStueck(10, 0, RAUM.zMax, Math.PI, 12);
+  wandStueck(8, RAUM.xMin, 0, Math.PI / 2, 13);
+  wandStueck(8, RAUM.xMax, 0, -Math.PI / 2, 14);
 
   const decke = new THREE.Mesh(new THREE.PlaneGeometry(10, 8), toon(0x6d665c));
   decke.rotation.x = Math.PI / 2;
@@ -146,12 +191,15 @@ export function baueWelt(scene) {
   // Leuchtstoffröhren
   const roehrenMat = new THREE.MeshBasicMaterial({ color: 0xfffbea });
   for (const [x, z] of [[-2.5, -1.5], [2.5, -1.5], [-2.5, 1.8], [2.5, 1.8]]) {
+    // hohe Decke: Lampen hängen an Ketten auf ca. 3,6 m
+    const haengeY = 3.6;
     const gehaeuse = quader(1.3, 0.06, 0.2, 0xd8d8d8, { wirft: false });
-    setze(gehaeuse, x, RAUM.hoehe - 0.05, z);
+    setze(gehaeuse, x, haengeY, z);
     scene.add(gehaeuse);
     const r = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.03, 0.08), roehrenMat);
-    r.position.set(x, RAUM.hoehe - 0.095, z);
+    r.position.set(x, haengeY - 0.045, z);
     scene.add(r);
+    for (const dx of [-0.55, 0.55]) scene.add(setze(zylinder(0.006, 0.006, RAUM.hoehe - haengeY, 0x555555, { umriss: false, wirft: false }, 5), x + dx, (RAUM.hoehe + haengeY) / 2, z));
   }
 
   // Fenster links
@@ -167,13 +215,68 @@ export function baueWelt(scene) {
   setze(fenster, RAUM.xMin + 0.01, 1.95, 1.6, 0, Math.PI / 2, 0);
   scene.add(fenster);
 
-  // Tür vorne
+  // Eingang vorne: breites grünes Scheunentor (zwei Flügel, Bretter, helle Z-Streben, Bänder), Rauchen-verboten-Schild
   const tuer = new THREE.Group();
-  tuer.add(setze(quader(1.0, 2.1, 0.06, 0x7d5733), 0, 1.05, 0));
-  tuer.add(setze(quader(1.12, 0.07, 0.08, 0x3b3b3b), 0, 2.13, 0));
-  tuer.add(setze(zylinder(0.025, 0.025, 0.14, 0xc9c9c9, {}, 10), 0.36, 1.05, -0.06, Math.PI / 2, 0, 0));
-  tuer.add(setze(quader(0.04, 0.04, 0.12, 0xc9c9c9), 0.36, 1.05, -0.08, 0, 0, 0));
-  setze(tuer, -1.6, 0, RAUM.zMax - 0.03, 0, Math.PI, 0);
+  const torGruen = 0x2f6b3a;
+  const bretter = leinwandTextur(256, 256, (g, b, h) => {
+    g.fillStyle = '#2f6b3a'; g.fillRect(0, 0, b, h);
+    const r = zufall(21);
+    for (let x = 0; x < b; x += 32) {
+      g.fillStyle = `rgba(0,0,0,${0.05 + r() * 0.08})`; g.fillRect(x, 0, 32, h);
+      g.fillStyle = 'rgba(0,0,0,0.45)'; g.fillRect(x, 0, 3, h);
+      for (let i = 0; i < 6; i++) { g.fillStyle = 'rgba(255,255,255,0.05)'; g.fillRect(x + 6 + r() * 20, r() * h, 2, 20 + r() * 50); }
+    }
+    // abgeplatzte Farbe
+    for (let i = 0; i < 14; i++) { g.fillStyle = 'rgba(120,90,60,0.6)'; g.beginPath(); g.ellipse(r() * b, r() * h, 3 + r() * 8, 2 + r() * 5, r() * 3, 0, Math.PI * 2); g.fill(); }
+  }, [1.5, 1.5]);
+  const brettMat = toon(0xffffff, { map: bretter });
+  const TOR_B = 1.3, TOR_H = 3.0;
+  for (const seite of [-1, 1]) {
+    const fluegel = new THREE.Group();
+    fluegel.add(setze(teil(new THREE.BoxGeometry(TOR_B, TOR_H, 0.07), 0, { material: brettMat, umriss: 0.004 }), 0, TOR_H / 2, 0));
+    // helle Rahmen- und Z-Streben
+    const strebe = (bb, hh, x, y, rz = 0) => fluegel.add(setze(quader(bb, hh, 0.04, 0xe9e4d4, { umriss: 0.003 }), x, y, 0.05, 0, 0, rz));
+    strebe(TOR_B, 0.12, 0, 0.12); strebe(TOR_B, 0.12, 0, TOR_H / 2); strebe(TOR_B, 0.12, 0, TOR_H - 0.12);
+    strebe(0.12, TOR_H, -TOR_B / 2 + 0.06, TOR_H / 2); strebe(0.12, TOR_H, TOR_B / 2 - 0.06, TOR_H / 2);
+    const diag = Math.hypot(TOR_B - 0.24, TOR_H / 2 - 0.24);
+    const w = Math.atan2(TOR_H / 2 - 0.24, TOR_B - 0.24) * seite;
+    strebe(diag, 0.11, 0, TOR_H * 0.31, w); strebe(diag, 0.11, 0, TOR_H * 0.69, w);
+    // schwarze Langbänder an der Außenkante
+    for (const y of [0.45, TOR_H - 0.45]) {
+      fluegel.add(setze(quader(0.6, 0.06, 0.02, 0x1d1d1f, { umriss: 0.002 }), seite * (TOR_B / 2 - 0.3), y, 0.08));
+      fluegel.add(setze(zylinder(0.03, 0.03, 0.12, 0x1d1d1f, {}, 8), seite * (TOR_B / 2 + 0.01), y, 0.04));
+    }
+    // Griffstange an der Mittelkante
+    fluegel.add(setze(zylinder(0.018, 0.018, 0.5, 0x8d949b, { umriss: 0.002 }, 8), -seite * (TOR_B / 2 - 0.12), 1.15, 0.11));
+    for (const y of [0.92, 1.38]) fluegel.add(setze(quader(0.03, 0.03, 0.08, 0x8d949b, { umriss: false }), -seite * (TOR_B / 2 - 0.12), y, 0.08));
+    fluegel.position.x = seite * TOR_B / 2;
+    tuer.add(fluegel);
+  }
+  // Riegel über beide Flügel
+  tuer.add(setze(quader(0.5, 0.07, 0.05, 0x5a5f66, { umriss: 0.002 }), 0, 1.6, 0.13));
+  tuer.add(setze(quader(2 * TOR_B + 0.2, 0.12, 0.1, 0x3b3b3b), 0, TOR_H + 0.06, 0.0));
+  // Rauchen-verboten-Schild
+  const verbotTex = leinwandTextur(256, 320, (g) => {
+    g.fillStyle = '#fbfaf5'; g.fillRect(0, 0, 256, 320);
+    g.strokeStyle = '#222'; g.lineWidth = 4; g.strokeRect(2, 2, 252, 316);
+    // Zigarette mit Glut und Rauch
+    g.fillStyle = '#f4f0e6'; g.strokeStyle = '#111'; g.lineWidth = 4;
+    g.fillRect(48, 120, 130, 26); g.strokeRect(48, 120, 130, 26);
+    g.fillStyle = '#d9a35a'; g.fillRect(48, 120, 36, 26); g.strokeRect(48, 120, 36, 26);
+    g.fillStyle = '#e2531e'; g.fillRect(178, 120, 14, 26);
+    g.strokeStyle = '#555'; g.lineWidth = 5;
+    g.beginPath(); g.moveTo(186, 112); g.bezierCurveTo(170, 90, 205, 80, 188, 56); g.stroke();
+    // roter Ring mit Balken
+    g.strokeStyle = '#d0201a'; g.lineWidth = 22;
+    g.beginPath(); g.arc(128, 128, 98, 0, Math.PI * 2); g.stroke();
+    g.beginPath(); g.moveTo(128 - 69, 128 - 69); g.lineTo(128 + 69, 128 + 69); g.stroke();
+    g.fillStyle = '#111'; g.font = 'bold 34px Arial'; g.textAlign = 'center';
+    g.fillText('RAUCHEN', 128, 270); g.fillText('VERBOTEN', 128, 304);
+  });
+  const rauchSchild = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.525), new THREE.MeshBasicMaterial({ map: verbotTex }));
+  rauchSchild.position.set(TOR_B / 2, 1.85, 0.081);
+  tuer.add(rauchSchild);
+  setze(tuer, -0.85, 0, RAUM.zMax - 0.05, 0, Math.PI, 0);
   scene.add(tuer);
 
   // Feuerlöscher an der rechten Wand zwischen Schweißplatz und Waschplatz
@@ -1277,7 +1380,7 @@ export function baueWelt(scene) {
   const wippe = quader(0.04, 0.04, 0.015, 0xe8e2d0, { umriss: 0.002 });
   wippe.position.z = 0.012;
   schalter.add(wippe);
-  setze(schalter, -0.85, 1.1, RAUM.zMax - 0.012, 0, Math.PI, 0);
+  setze(schalter, 0.72, 1.1, RAUM.zMax - 0.012, 0, Math.PI, 0);
   scene.add(schalter);
   merke(schalter, 'licht', 'Lichtschalter', null);
 
@@ -1529,7 +1632,7 @@ export function baueWelt(scene) {
   russDecke.position.set(1.55, RAUM.hoehe - 0.012, -3.15);
   scene.add(russDecke);
   const russWand = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 2.4), russMat);
-  russWand.position.set(1.55, RAUM.hoehe - 1.0, RAUM.zMin + 0.015);
+  russWand.position.set(1.55, 2.4, RAUM.zMin + 0.015);
   scene.add(russWand);
   let russ = 0;
   let feuerZeit = 0;

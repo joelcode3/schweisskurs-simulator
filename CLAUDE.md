@@ -108,6 +108,10 @@
   Rand 16 % links/rechts, 13 % oben/unten, Zeiger wird zum Pfeil). Kein Pointer Lock/Einrasten (Betreiber: doof). Ziehen geht weiterhin.
   Nicht drehen, solange ein Menü/Dialog/Minispiel/Dennis-Fenster offen ist.
 - Dennis aufhelfen (Hüfte) nur mit leeren Händen (Ausnahme: Kaffee, Wäschetasche, Sieb, die man nicht hinlegen kann).
+- Werkstatt-Optik: Deckenhöhe 4,8 m (RAUM.hoehe), Leuchtstoffröhren hängen an Ketten auf 3,6 m. Wände mit eigener Leinwand je Wand
+  (`wandMalen`): Putz, grüngrauer Sockel bis 1,25 m, Putz bröckelt stellenweise (Ziegel sichtbar), Risse, Wasserflecken.
+  KEINE Graffiti und Zahlen (Betreiber: wieder weg). Eingang vorne: breites grünes Scheunentor (2 Flügel, helle Z-Streben,
+  schwarze Bänder) mit Rauchen-verboten-Schild; Lichtschalter zwischen Tor und WC-Tür.
 - Bedienung: Hat ein Ding nur eine Aktion, wird sie beim Klick direkt ausgeführt (kein Menü). Box und Licht schalten
   sofort beim Klick (ohne Hinlaufen). Abbrechen-Knöpfe hell mit dunkler Schrift.
 - Dennis hält seinen Becher immer aufrecht, Schuhsohlen rund (keine eckigen Platten).
