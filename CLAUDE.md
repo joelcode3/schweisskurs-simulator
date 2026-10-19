@@ -105,9 +105,10 @@
   danach Wut + stimme/hand.handyNochmal.mp3, Ton aus handy1/handy2.MOV),
   Löscher auf Dennis (Ausraster), Löscher sinnlos (Ermahnung), laufende Flex auf Dennis (sauer).
 - Umschauen am Computer: Maus an den Bildrand fahren (ohne Klicken), je näher am Rand desto schneller (steuerung.js `randDrehen`,
-  Rand 16 % links/rechts, 13 % oben/unten, Zeiger wird zum Pfeil). Kein Pointer Lock/Einrasten (Betreiber: doof). Ziehen geht weiterhin.
+  Rand 26 % links/rechts, 20 % oben/unten, bis 3,6 bzw. 2,0 rad/s, Zeiger wird zum Pfeil). Ziehen: 0,007 (Maus) / 0,0085 (Touch). Kein Pointer Lock/Einrasten (Betreiber: doof). Ziehen geht weiterhin.
   Nicht drehen, solange ein Menü/Dialog/Minispiel/Dennis-Fenster offen ist.
 - Dennis aufhelfen (Hüfte) nur mit leeren Händen (Ausnahme: Kaffee, Wäschetasche, Sieb, die man nicht hinlegen kann).
+- Kaffee kann man werfen (Q) und fallen lassen (G); dann ist er weg (neuen kochen), Dennis meckert, wenn er es sieht.
 - Werkstatt-Optik: Deckenhöhe 4,8 m (RAUM.hoehe), Leuchtstoffröhren hängen an Ketten auf 3,6 m. Wände mit eigener Leinwand je Wand
   (`wandMalen`): Putz, grüngrauer Sockel bis 1,25 m, Putz bröckelt stellenweise (Ziegel sichtbar), Risse, Wasserflecken.
   KEINE Graffiti und Zahlen (Betreiber: wieder weg). Eingang vorne: breites grünes Scheunentor (2 Flügel, helle Z-Streben,

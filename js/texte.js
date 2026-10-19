@@ -31,6 +31,7 @@ export const DENNIS = {
     loescherSpielen: ['Der Feuerlöscher ist kein Spielzeug! Den muss ich jetzt neu befüllen lassen!', 'Hör auf, mit dem Löscher rumzuspielen!', 'Der Löscher ist für Feuer, nicht für Spaß!'],
   },
   wurf: {
+    kaffee: ['Mein KAFFEE! Wirfst du jetzt mit Kaffee?!', 'Der Kaffee war für MICH! Und jetzt liegt er auf dem Boden!'],
     werkzeug: ['Werkzeug wird nicht geworfen! Hast du sie noch alle?', 'Ey! Werkzeug fliegt hier nicht durch die Gegend!', 'Das ist Werkzeug, kein Wurfgeschoss!'],
     edding: ['Ey! Der Edding fliegt nicht, der malt!', 'Der Edding ist zum Anzeichnen da, nicht zum Werfen!'],
     ausruestung: ['Die Schutzausrüstung schmeißt man nicht durch die Gegend! Die brauchst du noch!', 'Schutzausrüstung wirft man nicht! Die schützt DICH!'],
@@ -133,6 +134,7 @@ export const DENNIS = {
     genug: 'Drei Kaffee?! Oh nein ... ich muss SOFORT aufs Klo!',
     milch: 'Ist da Milch drin? GIFT!!',
     nichtsInDerHand: 'Und wo ist der Kaffee?',
+    weg: ['Lässt du meinen Kaffee einfach fallen?!', 'Schade um den guten Kaffee.'],
   },
   kiwi: {
     erste: 'Klar, nimm dir eine. Vitamine!',

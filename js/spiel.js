@@ -155,6 +155,7 @@ const ARGERN_BEI = ['kaffee', 'kiwi', 'brotdose'];
 const KLO_TOENE = ['stimme/klo-1.mp3', 'stimme/klo-2.mp3'];
 // Was Dennis sagt, wenn man etwas wirft (je nach Ding)
 const WURF_ART = {
+  kaffee: 'kaffee',
   flex: 'werkzeug', hammer: 'werkzeug', rohrzange: 'werkzeug', edding: 'edding',
   brille: 'ausruestung', handschuhe: 'ausruestung', helm: 'ausruestung',
   hulahup: 'reifen', klemmbrett: 'notizen', besen: 'besen', feuerloescher: 'loescher',
@@ -946,6 +947,11 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     return false;
   }
 
+  // Kaffee weggeworfen oder fallen gelassen: Becher ist leer, man kann neuen kochen
+  function kaffeeWeg() {
+    z.kaffeeInHand = false;
+    z.kaffeeMilch = false;
+  }
   async function kaffeeGeben() {
     const milch = z.kaffeeMilch;
     z.kaffeeInHand = false;
@@ -1351,7 +1357,8 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
   }
 
   async function aufhelfen() {
-    if (hand.item) { ui.hinweis(`Mit ${hand.item.cfg.name} in der Hand? Erst ablegen (auf eine Fläche klicken) oder fallen lassen (G), dann Dennis aufhelfen.`, 3800); return; }
+    // Mit Werkzeug in der Hand geht das nicht. Kaffee, Wäschetasche und Sieb darf man dabei halten.
+    if (hand.item && !['kaffee', 'waeschetasche', 'sieb'].includes(hand.item.id)) { ui.hinweis(`Mit ${hand.item.cfg.name} in der Hand? Erst ablegen (auf eine Fläche klicken) oder fallen lassen (G), dann Dennis aufhelfen.`, 3800); return; }
     z.huefte = 'erledigt';
     z.beschaeftigt = true;
     dennis.setzeModus('normal');
@@ -1390,6 +1397,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     if (!cfg.nichtWerfen) knoepfe.push(['werfen', 'Werfen', 'Q']);
     if (!cfg.nichtAblegen && it.id !== 'flasche' && it.id !== 'ofen') knoepfe.push(['fallen', 'Fallen lassen', 'G']);
     if (it.id === 'schlauch') knoepfe.push(['fallen', 'Zurückhängen', 'G']);
+    if (it.id === 'kaffee') knoepfe.push(['fallen', 'Fallen lassen', 'G']);
     el.innerHTML = `<div class="hand-name">${SYMBOL.hand}<span>${cfg.name}</span></div>${knoepfe.map(([k, t, taste]) => (k
       ? `<button type="button" data-k="${k}">${taste ? `<kbd>${taste}</kbd>` : ''}${t}</button>`
       : `<span class="hand-tipp">${t}</span>`)).join('')}`;
@@ -1665,6 +1673,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
       return;
     }
     const id = it.id;
+    if (id === 'kaffee') kaffeeWeg();
     let getroffen = false;
     hand.wirf(steuerung.blickRichtung(), (gid, obj) => {
       klonk(gid === 'figur' || gid === 'feuerloescher' ? 0.8 : 0.4);
@@ -1684,6 +1693,14 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
   function fallenLassen() {
     const it = hand.item;
     if (it.id === 'schlauch') return schlauchZurueck();
+    if (it.id === 'kaffee') {
+      kaffeeWeg();
+      hand.fallenLassen(steuerung.blickRichtung());
+      klonk(0.3);
+      handleisteZeigen();
+      if (dennisSiehts()) dennisSagt(sag(DENNIS.kaffee.weg), false);
+      return;
+    }
     if (it.cfg.nichtAblegen) { ui.hinweis(it.cfg.ablegenHinweis || 'Den bringst du besser Dennis.'); return; }
     if (it.id === 'ofen') { ui.hinweis('Den Ofen nicht fallen lassen! Zu Dennis bringen oder am Schweißplatz abstellen.'); return; }
     if (it.id === 'flasche') { ui.hinweis('Die Flasche nicht einfach fallen lassen. Auf Werkbank, Schweißtisch oder Waschplatz klicken.'); return; }
