@@ -138,6 +138,13 @@
 - Fokus: Desktop-Version (Betreiber-Wunsch), Handy-Ansicht erstmal zweitrangig.
 - Fehlerstufen: leicht (Ermahnung, Dennis guckt), mittel (kommt rüber, sauer), voll (rennt rüber, Ausraster).
 
+## Projektliste (liste/)
+- `liste/` = Projektmanagement-Seite „hüfte hinten links – das spiel“ (To-Dos, Ideen, Utopisch (noch), Bugs) für den Betreiber
+  und seine Kumpels, ohne Konto. Link: https://joelcode3.github.io/schweisskurs-simulator/liste/ , Zugang mit Code (Start: 1312).
+- Daten liegen im Supabase-Projekt des Campingplatzes (Tabelle `asmus_eintraege`, nur über Funktionen `asmus_*` mit Code,
+  SQL in joelcode3/WCH-web-app-test `supabase/update-8.sql`). Code ändern: Table Editor → `asmus_einstellungen`.
+- Gepflegt vom Projektchat (täglicher Abgleich). Nachrichten „todo …“ und „bug …“ im Programmierchat sind nur Notizen dafür.
+
 ## Dateien
 - `index.html`, `css/style.css`
 - `js/main.js` Einstieg · `js/world.js` Werkstatt + Gasflasche · `js/dennis.js` 3D-Dennis
