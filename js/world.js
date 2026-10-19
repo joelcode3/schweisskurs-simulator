@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { toon, teil, quader, zylinder, kugel, setze, leinwandTextur, zufall, umriss } from './toon.js';
 
-export const RAUM = { xMin: -5, xMax: 5, zMin: -4, zMax: 4, hoehe: 4.8 };
+export const RAUM = { xMin: -5, xMax: 5, zMin: -4, zMax: 4, hoehe: 3.9 };
 // Bad hinter der WC-Tür (vorne rechts), begehbar
 export const BAD = { xMin: 0.7, xMax: 3.9, zMin: 4.0, zMax: 6.8, hoehe: 2.6 };
 const KLO_TUER = { xMin: 0.975, xMax: 1.825, hoehe: 2.05 };
@@ -189,16 +189,31 @@ export function baueWelt(scene) {
   wandStueck(8, RAUM.xMin, 0, Math.PI / 2, 13);
   wandStueck(8, RAUM.xMax, 0, -Math.PI / 2, 14);
 
-  const decke = new THREE.Mesh(new THREE.PlaneGeometry(10, 8), toon(0x6d665c));
+  // Decke: heller Putz zwischen Holzbalken (MeshBasic, damit sie von unten nicht dunkel wirkt)
+  const deckenTex = leinwandTextur(512, 512, (g, b, h) => {
+    g.fillStyle = '#ece6d8'; g.fillRect(0, 0, b, h);
+    const r = zufall(41);
+    for (let i = 0; i < 600; i++) { g.fillStyle = `rgba(120,105,80,${r() * 0.06})`; g.fillRect(r() * b, r() * h, 3 + r() * 9, 3 + r() * 9); }
+    for (let i = 0; i < 5; i++) { g.fillStyle = 'rgba(140,120,90,0.12)'; g.beginPath(); g.ellipse(r() * b, r() * h, 20 + r() * 50, 10 + r() * 30, r() * 3, 0, Math.PI * 2); g.fill(); }
+  }, [3, 3]);
+  const decke = new THREE.Mesh(new THREE.PlaneGeometry(10, 8), new THREE.MeshBasicMaterial({ map: deckenTex, color: 0xd9d3c5 }));
   decke.rotation.x = Math.PI / 2;
   decke.position.y = RAUM.hoehe;
   scene.add(decke);
+  for (let x = -4; x <= 4; x += 2) {
+    const balken = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.22, 8), new THREE.MeshBasicMaterial({ color: 0x9a7650 }));
+    balken.position.set(x, RAUM.hoehe - 0.11, 0);
+    scene.add(balken);
+    const kante = new THREE.LineSegments(new THREE.EdgesGeometry(balken.geometry), new THREE.LineBasicMaterial({ color: 0x3a2a1a }));
+    kante.position.copy(balken.position);
+    scene.add(kante);
+  }
 
   // Leuchtstoffröhren
   const roehrenMat = new THREE.MeshBasicMaterial({ color: 0xfffbea });
   for (const [x, z] of [[-2.5, -1.5], [2.5, -1.5], [-2.5, 1.8], [2.5, 1.8]]) {
-    // hohe Decke: Lampen hängen an Ketten auf ca. 3,6 m
-    const haengeY = 3.6;
+    // Lampen hängen an Ketten auf ca. 3,25 m
+    const haengeY = 3.25;
     const gehaeuse = quader(1.3, 0.06, 0.2, 0xd8d8d8, { wirft: false });
     setze(gehaeuse, x, haengeY, z);
     scene.add(gehaeuse);
@@ -207,6 +222,45 @@ export function baueWelt(scene) {
     scene.add(r);
     for (const dx of [-0.55, 0.55]) scene.add(setze(zylinder(0.006, 0.006, RAUM.hoehe - haengeY, 0x555555, { umriss: false, wirft: false }, 5), x + dx, (RAUM.hoehe + haengeY) / 2, z));
   }
+
+  // Zwei gelbe Stromverteiler-Würfel hängen an Kabeln tief von der Decke (Dennis stößt sich den Kopf)
+  const steckdosenTex = leinwandTextur(128, 128, (g, b, h) => {
+    g.fillStyle = '#f2c21c'; g.fillRect(0, 0, b, h);
+    g.strokeStyle = '#8a6a00'; g.lineWidth = 3; g.strokeRect(2, 2, b - 4, h - 4);
+    for (const [x, y] of [[36, 36], [92, 36], [36, 92], [92, 92]]) {
+      g.fillStyle = '#e9e9e4'; g.beginPath(); g.arc(x, y, 22, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = '#333'; g.lineWidth = 2; g.stroke();
+      g.fillStyle = '#c8c8c0'; g.beginPath(); g.arc(x, y, 15, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#111'; g.beginPath(); g.arc(x - 6, y, 3, 0, Math.PI * 2); g.fill(); g.beginPath(); g.arc(x + 6, y, 3, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#9aa0a6'; g.fillRect(x - 2, y - 15, 4, 4); g.fillRect(x - 2, y + 11, 4, 4);
+    }
+  });
+  const steckdosenMat = toon(0xffffff, { map: steckdosenTex });
+  const stromWuerfel = [];
+  for (const [x, z] of [[-0.9, 2.35], [0.0, -1.05]]) {
+    const pendel = new THREE.Group();
+    pendel.position.set(x, RAUM.hoehe, z);
+    const kabelLaenge = RAUM.hoehe - 2.05;
+    pendel.add(setze(zylinder(0.012, 0.012, kabelLaenge, 0x1d1d1f, { umriss: false, wirft: false }, 6), 0, -kabelLaenge / 2, 0));
+    const w = teil(new THREE.BoxGeometry(0.3, 0.3, 0.3), 0, { material: steckdosenMat, umriss: 0.004 });
+    w.position.y = -kabelLaenge - 0.15;
+    pendel.add(w);
+    pendel.add(setze(zylinder(0.03, 0.04, 0.04, 0x1d1d1f, { umriss: 0.002 }, 8), 0, -kabelLaenge + 0.02, 0));
+    // eingesteckter Stecker mit Kabel an einer Seite
+    pendel.add(setze(quader(0.05, 0.05, 0.06, 0x1d1d1f, { umriss: 0.002 }), 0.05, -kabelLaenge - 0.1, 0.18));
+    scene.add(pendel);
+    merke(pendel, 'stromwuerfel', 'Stromverteiler', null);
+    stromWuerfel.push({ pendel, x, z, schwung: 0, t: 0 });
+  }
+  animiert.push((dt) => {
+    for (const s of stromWuerfel) {
+      if (s.schwung <= 0.001) continue;
+      s.t += dt;
+      s.schwung *= Math.pow(0.35, dt);
+      s.pendel.rotation.x = Math.sin(s.t * 3.2) * s.schwung;
+      s.pendel.rotation.z = Math.cos(s.t * 2.7) * s.schwung * 0.6;
+    }
+  });
 
   // Fenster links
   const fenster = new THREE.Group();
@@ -241,7 +295,7 @@ export function baueWelt(scene) {
     const fluegel = new THREE.Group();
     fluegel.add(setze(teil(new THREE.BoxGeometry(TOR_B, TOR_H, 0.07), 0, { material: brettMat, umriss: 0.004 }), 0, TOR_H / 2, 0));
     // helle Rahmen- und Z-Streben
-    const strebe = (bb, hh, x, y, rz = 0) => fluegel.add(setze(quader(bb, hh, 0.04, 0xe9e4d4, { umriss: 0.003 }), x, y, 0.05, 0, 0, rz));
+    const strebe = (bb, hh, x, y, rz = 0) => fluegel.add(setze(quader(bb, hh, 0.04, 0x2a6234, { umriss: 0.003 }), x, y, 0.05, 0, 0, rz));
     strebe(TOR_B, 0.12, 0, 0.12); strebe(TOR_B, 0.12, 0, TOR_H / 2); strebe(TOR_B, 0.12, 0, TOR_H - 0.12);
     strebe(0.12, TOR_H, -TOR_B / 2 + 0.06, TOR_H / 2); strebe(0.12, TOR_H, TOR_B / 2 - 0.06, TOR_H / 2);
     const diag = Math.hypot(TOR_B - 0.24, TOR_H / 2 - 0.24);
@@ -253,14 +307,14 @@ export function baueWelt(scene) {
       fluegel.add(setze(zylinder(0.03, 0.03, 0.12, 0x1d1d1f, {}, 8), seite * (TOR_B / 2 + 0.01), y, 0.04));
     }
     // Griffstange an der Mittelkante
-    fluegel.add(setze(zylinder(0.018, 0.018, 0.5, 0x8d949b, { umriss: 0.002 }, 8), -seite * (TOR_B / 2 - 0.12), 1.15, 0.11));
-    for (const y of [0.92, 1.38]) fluegel.add(setze(quader(0.03, 0.03, 0.08, 0x8d949b, { umriss: false }), -seite * (TOR_B / 2 - 0.12), y, 0.08));
+    fluegel.add(setze(zylinder(0.018, 0.018, 0.5, torGruen, { umriss: 0.002 }, 8), -seite * (TOR_B / 2 - 0.12), 1.15, 0.11));
+    for (const y of [0.92, 1.38]) fluegel.add(setze(quader(0.03, 0.03, 0.08, torGruen, { umriss: false }), -seite * (TOR_B / 2 - 0.12), y, 0.08));
     fluegel.position.x = seite * TOR_B / 2;
     tuer.add(fluegel);
   }
   // Riegel über beide Flügel
-  tuer.add(setze(quader(0.5, 0.07, 0.05, 0x5a5f66, { umriss: 0.002 }), 0, 1.6, 0.13));
-  tuer.add(setze(quader(2 * TOR_B + 0.2, 0.12, 0.1, 0x3b3b3b), 0, TOR_H + 0.06, 0.0));
+  tuer.add(setze(quader(0.5, 0.07, 0.05, torGruen, { umriss: 0.002 }), 0, 1.6, 0.13));
+  tuer.add(setze(quader(2 * TOR_B + 0.2, 0.12, 0.1, torGruen), 0, TOR_H + 0.06, 0.0));
   // Rauchen-verboten-Schild
   const verbotTex = leinwandTextur(256, 320, (g) => {
     g.fillStyle = '#fbfaf5'; g.fillRect(0, 0, 256, 320);
@@ -314,6 +368,7 @@ export function baueWelt(scene) {
   scene.add(reifen);
   scene.add(setze(zylinder(0.008, 0.008, 0.08, 0x7a7a7a, {}, 6), -2.9, 1.98, RAUM.zMin + 0.03, Math.PI / 2, 0, 0));
   merke(reifen, 'hulahup', 'Hula-Hoop-Reifen', null);
+  reifen.userData.liegend = true;
   objekte.hulahup = reifen;
   reifen.userData.wand = { pos: reifen.position.clone(), rot: reifen.rotation.clone() };
 
@@ -611,6 +666,46 @@ export function baueWelt(scene) {
   objekte.traeger = traeger;
   hindernis(2.2, 4.9, RAUM.zMax - 0.9, RAUM.zMax);
 
+  // Johnnys Alu-Leiter (Kofferraumleiter von einem alten Camper) hängt an der rechten Wand:
+  // zwei schmale Holme, 6 geriffelte Sprossen, oben zum Wohnmobil-Dach hin gebogen, Gummifüße, zwei Wandhaken
+  const leiter = new THREE.Group();
+  {
+    const alu = 0xc4c9ce;
+    const LH = 1.75, B = 0.34;
+    for (const sx of [-1, 1]) {
+      const holm = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(sx * B / 2, 0, 0.0), new THREE.Vector3(sx * B / 2, LH * 0.5, 0.0), new THREE.Vector3(sx * B / 2, LH, 0.0),
+        new THREE.Vector3(sx * B / 2, LH + 0.1, -0.03), new THREE.Vector3(sx * B / 2, LH + 0.15, -0.12), new THREE.Vector3(sx * B / 2, LH + 0.14, -0.2),
+      ]);
+      leiter.add(teil(new THREE.TubeGeometry(holm, 48, 0.016, 10, false), alu, { umriss: 0.003 }));
+      // Gummifuß und Endkappe
+      leiter.add(setze(zylinder(0.021, 0.024, 0.04, 0x1d1d1f, { umriss: 0.002 }, 10), sx * B / 2, 0.0, 0));
+      leiter.add(setze(zylinder(0.019, 0.019, 0.03, 0x1d1d1f, { umriss: 0.002 }, 10), sx * B / 2, LH + 0.14, -0.2, Math.PI / 2, 0, 0));
+    }
+    for (let i = 0; i < 6; i++) {
+      const y = 0.22 + i * 0.29;
+      leiter.add(setze(zylinder(0.017, 0.017, B, alu, { umriss: 0.002 }, 10), 0, y, 0, 0, 0, Math.PI / 2));
+      // Riffelung als Ringe
+      for (let k = 0; k < 7; k++) leiter.add(setze(zylinder(0.019, 0.019, 0.006, 0x9aa0a6, { umriss: false, wirft: false }, 10), -0.12 + k * 0.04, y, 0, 0, 0, Math.PI / 2));
+      // Nietköpfe
+      for (const sx of [-1, 1]) leiter.add(setze(kugel(0.009, 0x8d949b, { umriss: false }, 8), sx * (B / 2 + 0.017), y, 0));
+    }
+    // Aufkleber vom Camper
+    const klebTex = leinwandTextur(128, 48, (g) => { g.fillStyle = '#f2c21c'; g.fillRect(0, 0, 128, 48); g.fillStyle = '#111'; g.font = 'bold 18px Arial'; g.fillText('max 100 kg', 8, 30); });
+    const kleber = new THREE.Mesh(new THREE.PlaneGeometry(0.05, 0.02), new THREE.MeshBasicMaterial({ map: klebTex }));
+    kleber.position.set(-B / 2, 0.9, 0.017);
+    leiter.add(kleber);
+  }
+  // an der Wand: Biegung zeigt zur Wand, hängt an zwei Haken
+  // hängt quer, hoch oben und leicht schräg an der Wand, die Biegung zeigt zur Wand, liegt auf zwei Konsolen
+  const leiterNeigung = 0.12;
+  leiter.position.set(RAUM.xMax - 0.22, 3.12, -0.55);
+  leiter.rotation.set(Math.PI / 2 - leiterNeigung, -Math.PI / 2, 0, 'XYZ');
+  scene.add(leiter);
+  for (const dz of [0.35, 1.45]) scene.add(setze(quader(0.26, 0.035, 0.04, 0x5d6268, { umriss: 0.002 }), RAUM.xMax - 0.13, 3.12 - 0.19 + dz * Math.sin(leiterNeigung), -0.55 + dz));
+  merke(leiter, 'leiter', 'Johnnys Leiter', null);
+  objekte.leiter = leiter;
+
   // Pömpel (Saugglocke) steht oben im Regal
   const poempel = new THREE.Group();
   poempel.add(setze(zylinder(0.014, 0.014, 0.5, 0xb27a42, { umriss: 0.002 }, 8), 0, 0.33, 0));
@@ -622,6 +717,7 @@ export function baueWelt(scene) {
   setze(poempel, -4.62, 1.765, 0.0);
   scene.add(poempel);
   merke(poempel, 'poempel', 'Pömpel', null);
+  poempel.userData.liegend = true;
   objekte.poempel = poempel;
   poempel.userData.wand = { pos: poempel.position.clone(), rot: poempel.rotation.clone() };
 
@@ -812,15 +908,17 @@ export function baueWelt(scene) {
     g.add(ring);
     const trommel = new THREE.Group();
     trommel.position.set(-0.3, 0.38, 0);
-    const glas = new THREE.Mesh(new THREE.CircleGeometry(0.16, 28), new THREE.MeshBasicMaterial({ color: 0x223a4e }));
+    // Scheibe: einfach blau (vor dem Ring, damit nichts durchschimmert)
+    const glas = new THREE.Mesh(new THREE.CircleGeometry(0.165, 32), new THREE.MeshBasicMaterial({ color: 0x3b74b8 }));
     glas.rotation.y = -Math.PI / 2;
+    glas.position.x = -0.012;
     trommel.add(glas);
     const waesche = new THREE.Group();
     for (const [i, c] of [0x2f5fa8, 0x1d1d1f, 0x8a8f96, 0xc8352a, 0x3c7a3a].entries()) {
       const k = new THREE.Mesh(new THREE.CircleGeometry(0.05 + (i % 2) * 0.02, 10), new THREE.MeshBasicMaterial({ color: c }));
       k.rotation.y = -Math.PI / 2;
       const w = i * 1.3;
-      k.position.set(-0.002 - i * 0.0005, Math.sin(w) * 0.08 - 0.04, Math.cos(w) * 0.08);
+      k.position.set(-0.014 - i * 0.0005, Math.sin(w) * 0.08 - 0.04, Math.cos(w) * 0.08);
       waesche.add(k);
     }
     waesche.visible = false;
@@ -828,7 +926,7 @@ export function baueWelt(scene) {
     // Wasser (nur Waschmaschine)
     const wasser = new THREE.Mesh(new THREE.CircleGeometry(0.155, 28, Math.PI, Math.PI), new THREE.MeshBasicMaterial({ color: 0x6fb5e8, transparent: true, opacity: 0.55 }));
     wasser.rotation.y = -Math.PI / 2;
-    wasser.position.x = -0.004;
+    wasser.position.x = -0.017;
     wasser.visible = false;
     trommel.add(wasser);
     g.add(trommel);
@@ -837,20 +935,46 @@ export function baueWelt(scene) {
     if (mitSieb) {
       // Flusensieb unten in der Tür-Öffnung, schaut ein Stück raus
       sieb = new THREE.Group();
-      sieb.add(setze(quader(0.04, 0.02, 0.24, 0x7c838b, { umriss: 0.002 }), 0, 0.06, 0));
-      const netzMat = new THREE.MeshBasicMaterial({ color: 0x8c8378 });
-      const netz = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.12, 0.2), netzMat);
+      // Kunststoffrahmen mit Griffmulde oben, feines Netz (Gitter-Textur), Fusselschicht als Filzmatte mit Flocken
+      const siebGrau = 0x9aa0a6;
+      sieb.add(setze(quader(0.03, 0.022, 0.25, siebGrau, { umriss: 0.002 }), 0, 0.075, 0));
+      sieb.add(setze(quader(0.03, 0.016, 0.25, siebGrau, { umriss: 0.002 }), 0, -0.072, 0));
+      for (const sz of [-1, 1]) sieb.add(setze(quader(0.03, 0.15, 0.016, siebGrau, { umriss: 0.002 }), 0, 0, sz * 0.117));
+      sieb.add(setze(quader(0.03, 0.15, 0.008, siebGrau, { umriss: 0.0015 }), 0, 0, 0));
+      const griff = setze(quader(0.024, 0.03, 0.09, 0x7c838b, { umriss: 0.002 }), 0, 0.1, 0);
+      sieb.add(griff);
+      sieb.add(setze(quader(0.026, 0.012, 0.05, 0x5d6268, { umriss: false }), 0, 0.1, 0));
+      const netzTex = leinwandTextur(128, 96, (g, b, h) => {
+        g.fillStyle = '#e9ecef'; g.fillRect(0, 0, b, h);
+        g.strokeStyle = '#8f979e'; g.lineWidth = 1;
+        for (let x = 0; x < b; x += 4) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); }
+        for (let y = 0; y < h; y += 4) { g.beginPath(); g.moveTo(0, y); g.lineTo(b, y); g.stroke(); }
+      });
+      const netzMat = new THREE.MeshBasicMaterial({ map: netzTex, side: THREE.DoubleSide });
+      const netz = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.13), netzMat);
+      netz.rotation.y = -Math.PI / 2;
       sieb.add(netz);
       const fussel = [];
-      for (let i = 0; i < 7; i++) {
-        const f = kugel(0.022 + (i % 3) * 0.008, 0x9b9389, { umriss: false }, 8);
-        f.scale.set(0.7, 0.8, 1.3);
-        f.position.set(-0.012, (i % 3 - 1) * 0.035, -0.08 + i * 0.027);
+      const filzTex = leinwandTextur(128, 96, (g, b, h) => {
+        const r = zufall(17);
+        g.fillStyle = '#8f877c'; g.fillRect(0, 0, b, h);
+        for (let i = 0; i < 400; i++) { g.strokeStyle = `rgba(${150 + r() * 60},${140 + r() * 55},${130 + r() * 50},0.6)`; g.lineWidth = 1; const x = r() * b, y = r() * h; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + (r() - 0.5) * 12, y + (r() - 0.5) * 12, x + (r() - 0.5) * 16, y + (r() - 0.5) * 10); g.stroke(); }
+        g.fillStyle = '#c23a2e'; g.fillRect(30, 40, 4, 2); g.fillStyle = '#2f5fa8'; g.fillRect(80, 60, 5, 2);
+      });
+      const filz = new THREE.Mesh(new THREE.PlaneGeometry(0.21, 0.12), new THREE.MeshBasicMaterial({ map: filzTex, side: THREE.DoubleSide }));
+      filz.rotation.y = -Math.PI / 2;
+      filz.position.x = -0.006;
+      sieb.add(filz);
+      fussel.push(filz);
+      for (let i = 0; i < 6; i++) {
+        const f = kugel(0.014 + (i % 3) * 0.006, 0xa59d91, { umriss: false }, 8);
+        f.scale.set(0.5, 0.7, 1.4);
+        f.position.set(-0.01, (i % 3 - 1) * 0.035, -0.08 + i * 0.032);
         sieb.add(f);
         fussel.push(f);
       }
       sieb.position.set(-0.29, 0.13, 0);
-      sieb.userData.sauber = (ja) => { netzMat.color.set(ja ? 0xe7e9ec : 0x8c8378); for (const f of fussel) f.visible = !ja; };
+      sieb.userData.sauber = (ja) => { for (const f of fussel) f.visible = !ja; };
       g.add(sieb);
     }
     g.position.set(BAD.xMax - 0.33, y, BAD.zMin + 0.5);
@@ -1433,6 +1557,7 @@ export function baueWelt(scene) {
   setze(besen, -4.88, 0, 2.05, 0.18, Math.PI / 2, 0);
   scene.add(besen);
   merke(besen, 'besen', 'Besen', null);
+  besen.userData.liegend = true;
   objekte.besen = besen;
   besen.userData.wand = { pos: besen.position.clone(), rot: besen.rotation.clone() };
 
@@ -1571,21 +1696,132 @@ export function baueWelt(scene) {
   scene.add(toilette);
   // Bild über dem Klo (Foto vom Betreiber: assets/bad-bild.jpg), Holzrahmen; fehlt das Foto, bleibt der Rahmen leer
   const badBild = new THREE.Group();
-  badBild.add(setze(quader(0.46, 0.76, 0.03, 0x7a4f2a, { wirft: false }), 0, 0, 0));
+  // Profilrahmen: dunkles Holz außen, goldene Zierleiste, Passepartout, Glas mit Lichtreflex, Nagel und Aufhängeschnur
+  const rahmenHolzTex = leinwandTextur(64, 256, (g, b, h) => {
+    g.fillStyle = '#5a3a1e'; g.fillRect(0, 0, b, h);
+    const r = zufall(61);
+    for (let i = 0; i < 40; i++) { g.strokeStyle = `rgba(${30 + r() * 30},${18 + r() * 15},8,0.5)`; g.lineWidth = 1 + r() * 2; const x = r() * b; g.beginPath(); g.moveTo(x, 0); g.bezierCurveTo(x + 6, h * 0.3, x - 6, h * 0.6, x + 3, h); g.stroke(); }
+  });
+  const rahmenHolzMat = toon(0xffffff, { map: rahmenHolzTex });
+  const rahmenLeiste = (bb, hh, x, y) => badBild.add(setze(teil(new THREE.BoxGeometry(bb, hh, 0.045), 0, { material: rahmenHolzMat, umriss: 0.003, wirft: false }), x, y, 0));
+  rahmenLeiste(0.56, 0.06, 0, 0.42); rahmenLeiste(0.56, 0.06, 0, -0.42);
+  rahmenLeiste(0.06, 0.9, -0.25, 0); rahmenLeiste(0.06, 0.9, 0.25, 0);
+  // abgeschrägte Innenkante (gold)
+  for (const [bb, hh, x, y] of [[0.44, 0.018, 0, 0.383], [0.44, 0.018, 0, -0.383], [0.018, 0.78, -0.211, 0], [0.018, 0.78, 0.211, 0]]) badBild.add(setze(quader(bb, hh, 0.03, 0xc9a13b, { umriss: 0.0015, wirft: false }), x, y, 0.012));
+  // Eckverzierungen
+  for (const [x, y] of [[-0.25, 0.42], [0.25, 0.42], [-0.25, -0.42], [0.25, -0.42]]) badBild.add(setze(kugel(0.018, 0xc9a13b, { umriss: 0.0015, wirft: false }, 10), x, y, 0.025));
+  // Passepartout und Rückwand
+  const passepartout = new THREE.Mesh(new THREE.PlaneGeometry(0.405, 0.75), new THREE.MeshBasicMaterial({ color: 0xf6f1e4 }));
+  passepartout.position.z = 0.004;
+  badBild.add(passepartout);
   const badBildMat = new THREE.MeshBasicMaterial({ color: 0xf4f0e6 });
-  const badBildFoto = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.7), badBildMat);
-  badBildFoto.position.z = 0.017;
+  const badBildFoto = new THREE.Mesh(new THREE.PlaneGeometry(0.33, 0.6), badBildMat);
+  badBildFoto.position.z = 0.006;
   badBild.add(badBildFoto);
+  // feine Linie ums Foto
+  const fotoLinie = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(0.335, 0.605)), new THREE.LineBasicMaterial({ color: 0x9a8f78 }));
+  fotoLinie.position.z = 0.007;
+  badBild.add(fotoLinie);
+  // Glas: schräger Lichtreflex
+  const glasReflexMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.18, depthWrite: false });
+  for (const [x, w] of [[-0.08, 0.06], [0.0, 0.025]]) {
+    const reflex = new THREE.Mesh(new THREE.PlaneGeometry(w, 0.9), glasReflexMat);
+    reflex.position.set(x, 0, 0.012);
+    reflex.rotation.z = -0.5;
+    reflex.scale.y = 0.85;
+    badBild.add(reflex);
+  }
+  // Messingschild unten
+  badBild.add(setze(quader(0.12, 0.025, 0.006, 0xc9a13b, { umriss: 0.001, wirft: false }), 0, -0.4, 0.026));
+  // Nagel und Schnur
+  badBild.add(setze(zylinder(0.007, 0.007, 0.02, 0x5d6268, { umriss: false, wirft: false }, 8), 0, 0.58, -0.005, Math.PI / 2, 0, 0));
+  for (const sx of [-1, 1]) badBild.add(setze(quader(0.2, 0.004, 0.004, 0x3a3a3a, { umriss: false, wirft: false }), sx * 0.09, 0.51, -0.018, 0, 0, sx * -0.75));
+  badBild.rotation.z = 0.02;
   new THREE.TextureLoader().load('assets/bad-bild.jpg', (t) => { t.colorSpace = THREE.SRGBColorSpace; badBildMat.map = t; badBildMat.color.set(0xffffff); badBildMat.needsUpdate = true; }, undefined, () => {});
-  setze(badBild, 1.2, 1.55, BAD.zMax - 0.02, 0, Math.PI, 0);
+  setze(badBild, 1.2, 1.55, BAD.zMax - 0.03, 0, Math.PI, 0.025);
   scene.add(badBild);
+  // Kackwurst: dick, geringelt, an den Enden spitz zulaufend, Knubbel und Risse, schwimmt im Wasser
+  const wurst = new THREE.Group();
+  {
+    const pkt = [];
+    for (let i = 0; i <= 40; i++) {
+      const t = i / 40;
+      const w = t * Math.PI * 2.6;
+      const rr = 0.085 - t * 0.055;
+      pkt.push(new THREE.Vector3(Math.cos(w) * rr * 0.95, 0.01 + t * 0.045 + Math.sin(t * 9) * 0.004, Math.sin(w) * rr * 1.15));
+    }
+    const kurve = new THREE.CatmullRomCurve3(pkt);
+    const SEG = 160, RAD = 12;
+    const geo = new THREE.TubeGeometry(kurve, SEG, 1, RAD, false);
+    // Radius entlang der Wurst: Enden spitz, Mitte dick, unregelmäßige Wülste
+    const pos = geo.attributes.position;
+    const v = new THREE.Vector3();
+    for (let i = 0; i <= SEG; i++) {
+      const t = i / SEG;
+      const mitte = kurve.getPointAt(t);
+      const ende = Math.min(1, t / 0.12, (1 - t) / 0.16);
+      const dick = 0.026 * Math.pow(Math.max(0, ende), 0.6) * (1 + Math.sin(t * 47) * 0.12 + Math.sin(t * 13 + 1) * 0.08);
+      for (let j = 0; j <= RAD; j++) {
+        const k = i * (RAD + 1) + j;
+        v.fromBufferAttribute(pos, k).sub(mitte);
+        const knubbel = 1 + Math.sin(j * 2.3 + i * 0.9) * 0.07;
+        v.multiplyScalar(dick * knubbel);
+        pos.setXYZ(k, mitte.x + v.x, mitte.y + v.y, mitte.z + v.z);
+      }
+    }
+    geo.computeVertexNormals();
+    const kackTex = leinwandTextur(256, 32, (g, b, h) => {
+      g.fillStyle = '#6b4320'; g.fillRect(0, 0, b, h);
+      const r = zufall(91);
+      for (let i = 0; i < 180; i++) { g.fillStyle = r() < 0.5 ? 'rgba(60,34,14,0.55)' : 'rgba(140,96,52,0.45)'; g.fillRect(r() * b, r() * h, 2 + r() * 6, 1 + r() * 3); }
+      // Querrisse
+      g.strokeStyle = 'rgba(40,22,8,0.8)'; g.lineWidth = 1.5;
+      for (let x = 6; x < b; x += 10 + r() * 12) { g.beginPath(); g.moveTo(x, r() * 6); g.lineTo(x + (r() - 0.5) * 4, h - r() * 6); g.stroke(); }
+      // Maiskörner
+      g.fillStyle = '#e8c33a';
+      for (let i = 0; i < 6; i++) g.fillRect(r() * b, r() * h, 4, 3);
+    }, [4, 1]);
+    const kack = teil(geo, 0, { material: toon(0xffffff, { map: kackTex }), umriss: 0.003 });
+    wurst.add(kack);
+    // zwei kleinere Brocken daneben
+    for (const [x, z, s] of [[0.07, -0.06, 0.018], [-0.075, 0.07, 0.014]]) {
+      const b = kugel(s, 0x5e3a1b, { umriss: 0.002 }, 10);
+      b.scale.set(1.6, 0.8, 1);
+      b.position.set(x, 0.008, z);
+      b.rotation.y = x * 10;
+      wurst.add(b);
+    }
+    // Fetzen Klopapier
+    const papier = new THREE.Mesh(new THREE.PlaneGeometry(0.07, 0.05), new THREE.MeshBasicMaterial({ color: 0xf4f2ea, side: THREE.DoubleSide }));
+    papier.rotation.set(-Math.PI / 2 + 0.2, 0, 0.6);
+    papier.position.set(-0.05, 0.012, -0.07);
+    wurst.add(papier);
+  }
+  wurst.position.set(0, 0.405, 0.06);
+  wurst.visible = false;
+  toilette.add(wurst);
   merke(toilette, 'toilette', 'Toilette', null);
   objekte.toilette = toilette;
   hindernis(0.95, 1.5, BAD.zMax - 0.7, BAD.zMax);
   // Pfütze bei Verstopfung
-  const kloPfuetze = new THREE.Mesh(new THREE.CircleGeometry(0.45, 20), new THREE.MeshBasicMaterial({ color: 0x8aa66a, transparent: true, opacity: 0.55, depthWrite: false }));
+  const kloPfuetzeTex = leinwandTextur(256, 256, (g) => {
+    const r = zufall(73);
+    g.clearRect(0, 0, 256, 256);
+    g.filter = 'blur(4px)';
+    g.fillStyle = 'rgba(196,178,70,1)';
+    // Hauptlache vor dem Klo, dazu Ausläufer und Spritzer
+    for (let i = 0; i < 9; i++) {
+      const w = r() * Math.PI * 2, d = r() * 55;
+      const rr = 18 + r() * 40;
+      g.beginPath(); g.ellipse(128 + Math.cos(w) * d, 110 + Math.sin(w) * d * 0.7, rr, rr * (0.45 + r() * 0.5), r() * 3, 0, Math.PI * 2); g.fill();
+    }
+    for (let i = 0; i < 4; i++) { g.beginPath(); g.ellipse(60 + r() * 140, 180 + r() * 50, 6 + r() * 14, 4 + r() * 8, r() * 3, 0, Math.PI * 2); g.fill(); }
+    g.filter = 'none';
+    g.fillStyle = 'rgba(255,255,230,0.35)';
+    for (let i = 0; i < 5; i++) { g.beginPath(); g.ellipse(100 + r() * 60, 90 + r() * 40, 8 + r() * 12, 2 + r() * 3, r() * 3, 0, Math.PI * 2); g.fill(); }
+  });
+  const kloPfuetze = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.5), new THREE.MeshBasicMaterial({ map: kloPfuetzeTex, transparent: true, opacity: 0.75, depthWrite: false }));
   kloPfuetze.rotation.x = -Math.PI / 2;
-  kloPfuetze.scale.set(1.3, 0.9, 1);
   kloPfuetze.position.set(1.4, 0.006, BAD.zMax - 0.9);
   kloPfuetze.visible = false;
   scene.add(kloPfuetze);
@@ -1635,6 +1871,97 @@ export function baueWelt(scene) {
   setze(becken2, BAD.xMin + 0.23, 0, 5.35, 0, Math.PI / 2, 0);
   scene.add(becken2);
   merke(becken2, 'waschbecken', 'Waschbecken', null);
+
+  // Dennis' Lockencreme auf der Ablage unter dem Spiegel: Tiegel mit Etikett, daneben Tube und Kamm
+  const cremeTex = leinwandTextur(256, 64, (g, b, h) => {
+    g.fillStyle = '#f7efe0'; g.fillRect(0, 0, b, h);
+    g.fillStyle = '#7a3fa0'; g.fillRect(0, 0, b, 10); g.fillRect(0, h - 10, b, 10);
+    g.fillStyle = '#5a2a7a'; g.font = 'bold 20px Bangers, Impact, sans-serif'; g.textAlign = 'center';
+    g.fillText('CURL KING', b / 2, 32); g.font = '13px Arial'; g.fillText('Lockencreme  250 ml', b / 2, 50);
+    g.strokeStyle = '#7a3fa0'; g.lineWidth = 2;
+    for (let i = 0; i < 4; i++) { g.beginPath(); g.arc(20 + i * 7, 32, 6, 0, Math.PI * 1.6); g.stroke(); }
+  });
+  const cremeDose = new THREE.Group();
+  const cremeTiegel = teil(new THREE.CylinderGeometry(0.042, 0.04, 0.05, 20), 0, { material: toon(0xffffff, { map: cremeTex }), umriss: 0.002 });
+  cremeTiegel.position.y = 0.025;
+  cremeDose.add(cremeTiegel);
+  cremeDose.add(setze(zylinder(0.045, 0.045, 0.02, 0x7a3fa0, { umriss: 0.002 }, 20), 0, 0.06, 0));
+  cremeDose.add(setze(zylinder(0.03, 0.03, 0.004, 0xc9a13b, { umriss: false }, 16), 0, 0.071, 0));
+  scene.add(setze(cremeDose, BAD.xMin + 0.07, 1.265, 5.27));
+  merke(cremeDose, 'creme', 'Lockencreme', null);
+  objekte.creme = cremeDose;
+  cremeDose.userData.start = { pos: cremeDose.position.clone(), rot: cremeDose.rotation.clone() };
+  const cremeTube = new THREE.Group();
+  const cremeTubeKoerper = teil(new THREE.CylinderGeometry(0.018, 0.025, 0.13, 12), 0xf7efe0, { umriss: 0.002 });
+  cremeTubeKoerper.scale.z = 0.5;
+  cremeTube.add(setze(cremeTubeKoerper, 0, 0.065, 0));
+  cremeTube.add(setze(zylinder(0.012, 0.012, 0.025, 0x7a3fa0, { umriss: 0.002 }, 10), 0, 0.142, 0));
+  scene.add(setze(cremeTube, BAD.xMin + 0.07, 1.265, 5.42, 0, 0, 0.12));
+  const badKamm = new THREE.Group();
+  badKamm.add(setze(quader(0.012, 0.012, 0.16, 0x1d1d1f, { umriss: 0.0015 }), 0, 0.012, 0));
+  for (let i = 0; i < 14; i++) badKamm.add(setze(quader(0.012, 0.022, 0.003, 0x1d1d1f, { umriss: false }), 0, -0.004, -0.07 + i * 0.01));
+  scene.add(setze(badKamm, BAD.xMin + 0.11, 1.282, 5.36, 0, 0.3, Math.PI / 2));
+
+  // Schwarze enge Latexunterhose am Haken an der linken Badwand (glänzend, Bund mit Naht, Beinausschnitte mit Rand)
+  const hosenHaken = new THREE.Group();
+  hosenHaken.add(setze(quader(0.02, 0.07, 0.04, 0xc9a13b, { umriss: 0.002 }), 0, 0, 0));
+  const hosenHakenBogen = new THREE.CatmullRomCurve3([new THREE.Vector3(0.01, 0.0, 0), new THREE.Vector3(0.07, -0.02, 0), new THREE.Vector3(0.09, 0.02, 0), new THREE.Vector3(0.08, 0.045, 0)]);
+  hosenHaken.add(teil(new THREE.TubeGeometry(hosenHakenBogen, 16, 0.007, 8, false), 0xc9a13b, { umriss: 0.0015 }));
+  hosenHaken.add(setze(kugel(0.01, 0xc9a13b, { umriss: 0.0015 }, 8), 0.08, 0.05, 0));
+  setze(hosenHaken, BAD.xMin + 0.01, 1.7, 5.85);
+  scene.add(hosenHaken);
+  const latex = new THREE.Group();
+  {
+    const latexMat = toon(0x17171a);
+    // Silhouette (vorne): oben breit, Beinausschnitte als Bögen, schmaler Schritt
+    const hosenForm = new THREE.Shape();
+    hosenForm.moveTo(-0.16, 0.0);
+    hosenForm.lineTo(0.16, 0.0);
+    hosenForm.lineTo(0.15, -0.06);
+    hosenForm.bezierCurveTo(0.1, -0.08, 0.05, -0.15, 0.035, -0.22);
+    hosenForm.lineTo(-0.035, -0.22);
+    hosenForm.bezierCurveTo(-0.05, -0.15, -0.1, -0.08, -0.15, -0.06);
+    hosenForm.closePath();
+    const hosenGeo = new THREE.ExtrudeGeometry(hosenForm, { depth: 0.03, bevelEnabled: true, bevelThickness: 0.018, bevelSize: 0.012, bevelSegments: 5, curveSegments: 24 });
+    hosenGeo.translate(0, 0, -0.015);
+    // leicht gewölbt wie ein Körper
+    const hosenPos = hosenGeo.attributes.position;
+    for (let i = 0; i < hosenPos.count; i++) {
+      const x = hosenPos.getX(i), y = hosenPos.getY(i), zz = hosenPos.getZ(i);
+      hosenPos.setZ(i, zz * (1 + 0.9 * Math.max(0, 1 - Math.abs(x) / 0.17)) - Math.pow(x / 0.17, 2) * 0.03 + (y < -0.12 ? 0.01 : 0));
+    }
+    hosenGeo.computeVertexNormals();
+    const latexKoerper = new THREE.Mesh(hosenGeo, latexMat);
+    latexKoerper.castShadow = true;
+    latex.add(latexKoerper);
+    umriss(latexKoerper, 0.003);
+    // Bund: etwas dicker, mattere Kante mit Prägung
+    const latexBund = new THREE.Mesh(new THREE.BoxGeometry(0.33, 0.028, 0.072), new THREE.MeshPhongMaterial({ color: 0x151518, specular: 0x555a60, shininess: 60 }));
+    latexBund.position.set(0, -0.012, 0);
+    latex.add(latexBund);
+    umriss(latexBund, 0.0025);
+    const latexPraegeTex = leinwandTextur(256, 32, (g, b, h) => { g.fillStyle = '#151518'; g.fillRect(0, 0, b, h); g.fillStyle = '#3a3d42'; g.font = 'bold 18px Arial'; g.textAlign = 'center'; g.fillText('LATEX', b / 2, 23); });
+    const latexPraege = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 0.016), new THREE.MeshBasicMaterial({ map: latexPraegeTex }));
+    latexPraege.position.set(0, -0.012, 0.0365);
+    latex.add(latexPraege);
+    // Ränder an den Beinausschnitten (schmale Wülste)
+    for (const sx of [-1, 1]) {
+      const latexRand = new THREE.CatmullRomCurve3([new THREE.Vector3(sx * 0.15, -0.06, 0.03), new THREE.Vector3(sx * 0.1, -0.085, 0.036), new THREE.Vector3(sx * 0.055, -0.15, 0.036), new THREE.Vector3(sx * 0.037, -0.215, 0.03)]);
+      latex.add(new THREE.Mesh(new THREE.TubeGeometry(latexRand, 20, 0.004, 6, false), latexMat));
+    }
+    // Glanzlichter
+    const latexGlanz = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.45, depthWrite: false });
+    for (const [x, y, w, hh, r] of [[-0.06, -0.06, 0.012, 0.09, 0.25], [0.07, -0.05, 0.008, 0.06, -0.3], [0.0, -0.17, 0.006, 0.04, 0]]) {
+      const latexGl = new THREE.Mesh(new THREE.PlaneGeometry(w, hh), latexGlanz);
+      latexGl.position.set(x, y, 0.05);
+      latexGl.rotation.z = r;
+      latex.add(latexGl);
+    }
+  }
+  // hängt mit dem Bund am Haken, Vorderseite zum Raum, leicht schräg
+  setze(latex, BAD.xMin + 0.06, 1.74, 5.93, 0, Math.PI / 2, -0.12);
+  scene.add(latex);
+  merke(latex, 'latexhose', 'Latexunterhose', null);
   hindernis(BAD.xMin, BAD.xMin + 0.48, 5.1, 5.6);
 
   // Poster mit Klebeband, leicht schräg, über der Kaffeeecke
@@ -2184,11 +2511,22 @@ export function baueWelt(scene) {
     },
     imBad(x, z) { return x > BAD.xMin && x < BAD.xMax && z > BAD.zMin && z < BAD.zMax; },
     kloTuer(offen) { kloOffen = offen; },
+    // Stromwürfel: welcher ist nah an (x, z)? anstossen() lässt ihn pendeln
+    stromWuerfelBei(x, z, r) { return stromWuerfel.find((s) => Math.hypot(s.x - x, s.z - z) < r) || null; },
+    anstossen(s) { s.schwung = 0.35; s.t = 0; },
+    cremeZurueck(obj) {
+      scene.add(obj);
+      obj.position.copy(obj.userData.start.pos);
+      obj.rotation.copy(obj.userData.start.rot);
+      if (obj.userData.ruhe) obj.scale.copy(obj.userData.ruhe.skala);
+      obj.visible = true;
+    },
     get kloOffen() { return kloOffen; },
     kloVerstopft(an) {
-      kloWasser.material.color.set(an ? 0x8a7a4a : 0x9cc9e0);
+      kloWasser.material.color.set(an ? 0x9a8a50 : 0x9cc9e0);
       kloWasser.position.y = an ? 0.415 : 0.38;
       kloPfuetze.visible = an;
+      wurst.visible = an;
     },
     FEUER: { x: 1.55, z: -3.3, vorX: 1.55, vorZ: -2.45 },
     LOESCHER: { x: 4.35, z: -1.0 },

@@ -196,6 +196,15 @@ export const DENNIS = {
     danke: ['Ah, frische Wäsche! Riecht ja wie neu. Danke dir, echt.', 'Trocken und warm! Du bist ein Schatz. Das vergess ich dir nicht.'],
     dankeHalb: ['Danke. Auch wenn mein Hoodie jetzt kneift.'],
   },
+  stromwuerfel: ['Aua! Man, wer hängt die Scheißdinger immer so tief?!', 'AU! Schon wieder dieser Würfel! Wer hat den so tief gehängt?!', 'Mein Kopf! Irgendwann reiß ich die Dinger ab!', 'Wer hängt denn Steckdosen auf Kopfhöhe?! Ehrlich!'],
+  creme: {
+    danke: ['Ah, meine Lockencreme! Du verstehst mich. Jetzt sitzt die Frisur wieder.', 'Locken-Notfall gelöst. Danke! Jetzt bin ich gleich viel entspannter.', 'Ein bisschen Creme in die Locken ... ahh. Besser.'],
+    schonDrin: ['Danke, aber ich hab grad erst gecremt. Sonst fettet das.', 'Nee, lass mal, zu viel Creme ist auch nicht gut für die Locken.'],
+  },
+  latexhose: ['Finger weg! Die ist ... zum Trocknen da.', 'Was guckst du so? Die hängt da nur zum Trocknen!', 'Die gehört Torben. Glaub ich.'],
+  eingeschissen: ['RAUS DA! RAUS! Ich muss ... oh nein. OH NEIN. Zu spät. ZU SPÄT!!', 'Was machst du im Bad?! Ich muss DRINGEND ... ach du Scheiße. Wortwörtlich.', 'Ich hab doch gesagt, ich muss! Jetzt ist es passiert! Die ganze Hose!'],
+  eingeschissenRaus: ['Ich hab mir wegen dir in die Hose geschissen! In MEINE kurze Hose! RAUS! Und komm nie wieder!', 'Eingeschissen! Wegen DIR! Das wars, du fliegst! Pack deine Sachen!'],
+  leiter: ['Hängt die Leiter von Johnny immer noch da?! Der soll die endlich abholen!', 'Johnny! Deine Camper-Leiter! Seit Monaten hängt die hier rum!', 'Ich schmeiß die Leiter bald auf den Schrott. Johnny holt die ja eh nie ab.', 'Wer braucht denn eine Leiter für einen Camper, den es gar nicht mehr gibt? Johnny!'],
   traeger: ['Halt! Nicht anfassen! Schwere Stahlträger sind Torbens Job!', 'Finger weg von den Trägern! Das macht Torben.', 'Die Träger lässt du liegen. Das ist Torbens Job, nicht deiner!'],
   verstopft: {
     hilfe: ['Oh oh. Das Klo ist verstopft. Hilf mir mal! Der Pömpel steht oben auf dem Regal.', 'Mist, Klo ist dicht! Hol mal den Pömpel, oben im Regal. Ich geh da nicht nochmal rein.'],

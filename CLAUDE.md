@@ -109,15 +109,28 @@
   Nicht drehen, solange ein Menü/Dialog/Minispiel/Dennis-Fenster offen ist.
 - Dennis aufhelfen (Hüfte) nur mit leeren Händen (Ausnahme: Kaffee, Wäschetasche, Sieb, die man nicht hinlegen kann).
 - Kaffee kann man werfen (Q) und fallen lassen (G); dann ist er weg (neuen kochen), Dennis meckert, wenn er es sieht.
-- Werkstatt-Optik: Deckenhöhe 4,8 m (RAUM.hoehe), Leuchtstoffröhren hängen an Ketten auf 3,6 m. Wände mit eigener Leinwand je Wand
+- Werkstatt-Optik: Deckenhöhe 3,9 m (RAUM.hoehe), helle Putzdecke (MeshBasic) mit Holzbalken, Leuchtstoffröhren an Ketten auf 3,25 m. Wände mit eigener Leinwand je Wand
   (`wandMalen`): Putz, grüngrauer Sockel bis 1,25 m, Putz bröckelt stellenweise (Ziegel sichtbar), Risse, Wasserflecken.
-  KEINE Graffiti und Zahlen (Betreiber: wieder weg). Eingang vorne: breites grünes Scheunentor (2 Flügel, helle Z-Streben,
-  schwarze Bänder) mit Rauchen-verboten-Schild; Lichtschalter zwischen Tor und WC-Tür.
+  KEINE Graffiti und Zahlen (Betreiber: wieder weg). Eingang vorne: breites Scheunentor komplett grün (2 Flügel, Z-Streben,
+  nur die Scharniere/Bänder schwarz) mit Rauchen-verboten-Schild; Lichtschalter zwischen Tor und WC-Tür.
 - Bad (begehbar) hinter der WC-Tür vorne rechts (BAD in world.js, x 0,7–3,9, z 4,0–6,8): Schachbrett-Boden, Fliesen bis 1,4 m,
   Milchglasfenster, Klo (hinten links), Dusche (hinten rechts), Waschbecken mit Spiegel, Waschmaschine + Trockner (vorne rechts).
   WC-Tür offen, nur zu während Dennis drin ist. Bild über dem Klo: assets/bad-bild.jpg (Foto vom Betreiber, Dennis oben ohne mit Handy, Holzrahmen).
   Verstopfung: nach Dennis' Klo einmal pro Spiel mit 30 % Wahrscheinlichkeit; Pömpel steht oben im Regal, in die Hand, aufs Klo
   klicken (Wut -10). Nach 70 s macht Dennis es selbst (+8 Wut).
+- Zwei gelbe Stromverteiler-Würfel (Steckdosen an jeder Seite) hängen an Kabeln tief von der Decke (Unterkante 1,75 m, bei
+  (-0,9 | 2,35) und (0 | -1,05)). Läuft Dennis dagegen: pendelt, Klonk, Spruch (DENNIS.stromwuerfel, max. alle 35 s).
+- Johnnys Leiter (Alu-Kofferraumleiter vom Camper, 6 Sprossen, oben gebogen) hängt quer, hoch und leicht schräg an der rechten
+  Wand auf zwei Konsolen. Dennis regt sich alle 2,5–4 min darüber auf (DENNIS.leiter) und beim Anklicken.
+- Lockencreme „CURL KING“ (Tiegel) auf der Ablage unter dem Spiegel im Bad (daneben Tube und Kamm): in die Hand, auf Dennis
+  klicken = er cremt die Locken, Wut -12 (höchstens alle 90 s), Creme kommt zurück aufs Regal.
+- Schwarze Latexunterhose hängt an einem Messinghaken an der linken Badwand (zwischen Waschbecken und Klo), Anklicken = Spruch.
+- Bad blockiert: steht man im Bad, wenn Dennis zur Klo-Pause an der WC-Tür ankommt, hat er sich eingeschissen: Wut 100,
+  sofort Rausschmiss mit eigenem Text (DENNIS.eingeschissen / eingeschissenRaus).
+- Verstopftes Klo: große detaillierte Kackwurst schwimmt (Tube mit wechselndem Radius, Risse, Maiskörner, Klopapierfetzen),
+  gelbliche unregelmäßige Pfütze davor. Bilderrahmen über dem Klo: Profilrahmen mit Goldleiste, Passepartout, Glasreflex, Nagel.
+- Feuer und Wasserrohrbruch mit mindestens 90 s Abstand (z.letztesEreignis). Waschmaschine/Trockner: Scheibe schlicht blau.
+- Geworfene/fallen gelassene längliche Dinge liegen flach (userData.liegend: Rohrzange, Pömpel, Besen, Hula-Hoop-Reifen).
 - Stahlträger (HEB 200, rostig) liegen vorne rechts zwischen Waschplatz und Bad-Tür, ohne Funktion. Anklicken oder in der Nähe
   (max. alle 45 s): Dennis „Schwere Stahlträger sind Torbens Job!“.
 - Bedienung: Hat ein Ding nur eine Aktion, wird sie beim Klick direkt ausgeführt (kein Menü). Box und Licht schalten
