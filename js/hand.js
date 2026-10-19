@@ -17,7 +17,10 @@ const HALTUNG = {
   figur: { pos: [0, -0.6, -0.9], rot: [0.05, Math.PI, 0], name: 'Holzfigur', beidhaendig: true, schwer: true },
   handy: { pos: [0.15, -0.14, -0.38], rot: [0.9, 0, 0], skala: 1.2, name: 'Dein Handy', benutzen: 'Aufs Handy gucken' },
   flasche: { pos: [0, -0.5, -1.05], rot: [0.3, 0, 0], name: 'Gasflasche', beidhaendig: true, schwer: true, nichtWerfen: true },
-  klemmbrett: { pos: [0.06, -0.1, -0.4], rot: [Math.PI / 2 - 0.3, 0, 0], name: 'Dennis’ Klemmbrett' },
+  ofen: { pos: [0.4, -0.8, -1.2], rot: [-0.2, Math.PI / 2, 0], name: 'Fertiger Ofen', beidhaendig: true, schwer: true, nichtWerfen: true, benutzen: 'Zu Dennis bringen (auf Dennis klicken)' },
+  klemmbrett: { pos: [-0.03, 0.0, -0.4], rot: [Math.PI / 2 - 0.08, 0, 0], griff: [0.15, -0.17, 0.02], name: 'Dennis’ Klemmbrett' },
+  waeschetasche: { pos: [0.42, -0.78, -0.95], rot: [0.1, 0.5, 0], griff: [-0.02, 0.58, -0.08], name: 'Dennis’ Wäschetasche', nichtWerfen: true, nichtAblegen: true, ablegenHinweis: 'Die Wäsche kommt in die Maschine (oder zu Dennis).' },
+  sieb: { pos: [0.16, -0.18, -0.48], rot: [0.2, 1.3, 0.2], skala: 1.3, name: 'Flusensieb', nichtWerfen: true, nichtAblegen: true, ablegenHinweis: 'Das Sieb gehört in den Trockner. Dreckig erst am Kompressor ausblasen.' },
   hulahup: { pos: [0.3, -0.5, -1.05], rot: [0.35, 1.1, 0], skala: 0.85, name: 'Hula-Hoop-Reifen', benutzen: 'Dennis bringen' },
   rohrzange: { pos: [0.24, -0.22, -0.52], rot: [0.4, 0.3, -0.9], name: 'Rohrzange', benutzen: 'Reparieren' },
   schlauch: { pos: [0.2, -0.2, -0.55], rot: [0.1, 0.12, 0], skala: 1.2, name: 'Wasserschlauch', benutzen: 'Spritzen (halten)', nichtWerfen: true, nichtAblegen: true },
@@ -94,6 +97,10 @@ export function baueHand(scene, kamera) {
     becher.add(d);
   }
 
+  // Flache Werkzeuge (Rohrzange) auf die Seite legen statt aufrecht hinstellen
+  function flachLegen(obj, drehungY) {
+    obj.rotation.set(Math.PI / 2, drehungY, 0, 'YXZ');
+  }
   function bodenAbstand(obj) {
     const alt = obj.position.clone();
     obj.position.set(0, 0, 0);
@@ -121,7 +128,7 @@ export function baueHand(scene, kamera) {
       obj.removeFromParent();
       halter.add(obj);
       obj.position.set(...cfg.pos);
-      obj.rotation.set(...cfg.rot);
+      obj.rotation.set(...cfg.rot, 'XYZ');
       obj.scale.copy(obj.userData.ruhe.skala).multiplyScalar(cfg.skala || 1);
       obj.visible = true;
       item = { id, obj, cfg };
@@ -153,6 +160,7 @@ export function baueHand(scene, kamera) {
       const obj = api.weg();
       obj.rotation.copy(obj.userData.ruhe.rot);
       if (drehungY !== undefined) obj.rotation.y = drehungY;
+      if (obj.userData.liegend) flachLegen(obj, drehungY || 0);
       obj.scale.copy(obj.userData.ruhe.skala);
       scene.add(obj);
       obj.position.set(punkt.x, punkt.y + bodenAbstand(obj) + 0.002, punkt.z);
@@ -193,7 +201,8 @@ export function baueHand(scene, kamera) {
         const b = gehtGerade ? Math.sin(t * 9) * 0.012 : Math.sin(t * 1.6) * 0.004;
         const cfg = item.cfg;
         item.obj.position.set(cfg.pos[0], cfg.pos[1] + b - wackel * 0.3, cfg.pos[2]);
-        rechts.position.set(cfg.beidhaendig ? 0.22 : cfg.pos[0] + 0.02, cfg.pos[1] - 0.04 + b - wackel * 0.3, cfg.pos[2] + 0.08);
+        const gr = cfg.griff || [0, 0, 0]; // wo die Hand anfasst (z. B. Klemmbrett unten rechts, damit man alles lesen kann)
+        rechts.position.set((cfg.beidhaendig ? 0.22 : cfg.pos[0] + 0.02) + gr[0], cfg.pos[1] - 0.04 + gr[1] + b - wackel * 0.3, cfg.pos[2] + 0.08 + gr[2]);
         rechts.rotation.set(0.2, -0.2, 0.3);
         links.position.set(-0.22, cfg.pos[1] - 0.04 + b - wackel * 0.3, cfg.pos[2] + 0.08);
         links.rotation.set(0.2, 0.2, -0.3);
@@ -245,6 +254,7 @@ export function baueHand(scene, kamera) {
           // liegen lassen: auf die Seite gekippt wäre schöner, aufrecht ist eindeutiger
           f.obj.rotation.copy(f.obj.userData.ruhe.rot);
           f.obj.rotation.y += Math.random() * Math.PI;
+          if (f.obj.userData.liegend) flachLegen(f.obj, Math.random() * Math.PI * 2);
           f.obj.position.y = bodenAbstand(f.obj);
           fliegend.splice(i, 1);
           if (f.beiLanden) f.beiLanden(f.id, f.obj);

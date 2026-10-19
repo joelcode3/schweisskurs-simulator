@@ -257,32 +257,95 @@ export function baueWelt(scene) {
     g.fillText('SICHERHEIT ZUERST', b / 2, h - 18);
   }, 2.0, 1.9, RAUM.zMin + 0.01, 0);
 
-  // Rohrzange an der Werkzeugwand: roter Doppel-T-Griff, Hakenbacke oben, Rändelmutter zum Verstellen, Zähne
+  // Rohrzange an der Werkzeugwand: roter, schmaler werdender Doppel-T-Griff mit Aufhängeloch,
+  // Stahlgehäuse mit Fenster für die gerändelte Stellmutter, feste Backe unten, Hakenbacke oben, beide mit Zähnen
   const zange = new THREE.Group();
   const rot = 0xc8352a;
-  zange.add(setze(quader(0.045, 0.34, 0.02, rot), 0, -0.1, 0));
-  zange.add(setze(quader(0.02, 0.34, 0.035, rot), 0, -0.1, 0));
-  zange.add(setze(quader(0.05, 0.05, 0.04, 0x8a1f17), 0, -0.29, 0));
-  zange.add(setze(zylinder(0.012, 0.012, 0.03, 0x222222, {}, 8), 0, -0.26, 0, Math.PI / 2, 0, 0));
-  // feste Backe mit Gehäuse
-  zange.add(setze(quader(0.07, 0.08, 0.045, FARBE.stahl), 0.005, 0.1, 0));
-  zange.add(setze(quader(0.05, 0.03, 0.04, FARBE.stahlHell), -0.03, 0.155, 0));
-  // Hakenbacke (beweglich) mit Schaft und Zähnen
-  zange.add(setze(zylinder(0.012, 0.012, 0.14, FARBE.stahlHell, {}, 8), 0.025, 0.17, 0));
-  zange.add(setze(quader(0.08, 0.035, 0.04, FARBE.stahlHell), -0.005, 0.24, 0));
-  for (let i = 0; i < 4; i++) zange.add(setze(quader(0.008, 0.01, 0.042, 0x555a60, { umriss: false }), -0.035 + i * 0.016, 0.222, 0));
-  for (let i = 0; i < 3; i++) zange.add(setze(quader(0.008, 0.01, 0.042, 0x555a60, { umriss: false }), -0.04 + i * 0.016, 0.172, 0));
-  // Rändelmutter
-  const mutter = teil(new THREE.CylinderGeometry(0.022, 0.022, 0.03, 14), 0x9aa0a6, { umriss: 0.003 });
-  mutter.position.set(0.025, 0.135, 0);
-  zange.add(mutter);
-  for (let i = 0; i < 6; i++) zange.add(setze(quader(0.004, 0.03, 0.006, 0x555a60, { umriss: false }), 0.025 + Math.cos(i) * 0.022, 0.135, Math.sin(i) * 0.022));
+  const ext = (form, tiefe, farbe, fase = 0.003) => {
+    const geo = new THREE.ExtrudeGeometry(form, { depth: tiefe, bevelEnabled: fase > 0, bevelThickness: fase, bevelSize: fase, bevelSegments: 2, curveSegments: 10 });
+    geo.translate(0, 0, -tiefe / 2);
+    return teil(geo, farbe, { umriss: 0.003 });
+  };
+  // Griff
+  const griff = new THREE.Shape();
+  griff.moveTo(-0.016, -0.29);
+  griff.quadraticCurveTo(-0.017, -0.312, 0, -0.313);
+  griff.quadraticCurveTo(0.017, -0.312, 0.016, -0.29);
+  griff.lineTo(0.021, 0.05);
+  griff.lineTo(-0.021, 0.05);
+  griff.closePath();
+  const loch = new THREE.Path();
+  loch.absarc(0, -0.292, 0.006, 0, Math.PI * 2, true);
+  griff.holes.push(loch);
+  zange.add(ext(griff, 0.014, rot));
+  // Doppel-T: vertiefte Mittelstege auf beiden Seiten
+  for (const sz of [-1, 1]) {
+    const steg = quader(0.016, 0.3, 0.004, 0x8a1f17, { umriss: false });
+    zange.add(setze(steg, 0, -0.12, sz * 0.0095));
+  }
+  // Gehäuse mit Fenster
+  const geh = new THREE.Shape();
+  geh.moveTo(-0.028, 0.04);
+  geh.lineTo(0.036, 0.04);
+  geh.lineTo(0.036, 0.135);
+  geh.lineTo(-0.048, 0.135);
+  geh.lineTo(-0.048, 0.118);
+  geh.quadraticCurveTo(-0.03, 0.105, -0.028, 0.04);
+  const zFenster = new THREE.Path();
+  zFenster.moveTo(-0.004, 0.058);
+  zFenster.lineTo(0.03, 0.058);
+  zFenster.lineTo(0.03, 0.117);
+  zFenster.lineTo(-0.004, 0.117);
+  zFenster.closePath();
+  geh.holes.push(zFenster);
+  zange.add(ext(geh, 0.026, FARBE.stahl));
+  // Zähne (Sägezahn-Leiste), dir = 1 nach oben, -1 nach unten
+  const zaehne = (x0, x1, y, dir) => {
+    const f = new THREE.Shape();
+    const n = 7;
+    const w = (x1 - x0) / n;
+    f.moveTo(x0, y);
+    for (let i = 0; i < n; i++) {
+      f.lineTo(x0 + i * w + w * 0.75, y + dir * 0.007);
+      f.lineTo(x0 + (i + 1) * w, y);
+    }
+    f.lineTo(x1, y - dir * 0.004);
+    f.lineTo(x0, y - dir * 0.004);
+    f.closePath();
+    return ext(f, 0.024, 0x6c7178, 0);
+  };
+  zange.add(zaehne(-0.048, 0.0, 0.137, 1));
+  // Gewindeschaft der Hakenbacke
+  zange.add(setze(zylinder(0.0075, 0.0075, 0.2, FARBE.stahlHell, { umriss: 0.002 }, 10), 0.013, 0.15, 0));
+  for (let i = 0; i < 11; i++) zange.add(setze(zylinder(0.0092, 0.0092, 0.0025, 0x7b8188, { umriss: false }, 10), 0.013, 0.14 + i * 0.0085, 0));
+  // Hakenbacke
+  const haken = new THREE.Shape();
+  haken.moveTo(0.004, 0.2);
+  haken.lineTo(0.026, 0.2);
+  haken.lineTo(0.026, 0.262);
+  haken.quadraticCurveTo(0.026, 0.27, 0.016, 0.27);
+  haken.lineTo(-0.052, 0.27);
+  haken.quadraticCurveTo(-0.058, 0.262, -0.052, 0.236);
+  haken.lineTo(0.004, 0.236);
+  haken.closePath();
+  zange.add(ext(haken, 0.024, FARBE.stahlHell));
+  zange.add(zaehne(-0.052, 0.002, 0.234, -1));
+  // Stellmutter (gerändelt) im Fenster
+  zange.add(setze(zylinder(0.016, 0.016, 0.05, 0x9aa0a6, { umriss: 0.002 }, 16), 0.013, 0.0875, 0));
+  for (let i = 0; i < 14; i++) {
+    const a = (i / 14) * Math.PI * 2;
+    zange.add(setze(quader(0.003, 0.05, 0.004, 0x5d6268, { umriss: false }), 0.013 + Math.cos(a) * 0.016, 0.0875, Math.sin(a) * 0.016, 0, -a, 0));
+  }
+  // Niete und Feder am Gehäuse
+  for (const [x, y] of [[-0.016, 0.05], [0.026, 0.05]]) for (const sz of [-1, 1]) zange.add(setze(zylinder(0.004, 0.004, 0.003, 0x4a4e54, { umriss: false }, 8), x, y, sz * 0.0165, Math.PI / 2, 0, 0));
+  zange.add(setze(zylinder(0.003, 0.003, 0.05, 0x3a3d42, { umriss: false }, 6), 0.033, 0.0875, 0.01));
   setze(zange, 1.32, 1.6, RAUM.zMin + 0.06, 0, 0, 0.25);
   zange.scale.setScalar(1.15);
   scene.add(zange);
   merke(zange, 'rohrzange', 'Rohrzange', null);
   objekte.rohrzange = zange;
   zange.userData.wand = { pos: zange.position.clone(), rot: zange.rotation.clone() };
+  zange.userData.liegend = true; // abgelegt flach hinlegen, nicht aufrecht hinstellen
 
   // ---------- Werkbank ----------
   const werkbank = new THREE.Group();
@@ -546,6 +609,337 @@ export function baueWelt(scene) {
   setze(eimer, 4.4, 0, 0.75);
   scene.add(eimer);
   hindernis(4.2, 4.6, 0.55, 0.95);
+
+  // ---------- Waschmaschine mit Trockner obendrauf (rechts neben dem Waschplatz) ----------
+  function waschAnzeige() {
+    const c = document.createElement('canvas');
+    c.width = 128; c.height = 48;
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.userData = { c, zeig(text, farbe = '#7dff8a') {
+      const g = c.getContext('2d');
+      g.fillStyle = '#10161a'; g.fillRect(0, 0, 128, 48);
+      g.fillStyle = farbe; g.font = 'bold 30px monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillText(text, 64, 26);
+      t.needsUpdate = true;
+    } };
+    t.userData.zeig('--:--');
+    return t;
+  }
+  function waschGeraet(y, mitSieb) {
+    const g = new THREE.Group();
+    g.add(setze(quader(0.6, 0.84, 0.6, 0xf1f1ee), 0, 0.42, 0));
+    // Bedienblende oben
+    g.add(setze(quader(0.012, 0.13, 0.58, 0xdedfdc, { umriss: 0.002 }), -0.305, 0.76, 0));
+    const anzeige = waschAnzeige();
+    const display = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.06), new THREE.MeshBasicMaterial({ map: anzeige }));
+    display.rotation.y = -Math.PI / 2;
+    display.position.set(-0.313, 0.77, 0.05);
+    g.add(display);
+    const knopf = setze(zylinder(0.035, 0.035, 0.03, 0xb8bcc2, { umriss: 0.002 }, 16), -0.325, 0.77, -0.17, 0, 0, Math.PI / 2);
+    knopf.add(setze(quader(0.006, 0.032, 0.012, 0x333333, { umriss: false }), 0, 0.016, 0.018));
+    g.add(knopf);
+    for (let i = 0; i < 3; i++) g.add(setze(quader(0.012, 0.02, 0.035, 0x9aa0a6, { umriss: false }), -0.315, 0.77, 0.17 + i * 0.045));
+    // Bullauge mit Trommel
+    const ring = teil(new THREE.TorusGeometry(0.17, 0.028, 10, 32), 0xc9cdd2, { umriss: 0.003 });
+    ring.rotation.y = Math.PI / 2;
+    ring.position.set(-0.315, 0.38, 0);
+    g.add(ring);
+    const trommel = new THREE.Group();
+    trommel.position.set(-0.3, 0.38, 0);
+    const glas = new THREE.Mesh(new THREE.CircleGeometry(0.16, 28), new THREE.MeshBasicMaterial({ color: 0x223a4e }));
+    glas.rotation.y = -Math.PI / 2;
+    trommel.add(glas);
+    const waesche = new THREE.Group();
+    for (const [i, c] of [0x2f5fa8, 0x1d1d1f, 0x8a8f96, 0xc8352a, 0x3c7a3a].entries()) {
+      const k = new THREE.Mesh(new THREE.CircleGeometry(0.05 + (i % 2) * 0.02, 10), new THREE.MeshBasicMaterial({ color: c }));
+      k.rotation.y = -Math.PI / 2;
+      const w = i * 1.3;
+      k.position.set(-0.002 - i * 0.0005, Math.sin(w) * 0.08 - 0.04, Math.cos(w) * 0.08);
+      waesche.add(k);
+    }
+    waesche.visible = false;
+    trommel.add(waesche);
+    // Wasser (nur Waschmaschine)
+    const wasser = new THREE.Mesh(new THREE.CircleGeometry(0.155, 28, Math.PI, Math.PI), new THREE.MeshBasicMaterial({ color: 0x6fb5e8, transparent: true, opacity: 0.55 }));
+    wasser.rotation.y = -Math.PI / 2;
+    wasser.position.x = -0.004;
+    wasser.visible = false;
+    trommel.add(wasser);
+    g.add(trommel);
+    g.add(setze(quader(0.02, 0.07, 0.03, 0xb8bcc2, { umriss: 0.002 }), -0.33, 0.38, -0.2));
+    let sieb = null;
+    if (mitSieb) {
+      // Flusensieb unten in der Tür-Öffnung, schaut ein Stück raus
+      sieb = new THREE.Group();
+      sieb.add(setze(quader(0.04, 0.02, 0.24, 0x7c838b, { umriss: 0.002 }), 0, 0.06, 0));
+      const netzMat = new THREE.MeshBasicMaterial({ color: 0x8c8378 });
+      const netz = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.12, 0.2), netzMat);
+      sieb.add(netz);
+      const fussel = [];
+      for (let i = 0; i < 7; i++) {
+        const f = kugel(0.022 + (i % 3) * 0.008, 0x9b9389, { umriss: false }, 8);
+        f.scale.set(0.7, 0.8, 1.3);
+        f.position.set(-0.012, (i % 3 - 1) * 0.035, -0.08 + i * 0.027);
+        sieb.add(f);
+        fussel.push(f);
+      }
+      sieb.position.set(-0.29, 0.13, 0);
+      sieb.userData.sauber = (ja) => { netzMat.color.set(ja ? 0xe7e9ec : 0x8c8378); for (const f of fussel) f.visible = !ja; };
+      g.add(sieb);
+    }
+    g.position.set(4.66, y, 3.12);
+    scene.add(g);
+    return { g, trommel, waesche, wasser, anzeige: anzeige.userData, knopf, sieb };
+  }
+  const wm = waschGeraet(0, false);
+  const tr = waschGeraet(0.845, true);
+  wm.anzeige.zeig('40°');
+  merke(wm.g, 'waschmaschine', 'Waschmaschine', null);
+  merke(tr.g, 'trockner', 'Trockner', null);
+  objekte.waschmaschine = wm;
+  objekte.trockner = tr;
+  hindernis(4.3, 5, 2.78, 3.46);
+  let geraetZeit = 0;
+  animiert.push((dt) => {
+    geraetZeit += dt;
+    for (const d of [wm, tr]) {
+      if (!d.laeuft) { d.g.position.x = 4.66; continue; }
+      d.trommel.children[1].rotation.x += dt * (d === wm ? 5 : 3.5);
+      d.g.position.x = 4.66 + Math.sin(geraetZeit * 37) * 0.003;
+    }
+    wm.wasser.visible = !!wm.laeuft;
+  });
+
+  // Druckluft-Kompressor (50 l) in der Ecke rechts neben dem Regal: liegender Kessel mit Schweißnähten, Motor mit Lüfterhaube,
+  // Zylinder mit Kühlrippen, Luftfilter, Druckschalter mit Ein/Aus, zwei Manometer, Druckminderer, Schnellkupplung,
+  // Spiralschlauch mit Ausblaspistole, Räder, Gummifüße, Ablassventil, Typenschild
+  const kompressor = new THREE.Group();
+  const kRot = 0xd03a2c;
+  const kessel = setze(zylinder(0.17, 0.17, 0.56, kRot, {}, 24), 0, 0.3, 0, 0, 0, Math.PI / 2);
+  kompressor.add(kessel);
+  for (const sx of [-1, 1]) {
+    const kappe = setze(kugel(0.17, kRot, {}, 20), sx * 0.28, 0.3, 0);
+    kappe.scale.set(0.38, 1, 1);
+    kompressor.add(kappe);
+    // Schweißnaht am Übergang
+    kompressor.add(setze(teil(new THREE.TorusGeometry(0.171, 0.006, 6, 28), 0xa82a20, { umriss: false }), sx * 0.27, 0.3, 0, 0, Math.PI / 2, 0));
+  }
+  // Typenschild
+  const schildTex = leinwandTextur(128, 64, (g) => {
+    g.fillStyle = '#e9e6dc'; g.fillRect(0, 0, 128, 64);
+    g.fillStyle = '#1d1d1f'; g.font = 'bold 18px Arial'; g.fillText('50 L', 8, 24);
+    g.font = '13px Arial'; g.fillText('max. 8 bar', 8, 44); g.fillText('230 V  1,5 kW', 8, 58);
+    g.fillStyle = '#d03a2c'; g.fillRect(96, 8, 24, 24);
+  });
+  const schild = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 0.06), new THREE.MeshBasicMaterial({ map: schildTex }));
+  schild.position.set(0.02, 0.3, 0.1715 + 0.001);
+  kompressor.add(schild);
+  // Räder mit Felge an einem Ende, Gummifüße am anderen, Schiebebügel
+  for (const sz of [-1, 1]) {
+    const rad = setze(zylinder(0.07, 0.07, 0.04, 0x1d1d1f, {}, 18), -0.24, 0.07, sz * 0.15, Math.PI / 2, 0, 0);
+    kompressor.add(rad);
+    kompressor.add(setze(zylinder(0.035, 0.035, 0.045, 0xb8bcc2, { umriss: 0.002 }, 12), -0.24, 0.07, sz * 0.15, Math.PI / 2, 0, 0));
+    kompressor.add(setze(quader(0.04, 0.14, 0.03, 0x3a3d42), 0.24, 0.07, sz * 0.09));
+    kompressor.add(setze(zylinder(0.025, 0.03, 0.02, 0x1d1d1f, {}, 10), 0.24, 0.01, sz * 0.09));
+  }
+  kompressor.add(setze(zylinder(0.012, 0.012, 0.32, 0x1d1d1f, {}, 8), -0.24, 0.07, 0, Math.PI / 2, 0, 0));
+  const buegel = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0.3, 0.42, -0.12), new THREE.Vector3(0.42, 0.62, -0.12), new THREE.Vector3(0.44, 0.66, 0), new THREE.Vector3(0.42, 0.62, 0.12), new THREE.Vector3(0.3, 0.42, 0.12),
+  ]);
+  kompressor.add(teil(new THREE.TubeGeometry(buegel, 24, 0.012, 8, false), 0x2a2c30, { umriss: 0.002 }));
+  // Grundplatte, Motor mit Lüfterhaube und Lüftungsschlitzen
+  kompressor.add(setze(quader(0.4, 0.02, 0.22, 0x3a3d42), -0.02, 0.475, 0));
+  const motor = setze(zylinder(0.075, 0.075, 0.2, 0x26282c, {}, 18), -0.12, 0.56, 0, 0, 0, Math.PI / 2);
+  kompressor.add(motor);
+  for (let i = 0; i < 6; i++) kompressor.add(setze(quader(0.012, 0.004, 0.11, 0x111214, { umriss: false }), -0.2 + i * 0.03, 0.637, 0));
+  const haube = setze(zylinder(0.085, 0.085, 0.05, 0x2f3236, {}, 18), -0.245, 0.56, 0, 0, 0, Math.PI / 2);
+  kompressor.add(haube);
+  for (let i = 0; i < 5; i++) kompressor.add(setze(quader(0.004, 0.11, 0.008, 0x111214, { umriss: false }), -0.271, 0.56, -0.04 + i * 0.02));
+  // Zylinder mit Kühlrippen und Zylinderkopf
+  kompressor.add(setze(zylinder(0.045, 0.05, 0.08, 0xa7adb3, {}, 14), 0.06, 0.53, 0));
+  for (let i = 0; i < 6; i++) kompressor.add(setze(zylinder(0.065, 0.065, 0.006, 0xc3c8cd, { umriss: 0.0015 }, 16), 0.06, 0.575 + i * 0.016, 0));
+  kompressor.add(setze(quader(0.11, 0.035, 0.11, 0x8d949b), 0.06, 0.68, 0));
+  // Luftfilter (schwarze Dose) und Druckrohr zum Kessel
+  kompressor.add(setze(zylinder(0.035, 0.035, 0.04, 0x1d1d1f, {}, 14), 0.06, 0.68, 0.085, Math.PI / 2, 0, 0));
+  const druckrohr = new THREE.CatmullRomCurve3([new THREE.Vector3(0.1, 0.68, -0.03), new THREE.Vector3(0.17, 0.62, -0.06), new THREE.Vector3(0.18, 0.5, -0.07), new THREE.Vector3(0.19, 0.47, -0.07)]);
+  kompressor.add(teil(new THREE.TubeGeometry(druckrohr, 16, 0.008, 6, false), 0xb87333, { umriss: 0.0015 }));
+  // Druckschalter-Kasten mit rotem Ein/Aus-Knopf
+  kompressor.add(setze(quader(0.08, 0.09, 0.07, 0x1d1d1f), 0.2, 0.53, 0.02));
+  kompressor.add(setze(zylinder(0.018, 0.018, 0.025, 0xe02b20, { umriss: 0.002 }, 12), 0.2, 0.585, 0.02));
+  // zwei Manometer (Kessel- und Arbeitsdruck) mit Zeigern
+  const manoTex = leinwandTextur(64, 64, (g) => {
+    g.fillStyle = '#f7f5ee'; g.beginPath(); g.arc(32, 32, 30, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = '#d03a2c'; g.lineWidth = 5; g.beginPath(); g.arc(32, 32, 24, -0.6, 0.4); g.stroke();
+    g.strokeStyle = '#1d1d1f'; g.lineWidth = 2;
+    for (let i = 0; i <= 8; i++) { const w = Math.PI * 0.75 + i * Math.PI * 1.5 / 8; g.beginPath(); g.moveTo(32 + Math.cos(w) * 22, 32 + Math.sin(w) * 22); g.lineTo(32 + Math.cos(w) * 27, 32 + Math.sin(w) * 27); g.stroke(); }
+    g.lineWidth = 3; g.beginPath(); g.moveTo(32, 32); g.lineTo(32 + Math.cos(-0.3) * 20, 32 + Math.sin(-0.3) * 20); g.stroke();
+  });
+  for (const [x, y] of [[0.29, 0.52], [0.29, 0.43]]) {
+    kompressor.add(setze(zylinder(0.032, 0.032, 0.02, 0xb8bcc2, { umriss: 0.002 }, 16), x, y, 0.0, 0, 0, Math.PI / 2));
+    const zifferblatt = new THREE.Mesh(new THREE.CircleGeometry(0.027, 20), new THREE.MeshBasicMaterial({ map: manoTex }));
+    zifferblatt.rotation.y = Math.PI / 2;
+    zifferblatt.position.set(x + 0.0105, y, 0);
+    kompressor.add(zifferblatt);
+  }
+  // Druckminderer (Drehknopf) und Messing-Schnellkupplung
+  kompressor.add(setze(zylinder(0.022, 0.022, 0.03, 0x1d1d1f, { umriss: 0.002 }, 10), 0.3, 0.475, -0.06, 0, 0, Math.PI / 2));
+  kompressor.add(setze(zylinder(0.012, 0.014, 0.05, FARBE.messing, { umriss: 0.002 }, 8), 0.31, 0.43, 0.06, 0, 0, Math.PI / 2));
+  // Ablassventil unten
+  kompressor.add(setze(zylinder(0.008, 0.008, 0.04, FARBE.messing, {}, 8), 0.1, 0.12, 0));
+  // Spiralschlauch (blau) hängt am Bügel, unten die gelbe Ausblaspistole
+  const spirale = [];
+  for (let i = 0; i <= 80; i++) { const w = i * 0.5; spirale.push(new THREE.Vector3(0.44 + Math.cos(w) * 0.045, 0.6 - i * 0.0055, 0.05 + Math.sin(w) * 0.045)); }
+  kompressor.add(teil(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(spirale), 200, 0.007, 6, false), 0x2f6fd0, { umriss: 0.0015 }));
+  const zuleitung = new THREE.CatmullRomCurve3([new THREE.Vector3(0.335, 0.43, 0.06), new THREE.Vector3(0.39, 0.5, 0.06), new THREE.Vector3(0.44, 0.6, 0.05)]);
+  kompressor.add(teil(new THREE.TubeGeometry(zuleitung, 12, 0.007, 6, false), 0x2f6fd0, { umriss: 0.0015 }));
+  const blaspistole = new THREE.Group();
+  blaspistole.add(setze(quader(0.03, 0.09, 0.025, 0xe2c21e, { umriss: 0.002 }), 0, 0, 0));
+  blaspistole.add(setze(quader(0.012, 0.03, 0.02, 0x1d1d1f, { umriss: false }), 0.018, 0.005, 0));
+  blaspistole.add(setze(zylinder(0.005, 0.005, 0.12, 0x9aa3ab, {}, 8), 0, 0.06, 0.05, Math.PI / 2 - 0.3, 0, 0));
+  setze(blaspistole, 0.44, 0.13, 0.05);
+  kompressor.add(blaspistole);
+  // in der Ecke rechts neben dem Regal, Bedienseite zum Raum
+  setze(kompressor, -4.45, 0, -2.3, 0, 0, 0);
+  scene.add(kompressor);
+  merke(kompressor, 'kompressor', 'Kompressor (Druckluft)', null);
+  objekte.kompressor = kompressor;
+  hindernis(-4.85, -3.95, -2.55, -2.05);
+
+  // Dennis' blaue Einkaufstasche (wie die große von IKEA): gewebte Plane, gelbe Gurtbänder, flache Henkel, Wäsche drin
+  const tasche = new THREE.Group();
+  const gewebe = leinwandTextur(128, 128, (g, b, h) => {
+    g.fillStyle = '#1d5fc4'; g.fillRect(0, 0, b, h);
+    for (let i = 0; i < b; i += 4) {
+      g.fillStyle = i % 8 ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,40,0.12)';
+      g.fillRect(i, 0, 2, h);
+      g.fillRect(0, i, b, 2);
+    }
+  }, [3, 2]);
+  {
+    // Korpus: unten 55 x 37 cm, oben etwas weiter, 35 cm hoch, oben offen
+    const geo = new THREE.BoxGeometry(0.55, 0.35, 0.37, 2, 2, 2);
+    const pos = geo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const t = (pos.getY(i) + 0.175) / 0.35;
+      pos.setX(i, pos.getX(i) * (1 + t * 0.05));
+      pos.setZ(i, pos.getZ(i) * (1 + t * 0.07) + Math.sin(pos.getX(i) * 9) * 0.004 * t);
+    }
+    geo.translate(0, 0.175, 0);
+    geo.computeVertexNormals();
+    // Deckel-Flächen (Gruppe 2 = +y) weglassen: Tasche ist oben offen
+    const plane = toon(0xffffff, { map: gewebe });
+    const aussen = new THREE.Mesh(geo, [plane, plane, new THREE.MeshBasicMaterial({ visible: false }), plane, plane, plane]);
+    tasche.add(aussen);
+    const innenMat = new THREE.MeshBasicMaterial({ color: 0x0f2f66, side: THREE.BackSide });
+    const innen = new THREE.Mesh(geo, [innenMat, innenMat, new THREE.MeshBasicMaterial({ visible: false }), innenMat, innenMat, innenMat]);
+    innen.scale.setScalar(0.995);
+    tasche.add(innen);
+    // Comic-Kanten
+    const kanten = new THREE.LineSegments(new THREE.EdgesGeometry(geo, 30), new THREE.LineBasicMaterial({ color: 0x111111 }));
+    tasche.add(kanten);
+    // Saum oben
+    for (const sz of [-1, 1]) tasche.add(setze(quader(0.58, 0.02, 0.006, 0x174e9e, { umriss: 0.002 }), 0, 0.34, sz * 0.198));
+    for (const sx of [-1, 1]) tasche.add(setze(quader(0.006, 0.02, 0.4, 0x174e9e, { umriss: 0.002 }), sx * 0.289, 0.34, 0));
+  }
+  const gurtGelb = 0xf2c21c;
+  // flacher, gebogener Gurt-Henkel (Bogen aus Band)
+  function henkel(rx, ry, breite) {
+    const f = new THREE.Shape();
+    f.absellipse(0, 0, rx + breite / 2, ry + breite / 2, 0, Math.PI, false);
+    f.absellipse(0, 0, rx - breite / 2, ry - breite / 2, Math.PI, 0, true);
+    const geo = new THREE.ExtrudeGeometry(f, { depth: 0.004, bevelEnabled: false, curveSegments: 20 });
+    geo.translate(0, 0, -0.002);
+    return teil(geo, gurtGelb, { umriss: 0.0025 });
+  }
+  for (const sz of [-1, 1]) {
+    const seite = new THREE.Group();
+    // senkrechte Gurtbänder mit Naht
+    for (const sx of [-0.13, 0.13]) {
+      seite.add(setze(quader(0.036, 0.34, 0.004, gurtGelb, { umriss: 0.002 }), sx, 0.17, 0));
+      seite.add(setze(quader(0.002, 0.33, 0.005, 0xb88a0a, { umriss: false }), sx - 0.011, 0.17, 0.0005));
+      seite.add(setze(quader(0.002, 0.33, 0.005, 0xb88a0a, { umriss: false }), sx + 0.011, 0.17, 0.0005));
+      seite.add(setze(quader(0.04, 0.012, 0.007, 0x2a2a2a, { umriss: 0.002 }), sx, 0.26, 0.002));
+    }
+    // kurzer Henkel und langer Schultergurt
+    const kurz = henkel(0.13, 0.15, 0.034);
+    kurz.position.y = 0.34;
+    kurz.rotation.x = -0.32;
+    seite.add(kurz);
+    const lang = henkel(0.13, 0.3, 0.03);
+    lang.position.set(0, 0.34, 0.006);
+    lang.rotation.x = -0.6;
+    seite.add(lang);
+    seite.position.z = sz * 0.2;
+    if (sz < 0) seite.rotation.y = Math.PI;
+    tasche.add(seite);
+  }
+  // Gurt unter dem Boden
+  for (const sx of [-0.13, 0.13]) tasche.add(setze(quader(0.036, 0.004, 0.38, gurtGelb, { umriss: 0.002 }), sx, -0.002, 0));
+  // Wäsche: zerknautschte Kleidungsstücke, ein Ärmel und ein Hosenbein hängen raus
+  function knautsch(geo, staerke, saat) {
+    const p = geo.attributes.position;
+    const v = new THREE.Vector3();
+    for (let i = 0; i < p.count; i++) {
+      v.fromBufferAttribute(p, i);
+      const n = Math.sin(v.x * 31 + saat) * Math.cos(v.z * 27 + saat * 2) + Math.sin(v.y * 23 + saat * 3) * 0.6;
+      v.multiplyScalar(1 + n * staerke);
+      p.setXYZ(i, v.x, v.y, v.z);
+    }
+    geo.computeVertexNormals();
+    return geo;
+  }
+  const stoff = (geo, farbe) => teil(geo, farbe, { umriss: 0.003 });
+  const tWaesche = new THREE.Group();
+  // grauer Hoodie (Haufen + Kapuze + raushängender Ärmel mit Bündchen)
+  const hoodie = stoff(knautsch(new THREE.SphereGeometry(0.15, 20, 14), 0.12, 1), 0x8e939a);
+  hoodie.scale.set(1.35, 0.55, 1.0);
+  hoodie.position.set(-0.09, 0.33, 0.02);
+  tWaesche.add(hoodie);
+  const kapuze = stoff(knautsch(new THREE.SphereGeometry(0.07, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.6), 0.1, 4), 0x7f848b);
+  kapuze.position.set(-0.2, 0.38, -0.05);
+  kapuze.rotation.set(-0.8, 0.4, 0.3);
+  tWaesche.add(kapuze);
+  const aermelKurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(-0.05, 0.34, 0.08), new THREE.Vector3(-0.03, 0.38, 0.17), new THREE.Vector3(-0.02, 0.36, 0.215),
+    new THREE.Vector3(-0.01, 0.28, 0.235), new THREE.Vector3(0.0, 0.18, 0.235),
+  ]);
+  tWaesche.add(stoff(knautsch(new THREE.TubeGeometry(aermelKurve, 24, 0.034, 10, false), 0.06, 2), 0x8e939a));
+  tWaesche.add(setze(stoff(new THREE.CylinderGeometry(0.03, 0.03, 0.04, 12), 0x6f747a), 0.0, 0.175, 0.235));
+  // Jeans: Haufen + Hosenbein über die Schmalseite, mit Saum
+  const jeans = stoff(knautsch(new THREE.SphereGeometry(0.13, 18, 12), 0.13, 7), 0x35577f);
+  jeans.scale.set(1.0, 0.5, 1.0);
+  jeans.position.set(0.1, 0.35, -0.03);
+  tWaesche.add(jeans);
+  const beinKurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0.16, 0.36, 0.0), new THREE.Vector3(0.26, 0.4, 0.01), new THREE.Vector3(0.3, 0.36, 0.015),
+    new THREE.Vector3(0.315, 0.25, 0.02), new THREE.Vector3(0.315, 0.14, 0.02),
+  ]);
+  const bein = stoff(knautsch(new THREE.TubeGeometry(beinKurve, 24, 0.048, 10, false), 0.05, 3), 0x35577f);
+  tWaesche.add(bein);
+  tWaesche.add(setze(stoff(new THREE.CylinderGeometry(0.046, 0.046, 0.025, 12), 0x5a7aa3), 0.315, 0.135, 0.02));
+  tWaesche.add(setze(quader(0.004, 0.2, 0.006, 0xd8a24a, { umriss: false }), 0.318, 0.24, 0.068));
+  // schwarzes Shirt, weißes Handtuch mit Streifen, rote Socke
+  const shirt = stoff(knautsch(new THREE.SphereGeometry(0.11, 16, 10), 0.15, 9), 0x232326);
+  shirt.scale.set(1.3, 0.35, 0.9);
+  shirt.position.set(0.02, 0.38, -0.08);
+  tWaesche.add(shirt);
+  const tuch = stoff(knautsch(new THREE.BoxGeometry(0.2, 0.05, 0.14, 6, 2, 4), 0.06, 5), 0xf2efe6);
+  tuch.position.set(0.1, 0.39, 0.08);
+  tuch.rotation.set(0.15, 0.4, -0.12);
+  tWaesche.add(tuch);
+  tWaesche.add(setze(quader(0.205, 0.052, 0.018, 0x3a7ac2, { umriss: false }), 0.1, 0.39, 0.08, 0.15, 0.4, -0.12));
+  const sockeKurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(-0.2, 0.37, -0.12), new THREE.Vector3(-0.22, 0.39, -0.19), new THREE.Vector3(-0.23, 0.33, -0.215),
+    new THREE.Vector3(-0.23, 0.26, -0.215), new THREE.Vector3(-0.2, 0.235, -0.22),
+  ]);
+  tWaesche.add(stoff(new THREE.TubeGeometry(sockeKurve, 20, 0.022, 8, false), 0xc23a2e));
+  tWaesche.add(setze(stoff(new THREE.CylinderGeometry(0.023, 0.023, 0.02, 10), 0xf4f0e6), -0.205, 0.37, -0.12, 0.3, 0, 0));
+  tasche.add(tWaesche);
+  tasche.userData.waesche = tWaesche;
+  tasche.visible = false;
+  scene.add(tasche);
+  objekte.waeschetasche = tasche;
 
   // ---------- Schweißplatz ----------
   const tisch = new THREE.Group();
@@ -1032,18 +1426,65 @@ export function baueWelt(scene) {
   merke(eimerM, 'muelleimer', 'Mülleimer', null);
   hindernis(1.32, 1.78, -3.55, -3.05);
 
-  // Feuer: flackernde Flammen + Licht
+  // Feuer: flackernde Comic-Flammen, leuchtende Zungen, Glut, Rauch zur Decke, Ruß bleibt danach
   const feuer = new THREE.Group();
   const flammen = [];
-  const flammenMats = [0xff5a1f, 0xff9a1f, 0xffd23a].map((c) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.9, depthWrite: false }));
-  for (let i = 0; i < 9; i++) {
-    const f = new THREE.Mesh(new THREE.ConeGeometry(0.06 + (i % 3) * 0.02, 0.35, 8), flammenMats[i % 3]);
+  const flammenMats = [0xd8321a, 0xff5a1f, 0xff9a1f, 0xffd23a].map((c) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.92, depthWrite: false }));
+  for (let i = 0; i < 14; i++) {
+    const innen = i >= 9;
+    const geo = new THREE.ConeGeometry(innen ? 0.04 : 0.055 + (i % 3) * 0.018, innen ? 0.24 : 0.38, 7);
+    geo.translate(0, innen ? 0.12 : 0.19, 0);
+    const f = new THREE.Mesh(geo, flammenMats[innen ? 3 : i % 3]);
     f.userData.phase = i * 1.3;
-    f.userData.x = Math.sin(i * 2.1) * 0.09;
-    f.userData.z = Math.cos(i * 2.1) * 0.09;
+    const r = innen ? 0.03 : 0.07 + (i % 2) * 0.04;
+    f.userData.x = Math.sin(i * 2.1) * r;
+    f.userData.z = Math.cos(i * 2.1) * r;
+    f.userData.neig = innen ? 0.05 : 0.18;
     feuer.add(f);
     flammen.push(f);
   }
+  // weiche Flammenzungen (Sprites, additiv)
+  const zungenTex = leinwandTextur(64, 128, (g) => {
+    const gr = g.createRadialGradient(32, 92, 2, 32, 80, 60);
+    gr.addColorStop(0, 'rgba(255,250,200,1)');
+    gr.addColorStop(0.25, 'rgba(255,200,60,0.95)');
+    gr.addColorStop(0.55, 'rgba(255,100,20,0.6)');
+    gr.addColorStop(1, 'rgba(200,30,10,0)');
+    g.fillStyle = gr;
+    g.beginPath();
+    g.moveTo(32, 2);
+    g.bezierCurveTo(56, 50, 62, 90, 32, 126);
+    g.bezierCurveTo(2, 90, 8, 50, 32, 2);
+    g.fill();
+  });
+  const zungen = [];
+  for (let i = 0; i < 10; i++) {
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: zungenTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    sp.userData = { t: i / 10, x: Math.sin(i * 2.7) * 0.08, z: Math.cos(i * 2.7) * 0.08 };
+    feuer.add(sp);
+    zungen.push(sp);
+  }
+  // Glut: kleine Funken, die hochfliegen
+  const punktTex = leinwandTextur(32, 32, (g) => {
+    const gr = g.createRadialGradient(16, 16, 1, 16, 16, 15);
+    gr.addColorStop(0, 'rgba(255,255,255,1)');
+    gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr;
+    g.fillRect(0, 0, 32, 32);
+  });
+  const glut = [];
+  for (let i = 0; i < 14; i++) {
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: punktTex, color: i % 2 ? 0xffb030 : 0xff6a20, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    sp.userData = { t: i / 14, x: 0, z: 0, wx: Math.sin(i * 1.9) * 0.15, wz: Math.cos(i * 3.1) * 0.15 };
+    sp.scale.setScalar(0.025);
+    feuer.add(sp);
+    glut.push(sp);
+  }
+  // Glühende Pappe oben im Eimer
+  const glutBett = new THREE.Mesh(new THREE.CircleGeometry(0.16, 16), new THREE.MeshBasicMaterial({ color: 0xff7a1a, transparent: true, opacity: 0.9 }));
+  glutBett.rotation.x = -Math.PI / 2;
+  glutBett.position.y = -0.02;
+  feuer.add(glutBett);
   const feuerLicht = new THREE.PointLight(0xff7a2a, 0, 4, 1.5);
   feuerLicht.position.y = 0.4;
   feuer.add(feuerLicht);
@@ -1051,17 +1492,91 @@ export function baueWelt(scene) {
   feuer.scale.setScalar(1.7);
   feuer.visible = false;
   scene.add(feuer);
+  // Rauch steigt zur Decke (in Weltkoordinaten)
+  const rauch = new THREE.Group();
+  rauch.visible = false;
+  scene.add(rauch);
+  const rauchTex = leinwandTextur(64, 64, (g) => {
+    const gr = g.createRadialGradient(32, 32, 4, 32, 32, 30);
+    gr.addColorStop(0, 'rgba(255,255,255,0.9)');
+    gr.addColorStop(0.6, 'rgba(255,255,255,0.45)');
+    gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr;
+    g.fillRect(0, 0, 64, 64);
+  });
+  const qualm = [];
+  for (let i = 0; i < 12; i++) {
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: rauchTex, color: 0x3a3634, transparent: true, depthWrite: false }));
+    sp.userData = { t: i / 12, wx: Math.sin(i * 2.3) * 0.25, wz: Math.cos(i * 1.7) * 0.15 };
+    rauch.add(sp);
+    qualm.push(sp);
+  }
+  // Ruß: wächst, solange es brennt, und bleibt danach (Decke und Wand über dem Eimer)
+  const russTex = leinwandTextur(128, 128, (g) => {
+    const r = zufall(77);
+    for (let i = 0; i < 26; i++) {
+      const x = 64 + (r() - 0.5) * 50, y = 64 + (r() - 0.5) * 50, rad = 18 + r() * 34;
+      const gr = g.createRadialGradient(x, y, 1, x, y, rad);
+      gr.addColorStop(0, 'rgba(20,16,14,0.35)');
+      gr.addColorStop(1, 'rgba(20,16,14,0)');
+      g.fillStyle = gr;
+      g.fillRect(0, 0, 128, 128);
+    }
+  });
+  const russMat = new THREE.MeshBasicMaterial({ map: russTex, transparent: true, opacity: 0, depthWrite: false });
+  const russDecke = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 2.2), russMat);
+  russDecke.rotation.x = Math.PI / 2;
+  russDecke.position.set(1.55, RAUM.hoehe - 0.012, -3.15);
+  scene.add(russDecke);
+  const russWand = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 2.4), russMat);
+  russWand.position.set(1.55, RAUM.hoehe - 1.0, RAUM.zMin + 0.015);
+  scene.add(russWand);
+  let russ = 0;
   let feuerZeit = 0;
   animiert.push((dt) => {
+    if (rauch.visible) {
+      // Rauch zieht nach dem Löschen noch kurz ab
+      let sichtbar = false;
+      for (const sp of qualm) {
+        const u = sp.userData;
+        u.t += dt * 0.22;
+        if (u.t >= 1) { if (feuer.visible) u.t -= 1; else { sp.material.opacity = 0; continue; } }
+        sichtbar = true;
+        const h = 0.9 + u.t * (RAUM.hoehe - 1.0);
+        const breit = u.t > 0.8 ? (u.t - 0.8) * 4 : 0;
+        sp.position.set(1.55 + u.wx * u.t + Math.sin(feuerZeit + u.t * 6) * 0.05 + breit * u.wx * 2, h, -3.3 + u.wz * u.t + breit * 0.3);
+        sp.scale.setScalar(0.35 + u.t * 1.1);
+        sp.material.opacity = Math.sin(Math.min(1, u.t) * Math.PI) * 0.55;
+      }
+      if (!sichtbar) rauch.visible = false;
+    }
     if (!feuer.visible) return;
     feuerZeit += dt;
+    russ = Math.min(1, russ + dt * 0.035);
+    russMat.opacity = russ * 0.9;
     for (const f of flammen) {
       const p = f.userData.phase;
       const h = 0.8 + Math.sin(feuerZeit * 9 + p) * 0.25 + Math.sin(feuerZeit * 17 + p * 2) * 0.12;
-      f.scale.set(1, h, 1);
-      f.position.set(f.userData.x + Math.sin(feuerZeit * 5 + p) * 0.02, 0.17 * h, f.userData.z);
+      f.scale.set(1 + Math.sin(feuerZeit * 13 + p) * 0.08, h, 1);
+      f.position.set(f.userData.x + Math.sin(feuerZeit * 5 + p) * 0.02, 0, f.userData.z);
+      f.rotation.set(Math.sin(feuerZeit * 4 + p) * f.userData.neig, 0, Math.cos(feuerZeit * 3 + p) * f.userData.neig);
     }
-    feuerLicht.intensity = 4 + Math.sin(feuerZeit * 23) * 1.2;
+    for (const sp of zungen) {
+      const u = sp.userData;
+      u.t = (u.t + dt * 1.6) % 1;
+      sp.position.set(u.x * (1 - u.t) + Math.sin(feuerZeit * 7 + u.x * 40) * 0.02, 0.08 + u.t * 0.42, u.z * (1 - u.t));
+      sp.scale.set(0.18 * (1 - u.t * 0.6), 0.34 * (1 - u.t * 0.4), 1);
+      sp.material.opacity = Math.sin(u.t * Math.PI) * 0.85;
+    }
+    for (const sp of glut) {
+      const u = sp.userData;
+      u.t += dt * 0.7;
+      if (u.t >= 1) u.t -= 1;
+      sp.position.set(u.wx * u.t + Math.sin(feuerZeit * 11 + u.wz * 30) * 0.03, 0.1 + u.t * 0.9, u.wz * u.t);
+      sp.material.opacity = 1 - u.t;
+    }
+    glutBett.material.opacity = 0.75 + Math.sin(feuerZeit * 15) * 0.2;
+    feuerLicht.intensity = 4 + Math.sin(feuerZeit * 23) * 1.2 + Math.sin(feuerZeit * 7.3) * 0.6;
   });
 
   // Löschpulver-Wolke
@@ -1206,14 +1721,54 @@ export function baueWelt(scene) {
 
   // Dennis' Klemmbrett mit Notizen, liegt auf dem Sofa
   const klemmbrett = new THREE.Group();
-  const notizTex = leinwandTextur(256, 340, (g, b, h) => {
+  // Handschrift: Caveat (Google Font), leicht schief, wechselnde Stiftfarbe, Erledigtes durchgestrichen
+  function notizenMalen(g, b, h) {
+    const r = zufall(31);
     g.fillStyle = '#fbfaf3'; g.fillRect(0, 0, b, h);
     g.strokeStyle = '#9ec3e6'; g.lineWidth = 2;
-    for (let y = 70; y < h; y += 27) { g.beginPath(); g.moveTo(10, y); g.lineTo(b - 10, y); g.stroke(); }
-    g.fillStyle = '#1f3f8a';
-    g.font = '24px "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive';
-    NOTIZEN.forEach((t, i) => g.fillText(t, 16, 64 + i * 27));
-  });
+    for (let y = 92; y < h; y += 46) { g.beginPath(); g.moveTo(14, y); g.lineTo(b - 14, y); g.stroke(); }
+    g.strokeStyle = '#e8a0a0'; g.beginPath(); g.moveTo(52, 0); g.lineTo(52, h); g.stroke();
+    // Kaffeefleck
+    g.strokeStyle = 'rgba(140, 95, 50, 0.25)'; g.lineWidth = 5;
+    g.beginPath(); g.arc(430, 630, 34, 0.3, 5.6); g.stroke();
+    let zeile = 0;
+    for (const n of NOTIZEN) {
+      const teile = Array.isArray(n.t) ? n.t : [n.t];
+      teile.forEach((t, j) => {
+        const y = 84 + zeile * 46;
+        const x = 64 + (j ? 26 : 0) + (r() - 0.5) * 8;
+        g.save();
+        g.translate(x, y);
+        g.rotate((r() - 0.5) * 0.05);
+        g.fillStyle = n.rot ? '#b3261e' : r() < 0.25 ? '#16306e' : '#1f3f8a';
+        g.font = `${n.fett ? 700 : 500} ${46 + Math.round((r() - 0.5) * 4)}px Caveat, "Segoe Print", "Bradley Hand", cursive`;
+        g.fillText(t, 0, 0);
+        const breite = g.measureText(t).width;
+        if (n.durch) {
+          // krakelig durchgestrichen
+          g.strokeStyle = '#1f3f8a'; g.lineWidth = 3;
+          g.beginPath();
+          g.moveTo(-6, -13);
+          for (let i = 1; i <= 6; i++) g.lineTo(-6 + (breite + 12) * i / 6, -13 + (r() - 0.5) * 6);
+          g.stroke();
+        }
+        g.restore();
+        zeile++;
+      });
+      if (n.haken) {
+        g.strokeStyle = '#2b7a2b'; g.lineWidth = 4;
+        const y = 84 + (zeile - 1) * 46;
+        g.beginPath(); g.moveTo(22, y - 14); g.lineTo(30, y - 4); g.lineTo(44, y - 26); g.stroke();
+      }
+    }
+  }
+  const notizTex = leinwandTextur(512, 692, notizenMalen);
+  // Schrift kommt erst aus dem Netz: danach neu malen
+  if (document.fonts?.load) {
+    Promise.all([document.fonts.load('500 46px Caveat'), document.fonts.load('700 46px Caveat')])
+      .then(() => { notizenMalen(notizTex.userData.ctx, 512, 692); notizTex.needsUpdate = true; })
+      .catch(() => {});
+  }
   klemmbrett.add(quader(0.23, 0.012, 0.32, 0x8a5a2e));
   const blatt = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.27), new THREE.MeshBasicMaterial({ map: notizTex }));
   blatt.rotation.x = -Math.PI / 2;
@@ -1223,6 +1778,7 @@ export function baueWelt(scene) {
   setze(klemmbrett, -3.75, 0.49, 3.5, 0, 0.5, 0);
   scene.add(klemmbrett);
   merke(klemmbrett, 'klemmbrett', 'Dennis’ Klemmbrett', null);
+  klemmbrett.userData.start = { pos: klemmbrett.position.clone(), rot: klemmbrett.rotation.clone() };
   objekte.klemmbrett = klemmbrett;
 
   // ---------- Gasflasche ----------
@@ -1289,7 +1845,7 @@ export function baueWelt(scene) {
     KLO: { x: 1.4, z: 3.55 },
     FEUER: { x: 1.55, z: -3.3, vorX: 1.55, vorZ: -2.45 },
     LOESCHER: { x: 4.35, z: -1.0 },
-    feuer(an) { feuer.visible = an; feuerLicht.intensity = an ? 4 : 0; },
+    feuer(an) { feuer.visible = an; feuerLicht.intensity = an ? 4 : 0; if (an) rauch.visible = true; },
     get brennt() { return feuer.visible; },
     pulver,
     wasser,
@@ -1538,13 +2094,16 @@ export function baueReifen() {
 }
 
 export const NOTIZEN = [
-  'Lydia anrufen',
-  'Hüfte hinten links!!',
-  'Heringe essen',
-  'Orthopäde Di 8:15',
-  'Zahnarzt Mi 14:30',
-  'Hautarzt Fr 9:00',
-  'TK-Pizza einkaufen',
-  'Sexy abmelden',
-  'Fußmatte waschen',
-];
+  { t: 'Lydia anrufen', durch: true, haken: true },
+  { t: 'Hüfte hinten links!!', rot: true, fett: true },
+  { t: 'Heringe essen', durch: true },
+  { t: 'Orthopäde Di 8:15' },
+  { t: 'Zahnarzt Mi 14:30', durch: true },
+  { t: 'Hautarzt Fr 9:00' },
+  { t: 'TK-Pizza einkaufen' },
+  { t: 'Sexy abmelden' },
+  { t: ['neue Motorhaube für Benz', 'organisieren'] },
+  { t: 'Konzerttickets verkaufen' },
+  { t: 'Urlaub einreichen' },
+  { t: '40-Grad-Wäsche!!', fett: true },
+]

@@ -181,6 +181,20 @@ export const DENNIS = {
     fertig: 'Fertig? Dann gib her, ich guck mir das an.',
   },
   nichtFertig: ['Das ist doch noch kein Ofen. Mach erst fertig!', 'Fertig? Da fehlt ja noch die Hälfte!', 'Nee nee. Erst alles anschweißen, dann reden wir.'],
+  waesche: {
+    anleitung: [
+      'Ach, du machst meine Wäsche? Super! Hier, die blaue Tasche.',
+      'Ab in die Waschmaschine rechts neben dem Waschplatz. 40 Grad! Nicht mehr, sonst passt mir nix mehr.',
+      'Wenn sie fertig ist, kommt alles in den Trockner obendrauf. Aber vorher das Flusensieb rausziehen, das ist immer dicht.',
+      'Das Sieb am Kompressor mit Druckluft ausblasen, wieder rein, dann Trockner an. Und dann bringst du mir die Wäsche.',
+    ],
+    heiss: ['Wie heiß?! Meine Hoodies sind jetzt Kindergröße!', 'Hab ich nicht 40 Grad gesagt?! Das läuft doch alles ein!'],
+    kalt: ['30 Grad? Das wird doch nicht sauber. Na ja, besser als zu heiß.'],
+    sieb: ['Halt! Erst das Flusensieb sauber machen! Sonst fängt der Trockner Feuer!', 'Flusensieb! Raus damit und ausblasen, sonst brennt die Bude!'],
+    danke: ['Ah, frische Wäsche! Riecht ja wie neu. Danke dir, echt.', 'Trocken und warm! Du bist ein Schatz. Das vergess ich dir nicht.'],
+    dankeHalb: ['Danke. Auch wenn mein Hoodie jetzt kneift.'],
+  },
+  ofenBringen: ['Schön! Dann bring ihn mal her, ich will ihn in die Hand nehmen.', 'Na dann her damit! Hochheben und zu mir bringen.', 'Bring ihn rüber, dann gucken wir.'],
   nichtLackiert: ['Und lackieren? So rostet der dir doch weg. Ofenlack drauf, dann reden wir.', 'Ohne Lack nehm ich den nicht. Schwarz muss er sein!', 'Lackieren fehlt noch. Ofenlack, mattschwarz!'],
 
   ende: {

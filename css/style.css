@@ -121,6 +121,10 @@ button { font: inherit; color: inherit; }
 }
 #aufgaben li.aktiv { color: var(--tinte); font-weight: 800; }
 #aufgaben li.fertig { color: rgba(0, 0, 0, 0.4); text-decoration: line-through; }
+#aufgaben li.neben { color: rgba(31, 78, 140, 0.6); }
+#aufgaben li.neben.aktiv { color: #1f4e8c; }
+#aufgaben li.neben.fertig { color: rgba(31, 78, 140, 0.45); }
+#aufgaben li.neben-start { border-top: 1.5px dashed rgba(0, 0, 0, 0.25); margin-top: 4px; padding-top: 7px; }
 #aufgaben li .box {
   width: 15px;
   height: 15px;
