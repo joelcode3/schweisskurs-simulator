@@ -839,6 +839,25 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
   }
 
 
+  // ---------- Lockencreme: Dennis cremt sich die Locken ein und beruhigt sich ----------
+  async function cremeGeben() {
+    const creme = hand.weg();
+    handleisteZeigen();
+    dennis.stimmung('froh');
+    // kurz in die Haare greifen (Hand hoch), dann Creme zurück ans Waschbecken
+    const zuletzt = z.cremeZuletzt ?? -999;
+    z.cremeZuletzt = sekundenSeitStart();
+    const genug = sekundenSeitStart() - zuletzt < 90;
+    await dennisSagt(sag(genug ? DENNIS.creme.schonDrin : DENNIS.creme.danke), false, { prio: 2, minMs: 3500 });
+    if (!genug) {
+      z.wut = Math.max(0, z.wut - 12);
+      aktualisieren();
+      jingle(true);
+    }
+    welt.cremeZurueck(creme);
+    dennis.stimmung('ruhig');
+  }
+
   // ---------- Stahlträger in der Ecke: Torbens Job ----------
   function traegerAnfassen() {
     z.traegerZuletzt = sekundenSeitStart();
@@ -1127,6 +1146,20 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     z.aufKlo = true;
     ui.pauseZeigen(true, 'Dennis ist auf dem Klo: Arbeitspause, bis er zurück ist');
     await Promise.race([dennis.gehZu(welt.KLO.x, welt.KLO.z, regulaer ? 3.4 : 4.2), warte(6000)]);
+    // Steht man selbst im Bad, wenn Dennis ankommt: zu spät, eingeschissen, sofort Rausschmiss
+    if (welt.imBad(kamera.position.x, kamera.position.z) && !z.vorbei) {
+      z.aufKlo = false;
+      ui.pauseZeigen(false);
+      z.wut = 100;
+      z.wutMax = 100;
+      z.fehler.push('Bad blockiert, als Dennis dringend musste');
+      ui.wutZeigen(100, 'wut');
+      dennis.stimmung('wut');
+      await dennisSagt(sag(DENNIS.eingeschissen), true, { prio: 2, minMs: 3500 });
+      z.beschaeftigt = true;
+      await rausgeflogen(sag(DENNIS.eingeschissenRaus));
+      return;
+    }
     // durch die WC-Tür ins Bad, Tür zu (außer man steht selbst im Bad)
     await Promise.race([dennis.gehZu(welt.KLO_DRIN.x, welt.KLO_DRIN.z, 2.4), warte(2500)]);
     if (!welt.imBad(kamera.position.x, kamera.position.z)) welt.kloTuer(false);
@@ -1272,6 +1305,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
   let feuerTon = null;
   // Grund: nach dem Flexen Funken, vorher hat Johnny seine Kippe reingeschnippt
   function feuerStart() {
+    z.letztesEreignis = sekundenSeitStart();
     z.feuer = 'brennt';
     z.feuerGrund = z.geschnitten ? 'funken' : 'kippe';
     z.feuerSeit = sekundenSeitStart();
@@ -1374,7 +1408,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
   }
 
   // ---------- Dinge in der Hand ----------
-  const AUFNEHMBAR = ['brille', 'handschuhe', 'helm', 'flex', 'edding', 'hammer', 'feuerloescher', 'besen', 'figur', 'handy', 'klemmbrett', 'hulahup', 'rohrzange', 'schlauch', 'poempel'];
+  const AUFNEHMBAR = ['brille', 'handschuhe', 'helm', 'flex', 'edding', 'hammer', 'feuerloescher', 'besen', 'figur', 'handy', 'klemmbrett', 'hulahup', 'rohrzange', 'schlauch', 'poempel', 'creme'];
   const ANZIEHBAR = ['brille', 'handschuhe', 'helm'];
   let handyMal = 0;
 
@@ -1489,6 +1523,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     if (id === 'hulahup') { ui.hinweis('Klick auf Dennis, dann gibst du ihm den Reifen.'); return; }
     if (id === 'schlauch') return spritzen();
     if (id === 'klemmbrett') return waescheUebernehmen();
+    if (id === 'creme') { ui.hinweis('Die ist für Dennis. Klick auf Dennis, dann gibst du sie ihm.'); return; }
     if (id === 'poempel') {
       const t = welt.objekte.toilette.position;
       if (Math.hypot(kamera.position.x - t.x, kamera.position.z - t.z) < 2.2) return poempeln();
@@ -1576,6 +1611,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
   // ---------- Wasserrohrbruch (Frost): Rohrzange holen und abdichten ----------
   let leckTon = null;
   function leckStart() {
+    z.letztesEreignis = sekundenSeitStart();
     z.leck = 'spritzt';
     welt.leck(true);
     ui.warnung('wasser', true);
@@ -1766,6 +1802,12 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
         await spruehen(ziel === 'dennis' ? 'dennis' : 'feuer');
         return true;
       }
+      if (it.id === 'creme' && ziel === 'dennis') {
+        if (dennis.modus !== 'normal' || z.aufKlo) { ui.hinweis('Dennis hat gerade keine Hand frei.'); return true; }
+        await hinZu(info, treffer.obj);
+        await cremeGeben();
+        return true;
+      }
       if (it.id === 'poempel' && ziel === 'toilette') { await hinZu(info, treffer.obj); await poempeln(); return true; }
       if (it.id === 'sieb' && ziel === 'kompressor') { await hinZu(info, treffer.obj); await siebAusblasen(); return true; }
       if (it.id === 'sieb' && ziel === 'trockner') {
@@ -1937,6 +1979,25 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
         return ['Dusche', 'Jetzt nicht. Erst wird gearbeitet.', []];
       case 'waschbecken':
         return ['Waschbecken', 'Mit Spiegel. Siehst müde aus.', [A('Hände waschen', 'wasser', haendeWaschen)]];
+      case 'leiter':
+        return ['Johnnys Leiter', 'Alu-Leiter von einem alten Camper. Hängt hier schon ewig.', [A('Anfassen', 'hand', () => {
+          z.leiterZuletzt = sekundenSeitStart();
+          if (dennisSiehts()) dennisSagt(sag(DENNIS.leiter), true, { prio: 2 });
+          else ui.hinweis('Hängt fest. Und ist nicht deine.');
+        })]];
+      case 'stromwuerfel':
+        return ['Stromverteiler', 'Gelber Würfel mit Steckdosen an jeder Seite. Hängt ziemlich tief.', [A('Anstupsen', 'hand', () => {
+          const w = welt.stromWuerfelBei(kamera.position.x, kamera.position.z, 3);
+          if (w) welt.anstossen(w);
+          klonk(0.3);
+        })]];
+      case 'creme':
+        return ['Lockencreme', 'Dennis’ Lockencreme. Ohne die sitzt nix.', [A('In die Hand nehmen', 'hand', () => aufnehmen('creme', welt.objekte.creme))]];
+      case 'latexhose':
+        return ['Latexunterhose', 'Schwarz, eng, glänzend. Hängt am Haken. Frag lieber nicht.', [A('Lieber nicht anfassen', 'hand', () => {
+          if (dennisSiehts()) dennisSagt(sag(DENNIS.latexhose), false, { prio: 2 });
+          else ui.hinweis('Du lässt sie lieber hängen.');
+        })]];
       case 'traeger':
         return ['Stahlträger', 'HEB 200, je gut 160 kg. Liegen hier rum.', [A('Anfassen', 'hand', traegerAnfassen)]];
       case 'poempel':
@@ -2096,10 +2157,10 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     location.reload();
   }
 
-  async function rausgeflogen() {
+  async function rausgeflogen(text = DENNIS.rausgeflogen) {
     z.vorbei = true;
     dennis.stimmung('wut');
-    await auftritt({ schluessel: ['rausgeflogen', 'ausraster'], text: DENNIS.rausgeflogen, stufe: 'voll', stimmung: 'wut' });
+    await auftritt({ schluessel: ['rausgeflogen', 'ausraster'], text, stufe: 'voll', stimmung: 'wut' });
     jingle(false);
     await ui.infoDialog('Rausgeflogen!', `<img class="ende-foto" src="assets/ende-nichtbestanden.webp" alt="">
       <p>Dennis ist der Kragen geplatzt.</p>
@@ -2217,10 +2278,32 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
         murmeln();
       }
       // Feuer im Mülleimer: einmal pro Spiel, nach dem Flexen bald, sonst irgendwann
-      if (z.feuer === 'nie' && sekundenSeitStart() > z.feuerAb && !z.beschaeftigt && !z.aufKlo && !z.dennisFegt && z.mittag !== 'gerade' && dennis.modus === 'normal' && !buehneBelegt()) feuerStart();
+      // Dennis läuft gegen einen tief hängenden Stromwürfel
+      if (dennis.wurzel.visible && dennis.modus !== 'liegen' && dennis.modus !== 'sitzen' && dennis.modus !== 'schlafen') {
+        const w = welt.stromWuerfelBei(dennis.position.x, dennis.position.z, 0.32);
+        if (w && sekundenSeitStart() - (w.zuletzt ?? -99) > 6) {
+          w.zuletzt = sekundenSeitStart();
+          welt.anstossen(w);
+          klonk(0.35);
+          if (sekundenSeitStart() - (z.wuerfelSpruch ?? -99) > 35) {
+            z.wuerfelSpruch = sekundenSeitStart();
+            dennisSagt(sag(DENNIS.stromwuerfel), true, { prio: 1 });
+          }
+        }
+      }
+      // Zwischendurch regt sich Dennis über Johnnys Leiter auf (alle 2,5–4 min, nur wenn es ruhig ist)
+      if (z.leiterZuletzt === undefined) z.leiterZuletzt = sekundenSeitStart() - 60 * Math.random();
+      if (sekundenSeitStart() - z.leiterZuletzt > 150 + (z.leiterZufall ?? 60) && dennisSiehts() && dennis.modus === 'normal' && !z.beschaeftigt && ruhig() && !buehneBelegt()) {
+        z.leiterZuletzt = sekundenSeitStart();
+        z.leiterZufall = Math.random() * 90;
+        dennisSagt(sag(DENNIS.leiter), true, { prio: 0 });
+      }
+      // Feuer und Wasserrohrbruch nie kurz hintereinander: mindestens 90 s Abstand
+      const ereignisPause = sekundenSeitStart() - (z.letztesEreignis ?? -999) > 90;
+      if (z.feuer === 'nie' && sekundenSeitStart() > z.feuerAb && ereignisPause && !z.beschaeftigt && !z.aufKlo && !z.dennisFegt && z.mittag !== 'gerade' && dennis.modus === 'normal' && !buehneBelegt()) feuerStart();
       // Wasserrohrbruch (Frost): einmal pro Spiel, irgendwann
       if (!z.leckAb) z.leckAb = 160 + Math.random() * 140;
-      if (!z.leck && sekundenSeitStart() > z.leckAb && !z.beschaeftigt && !z.aufKlo && z.feuer !== 'brennt' && !z.hula && dennis.modus === 'normal' && !buehneBelegt()) leckStart();
+      if (!z.leck && sekundenSeitStart() > z.leckAb && ereignisPause && !z.beschaeftigt && !z.aufKlo && z.feuer !== 'brennt' && !z.hula && dennis.modus === 'normal' && !buehneBelegt()) leckStart();
       // Der Schlauch reicht nicht durch die ganze Werkstatt
       if (hand.item?.id === 'schlauch' && Math.hypot(kamera.position.x - 4.6, kamera.position.z - 1.8) > 5.2) {
         spritzStopp();

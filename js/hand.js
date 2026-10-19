@@ -22,6 +22,7 @@ const HALTUNG = {
   waeschetasche: { pos: [0.42, -0.78, -0.95], rot: [0.1, 0.5, 0], griff: [-0.02, 0.58, -0.08], name: 'Dennis’ Wäschetasche', nichtWerfen: true, nichtAblegen: true, ablegenHinweis: 'Die Wäsche kommt in die Maschine (oder zu Dennis).' },
   sieb: { pos: [0.16, -0.18, -0.48], rot: [0.2, 1.3, 0.2], skala: 1.3, name: 'Flusensieb', nichtWerfen: true, nichtAblegen: true, ablegenHinweis: 'Das Sieb gehört in den Trockner. Dreckig erst am Kompressor ausblasen.' },
   hulahup: { pos: [0.3, -0.5, -1.05], rot: [0.35, 1.1, 0], skala: 0.85, name: 'Hula-Hoop-Reifen', benutzen: 'Dennis bringen' },
+  creme: { pos: [0.18, -0.16, -0.42], rot: [0.2, 0.4, 0], skala: 1.5, name: 'Lockencreme', benutzen: 'Dennis geben (auf Dennis klicken)' },
   poempel: { pos: [0.22, -0.45, -0.62], rot: [0.35, 0, -0.25], name: 'Pömpel', benutzen: 'Pömpeln' },
   rohrzange: { pos: [0.24, -0.22, -0.52], rot: [0.4, 0.3, -0.9], name: 'Rohrzange', benutzen: 'Reparieren' },
   schlauch: { pos: [0.2, -0.2, -0.55], rot: [0.1, 0.12, 0], skala: 1.2, name: 'Wasserschlauch', benutzen: 'Spritzen (halten)', nichtWerfen: true, nichtAblegen: true },
