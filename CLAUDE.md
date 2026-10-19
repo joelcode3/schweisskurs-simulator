@@ -103,6 +103,10 @@
   Reaktionen: Werfen (Ermahnung), Dennis treffen (Ausraster), Figur anfassen/werfen, Handy (1. Mal Blase + stimme/hand.handy.mp3,
   danach Wut + stimme/hand.handyNochmal.mp3, Ton aus handy1/handy2.MOV),
   Löscher auf Dennis (Ausraster), Löscher sinnlos (Ermahnung), laufende Flex auf Dennis (sauer).
+- Umschauen am Computer: Maus an den Bildrand fahren (ohne Klicken), je näher am Rand desto schneller (steuerung.js `randDrehen`,
+  Rand 16 % links/rechts, 13 % oben/unten, Zeiger wird zum Pfeil). Kein Pointer Lock/Einrasten (Betreiber: doof). Ziehen geht weiterhin.
+  Nicht drehen, solange ein Menü/Dialog/Minispiel/Dennis-Fenster offen ist.
+- Dennis aufhelfen (Hüfte) nur mit leeren Händen (Ausnahme: Kaffee, Wäschetasche, Sieb, die man nicht hinlegen kann).
 - Bedienung: Hat ein Ding nur eine Aktion, wird sie beim Klick direkt ausgeführt (kein Menü). Box und Licht schalten
   sofort beim Klick (ohne Hinlaufen). Abbrechen-Knöpfe hell mit dunkler Schrift.
 - Dennis hält seinen Becher immer aufrecht, Schuhsohlen rund (keine eckigen Platten).
@@ -133,7 +137,8 @@
 
 ## Technik
 - Statische Seite, GitHub Pages. Lokal testen: `python3 -m http.server` im Projektordner.
-- Versionsnummer `?v=JJJJMMTT-n` an `css/style.css` und `js/main.js` in `index.html` bei jeder Änderung hochzählen.
+- Versionsnummer `?v=JJJJMMTT-n` in `index.html` bei jeder Änderung überall hochzählen (css, main.js UND alle Einträge der
+  Importmap für die Module), sonst lädt der Browser alte world.js/spiel.js usw. aus dem Speicher.
 - Fehlt ein Clip, zeigt das Spiel ein gezeichnetes Dennis-Gesicht mit Gebrabbel und Sprechblase.
 - Gebrabbel (Sätze ohne Aufnahme, `brummeln` in audio.js): gedämpfte Posaune wie bei den Peanuts (Betreiber-Wahl C).
 - `window.__werkstatt` ist nur für Tests (Playwright) gedacht.
