@@ -1,7 +1,7 @@
 // Ich-Perspektive: Computer = Umschauen, indem man die Maus an den Bildrand fährt (ohne Klicken), Ziehen geht auch;
 // Touch = Wischen. Gehen per WASD, Stationen per Knopf, Klick = benutzen.
 import * as THREE from 'three';
-import { RAUM, AUGENHOEHE, STATIONEN } from './world.js';
+import { AUGENHOEHE, STATIONEN } from './world.js';
 
 export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
   let gier = 0;
@@ -81,8 +81,8 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
   // ---------- Umschauen mit der Maus am Bildrand ----------
   // Mitte = Maus frei zum Anklicken, äußerer Rand = Sicht dreht sich (je näher am Rand, desto schneller)
   const mitMaus = window.matchMedia('(pointer: fine)').matches;
-  const RAND_X = 0.16;
-  const RAND_Y = 0.13;
+  const RAND_X = 0.26;
+  const RAND_Y = 0.2;
   let maus = null;
   window.addEventListener('mousemove', (e) => { maus = { x: e.clientX, y: e.clientY, aufBild: e.target === canvas }; });
   document.addEventListener('mouseleave', () => { maus = null; });
@@ -101,13 +101,13 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
       const r = canvas.getBoundingClientRect();
       const rx = (maus.x - r.left) / r.width;
       const ry = (maus.y - r.top) / r.height;
-      const staerke = (w, rand) => Math.min(1, Math.max(0, (rand - w) / rand)) ** 1.5;
+      const staerke = (w, rand) => Math.min(1, Math.max(0, (rand - w) / rand)) ** 1.2;
       const links = staerke(rx, RAND_X);
       const rechts = staerke(1 - rx, RAND_X);
       const oben = staerke(ry, RAND_Y);
       const unten = staerke(1 - ry, RAND_Y);
-      if (links || rechts) gier += (links - rechts) * 2.2 * dt;
-      if (oben || unten) nick = THREE.MathUtils.clamp(nick + (oben - unten) * 1.2 * dt, -1.25, 1.1);
+      if (links || rechts) gier += (links - rechts) * 3.6 * dt;
+      if (oben || unten) nick = THREE.MathUtils.clamp(nick + (oben - unten) * 2.0 * dt, -1.25, 1.1);
       richtung = links ? 'w' : rechts ? 'e' : '';
       if (oben) richtung = 'n' + richtung;
       else if (unten) richtung = 's' + richtung;
@@ -136,7 +136,7 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
       zieh.weg += Math.abs(dx) + Math.abs(dy);
       if (zieh.weg > 6) {
         canvas.classList.add('zieht');
-        const f = e.pointerType === 'touch' ? 0.0065 : 0.0045;
+        const f = e.pointerType === 'touch' ? 0.0085 : 0.007;
         gier += dx * f;
         nick = THREE.MathUtils.clamp(nick + dy * f, -1.25, 1.1);
         fahrt = null;
@@ -173,7 +173,8 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
   function kollidiert(x, z) {
     const r = 0.3;
     const p = kamera.position;
-    if (x < RAUM.xMin + r || x > RAUM.xMax - r || z < RAUM.zMin + r || z > RAUM.zMax - r) return true;
+    // Werkstatt, Bad und offene WC-Tür sind begehbar
+    if (!welt.begehbar(x, z, r)) return true;
     const drin = (h, px, pz) => px > h.xMin - r && px < h.xMax + r && pz > h.zMin - r && pz < h.zMax + r;
     for (const h of welt.hindernisse) {
       if (drin(h, x, z) && !drin(h, p.x, p.z)) return true;

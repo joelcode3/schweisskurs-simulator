@@ -36,19 +36,86 @@ export function baueDennis(scene) {
   guertel.position.y = 0.05;
   const guertelSchnalle = setze(quader(0.045, 0.035, 0.012, 0x9aa0a6, { umriss: false }), 0, 0.05, 0.158);
 
-  // Beine: Oberschenkel, Knie, Unterschenkel, Arbeitsschuh
+  // Beine: kräftige Oberschenkel in kurzer schwarzer Arbeitshose, nackte dicke Waden mit Tattoos
+  // (links Kiwi, rechts Penis, Betreiber-Wunsch), kurze graue Socken, Arbeitsschuhe
+  function wadenTattoo(art) {
+    return leinwandTextur(512, 256, (g, b, h) => {
+      g.fillStyle = '#efc3a6'; g.fillRect(0, 0, b, h);
+      // ein paar blonde Härchen
+      g.strokeStyle = 'rgba(160, 110, 60, 0.35)'; g.lineWidth = 1.5;
+      for (let i = 0; i < 160; i++) {
+        const x = (i * 97) % b, y = 30 + ((i * 53) % (h - 50));
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x + 3, y - 6); g.stroke();
+      }
+      // Tattoo auf der Wadenrückseite (u = 0,5), leicht nach außen gedreht
+      g.save();
+      g.translate(b * 0.5, h * 0.42);
+      g.scale(1.4, 1.4);
+      g.lineJoin = 'round'; g.lineCap = 'round';
+      if (art === 'kiwi') {
+        // halbe Kiwi: braune Schale, grünes Fruchtfleisch, helles Herz, schwarze Kerne
+        g.fillStyle = '#7a5530'; g.beginPath(); g.ellipse(0, 0, 48, 40, 0, 0, Math.PI * 2); g.fill();
+        g.fillStyle = '#6fbf3a'; g.beginPath(); g.ellipse(0, 0, 41, 33, 0, 0, Math.PI * 2); g.fill();
+        g.fillStyle = '#f2f0c8'; g.beginPath(); g.ellipse(0, 0, 13, 10, 0, 0, Math.PI * 2); g.fill();
+        g.fillStyle = '#111';
+        for (let i = 0; i < 18; i++) {
+          const w = (i / 18) * Math.PI * 2;
+          g.beginPath(); g.ellipse(Math.cos(w) * 20, Math.sin(w) * 16, 3, 1.6, w, 0, Math.PI * 2); g.fill();
+        }
+        g.strokeStyle = '#4d7f26'; g.lineWidth = 1.5;
+        for (let i = 0; i < 24; i++) { const w = (i / 24) * Math.PI * 2; g.beginPath(); g.moveTo(Math.cos(w) * 14, Math.sin(w) * 11); g.lineTo(Math.cos(w) * 38, Math.sin(w) * 30); g.stroke(); }
+        g.strokeStyle = '#111'; g.lineWidth = 4;
+        g.beginPath(); g.ellipse(0, 0, 48, 40, 0, 0, Math.PI * 2); g.stroke();
+        // kleines Blatt oben
+        g.fillStyle = '#3f8f2a'; g.beginPath(); g.ellipse(26, -44, 14, 6, -0.6, 0, Math.PI * 2); g.fill(); g.lineWidth = 3; g.stroke();
+      } else {
+        // Comic-Penis als Tattoo (Strichzeichnung mit Hautton und Herzchen)
+        g.rotate(-0.35);
+        g.fillStyle = '#e8a58c'; g.strokeStyle = '#111'; g.lineWidth = 4;
+        g.beginPath(); g.ellipse(-26, 22, 17, 15, 0, 0, Math.PI * 2); g.fill(); g.stroke();
+        g.beginPath(); g.ellipse(4, 26, 17, 15, 0, 0, Math.PI * 2); g.fill(); g.stroke();
+        g.beginPath();
+        g.moveTo(-26, 12); g.lineTo(-24, -42); g.quadraticCurveTo(-11, -50, 2, -42); g.lineTo(2, 12); g.closePath();
+        g.fill(); g.stroke();
+        g.fillStyle = '#d9788f';
+        g.beginPath(); g.ellipse(-11, -48, 17, 12, 0, Math.PI, Math.PI * 2); g.lineTo(6, -46); g.lineTo(-28, -46); g.fill(); g.stroke();
+        g.beginPath(); g.moveTo(-11, -58); g.lineTo(-11, -52); g.stroke();
+        g.fillStyle = '#c8352a';
+        for (const [x, y, s] of [[30, -30, 1], [40, -8, 0.7]]) {
+          g.beginPath(); g.moveTo(x, y + 6 * s); g.bezierCurveTo(x - 12 * s, y - 4 * s, x - 4 * s, y - 12 * s, x, y - 4 * s);
+          g.bezierCurveTo(x + 4 * s, y - 12 * s, x + 12 * s, y - 4 * s, x, y + 6 * s); g.fill();
+        }
+      }
+      g.restore();
+    });
+  }
+  // Wade als Drehkörper: unten schmal (Knöchel), oben dicker Wadenmuskel
+  const wadenProfil = [[0.054, -0.41], [0.06, -0.36], [0.078, -0.28], [0.104, -0.18], [0.112, -0.11], [0.104, -0.05], [0.088, 0.0]]
+    .map(([r, y]) => new THREE.Vector2(r, y));
   const beine = [];
   const knie = [];
   for (const x of [-0.1, 0.1]) {
     const huefte = new THREE.Group();
     huefte.position.set(x, 0.88, 0);
-    huefte.add(setze(teil(new THREE.CapsuleGeometry(0.078, 0.3, 4, 10), HOSE), 0, -0.2, 0));
+    // dicke Oberschenkel in der kurzen Hose, Hosenbein endet über dem Knie
+    huefte.add(setze(teil(new THREE.CapsuleGeometry(0.098, 0.2, 4, 12), HOSE), 0, -0.16, 0));
+    huefte.add(setze(teil(new THREE.CylinderGeometry(0.106, 0.112, 0.07, 14, 1, true), HOSE, { mat: { side: THREE.DoubleSide } }), 0, -0.31, 0));
+    huefte.add(setze(zylinder(0.113, 0.113, 0.012, 0x1a1b1f, { umriss: false }, 14), 0, -0.345, 0));
     // Beintasche außen
-    huefte.add(setze(quader(0.02, 0.12, 0.09, 0x34363c, { umriss: 0.003 }), x > 0 ? 0.074 : -0.074, -0.22, 0));
+    huefte.add(setze(quader(0.02, 0.1, 0.09, 0x34363c, { umriss: 0.003 }), x > 0 ? 0.1 : -0.1, -0.2, 0));
+    // nackter Oberschenkel-Rest zwischen Hosenbein und Knie
+    huefte.add(setze(teil(new THREE.CylinderGeometry(0.09, 0.1, 0.08, 14), HAUT), 0, -0.375, 0));
     const k = new THREE.Group();
     k.position.y = -0.42;
-    k.add(kugel(0.072, HOSE, { umriss: 0.004 }, 10));
-    k.add(setze(teil(new THREE.CapsuleGeometry(0.068, 0.28, 4, 10), HOSE), 0, -0.2, 0));
+    k.add(teil(new THREE.SphereGeometry(0.09, 14, 10), HAUT));
+    const wadeMat = toon(0xffffff, { map: wadenTattoo(x < 0 ? 'kiwi' : 'penis') });
+    const wade = teil(new THREE.LatheGeometry(wadenProfil, 24), 0, { material: wadeMat });
+    // Tattoo leicht nach außen drehen, damit man es auch von der Seite sieht
+    wade.rotation.y = x < 0 ? 0.45 : -0.45;
+    k.add(wade);
+    // kurze graue Socke mit Bündchen
+    k.add(setze(zylinder(0.06, 0.058, 0.07, 0x8d9096, { umriss: 0.003 }, 14), 0, -0.375, 0));
+    k.add(setze(zylinder(0.062, 0.062, 0.014, 0x6f7278, { umriss: false }, 14), 0, -0.343, 0));
     // Arbeitsschuh mit Sohle und runder Kappe
     const schuh = new THREE.Group();
     schuh.position.y = -0.42;

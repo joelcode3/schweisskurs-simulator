@@ -2,7 +2,10 @@
 import * as THREE from 'three';
 import { toon, teil, quader, zylinder, kugel, setze, leinwandTextur, zufall, umriss } from './toon.js';
 
-export const RAUM = { xMin: -5, xMax: 5, zMin: -4, zMax: 4, hoehe: 3.2 };
+export const RAUM = { xMin: -5, xMax: 5, zMin: -4, zMax: 4, hoehe: 4.8 };
+// Bad hinter der WC-Tür (vorne rechts), begehbar
+export const BAD = { xMin: 0.7, xMax: 3.9, zMin: 4.0, zMax: 6.8, hoehe: 2.6 };
+const KLO_TUER = { xMin: 0.975, xMax: 1.825, hoehe: 2.05 };
 export const AUGENHOEHE = 1.65;
 
 // Stationen: Kameraposition und Blickziel
@@ -112,31 +115,79 @@ export function baueWelt(scene) {
   streifen(3.0, 0.1, 3.5, -1.9, 0);
   streifen(2.1, 0.1, 2.05, -2.95, Math.PI / 2);
 
-  const wand = leinwandTextur(512, 256, (g, b, h) => {
-    g.fillStyle = '#e8dcc2';
-    g.fillRect(0, 0, b, h);
-    g.fillStyle = '#6f7b77';
-    g.fillRect(0, h * 0.62, b, h * 0.38);
-    g.fillStyle = '#3a3f3d';
-    g.fillRect(0, h * 0.62 - 4, b, 6);
-    const r = zufall(3);
-    for (let i = 0; i < 900; i++) {
+  // Wände: alter Putz, unten grüngrau gestrichen, Putz bröckelt stellenweise (Ziegel schauen raus),
+  // Risse, Wasserflecken. Jede Wand hat ihre eigene Leinwand (ca. 160 Pixel pro Meter).
+  const PX = 160;
+  const SOCKEL = 1.25; // Höhe des gestrichenen Sockels in Metern
+  function wandMalen(g, b, h, saat, unten = 0) {
+    const r = zufall(saat);
+    const m = (y) => h - (y - unten) * PX; // Meter über Boden -> Pixel-Zeile
+    g.fillStyle = '#e3d6ba'; g.fillRect(0, 0, b, h);
+    g.fillStyle = '#6f7b77'; g.fillRect(0, m(SOCKEL), b, SOCKEL * PX);
+    g.fillStyle = '#3a3f3d'; g.fillRect(0, m(SOCKEL) - 4, b, 6);
+    for (let i = 0; i < b * h / 260; i++) {
       g.fillStyle = `rgba(90,80,60,${r() * 0.07})`;
       g.fillRect(r() * b, r() * h, 3 + r() * 8, 3 + r() * 8);
     }
-  }, [3, 1]);
-  const wandMat = toon(0xffffff, { map: wand });
-  const wandStueck = (b, x, z, ry) => {
-    const w = new THREE.Mesh(new THREE.PlaneGeometry(b, RAUM.hoehe), wandMat);
-    w.position.set(x, RAUM.hoehe / 2, z);
+    // Wasserflecken von oben
+    for (let i = 0; i < 3; i++) {
+      const x = r() * b, lang = (0.8 + r() * 1.6) * PX;
+      const gr = g.createLinearGradient(0, 0, 0, lang);
+      gr.addColorStop(0, 'rgba(120,95,60,0.28)'); gr.addColorStop(1, 'rgba(120,95,60,0)');
+      g.fillStyle = gr; g.fillRect(x, 0, 30 + r() * 60, lang);
+    }
+    // Putzschäden: Ziegel und Mörtel unter abgebröckeltem Putz
+    for (let i = 0; i < Math.round(b / PX * 0.7); i++) {
+      const cx = r() * b, cy = m(0.4 + r() * (RAUM.hoehe - 0.8));
+      const rx = 30 + r() * 70, ry = 20 + r() * 45;
+      const pkt = [];
+      for (let k = 0; k < 11; k++) { const w = (k / 11) * Math.PI * 2; const f = 0.6 + r() * 0.5; pkt.push([cx + Math.cos(w) * rx * f, cy + Math.sin(w) * ry * f]); }
+      const pfad = () => { g.beginPath(); pkt.forEach(([x, y], k) => (k ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); };
+      // heller Rand vom Putz
+      g.save(); g.translate(2, 3); pfad(); g.fillStyle = '#f2e9d6'; g.fill(); g.restore();
+      g.save(); pfad(); g.clip();
+      g.fillStyle = '#b9b2a2'; g.fillRect(cx - rx * 1.2, cy - ry * 1.2, rx * 2.4, ry * 2.4);
+      const zh = 11, zb = 38;
+      for (let y = Math.floor((cy - ry * 1.2) / zh) * zh; y < cy + ry * 1.2; y += zh) {
+        const versatz = (Math.floor(y / zh) % 2) * zb / 2;
+        for (let x = Math.floor((cx - rx * 1.2) / zb) * zb - versatz; x < cx + rx * 1.2; x += zb) {
+          const t = 150 + r() * 40;
+          g.fillStyle = `rgb(${t},${t * 0.48},${t * 0.36})`;
+          g.fillRect(x + 1.5, y + 1.5, zb - 3, zh - 3);
+        }
+      }
+      // Schatten unter der Putzkante oben
+      g.fillStyle = 'rgba(0,0,0,0.25)'; g.fillRect(cx - rx * 1.2, cy - ry * 1.2, rx * 2.4, 6);
+      g.restore();
+      pfad(); g.strokeStyle = 'rgba(60,50,40,0.75)'; g.lineWidth = 2.5; g.stroke();
+      // ein paar lose Bröckchen drumherum
+      g.fillStyle = 'rgba(150,140,120,0.8)';
+      for (let k = 0; k < 6; k++) g.fillRect(cx + (r() - 0.5) * rx * 2.6, cy + (r() - 0.5) * ry * 2.6, 3 + r() * 5, 3 + r() * 4);
+    }
+    // Risse
+    g.strokeStyle = 'rgba(55,48,40,0.55)'; g.lineWidth = 1.6;
+    for (let i = 0; i < Math.round(b / PX * 0.8); i++) {
+      let x = r() * b, y = r() * h;
+      g.beginPath(); g.moveTo(x, y);
+      for (let k = 0; k < 7; k++) { x += (r() - 0.5) * 40; y += 8 + r() * 22; g.lineTo(x, y); }
+      g.stroke();
+    }
+  }
+  const wandStueck = (b, x, z, ry, saat, hoehe = RAUM.hoehe, unten = 0) => {
+    const tex = leinwandTextur(Math.round(b * PX), Math.round(hoehe * PX), (g, bb, hh) => wandMalen(g, bb, hh, saat, unten));
+    const w = new THREE.Mesh(new THREE.PlaneGeometry(b, hoehe), toon(0xffffff, { map: tex }));
+    w.position.set(x, unten + hoehe / 2, z);
     w.rotation.y = ry;
     w.receiveShadow = true;
     scene.add(w);
   };
-  wandStueck(10, 0, RAUM.zMin, 0);
-  wandStueck(10, 0, RAUM.zMax, Math.PI);
-  wandStueck(8, RAUM.xMin, 0, Math.PI / 2);
-  wandStueck(8, RAUM.xMax, 0, -Math.PI / 2);
+  wandStueck(10, 0, RAUM.zMin, 0, 11);
+  // Vorderwand mit Öffnung für die WC-Tür
+  wandStueck(KLO_TUER.xMin - RAUM.xMin, (RAUM.xMin + KLO_TUER.xMin) / 2, RAUM.zMax, Math.PI, 12);
+  wandStueck(RAUM.xMax - KLO_TUER.xMax, (KLO_TUER.xMax + RAUM.xMax) / 2, RAUM.zMax, Math.PI, 15);
+  wandStueck(KLO_TUER.xMax - KLO_TUER.xMin, (KLO_TUER.xMin + KLO_TUER.xMax) / 2, RAUM.zMax, Math.PI, 16, RAUM.hoehe - KLO_TUER.hoehe, KLO_TUER.hoehe);
+  wandStueck(8, RAUM.xMin, 0, Math.PI / 2, 13);
+  wandStueck(8, RAUM.xMax, 0, -Math.PI / 2, 14);
 
   const decke = new THREE.Mesh(new THREE.PlaneGeometry(10, 8), toon(0x6d665c));
   decke.rotation.x = Math.PI / 2;
@@ -146,12 +197,15 @@ export function baueWelt(scene) {
   // Leuchtstoffröhren
   const roehrenMat = new THREE.MeshBasicMaterial({ color: 0xfffbea });
   for (const [x, z] of [[-2.5, -1.5], [2.5, -1.5], [-2.5, 1.8], [2.5, 1.8]]) {
+    // hohe Decke: Lampen hängen an Ketten auf ca. 3,6 m
+    const haengeY = 3.6;
     const gehaeuse = quader(1.3, 0.06, 0.2, 0xd8d8d8, { wirft: false });
-    setze(gehaeuse, x, RAUM.hoehe - 0.05, z);
+    setze(gehaeuse, x, haengeY, z);
     scene.add(gehaeuse);
     const r = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.03, 0.08), roehrenMat);
-    r.position.set(x, RAUM.hoehe - 0.095, z);
+    r.position.set(x, haengeY - 0.045, z);
     scene.add(r);
+    for (const dx of [-0.55, 0.55]) scene.add(setze(zylinder(0.006, 0.006, RAUM.hoehe - haengeY, 0x555555, { umriss: false, wirft: false }, 5), x + dx, (RAUM.hoehe + haengeY) / 2, z));
   }
 
   // Fenster links
@@ -167,13 +221,68 @@ export function baueWelt(scene) {
   setze(fenster, RAUM.xMin + 0.01, 1.95, 1.6, 0, Math.PI / 2, 0);
   scene.add(fenster);
 
-  // Tür vorne
+  // Eingang vorne: breites grünes Scheunentor (zwei Flügel, Bretter, helle Z-Streben, Bänder), Rauchen-verboten-Schild
   const tuer = new THREE.Group();
-  tuer.add(setze(quader(1.0, 2.1, 0.06, 0x7d5733), 0, 1.05, 0));
-  tuer.add(setze(quader(1.12, 0.07, 0.08, 0x3b3b3b), 0, 2.13, 0));
-  tuer.add(setze(zylinder(0.025, 0.025, 0.14, 0xc9c9c9, {}, 10), 0.36, 1.05, -0.06, Math.PI / 2, 0, 0));
-  tuer.add(setze(quader(0.04, 0.04, 0.12, 0xc9c9c9), 0.36, 1.05, -0.08, 0, 0, 0));
-  setze(tuer, -1.6, 0, RAUM.zMax - 0.03, 0, Math.PI, 0);
+  const torGruen = 0x2f6b3a;
+  const bretter = leinwandTextur(256, 256, (g, b, h) => {
+    g.fillStyle = '#2f6b3a'; g.fillRect(0, 0, b, h);
+    const r = zufall(21);
+    for (let x = 0; x < b; x += 32) {
+      g.fillStyle = `rgba(0,0,0,${0.05 + r() * 0.08})`; g.fillRect(x, 0, 32, h);
+      g.fillStyle = 'rgba(0,0,0,0.45)'; g.fillRect(x, 0, 3, h);
+      for (let i = 0; i < 6; i++) { g.fillStyle = 'rgba(255,255,255,0.05)'; g.fillRect(x + 6 + r() * 20, r() * h, 2, 20 + r() * 50); }
+    }
+    // abgeplatzte Farbe
+    for (let i = 0; i < 14; i++) { g.fillStyle = 'rgba(120,90,60,0.6)'; g.beginPath(); g.ellipse(r() * b, r() * h, 3 + r() * 8, 2 + r() * 5, r() * 3, 0, Math.PI * 2); g.fill(); }
+  }, [1.5, 1.5]);
+  const brettMat = toon(0xffffff, { map: bretter });
+  const TOR_B = 1.3, TOR_H = 3.0;
+  for (const seite of [-1, 1]) {
+    const fluegel = new THREE.Group();
+    fluegel.add(setze(teil(new THREE.BoxGeometry(TOR_B, TOR_H, 0.07), 0, { material: brettMat, umriss: 0.004 }), 0, TOR_H / 2, 0));
+    // helle Rahmen- und Z-Streben
+    const strebe = (bb, hh, x, y, rz = 0) => fluegel.add(setze(quader(bb, hh, 0.04, 0xe9e4d4, { umriss: 0.003 }), x, y, 0.05, 0, 0, rz));
+    strebe(TOR_B, 0.12, 0, 0.12); strebe(TOR_B, 0.12, 0, TOR_H / 2); strebe(TOR_B, 0.12, 0, TOR_H - 0.12);
+    strebe(0.12, TOR_H, -TOR_B / 2 + 0.06, TOR_H / 2); strebe(0.12, TOR_H, TOR_B / 2 - 0.06, TOR_H / 2);
+    const diag = Math.hypot(TOR_B - 0.24, TOR_H / 2 - 0.24);
+    const w = Math.atan2(TOR_H / 2 - 0.24, TOR_B - 0.24) * seite;
+    strebe(diag, 0.11, 0, TOR_H * 0.31, w); strebe(diag, 0.11, 0, TOR_H * 0.69, w);
+    // schwarze Langbänder an der Außenkante
+    for (const y of [0.45, TOR_H - 0.45]) {
+      fluegel.add(setze(quader(0.6, 0.06, 0.02, 0x1d1d1f, { umriss: 0.002 }), seite * (TOR_B / 2 - 0.3), y, 0.08));
+      fluegel.add(setze(zylinder(0.03, 0.03, 0.12, 0x1d1d1f, {}, 8), seite * (TOR_B / 2 + 0.01), y, 0.04));
+    }
+    // Griffstange an der Mittelkante
+    fluegel.add(setze(zylinder(0.018, 0.018, 0.5, 0x8d949b, { umriss: 0.002 }, 8), -seite * (TOR_B / 2 - 0.12), 1.15, 0.11));
+    for (const y of [0.92, 1.38]) fluegel.add(setze(quader(0.03, 0.03, 0.08, 0x8d949b, { umriss: false }), -seite * (TOR_B / 2 - 0.12), y, 0.08));
+    fluegel.position.x = seite * TOR_B / 2;
+    tuer.add(fluegel);
+  }
+  // Riegel über beide Flügel
+  tuer.add(setze(quader(0.5, 0.07, 0.05, 0x5a5f66, { umriss: 0.002 }), 0, 1.6, 0.13));
+  tuer.add(setze(quader(2 * TOR_B + 0.2, 0.12, 0.1, 0x3b3b3b), 0, TOR_H + 0.06, 0.0));
+  // Rauchen-verboten-Schild
+  const verbotTex = leinwandTextur(256, 320, (g) => {
+    g.fillStyle = '#fbfaf5'; g.fillRect(0, 0, 256, 320);
+    g.strokeStyle = '#222'; g.lineWidth = 4; g.strokeRect(2, 2, 252, 316);
+    // Zigarette mit Glut und Rauch
+    g.fillStyle = '#f4f0e6'; g.strokeStyle = '#111'; g.lineWidth = 4;
+    g.fillRect(48, 120, 130, 26); g.strokeRect(48, 120, 130, 26);
+    g.fillStyle = '#d9a35a'; g.fillRect(48, 120, 36, 26); g.strokeRect(48, 120, 36, 26);
+    g.fillStyle = '#e2531e'; g.fillRect(178, 120, 14, 26);
+    g.strokeStyle = '#555'; g.lineWidth = 5;
+    g.beginPath(); g.moveTo(186, 112); g.bezierCurveTo(170, 90, 205, 80, 188, 56); g.stroke();
+    // roter Ring mit Balken
+    g.strokeStyle = '#d0201a'; g.lineWidth = 22;
+    g.beginPath(); g.arc(128, 128, 98, 0, Math.PI * 2); g.stroke();
+    g.beginPath(); g.moveTo(128 - 69, 128 - 69); g.lineTo(128 + 69, 128 + 69); g.stroke();
+    g.fillStyle = '#111'; g.font = 'bold 34px Arial'; g.textAlign = 'center';
+    g.fillText('RAUCHEN', 128, 270); g.fillText('VERBOTEN', 128, 304);
+  });
+  const rauchSchild = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.525), new THREE.MeshBasicMaterial({ map: verbotTex }));
+  rauchSchild.position.set(TOR_B / 2, 1.85, 0.081);
+  tuer.add(rauchSchild);
+  setze(tuer, -0.85, 0, RAUM.zMax - 0.05, 0, Math.PI, 0);
   scene.add(tuer);
 
   // Feuerlöscher an der rechten Wand zwischen Schweißplatz und Waschplatz
@@ -460,6 +569,62 @@ export function baueWelt(scene) {
   scene.add(regal);
   hindernis(-5, -4.4, -1.4, 0.2);
 
+  // Schwere Stahlträger (Doppel-T, rostig) liegen in der Ecke vorne rechts auf Kanthölzern, ohne Funktion
+  const traeger = new THREE.Group();
+  const rostTex = leinwandTextur(256, 64, (g, b, h) => {
+    g.fillStyle = '#4b4f55'; g.fillRect(0, 0, b, h);
+    const r = zufall(55);
+    for (let i = 0; i < 70; i++) {
+      g.fillStyle = `rgba(${140 + r() * 40},${70 + r() * 20},${30 + r() * 15},${0.25 + r() * 0.4})`;
+      g.beginPath(); g.ellipse(r() * b, r() * h, 3 + r() * 14, 2 + r() * 6, r() * 3, 0, Math.PI * 2); g.fill();
+    }
+    g.fillStyle = 'rgba(255,255,255,0.08)'; g.fillRect(0, 2, b, 2);
+  }, [4, 1]);
+  const rostMat = toon(0xffffff, { map: rostTex });
+  function doppelT(laenge) {
+    const t = new THREE.Group();
+    const stahl = (bb, hh, tt, x, y) => t.add(setze(teil(new THREE.BoxGeometry(bb, hh, tt), 0, { material: rostMat, umriss: 0.004 }), x, y, 0));
+    stahl(laenge, 0.022, 0.2, 0, 0.011);
+    stahl(laenge, 0.022, 0.2, 0, 0.189);
+    stahl(laenge, 0.156, 0.016, 0, 0.1);
+    return t;
+  }
+  for (const x of [-0.9, 0.9]) traeger.add(setze(quader(0.12, 0.1, 0.75, 0x9a7444), x, 0.05, 0));
+  for (const z of [-0.24, 0, 0.24]) {
+    const t = doppelT(2.6);
+    t.position.set(0, 0.1, z);
+    traeger.add(t);
+  }
+  const oben = doppelT(2.4);
+  oben.position.set(0.1, 0.3, -0.12);
+  oben.rotation.y = 0.06;
+  traeger.add(oben);
+  // Kreide-Markierung
+  const kreide = leinwandTextur(128, 32, (g) => { g.fillStyle = '#4b4f55'; g.fillRect(0, 0, 128, 32); g.fillStyle = '#f2f0ea'; g.font = 'bold 22px Arial'; g.fillText('HEB 200', 8, 24); });
+  const kreideSchild = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.1), new THREE.MeshBasicMaterial({ map: kreide }));
+  kreideSchild.position.set(0.3, 0.4, 0.1 - 0.12 - 0.009);
+  kreideSchild.rotation.y = Math.PI;
+  traeger.add(kreideSchild);
+  setze(traeger, 3.55, 0, RAUM.zMax - 0.5, 0, 0, 0);
+  scene.add(traeger);
+  merke(traeger, 'traeger', 'Stahlträger', null);
+  objekte.traeger = traeger;
+  hindernis(2.2, 4.9, RAUM.zMax - 0.9, RAUM.zMax);
+
+  // Pömpel (Saugglocke) steht oben im Regal
+  const poempel = new THREE.Group();
+  poempel.add(setze(zylinder(0.014, 0.014, 0.5, 0xb27a42, { umriss: 0.002 }, 8), 0, 0.33, 0));
+  const glocke = teil(new THREE.SphereGeometry(0.075, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), 0xc8352a, { mat: { side: THREE.DoubleSide }, umriss: 0.003 });
+  glocke.rotation.x = Math.PI;
+  glocke.position.y = 0.075;
+  poempel.add(glocke);
+  poempel.add(setze(zylinder(0.02, 0.02, 0.03, 0x8a1f17, { umriss: false }, 10), 0, 0.085, 0));
+  setze(poempel, -4.62, 1.765, 0.0);
+  scene.add(poempel);
+  merke(poempel, 'poempel', 'Pömpel', null);
+  objekte.poempel = poempel;
+  poempel.userData.wand = { pos: poempel.position.clone(), rot: poempel.rotation.clone() };
+
   // Elektroden-Packung mit Aufschrift
   const elTex = leinwandTextur(128, 64, (g, b, h) => {
     g.fillStyle = '#f2c21c'; g.fillRect(0, 0, b, h);
@@ -610,7 +775,7 @@ export function baueWelt(scene) {
   scene.add(eimer);
   hindernis(4.2, 4.6, 0.55, 0.95);
 
-  // ---------- Waschmaschine mit Trockner obendrauf (rechts neben dem Waschplatz) ----------
+  // ---------- Waschmaschine mit Trockner obendrauf (im Bad, rechts neben der Tür) ----------
   function waschAnzeige() {
     const c = document.createElement('canvas');
     c.width = 128; c.height = 48;
@@ -688,7 +853,7 @@ export function baueWelt(scene) {
       sieb.userData.sauber = (ja) => { netzMat.color.set(ja ? 0xe7e9ec : 0x8c8378); for (const f of fussel) f.visible = !ja; };
       g.add(sieb);
     }
-    g.position.set(4.66, y, 3.12);
+    g.position.set(BAD.xMax - 0.33, y, BAD.zMin + 0.5);
     scene.add(g);
     return { g, trommel, waesche, wasser, anzeige: anzeige.userData, knopf, sieb };
   }
@@ -699,14 +864,14 @@ export function baueWelt(scene) {
   merke(tr.g, 'trockner', 'Trockner', null);
   objekte.waschmaschine = wm;
   objekte.trockner = tr;
-  hindernis(4.3, 5, 2.78, 3.46);
+  hindernis(BAD.xMax - 0.65, BAD.xMax, BAD.zMin, BAD.zMin + 0.82);
   let geraetZeit = 0;
   animiert.push((dt) => {
     geraetZeit += dt;
     for (const d of [wm, tr]) {
-      if (!d.laeuft) { d.g.position.x = 4.66; continue; }
+      if (!d.laeuft) { d.g.position.x = BAD.xMax - 0.33; continue; }
       d.trommel.children[1].rotation.x += dt * (d === wm ? 5 : 3.5);
-      d.g.position.x = 4.66 + Math.sin(geraetZeit * 37) * 0.003;
+      d.g.position.x = BAD.xMax - 0.33 + Math.sin(geraetZeit * 37) * 0.003;
     }
     wm.wasser.visible = !!wm.laeuft;
   });
@@ -1277,15 +1442,15 @@ export function baueWelt(scene) {
   const wippe = quader(0.04, 0.04, 0.015, 0xe8e2d0, { umriss: 0.002 });
   wippe.position.z = 0.012;
   schalter.add(wippe);
-  setze(schalter, -0.85, 1.1, RAUM.zMax - 0.012, 0, Math.PI, 0);
+  setze(schalter, 0.72, 1.1, RAUM.zMax - 0.012, 0, Math.PI, 0);
   scene.add(schalter);
   merke(schalter, 'licht', 'Lichtschalter', null);
 
-  // Klotür vorne rechts
+  // WC-Tür vorne rechts: dreht sich ins Bad (offen, außer Dennis ist drin), Schild zur Werkstatt
   const klo = new THREE.Group();
-  klo.add(setze(quader(0.85, 2.05, 0.05, 0xd9d4c4), 0, 1.025, 0));
-  klo.add(setze(quader(0.95, 0.06, 0.07, 0x3b3b3b), 0, 2.08, 0));
-  klo.add(setze(zylinder(0.022, 0.022, 0.12, 0xc9c9c9, {}, 10), 0.3, 1.0, 0.05, Math.PI / 2, 0, 0));
+  const kloBlatt = new THREE.Group();
+  kloBlatt.add(setze(quader(0.83, 2.03, 0.05, 0xd9d4c4), 0.425, 1.025, 0));
+  for (const sz of [-1, 1]) kloBlatt.add(setze(zylinder(0.022, 0.022, 0.12, 0xc9c9c9, {}, 10), 0.75, 1.0, sz * 0.05, Math.PI / 2, 0, 0));
   // WC-Schild zur Werkstatt hin: Schrift und Männchen/Weibchen
   const wcTex = leinwandTextur(256, 160, (g, b, h) => {
     g.fillStyle = '#ffffff'; g.fillRect(0, 0, b, h);
@@ -1301,10 +1466,176 @@ export function baueWelt(scene) {
     g.fillStyle = '#c8352a'; figur(224, true);
   });
   const wcSchild = new THREE.Mesh(new THREE.PlaneGeometry(0.36, 0.225), new THREE.MeshBasicMaterial({ map: wcTex }));
-  wcSchild.position.set(0, 1.62, 0.03);
-  klo.add(wcSchild);
-  setze(klo, 1.4, 0, RAUM.zMax - 0.03, 0, Math.PI, 0);
+  wcSchild.position.set(0.425, 1.62, -0.03);
+  wcSchild.rotation.y = Math.PI;
+  kloBlatt.add(wcSchild);
+  klo.add(kloBlatt);
+  // Zarge
+  klo.add(setze(quader(0.95, 0.06, 0.12, 0x3b3b3b), 0.425, 2.08, 0));
+  for (const x of [-0.02, 0.87]) klo.add(setze(quader(0.04, 2.08, 0.12, 0x3b3b3b), x, 1.04, 0));
+  setze(klo, KLO_TUER.xMin, 0, RAUM.zMax - 0.01, 0, 0, 0);
   scene.add(klo);
+  merke(kloBlatt, 'kloTuer', 'WC-Tür', null);
+  let kloOffen = true;
+  animiert.push((dt) => {
+    const ziel = kloOffen ? -1.5 : 0;
+    kloBlatt.rotation.y += (ziel - kloBlatt.rotation.y) * Math.min(1, dt * 6);
+  });
+
+  // ---------- Bad: Schachbrett-Boden, Fliesen, Fenster, Klo, Dusche, Waschbecken, Waschmaschine und Trockner ----------
+  const badBoden = leinwandTextur(256, 256, (g) => {
+    for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) {
+      g.fillStyle = (x + y) % 2 ? '#1d1d1f' : '#f2f0ea';
+      g.fillRect(x * 32, y * 32, 32, 32);
+    }
+    g.strokeStyle = 'rgba(120,120,120,0.5)'; g.lineWidth = 1;
+    for (let i = 0; i <= 256; i += 32) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i, 256); g.moveTo(0, i); g.lineTo(256, i); g.stroke(); }
+  }, [(BAD.xMax - BAD.xMin) / 2.4, (BAD.zMax - BAD.zMin) / 2.4]);
+  const badBodenMesh = new THREE.Mesh(new THREE.PlaneGeometry(BAD.xMax - BAD.xMin, BAD.zMax - BAD.zMin), toon(0xffffff, { map: badBoden }));
+  badBodenMesh.rotation.x = -Math.PI / 2;
+  badBodenMesh.position.set((BAD.xMin + BAD.xMax) / 2, 0.001, (BAD.zMin + BAD.zMax) / 2);
+  badBodenMesh.receiveShadow = true;
+  scene.add(badBodenMesh);
+  // Fliesen bis 1,4 m, darüber heller Putz mit ein paar Stockflecken
+  function badWandMalen(g, b, h, saat, unten = 0) {
+    const r = zufall(saat);
+    g.fillStyle = '#ece8df'; g.fillRect(0, 0, b, h);
+    for (let i = 0; i < 4; i++) { g.fillStyle = 'rgba(90,100,80,0.12)'; g.beginPath(); g.ellipse(r() * b, r() * h * 0.4, 20 + r() * 40, 10 + r() * 25, 0, 0, Math.PI * 2); g.fill(); }
+    const fliesenOben = h - (1.4 - unten) * PX;
+    if (fliesenOben < h) {
+      const f = 0.15 * PX;
+      for (let y = h; y > fliesenOben - 0.5; y -= f) for (let x = 0; x < b; x += f) {
+        g.fillStyle = r() < 0.05 ? '#d6dde0' : '#f7f8f6'; g.fillRect(x + 1, y - f + 1, f - 2, f - 2);
+      }
+      g.strokeStyle = '#9aa3a8'; g.lineWidth = 2;
+      for (let x = 0; x < b; x += f) { g.beginPath(); g.moveTo(x, Math.max(0, fliesenOben)); g.lineTo(x, h); g.stroke(); }
+      for (let y = h; y > fliesenOben - 0.5; y -= f) { g.beginPath(); g.moveTo(0, y); g.lineTo(b, y); g.stroke(); }
+      g.fillStyle = '#7f8a8f'; g.fillRect(0, fliesenOben - 4, b, 5);
+    }
+  }
+  const badWand = (b, x, z, ry, saat, hoehe = BAD.hoehe, unten = 0) => {
+    const tex = leinwandTextur(Math.round(b * PX), Math.round(hoehe * PX), (g, bb, hh) => badWandMalen(g, bb, hh, saat, unten));
+    const w = new THREE.Mesh(new THREE.PlaneGeometry(b, hoehe), toon(0xffffff, { map: tex }));
+    w.position.set(x, unten + hoehe / 2, z);
+    w.rotation.y = ry;
+    w.receiveShadow = true;
+    scene.add(w);
+  };
+  badWand(KLO_TUER.xMin - BAD.xMin, (BAD.xMin + KLO_TUER.xMin) / 2, BAD.zMin + 0.002, 0, 31);
+  badWand(BAD.xMax - KLO_TUER.xMax, (KLO_TUER.xMax + BAD.xMax) / 2, BAD.zMin + 0.002, 0, 32);
+  badWand(KLO_TUER.xMax - KLO_TUER.xMin, (KLO_TUER.xMin + KLO_TUER.xMax) / 2, BAD.zMin + 0.002, 0, 33, BAD.hoehe - KLO_TUER.hoehe, KLO_TUER.hoehe);
+  badWand(BAD.zMax - BAD.zMin, BAD.xMin, (BAD.zMin + BAD.zMax) / 2, Math.PI / 2, 34);
+  badWand(BAD.zMax - BAD.zMin, BAD.xMax, (BAD.zMin + BAD.zMax) / 2, -Math.PI / 2, 35);
+  badWand(BAD.xMax - BAD.xMin, (BAD.xMin + BAD.xMax) / 2, BAD.zMax, Math.PI, 36);
+  const badDecke = new THREE.Mesh(new THREE.PlaneGeometry(BAD.xMax - BAD.xMin, BAD.zMax - BAD.zMin), toon(0xe8e4da));
+  badDecke.rotation.x = Math.PI / 2;
+  badDecke.position.set((BAD.xMin + BAD.xMax) / 2, BAD.hoehe, (BAD.zMin + BAD.zMax) / 2);
+  scene.add(badDecke);
+  // Deckenlampe
+  scene.add(setze(zylinder(0.16, 0.12, 0.08, 0xfffbea, { umriss: 0.003, wirft: false }, 18), 2.3, BAD.hoehe - 0.04, 5.4));
+  const badLicht = new THREE.PointLight(0xfff2dc, 4, 6, 1.6);
+  badLicht.position.set(2.3, BAD.hoehe - 0.3, 5.4);
+  scene.add(badLicht);
+  // Fenster (Milchglas) in der Rückwand
+  const badFenster = new THREE.Group();
+  badFenster.add(new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.6), new THREE.MeshBasicMaterial({ color: 0xdfeef4 })));
+  for (const [bb, hh, x, y] of [[0.78, 0.06, 0, 0.32], [0.78, 0.06, 0, -0.32], [0.06, 0.7, -0.37, 0], [0.06, 0.7, 0.37, 0], [0.04, 0.6, 0, 0]]) badFenster.add(setze(quader(bb, hh, 0.05, 0xf4f4ef, { wirft: false }), x, y, 0.02));
+  badFenster.add(setze(quader(0.82, 0.04, 0.14, 0xf4f4ef, { wirft: false }), 0, -0.36, 0.06));
+  setze(badFenster, 2.3, 1.75, BAD.zMax - 0.01, 0, Math.PI, 0);
+  scene.add(badFenster);
+
+  // Toilette in der hinteren linken Ecke, schaut zur Tür
+  const toilette = new THREE.Group();
+  const porzellan = 0xf7f7f3;
+  toilette.add(setze(zylinder(0.15, 0.12, 0.36, porzellan, {}, 20), 0, 0.18, 0.04));
+  const schuessel = setze(zylinder(0.2, 0.16, 0.08, porzellan, {}, 22), 0, 0.37, 0.06);
+  schuessel.scale.set(0.9, 1, 1.15);
+  toilette.add(schuessel);
+  const kloWasser = new THREE.Mesh(new THREE.CircleGeometry(0.14, 20), new THREE.MeshBasicMaterial({ color: 0x9cc9e0 }));
+  kloWasser.rotation.x = -Math.PI / 2;
+  kloWasser.scale.set(0.9, 1.15, 1);
+  kloWasser.position.set(0, 0.38, 0.06);
+  toilette.add(kloWasser);
+  const kloBrille = teil(new THREE.TorusGeometry(0.15, 0.025, 8, 24), 0xffffff, { umriss: 0.002 });
+  kloBrille.rotation.x = Math.PI / 2;
+  kloBrille.scale.set(0.9, 1.15, 1);
+  kloBrille.position.set(0, 0.42, 0.06);
+  toilette.add(kloBrille);
+  toilette.add(setze(quader(0.36, 0.03, 0.4, 0xffffff), 0, 0.62, -0.17, -1.45, 0, 0));
+  toilette.add(setze(quader(0.4, 0.38, 0.17, porzellan), 0, 0.62, -0.25));
+  toilette.add(setze(quader(0.42, 0.03, 0.19, porzellan), 0, 0.825, -0.25));
+  toilette.add(setze(zylinder(0.03, 0.03, 0.015, 0xc9cdd2, { umriss: 0.002 }, 12), 0, 0.845, -0.25));
+  // Klorolle an der Wand
+  toilette.add(setze(zylinder(0.055, 0.055, 0.1, 0xffffff, { umriss: 0.002 }, 14), -0.32, 0.7, -0.05, 0, 0, Math.PI / 2));
+  setze(toilette, 1.2, 0, BAD.zMax - 0.35, 0, Math.PI, 0);
+  scene.add(toilette);
+  // Bild über dem Klo (Foto vom Betreiber: assets/bad-bild.jpg), Holzrahmen; fehlt das Foto, bleibt der Rahmen leer
+  const badBild = new THREE.Group();
+  badBild.add(setze(quader(0.46, 0.76, 0.03, 0x7a4f2a, { wirft: false }), 0, 0, 0));
+  const badBildMat = new THREE.MeshBasicMaterial({ color: 0xf4f0e6 });
+  const badBildFoto = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.7), badBildMat);
+  badBildFoto.position.z = 0.017;
+  badBild.add(badBildFoto);
+  new THREE.TextureLoader().load('assets/bad-bild.jpg', (t) => { t.colorSpace = THREE.SRGBColorSpace; badBildMat.map = t; badBildMat.color.set(0xffffff); badBildMat.needsUpdate = true; }, undefined, () => {});
+  setze(badBild, 1.2, 1.55, BAD.zMax - 0.02, 0, Math.PI, 0);
+  scene.add(badBild);
+  merke(toilette, 'toilette', 'Toilette', null);
+  objekte.toilette = toilette;
+  hindernis(0.95, 1.5, BAD.zMax - 0.7, BAD.zMax);
+  // Pfütze bei Verstopfung
+  const kloPfuetze = new THREE.Mesh(new THREE.CircleGeometry(0.45, 20), new THREE.MeshBasicMaterial({ color: 0x8aa66a, transparent: true, opacity: 0.55, depthWrite: false }));
+  kloPfuetze.rotation.x = -Math.PI / 2;
+  kloPfuetze.scale.set(1.3, 0.9, 1);
+  kloPfuetze.position.set(1.4, 0.006, BAD.zMax - 0.9);
+  kloPfuetze.visible = false;
+  scene.add(kloPfuetze);
+
+  // Dusche hinten rechts: Wanne, Glaswände mit Rahmen, Brausestange mit Kopf und Schlauch
+  const dusche = new THREE.Group();
+  dusche.add(setze(quader(0.9, 0.08, 0.9, porzellan), 0, 0.04, 0));
+  dusche.add(setze(zylinder(0.04, 0.04, 0.01, 0x9aa3ab, { umriss: false }, 12), 0, 0.085, 0));
+  const glasMat = new THREE.MeshBasicMaterial({ color: 0xcfe8f2, transparent: true, opacity: 0.28, depthWrite: false, side: THREE.DoubleSide });
+  const glasVorne = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 1.9), glasMat);
+  glasVorne.position.set(0, 1.03, -0.45);
+  dusche.add(glasVorne);
+  const glasSeite = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 1.9), glasMat);
+  glasSeite.rotation.y = Math.PI / 2;
+  glasSeite.position.set(-0.45, 1.03, 0);
+  dusche.add(glasSeite);
+  for (const [bb, hh, tt, x, y, zz] of [[0.92, 0.03, 0.03, 0, 1.98, -0.45], [0.03, 0.03, 0.92, -0.45, 1.98, 0], [0.03, 1.9, 0.03, -0.45, 1.03, -0.45]]) dusche.add(setze(quader(bb, hh, tt, 0xb8bcc2, { umriss: 0.002 }), x, y, zz));
+  dusche.add(setze(zylinder(0.012, 0.012, 1.0, 0xc9cdd2, {}, 8), 0.43, 1.5, 0.1));
+  dusche.add(setze(zylinder(0.06, 0.04, 0.03, 0xc9cdd2, { umriss: 0.002 }, 14), 0.38, 1.95, 0.1, 0, 0, 0.6));
+  const brauseSchlauch = new THREE.CatmullRomCurve3([new THREE.Vector3(0.43, 1.0, 0.1), new THREE.Vector3(0.38, 0.75, 0.14), new THREE.Vector3(0.42, 0.55, 0.12), new THREE.Vector3(0.43, 0.9, 0.08), new THREE.Vector3(0.4, 1.92, 0.1)]);
+  dusche.add(teil(new THREE.TubeGeometry(brauseSchlauch, 30, 0.008, 6, false), 0xb8bcc2, { umriss: 0.0015 }));
+  dusche.add(setze(zylinder(0.03, 0.03, 0.06, 0xc9cdd2, { umriss: 0.002 }, 10), 0.43, 1.05, 0.1, 0, 0, Math.PI / 2));
+  setze(dusche, BAD.xMax - 0.45, 0, BAD.zMax - 0.45, 0, 0, 0);
+  scene.add(dusche);
+  merke(dusche, 'dusche', 'Dusche', null);
+  hindernis(BAD.xMax - 0.92, BAD.xMax, BAD.zMax - 0.92, BAD.zMax);
+
+  // Waschbecken an der linken Wand mit Spiegel und Hahn
+  const becken2 = new THREE.Group();
+  const beckenSchale = setze(zylinder(0.24, 0.18, 0.16, porzellan, {}, 22), 0, 0.82, 0);
+  beckenSchale.scale.set(1, 1, 0.8);
+  becken2.add(beckenSchale);
+  const beckenGrund = new THREE.Mesh(new THREE.CircleGeometry(0.2, 20), new THREE.MeshBasicMaterial({ color: 0xdde4e6 }));
+  beckenGrund.rotation.x = -Math.PI / 2;
+  beckenGrund.scale.set(1, 0.8, 1);
+  beckenGrund.position.y = 0.901;
+  becken2.add(beckenGrund);
+  becken2.add(setze(zylinder(0.05, 0.07, 0.72, porzellan, {}, 14), 0, 0.37, -0.06));
+  becken2.add(setze(zylinder(0.015, 0.015, 0.14, 0xc9cdd2, { umriss: 0.002 }, 8), 0, 0.97, -0.15));
+  becken2.add(setze(zylinder(0.012, 0.012, 0.1, 0xc9cdd2, { umriss: 0.002 }, 8), 0, 1.03, -0.1, Math.PI / 2, 0, 0));
+  becken2.add(setze(quader(0.05, 0.015, 0.06, 0xc9cdd2, { umriss: 0.002 }), 0, 1.05, -0.17));
+  const badSpiegel = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.65), new THREE.MeshBasicMaterial({ color: 0xbfd6dd }));
+  badSpiegel.position.set(0, 1.6, -0.215);
+  becken2.add(badSpiegel);
+  becken2.add(setze(quader(0.54, 0.69, 0.02, 0x9aa3ab, { umriss: 0.002, wirft: false }), 0, 1.6, -0.228));
+  becken2.add(setze(quader(0.5, 0.02, 0.1, 0xf4f4ef, { umriss: 0.002 }), 0, 1.25, -0.17));
+  setze(becken2, BAD.xMin + 0.23, 0, 5.35, 0, Math.PI / 2, 0);
+  scene.add(becken2);
+  merke(becken2, 'waschbecken', 'Waschbecken', null);
+  hindernis(BAD.xMin, BAD.xMin + 0.48, 5.1, 5.6);
 
   // Poster mit Klebeband, leicht schräg, über der Kaffeeecke
   const posterTex = new THREE.TextureLoader().load('assets/poster.jpg');
@@ -1529,7 +1860,7 @@ export function baueWelt(scene) {
   russDecke.position.set(1.55, RAUM.hoehe - 0.012, -3.15);
   scene.add(russDecke);
   const russWand = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 2.4), russMat);
-  russWand.position.set(1.55, RAUM.hoehe - 1.0, RAUM.zMin + 0.015);
+  russWand.position.set(1.55, 2.4, RAUM.zMin + 0.015);
   scene.add(russWand);
   let russ = 0;
   let feuerZeit = 0;
@@ -1843,6 +2174,22 @@ export function baueWelt(scene) {
     BESEN: { x: -4.35, z: 2.05 },
     get dreck() { return dreck.length; },
     KLO: { x: 1.4, z: 3.55 },
+    KLO_DRIN: { x: 1.4, z: 4.75 },
+    BAD,
+    // Ist (x, z) mit Abstand r frei begehbar? Werkstatt, Bad oder die offene WC-Tür dazwischen
+    begehbar(x, z, r) {
+      const drin = (q, rr) => x > q.xMin + rr && x < q.xMax - rr && z > q.zMin + rr && z < q.zMax - rr;
+      if (drin(RAUM, r) || drin(BAD, r)) return true;
+      return kloOffen && x > KLO_TUER.xMin + 0.15 && x < KLO_TUER.xMax - 0.15 && z > RAUM.zMax - 0.7 && z < BAD.zMin + 0.7;
+    },
+    imBad(x, z) { return x > BAD.xMin && x < BAD.xMax && z > BAD.zMin && z < BAD.zMax; },
+    kloTuer(offen) { kloOffen = offen; },
+    get kloOffen() { return kloOffen; },
+    kloVerstopft(an) {
+      kloWasser.material.color.set(an ? 0x8a7a4a : 0x9cc9e0);
+      kloWasser.position.y = an ? 0.415 : 0.38;
+      kloPfuetze.visible = an;
+    },
     FEUER: { x: 1.55, z: -3.3, vorX: 1.55, vorZ: -2.45 },
     LOESCHER: { x: 4.35, z: -1.0 },
     feuer(an) { feuer.visible = an; feuerLicht.intensity = an ? 4 : 0; if (an) rauch.visible = true; },

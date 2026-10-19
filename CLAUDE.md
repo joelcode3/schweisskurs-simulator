@@ -18,8 +18,9 @@
   mit Holzgriff, langes Ofenrohr oben (statt Ventil), drei schräge Beine am Fußring, zwei seitliche Tragegriffe.
   Mit Beinen steht er vor dem Schweißtisch auf dem Boden.
 - Aussehen Dennis (nach Fotos): schlank, blond-rötliche Locken (oben/hinten voluminös), goldene Pilotenbrille,
-  Schnauzer, leichter Dreitagebart, schwarze Arbeitsjacke mit Kragen und Reflexstreifen, darunter grauer Hoodie (keine Kordeln), schwarze
-  Arbeitshose, **hässlicher blauer Rucksack** (ausdrücklich gewünscht). Keine roten Wangen, kein Gehörschutz, keine Mütze, kein grauer Ring am Hals.
+  Schnauzer, leichter Dreitagebart, schwarze Arbeitsjacke mit Kragen und Reflexstreifen, darunter grauer Hoodie (keine Kordeln), kurze
+  schwarze Arbeitshose (über dem Knie), dicke nackte Waden mit Tattoos auf der Rückseite (links Kiwi, rechts Penis, leicht nach
+  außen gedreht, `wadenTattoo` in dennis.js), kurze graue Socken, **hässlicher blauer Rucksack** (ausdrücklich gewünscht). Keine roten Wangen, kein Gehörschutz, keine Mütze, kein grauer Ring am Hals.
 - Start aktuell: einfache Karte mit „Kurs starten“, danach direkt Dennis' Begrüßung (#start-einfach).
 - FÜR SPÄTER gemerkt (Betreiber): Startbildschirm Werkstatt von außen, Plakat „Heute: Gasflaschen-Ofen schweißen mit Dennis“
   (Foto assets/dennis-plakat.jpg, kommt später), Tür mit Zahlenschloss, Code **1312**. Ist fertig gebaut (#start, Klasse
@@ -83,8 +84,8 @@
   40-Grad-Wäsche!! (kein „Fußmatte waschen“ mehr).
 - Nebenaufgabe 40-Grad-Wäsche (Dennis helfen, freut ihn: Wut -15, bei zu heiß nur -5): Klemmbrett in der Hand, E = übernehmen.
   Dennis kommt, gibt die blaue Einkaufstasche (wie IKEA: gewebte Plane, gelbe Gurtbänder, flache Henkel; darin
-  grauer Hoodie mit raushängendem Ärmel, Jeans mit Hosenbein, schwarzes Shirt, Handtuch, rote Socke) mit Wäsche und erklärt in 4 Blasen den Ablauf. Waschmaschine rechts
-  neben dem Waschplatz (Ecke vorne rechts), Trockner obendrauf, beide mit Anzeige (Restzeit/ENDE) und drehender Trommel.
+  grauer Hoodie mit raushängendem Ärmel, Jeans mit Hosenbein, schwarzes Shirt, Handtuch, rote Socke) mit Wäsche und erklärt in 4 Blasen den Ablauf. Waschmaschine im Bad
+  (vorne rechts), Trockner obendrauf, beide mit Anzeige (Restzeit/ENDE) und drehender Trommel.
   Temperatur wählbar 30/40/60/90 (über 40 = Fehler, Dennis merkt es spätestens beim Rausholen). Waschen 50 s, Trocknen 35 s.
   Flusensieb (unten in der Trocknertür, voller Fusseln) ausbauen, am Kompressor (Ecke rechts neben dem Regal, 50-l-Kessel mit
   Motor, Kühlrippen, Manometern, Spiralschlauch und Ausblaspistole) mit Druckluft ausblasen,
@@ -104,9 +105,21 @@
   danach Wut + stimme/hand.handyNochmal.mp3, Ton aus handy1/handy2.MOV),
   Löscher auf Dennis (Ausraster), Löscher sinnlos (Ermahnung), laufende Flex auf Dennis (sauer).
 - Umschauen am Computer: Maus an den Bildrand fahren (ohne Klicken), je näher am Rand desto schneller (steuerung.js `randDrehen`,
-  Rand 16 % links/rechts, 13 % oben/unten, Zeiger wird zum Pfeil). Kein Pointer Lock/Einrasten (Betreiber: doof). Ziehen geht weiterhin.
+  Rand 26 % links/rechts, 20 % oben/unten, bis 3,6 bzw. 2,0 rad/s, Zeiger wird zum Pfeil). Ziehen: 0,007 (Maus) / 0,0085 (Touch). Kein Pointer Lock/Einrasten (Betreiber: doof). Ziehen geht weiterhin.
   Nicht drehen, solange ein Menü/Dialog/Minispiel/Dennis-Fenster offen ist.
 - Dennis aufhelfen (Hüfte) nur mit leeren Händen (Ausnahme: Kaffee, Wäschetasche, Sieb, die man nicht hinlegen kann).
+- Kaffee kann man werfen (Q) und fallen lassen (G); dann ist er weg (neuen kochen), Dennis meckert, wenn er es sieht.
+- Werkstatt-Optik: Deckenhöhe 4,8 m (RAUM.hoehe), Leuchtstoffröhren hängen an Ketten auf 3,6 m. Wände mit eigener Leinwand je Wand
+  (`wandMalen`): Putz, grüngrauer Sockel bis 1,25 m, Putz bröckelt stellenweise (Ziegel sichtbar), Risse, Wasserflecken.
+  KEINE Graffiti und Zahlen (Betreiber: wieder weg). Eingang vorne: breites grünes Scheunentor (2 Flügel, helle Z-Streben,
+  schwarze Bänder) mit Rauchen-verboten-Schild; Lichtschalter zwischen Tor und WC-Tür.
+- Bad (begehbar) hinter der WC-Tür vorne rechts (BAD in world.js, x 0,7–3,9, z 4,0–6,8): Schachbrett-Boden, Fliesen bis 1,4 m,
+  Milchglasfenster, Klo (hinten links), Dusche (hinten rechts), Waschbecken mit Spiegel, Waschmaschine + Trockner (vorne rechts).
+  WC-Tür offen, nur zu während Dennis drin ist. Bild über dem Klo: assets/bad-bild.jpg (Foto vom Betreiber, Dennis oben ohne mit Handy, Holzrahmen).
+  Verstopfung: nach Dennis' Klo einmal pro Spiel mit 30 % Wahrscheinlichkeit; Pömpel steht oben im Regal, in die Hand, aufs Klo
+  klicken (Wut -10). Nach 70 s macht Dennis es selbst (+8 Wut).
+- Stahlträger (HEB 200, rostig) liegen vorne rechts zwischen Waschplatz und Bad-Tür, ohne Funktion. Anklicken oder in der Nähe
+  (max. alle 45 s): Dennis „Schwere Stahlträger sind Torbens Job!“.
 - Bedienung: Hat ein Ding nur eine Aktion, wird sie beim Klick direkt ausgeführt (kein Menü). Box und Licht schalten
   sofort beim Klick (ohne Hinlaufen). Abbrechen-Knöpfe hell mit dunkler Schrift.
 - Dennis hält seinen Becher immer aufrecht, Schuhsohlen rund (keine eckigen Platten).
