@@ -205,6 +205,7 @@ export const DENNIS = {
   eingeschissen: ['RAUS DA! RAUS! Ich muss ... oh nein. OH NEIN. Zu spät. ZU SPÄT!!', 'Was machst du im Bad?! Ich muss DRINGEND ... ach du Scheiße. Wortwörtlich.', 'Ich hab doch gesagt, ich muss! Jetzt ist es passiert! Die ganze Hose!'],
   eingeschissenRaus: ['Ich hab mir wegen dir in die Hose geschissen! In MEINE kurze Hose! RAUS! Und komm nie wieder!', 'Eingeschissen! Wegen DIR! Das wars, du fliegst! Pack deine Sachen!'],
   leiter: ['Hängt die Leiter von Johnny immer noch da?! Der soll die endlich abholen!', 'Johnny! Deine Camper-Leiter! Seit Monaten hängt die hier rum!', 'Ich schmeiß die Leiter bald auf den Schrott. Johnny holt die ja eh nie ab.', 'Wer braucht denn eine Leiter für einen Camper, den es gar nicht mehr gibt? Johnny!'],
+  waldoKruemel: ['Waldo! Du krümelst mir die ganze Werkstatt voll!', 'Waldo, isst du schon wieder? Wir haben grad erst Mittag gemacht!', 'Waldo, du hast da was im Bart. Also ... eigentlich alles.'],
   jonnyRaucht: ['Jonny! Da hängt ein Rauchen-verboten-Schild! Direkt neben dir!', 'Jonny, mach die Kippe aus! Hier steht Gas rum!', 'Und die Kippe NICHT in den Mülleimer, Jonny!'],
   traeger: ['Halt! Nicht anfassen! Schwere Stahlträger sind Torbens Job!', 'Finger weg von den Trägern! Das macht Torben.', 'Die Träger lässt du liegen. Das ist Torbens Job, nicht deiner!'],
   verstopft: {
@@ -246,4 +247,11 @@ export const JONNY = {
   quatschen: ['Na, Schweißer? Läuft bei dir?', 'Ich bin nur kurz hier. Seit drei Stunden.', 'Holz ist ehrlicher als Stahl. Sag ich nur.', 'Hast du mal Feuer? Nee, war Spaß. Hab selbst.', 'Dennis ist heute wieder voll in seinem Element, oder?'],
   leiter: ['Die Leiter? Die hol ich nächste Woche. Ganz sicher.', 'Welche Leiter? Ach DIE. Ja, irgendwann.', 'Der Camper ist weg, aber die Leiter ist noch gut. Die bleibt hier.'],
   feuer: ['Upsi. War ich das?', 'Die Kippe war doch aus! Glaub ich.'],
+};
+
+// Waldo (Kumpel, isst eigentlich immer)
+export const WALDO = {
+  quatschen: ['Mmh. Willst du auch was? Nee, ist meins.', 'Ich hab Hunger. Ich hab immer Hunger.', 'Feine Sahne live, das war so gut. Warst du dabei?', 'Schweißen macht hungrig. Auch vom Zugucken.'],
+  kruemel: ['Was? Wo? ... Ach, das spar ich mir für später.', 'Das ist kein Krümel, das ist Vorrat.', 'Lass mal, der Bart isst mit.'],
+  antwort: ['Ich krümel doch gar nicht. Mampf.', 'Ist doch nur ein Toast, Dennis!', 'Kann man auch wieder auffegen. Also du.'],
 };

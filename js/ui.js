@@ -200,6 +200,12 @@ export function sprechzeile(text, ms, sauer = false) { blaseRechts(text, ms, sau
 export function lobZeigen(text) { blaseRechts(text, 5000, 'lob'); }
 // Jonny spricht: gleiche Blase rechts, mit seinem Namen und einem kleinen Gesicht (Cap, Bart, Brille)
 const JONNY_MINI = '<circle cx="20" cy="22" r="14" fill="#eebda0" stroke="#111" stroke-width="2"/><path d="M8 26 Q20 42 32 26 Q30 36 20 37 Q10 36 8 26z" fill="#4e321d" stroke="#111" stroke-width="1.5"/><path d="M6 16 Q20 2 34 16 Z" fill="#7d8a5c" stroke="#111" stroke-width="2"/><circle cx="15" cy="21" r="4" fill="none" stroke="#c9a13b" stroke-width="1.5"/><circle cx="25" cy="21" r="4" fill="none" stroke="#c9a13b" stroke-width="1.5"/>';
+const WALDO_MINI = '<circle cx="20" cy="21" r="14" fill="#e9b896" stroke="#111" stroke-width="2"/><path d="M6 22 Q20 46 34 22 Q32 38 20 39 Q8 38 6 22z" fill="#3a261a" stroke="#111" stroke-width="1.5"/><path d="M6 15 Q20 1 34 15 Z" fill="#cdb894" stroke="#111" stroke-width="2"/><rect x="14" y="30" width="3" height="2" fill="#d9a35a"/><rect x="23" y="33" width="3" height="2" fill="#d9a35a"/>';
+export function waldoSagt(text, ms = 4500) {
+  blaseRechts(text, ms, 'normal');
+  $('lobblase').querySelector('b').textContent = 'WALDO';
+  $('lob-gesicht').innerHTML = WALDO_MINI;
+}
 export function jonnySagt(text, ms = 4500) {
   blaseRechts(text, ms, 'normal');
   $('lobblase').querySelector('b').textContent = 'JONNY';

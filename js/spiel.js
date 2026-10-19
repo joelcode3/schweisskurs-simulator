@@ -5,7 +5,7 @@ import { auftritt, hatClip, buehneBelegt } from './clips.js';
 import { pfadSpiel, schlackeSpiel, hulaSpiel, DENNIS_HULA_REKORD } from './minispiele.js';
 import { blip, kratzen, jingle, klonk, brummeln, dauer as dauerTon, technoAn, technoAus, technoBeat, klospuelung, mampfen, klick as schalterKlick, stimmeAbspielen, stimmenVorladen } from './audio.js';
 import * as ui from './ui.js';
-import { DENNIS, JONNY, satzId } from './texte.js';
+import { DENNIS, JONNY, WALDO, satzId } from './texte.js';
 import { SYMBOL } from './gesicht.js';
 
 const zufallAus = (liste) => liste[Math.floor(Math.random() * liste.length)];
@@ -1980,6 +1980,11 @@ export function baueSpiel({ welt, dennis, jonny, steuerung, kamera, hand }) {
         return ['Dusche', 'Jetzt nicht. Erst wird gearbeitet.', []];
       case 'waschbecken':
         return ['Waschbecken', 'Mit Spiegel. Siehst müde aus.', [A('Hände waschen', 'wasser', haendeWaschen)]];
+      case 'waldo':
+        return ['Waldo', 'Isst. Wie immer. Im Bart hängt noch das Frühstück.', [
+          A('Quatschen', 'frage', () => ui.waldoSagt(sag(WALDO.quatschen))),
+          A('Auf die Krümel im Bart hinweisen', 'frage', () => ui.waldoSagt(sag(WALDO.kruemel))),
+        ]];
       case 'jonny':
         return ['Jonny', 'Zimmermann. Steht gern rum. Raucht gern. Seine Leiter hängt immer noch hier.', [
           A('Quatschen', 'frage', () => ui.jonnySagt(sag(JONNY.quatschen))),
@@ -2299,6 +2304,13 @@ export function baueSpiel({ welt, dennis, jonny, steuerung, kamera, hand }) {
         jonny.rauchen(false);
         // manchmal ruft Dennis rüber
         if (dennisSiehts() && ruhig() && !z.beschaeftigt && Math.random() < 0.5) dennisSagt(sag(DENNIS.jonnyRaucht), true, { prio: 0 });
+      }
+      // ab und zu meckert Dennis über Waldos Krümel (alle 3–5 min, nur wenn es ruhig ist)
+      if (z.waldoZuletzt === undefined) z.waldoZuletzt = sekundenSeitStart() + 60;
+      if (sekundenSeitStart() - z.waldoZuletzt > 180 + Math.random() * 120 && dennisSiehts() && dennis.modus === 'normal' && !z.beschaeftigt && ruhig() && !buehneBelegt()) {
+        z.waldoZuletzt = sekundenSeitStart();
+        dennisSagt(sag(DENNIS.waldoKruemel), true, { prio: 0 });
+        setTimeout(() => ui.waldoSagt(sag(WALDO.antwort)), 3500);
       }
       // Dennis läuft gegen einen tief hängenden Stromwürfel
       if (dennis.wurzel.visible && dennis.modus !== 'liegen' && dennis.modus !== 'sitzen' && dennis.modus !== 'schlafen') {

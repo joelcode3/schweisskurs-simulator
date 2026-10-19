@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { baueWelt, STATIONEN } from './world.js';
 import { baueDennis } from './dennis.js';
 import { baueJonny } from './jonny.js';
+import { baueWaldo } from './waldo.js';
 import { baueSteuerung } from './steuerung.js';
 import { baueSpiel } from './spiel.js';
 import { baueHand } from './hand.js';
@@ -28,6 +29,9 @@ const dennis = baueDennis(scene);
 dennis.wurzel.userData.interaktiv = { id: 'dennis', name: 'Dennis', station: null };
 const jonny = baueJonny(scene);
 jonny.wurzel.userData.interaktiv = { id: 'jonny', name: 'Jonny', station: null };
+const waldo = baueWaldo(scene);
+waldo.wurzel.userData.interaktiv = { id: 'waldo', name: 'Waldo', station: null };
+welt.hindernisse.push({ xMin: waldo.position.x - 0.25, xMax: waldo.position.x + 0.25, zMin: waldo.position.z - 0.25, zMax: waldo.position.z + 0.25 });
 welt.hindernisse.push({ xMin: jonny.position.x - 0.25, xMax: jonny.position.x + 0.25, zMin: jonny.position.z - 0.25, zMax: jonny.position.z + 0.25 });
 
 const zielListe = scene.children;
@@ -67,6 +71,8 @@ function schleife(jetzt) {
   dennis.update(dt);
   jonny.schauZu(kamera.position);
   jonny.update(dt);
+  waldo.schauZu(kamera.position);
+  waldo.update(dt);
   welt.update(dt);
   if (spiel) {
     spiel.update(dt);
@@ -128,4 +134,4 @@ raeder.forEach((rad) => rad.addEventListener('pointerdown', (e) => {
 }));
 
 // Für Tests im Browser
-window.__werkstatt = { kamera, steuerung, dennis, jonny, welt, hand, get spiel() { return spiel; } };
+window.__werkstatt = { kamera, steuerung, dennis, jonny, waldo, welt, hand, get spiel() { return spiel; } };

@@ -138,6 +138,11 @@
   Raucht alle 1–2 min ca. 20 s (Kippe, Rauch), Dennis meckert manchmal (DENNIS.jonnyRaucht). Anklicken: Quatschen /
   Nach der Leiter fragen (Sprüche in JONNY in texte.js, Blase rechts mit Name JONNY, ui.jonnySagt). Feuer durch Kippe:
   Jonny sagt kurz danach „Upsi. War ich das?“. Weitere Ideen offen (Leiter abholen, Störenfried, Nähte kommentieren).
+- Waldo (js/waldo.js, nach Fotos): kleiner als Dennis/Jonny (Skala 0,85), breit, kurze dunkle Haare, großer dunkler Vollbart
+  mit Essensresten (Krümel, Salat, Mayo), beige Cap, dunkelroter Pulli mit weißem Feine-Sahne-Fischfilet-Schriftzug + Fisch
+  (eigene Fläche auf der Brust), kurze zerfetzte graue Jogginghose (Löcher, Fransen, Kordel), behaarte Beine, weiße Söckchen,
+  beige Sneaker. Steht bei (2,6 | 2,75) zwischen Trägern und Bad-Tür, isst Toast (beißt alle 7 s ab). Anklicken: Quatschen,
+  Krümel im Bart (WALDO in texte.js, ui.waldoSagt). Dennis meckert alle 3–5 min über Krümel (DENNIS.waldoKruemel).
 - Stahlträger (HEB 200, rostig) liegen vorne rechts zwischen Waschplatz und Bad-Tür, ohne Funktion. Anklicken oder in der Nähe
   (max. alle 45 s): Dennis „Schwere Stahlträger sind Torbens Job!“.
 - Bedienung: Hat ein Ding nur eine Aktion, wird sie beim Klick direkt ausgeführt (kein Menü). Box und Licht schalten
