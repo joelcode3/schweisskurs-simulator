@@ -172,7 +172,7 @@ const NAEHTE = {
   rohr: { name: 'Ofenrohr', form: 'kreis', text: 'Einmal komplett rundherum. Nicht hetzen, nicht trödeln.' },
 };
 
-export function baueSpiel({ welt, dennis, jonny, steuerung, kamera, hand }) {
+export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand }) {
   const z = {
     ppe: { brille: false, handschuhe: false, helm: false },
     ventilAuf: false,
@@ -919,6 +919,265 @@ export function baueSpiel({ welt, dennis, jonny, steuerung, kamera, hand }) {
   async function kloSpuelen() {
     const sp = await stimmeAbspielen('assets/klospuelung.mp3', 0.8);
     if (!sp) klospuelung(0.8);
+  }
+
+
+  // ---------- Jonny: Bier, Kitzeln, Leiter abholen, Störenfried, Sodbrennen ----------
+  const jz = { da: true, beschaeftigt: false, biere: 0, naechstesBier: 70 + Math.random() * 50, naechstesKitzeln: 110 + Math.random() * 80,
+    leiterAb: 170 + Math.random() * 90, leiter: 'nie', naechstesStoeren: 90 + Math.random() * 60, stoertSeit: -1 };
+  // Dennis ärgert sich über Jonny: Wut steigt etwas, ist aber kein Fehler des Spielers (höchstens bis 99)
+  function aerger(n) {
+    z.wut = Math.min(99, z.wut + n);
+    z.wutMax = Math.max(z.wutMax, z.wut);
+    ui.wutZeigen(z.wut, stimmungAusWut());
+    ui.wutWackeln();
+  }
+  const KUEHLSCHRANK_VOR = { x: -4.05, z: 2.42 };
+  async function jonnyBier(ueberredet) {
+    if (!jz.da || jz.beschaeftigt) return;
+    jz.beschaeftigt = true;
+    jonny.rauchen(false); z.jonnyRaucht = false;
+    ui.jonnySagt(sag(ueberredet ? JONNY.bierJa : JONNY.bierSelbst));
+    await Promise.race([jonny.gehZu(KUEHLSCHRANK_VOR.x, KUEHLSCHRANK_VOR.z, 1.3), warte(9000)]);
+    jonny.dreheZu(welt.objekte.kuehlschrank.position);
+    welt.kuehlschrank(true);
+    klonk(0.2);
+    await warte(900);
+    jonny.bier(true);
+    blip(900, 0.05, 0.15);
+    await warte(500);
+    welt.kuehlschrank(false);
+    jz.biere++;
+    if (dennisSiehts() && dennis.modus === 'normal') {
+      aerger(3);
+      dennisSagt(sag(DENNIS.jonnyBier), true, { prio: 1 });
+    }
+    await Promise.race([jonny.heim(), warte(9000)]);
+    jonny.trinken(true);
+    await warte(22000);
+    jonny.trinken(false);
+    jonny.bier(false);
+    // leere Flasche bleibt irgendwo bei ihm liegen (Unordnung)
+    const p = jonny.position;
+    welt.leereFlasche(p.x + (Math.random() - 0.5) * 0.9, p.z - 0.3 - Math.random() * 0.4);
+    jz.beschaeftigt = false;
+    if (jz.biere >= 4) jonnySodbrennen();
+  }
+  async function jonnySodbrennen() {
+    if (!jz.da || jz.beschaeftigt) return;
+    jz.beschaeftigt = true;
+    ui.jonnySagt(sag(JONNY.sodbrennen), 5000);
+    await warte(2500);
+    // ganz selten pinkelt er vorher in den Ofen (egal wie weit der ist)
+    if (Math.random() < 0.15 && !z.vorbei) {
+      const o = new THREE.Vector3();
+      welt.objekte.flasche.gruppe.getWorldPosition(o);
+      await Promise.race([jonny.gehZu(o.x + 0.9, o.z + 0.5, 1.0), warte(12000)]);
+      jonny.dreheZu(o);
+      jonny.pinkeln(true);
+      const ton = dauerTon('wasser', 0.25);
+      await warte(1500);
+      if (dennis.wurzel.visible) {
+        aerger(10);
+        dennis.stimmung('wut');
+        dennisSagt(sag(DENNIS.jonnyPisst), true, { prio: 2, minMs: 4000 });
+      }
+      await warte(2500);
+      ton.stopp();
+      jonny.pinkeln(false);
+      z.ofenAngepinkelt = true;
+    }
+    await Promise.race([jonny.gehZu(-0.85, 3.55, 1.0), warte(12000)]);
+    jonny.sichtbar(false);
+    jz.da = false;
+    jz.beschaeftigt = false;
+    if (dennisSiehts() && !z.vorbei) dennisSagt(sag(DENNIS.jonnyWeg), false, { prio: 0 });
+  }
+  async function jonnyKitzelt() {
+    if (!jz.da || jz.beschaeftigt) return;
+    jz.beschaeftigt = true;
+    const d = dennis.position;
+    const r = dennis.wurzel.rotation.y;
+    // schleicht sich von hinten an
+    await Promise.race([jonny.gehZu(d.x - Math.sin(r) * 0.55, d.z - Math.cos(r) * 0.55, 1.4), warte(9000)]);
+    if (dennis.modus === 'normal' && dennis.wurzel.visible && !z.vorbei) {
+      jonny.dreheZu(dennis.position);
+      jonny.kitzeln(true);
+      ui.jonnySagt(sag(JONNY.kitzeln), 2500);
+      await warte(1300);
+      dennis.stimmung('sauer');
+      aerger(4);
+      await dennisSagt(sag(DENNIS.jonnyKitzeln), true, { prio: 2, ton: 'stimme/aergern-2.mp3' });
+      jonny.kitzeln(false);
+    }
+    await Promise.race([jonny.heim(), warte(9000)]);
+    dennis.stimmung('ruhig');
+    jz.beschaeftigt = false;
+  }
+  async function jonnyLeiterHolen() {
+    if (!jz.da || jz.beschaeftigt || jz.leiter !== 'nie') return;
+    jz.beschaeftigt = true;
+    jz.leiter = 'wartet';
+    await Promise.race([jonny.gehZu(4.0, 0.3, 1.1), warte(10000)]);
+    jonny.dreheZu(welt.objekte.leiter.position);
+    ui.jonnySagt(sag(JONNY.leiterHolen), 6000);
+    for (let i = 0; i < 45 && jz.leiter === 'wartet'; i++) await warte(1000);
+    if (jz.leiter === 'wartet') {
+      jz.leiter = 'nix';
+      ui.jonnySagt(sag(JONNY.leiterNix));
+      if (dennisSiehts()) setTimeout(() => dennisSagt(sag(DENNIS.leiter), true, { prio: 1 }), 2500);
+    }
+    await Promise.race([jonny.heim(), warte(10000)]);
+    jz.beschaeftigt = false;
+  }
+  async function leiterRunterreichen() {
+    if (jz.leiter !== 'wartet') return;
+    const ok = await ui.haltenDialog({ titel: 'Leiter runterholen', text: 'Leiter von den Konsolen heben und Jonny in die Hand drücken.', knopf: 'Hochheben (halten)', sekunden: 2 });
+    if (!ok || jz.leiter !== 'wartet') return;
+    jz.leiter = 'weg';
+    welt.objekte.leiter.visible = false;
+    klonk(0.6);
+    ui.jonnySagt(sag(JONNY.leiterDanke));
+    z.wut = Math.max(0, z.wut - 10);
+    aktualisieren();
+    jingle(true);
+    setTimeout(() => dennisSagt(sag(DENNIS.leiterEndlich), false, { prio: 1 }), 2500);
+  }
+  async function jonnyStoert() {
+    if (!jz.da || jz.beschaeftigt) return;
+    jz.beschaeftigt = true;
+    const p = kamera.position;
+    const r = steuerung.blickRichtung();
+    // stellt sich seitlich neben den Spieler
+    await Promise.race([jonny.gehZu(p.x + r.z * 0.8 + r.x * 0.4, p.z - r.x * 0.8 + r.z * 0.4, 1.3), warte(9000)]);
+    jonny.dreheZu(p);
+    ui.jonnySagt(sag(JONNY.stoeren), 6000);
+    jz.stoertSeit = sekundenSeitStart();
+    for (let i = 0; i < 15 && jz.stoertSeit > 0; i++) await warte(1000);
+    if (jz.stoertSeit > 0) {
+      jz.stoertSeit = -1;
+      ui.jonnySagt(sag(JONNY.beleidigt));
+    }
+    await Promise.race([jonny.heim(), warte(9000)]);
+    jz.beschaeftigt = false;
+  }
+  async function jonnyAntworten() {
+    jz.stoertSeit = -1;
+    ui.jonnySagt(sag(JONNY.quatschen));
+    if (dennisSiehts()) {
+      await warte(1500);
+      await wutPlus({ wut: 5, name: 'Mit Jonny gequatscht statt gearbeitet' });
+      dennisSagt(sag(DENNIS.jonnyQuatschen), true, { prio: 2 });
+    }
+  }
+  // ---------- Waldo: kommt zu Besuch (Handy), sitzt auf Sofa oder Trägern; einmal sucht er mit Dennis die Kackepumpe ----------
+  const wz = { beschaeftigt: false, ort: null, naechsterBesuch: 60 + Math.random() * 60, bleibtBis: 0, naechsterMecker: 0,
+    pumpeAb: Math.random() < 0.7 ? 220 + Math.random() * 200 : Infinity };
+  const WALDO_ORTE = [
+    { ort: 'stehen', x: 2.6, z: 2.75, haltung: 'handy' },
+    { ort: 'traeger', x: 3.2, z: 3.42, haltung: 'sitzen', hoehe: 0.46, rot: Math.PI },
+    { ort: 'sofa', x: -2.75, z: 3.5, haltung: 'sitzen', hoehe: 0.5, rot: Math.PI },
+    { ort: 'mitte', x: -1.2, z: -0.4, haltung: 'handy' },
+  ];
+  async function waldoBesuch() {
+    if (waldo.da || wz.beschaeftigt) return;
+    wz.beschaeftigt = true;
+    const moeglich = WALDO_ORTE.filter((o) => o.ort !== 'sofa' || (z.mittag !== 'gerade' && dennis.modus !== 'sitzen' && dennis.modus !== 'schlafen'));
+    const o = moeglich[Math.floor(Math.random() * moeglich.length)];
+    waldo.wurzel.position.copy(waldo.TOR);
+    waldo.haltung('handy');
+    waldo.sichtbar(true);
+    await Promise.race([waldo.gehZu(o.x, o.z, 1.0), warte(20000)]);
+    waldo.wurzel.rotation.y = o.rot ?? Math.PI * 1.1;
+    waldo.haltung(o.haltung, o.hoehe);
+    wz.ort = o.ort;
+    wz.bleibtBis = sekundenSeitStart() + 50 + Math.random() * 40;
+    wz.naechsterMecker = sekundenSeitStart() + 30;
+    if (dennisSiehts() && !z.vorbei) {
+      aerger(3);
+      dennisSagt(sag(DENNIS.waldoBesuch), true, { prio: 1 });
+    }
+    wz.beschaeftigt = false;
+  }
+  async function waldoGeht(text) {
+    if (!waldo.da || wz.beschaeftigt) return;
+    wz.beschaeftigt = true;
+    if (text) ui.waldoSagt(text);
+    waldo.haltung('handy');
+    wz.ort = null;
+    await Promise.race([waldo.gehZu(waldo.TOR.x, waldo.TOR.z, 1.1), warte(20000)]);
+    waldo.sichtbar(false);
+    wz.naechsterBesuch = sekundenSeitStart() + 90 + Math.random() * 90;
+    wz.beschaeftigt = false;
+  }
+  async function kackePumpe() {
+    if (waldo.da || wz.beschaeftigt) return;
+    wz.beschaeftigt = true;
+    wz.pumpeAb = Infinity;
+    z.beschaeftigt = true;
+    waldo.wurzel.position.copy(waldo.TOR);
+    waldo.haltung('rennen');
+    waldo.sichtbar(true);
+    const d = dennis.position;
+    await Promise.race([waldo.gehZu(d.x + 0.7, d.z + 0.5, 3.2), warte(8000)]);
+    waldo.dreheZu(dennis.position);
+    waldo.haltung('stehen');
+    ui.waldoSagt(sag(WALDO.pumpe), 4500);
+    await warte(2500);
+    dennis.stimmung('sauer');
+    await dennisSagt(sag(DENNIS.pumpeWo), true, { prio: 2, minMs: 3000 });
+    // beide suchen hektisch: Dennis am Regal, Waldo an der Werkbank
+    waldo.haltung('suchen');
+    await Promise.all([Promise.race([dennis.gehZu(-3.9, -0.6, 2.6), warte(7000)]), Promise.race([waldo.gehZu(0.8, -2.2, 2.6), warte(7000)])]);
+    ui.waldoSagt(sag(WALDO.pumpeNicht), 2500);
+    await warte(1800);
+    await dennisSagt(sag(DENNIS.pumpeGefunden), true, { prio: 2 });
+    await Promise.all([Promise.race([dennis.gehZu(-3.6, -1.85, 2.6), warte(7000)]), Promise.race([waldo.gehZu(-3.7, -2.95, 2.6), warte(9000)])]);
+    waldo.dreheZu(welt.objekte.kackPumpe.position);
+    await warte(700);
+    welt.objekte.kackPumpe.visible = false;
+    waldo.pumpe(true);
+    klonk(0.4);
+    ui.waldoSagt(sag(WALDO.pumpeDanke), 3000);
+    await warte(1200);
+    waldo.haltung('rennen');
+    await Promise.race([waldo.gehZu(waldo.TOR.x, waldo.TOR.z, 3.4), warte(9000)]);
+    waldo.sichtbar(false);
+    waldo.pumpe(false);
+    z.beschaeftigt = false;
+    dennis.stimmung('ruhig');
+    dennisSagt(sag(DENNIS.pumpeWeg), false, { prio: 1 });
+    dennis.heim();
+    wz.naechsterBesuch = sekundenSeitStart() + 120 + Math.random() * 60;
+    wz.beschaeftigt = false;
+  }
+  function waldoUpdate() {
+    if (wz.beschaeftigt || z.vorbei) return;
+    const t = sekundenSeitStart();
+    const dennisFrei = dennis.modus === 'normal' && dennis.wurzel.visible && !z.aufKlo && !z.hula && !z.dennisFegt && !z.dennisLoescht && !z.beschaeftigt && !buehneBelegt() && z.feuer !== 'brennt' && z.leck !== 'spritzt';
+    if (!waldo.da) {
+      if (t > wz.pumpeAb && dennisFrei) { kackePumpe(); return; }
+      if (t > wz.naechsterBesuch) waldoBesuch();
+      return;
+    }
+    // Mittagspause: Waldo muss vom Sofa
+    if (wz.ort === 'sofa' && z.mittag === 'gerade') { waldoGeht(sag(WALDO.sofaRunter)); return; }
+    if (t > wz.bleibtBis) { waldoGeht(sag(WALDO.tschuess)); return; }
+    if (t > wz.naechsterMecker && dennisSiehts() && ruhig() && !z.beschaeftigt && dennis.modus === 'normal') {
+      wz.naechsterMecker = t + 30 + Math.random() * 20;
+      aerger(2);
+      dennisSagt(sag(DENNIS.waldoMecker), true, { prio: 0 });
+    }
+  }
+  function jonnyUpdate() {
+    if (!jz.da || jz.beschaeftigt || z.beschaeftigt || z.vorbei) return;
+    const t = sekundenSeitStart();
+    const dennisFrei = dennis.modus === 'normal' && dennis.wurzel.visible && !z.aufKlo && !z.hula && !z.dennisFegt && !z.dennisLoescht && !buehneBelegt();
+    if (jz.leiter === 'nie' && t > jz.leiterAb) { jonnyLeiterHolen(); return; }
+    if (t > jz.naechstesBier) { jz.naechstesBier = t + 70 + Math.random() * 60; jonnyBier(false); return; }
+    if (dennisFrei && t > jz.naechstesKitzeln) { jz.naechstesKitzeln = t + 120 + Math.random() * 90; jonnyKitzelt(); return; }
+    const st = steuerung.station();
+    if ((st === 'werkbank' || st === 'schweiss') && t > jz.naechstesStoeren) { jz.naechstesStoeren = t + 100 + Math.random() * 60; jonnyStoert(); }
   }
 
   // ---------- Klicks auf Objekte ----------
@@ -1872,7 +2131,7 @@ export function baueSpiel({ welt, dennis, jonny, steuerung, kamera, hand }) {
   window.addEventListener('keyup', (e) => { if (e.key.toLowerCase() === 'e') spritzStopp(); });
   window.addEventListener('blur', spritzStopp);
 
-  function menueFuer(id) {
+  function menueFuer(id, obj = null) {
     const A = (text, symbol, tun) => ({ text, symbol, tun });
     switch (id) {
       case 'brille':
@@ -1981,19 +2240,36 @@ export function baueSpiel({ welt, dennis, jonny, steuerung, kamera, hand }) {
       case 'waschbecken':
         return ['Waschbecken', 'Mit Spiegel. Siehst müde aus.', [A('Hände waschen', 'wasser', haendeWaschen)]];
       case 'waldo':
-        return ['Waldo', 'Isst. Wie immer. Im Bart hängt noch das Frühstück.', [
+        return ['Waldo', wz.ort ? 'Guckt aufs Handy. Im Bart hängt noch das Frühstück.' : 'Hat es eilig.', [
           A('Quatschen', 'frage', () => ui.waldoSagt(sag(WALDO.quatschen))),
           A('Auf die Krümel im Bart hinweisen', 'frage', () => ui.waldoSagt(sag(WALDO.kruemel))),
+          ...(wz.beschaeftigt ? [] : [A('Sagen, dass Dennis keinen Besuch will', 'hand', () => {
+            waldoGeht(sag(WALDO.rausgeschickt));
+            if (dennisSiehts()) { z.wut = Math.max(0, z.wut - 4); aktualisieren(); setTimeout(() => dennisSagt(sag(DENNIS.waldoDanke), false, { prio: 1 }), 2500); }
+          })]),
         ]];
-      case 'jonny':
-        return ['Jonny', 'Zimmermann. Steht gern rum. Raucht gern. Seine Leiter hängt immer noch hier.', [
-          A('Quatschen', 'frage', () => ui.jonnySagt(sag(JONNY.quatschen))),
-          A('Nach der Leiter fragen', 'frage', () => {
-            ui.jonnySagt(sag(JONNY.leiter));
-            if (dennisSiehts()) setTimeout(() => dennisSagt(sag(DENNIS.leiter), true, { prio: 1 }), 2500);
-          }),
-        ]];
+      case 'jonny': {
+        if (jz.stoertSeit > 0) return ['Jonny', 'Steht neben dir und will quatschen.', [A('Antworten', 'frage', jonnyAntworten), A('Ignorieren', 'hand', () => { jz.stoertSeit = -1; ui.jonnySagt(sag(JONNY.beleidigt)); })]];
+        const a = [A('Quatschen', 'frage', () => ui.jonnySagt(sag(JONNY.quatschen)))];
+        if (!jz.beschaeftigt) a.push(A('Zu einem Bier überreden', 'tasse', () => jonnyBier(true)));
+        if (jz.leiter === 'nie' || jz.leiter === 'nix') a.push(A('Nach der Leiter fragen', 'frage', () => {
+          ui.jonnySagt(sag(JONNY.leiter));
+          if (dennisSiehts()) setTimeout(() => dennisSagt(sag(DENNIS.leiter), true, { prio: 1 }), 2500);
+        }));
+        return ['Jonny', 'Zimmermann. Steht gern rum. Raucht gern. Trinkt gern.', a];
+      }
+      case 'kuehlschrank':
+        return ['Kühlschrank', 'Bier, Bier, Senf, Bier. Gehört Dennis. Jonny bedient sich trotzdem.', [A('Reinschauen', 'auge', () => { welt.kuehlschrank(true); setTimeout(() => welt.kuehlschrank(false), 1800); if (dennisSiehts()) dennisSagt(sag(DENNIS.kuehlschrank), false, { prio: 2 }); })]];
+      case 'leereflasche':
+        return ['Leere Bierflasche', 'Von Jonny. Natürlich.', [A('Wegräumen', 'hand', () => {
+          welt.flascheWeg(obj);
+          klonk(0.2);
+          z.wut = Math.max(0, z.wut - 2);
+          aktualisieren();
+          ui.hinweis('Weggeräumt. Dennis nickt anerkennend.');
+        })]];
       case 'leiter':
+        if (jz.leiter === 'wartet') return ['Johnnys Leiter', 'Jonny steht drunter und kommt nicht ran.', [A('Leiter für Jonny runterholen', 'hand', leiterRunterreichen)]];
         return ['Johnnys Leiter', 'Alu-Leiter von einem alten Camper. Hängt hier schon ewig.', [A('Anfassen', 'hand', () => {
           z.leiterZuletzt = sekundenSeitStart();
           if (dennisSiehts()) dennisSagt(sag(DENNIS.leiter), true, { prio: 2 });
@@ -2075,7 +2351,7 @@ export function baueSpiel({ welt, dennis, jonny, steuerung, kamera, hand }) {
     steuerung.sperre(true);
     await hinZu(info, obj);
     steuerung.sperre(false);
-    const m = menueFuer(info.id);
+    const m = menueFuer(info.id, obj);
     if (!m) return;
     const [titel, text, aktionen] = m;
     if (!aktionen.length) { ui.hinweis(`${titel}: ${text || 'Gerade nichts zu tun.'}`); return; }
@@ -2204,7 +2480,7 @@ export function baueSpiel({ welt, dennis, jonny, steuerung, kamera, hand }) {
   return {
     zustand: z,
     klick,
-    test: { hueftePlatt, mittagspause, kloPause }, // nur für Tests (Playwright)
+    test: { hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
     stationWaehlen,
     intro,
     aktualisieren,
@@ -2213,6 +2489,8 @@ export function baueSpiel({ welt, dennis, jonny, steuerung, kamera, hand }) {
       spritzUpdate(dt);
       if (z.vorbei) return;
       waescheUpdate(dt);
+      jonnyUpdate();
+      waldoUpdate();
       // in die Nähe der Stahlträger: Dennis ruft (höchstens alle 45 s)
       const tr = welt.objekte.traeger.position;
       if (Math.hypot(kamera.position.x - tr.x, kamera.position.z - tr.z) < 1.9 && sekundenSeitStart() - (z.traegerZuletzt ?? -99) > 45 && dennisSiehts() && !z.beschaeftigt && ruhig()) {
@@ -2294,7 +2572,7 @@ export function baueSpiel({ welt, dennis, jonny, steuerung, kamera, hand }) {
       // Feuer im Mülleimer: einmal pro Spiel, nach dem Flexen bald, sonst irgendwann
       // Jonny raucht zwischendurch an der Tor-Ecke (obwohl das Schild direkt daneben hängt)
       if (z.jonnyRauchtBis === undefined) { z.jonnyRauchtBis = 0; z.jonnyNaechsteKippe = 40 + Math.random() * 40; }
-      if (!z.jonnyRaucht && sekundenSeitStart() > z.jonnyNaechsteKippe) {
+      if (!z.jonnyRaucht && jz.da && !jz.beschaeftigt && sekundenSeitStart() > z.jonnyNaechsteKippe) {
         z.jonnyRaucht = true;
         z.jonnyRauchtBis = sekundenSeitStart() + 18 + Math.random() * 10;
         jonny.rauchen(true);
@@ -2304,13 +2582,6 @@ export function baueSpiel({ welt, dennis, jonny, steuerung, kamera, hand }) {
         jonny.rauchen(false);
         // manchmal ruft Dennis rüber
         if (dennisSiehts() && ruhig() && !z.beschaeftigt && Math.random() < 0.5) dennisSagt(sag(DENNIS.jonnyRaucht), true, { prio: 0 });
-      }
-      // ab und zu meckert Dennis über Waldos Krümel (alle 3–5 min, nur wenn es ruhig ist)
-      if (z.waldoZuletzt === undefined) z.waldoZuletzt = sekundenSeitStart() + 60;
-      if (sekundenSeitStart() - z.waldoZuletzt > 180 + Math.random() * 120 && dennisSiehts() && dennis.modus === 'normal' && !z.beschaeftigt && ruhig() && !buehneBelegt()) {
-        z.waldoZuletzt = sekundenSeitStart();
-        dennisSagt(sag(DENNIS.waldoKruemel), true, { prio: 0 });
-        setTimeout(() => ui.waldoSagt(sag(WALDO.antwort)), 3500);
       }
       // Dennis läuft gegen einen tief hängenden Stromwürfel
       if (dennis.wurzel.visible && dennis.modus !== 'liegen' && dennis.modus !== 'sitzen' && dennis.modus !== 'schlafen') {
@@ -2327,7 +2598,7 @@ export function baueSpiel({ welt, dennis, jonny, steuerung, kamera, hand }) {
       }
       // Zwischendurch regt sich Dennis über Johnnys Leiter auf (alle 2,5–4 min, nur wenn es ruhig ist)
       if (z.leiterZuletzt === undefined) z.leiterZuletzt = sekundenSeitStart() - 60 * Math.random();
-      if (sekundenSeitStart() - z.leiterZuletzt > 150 + (z.leiterZufall ?? 60) && dennisSiehts() && dennis.modus === 'normal' && !z.beschaeftigt && ruhig() && !buehneBelegt()) {
+      if (jz.leiter !== 'weg' && sekundenSeitStart() - z.leiterZuletzt > 150 + (z.leiterZufall ?? 60) && dennisSiehts() && dennis.modus === 'normal' && !z.beschaeftigt && ruhig() && !buehneBelegt()) {
         z.leiterZuletzt = sekundenSeitStart();
         z.leiterZufall = Math.random() * 90;
         dennisSagt(sag(DENNIS.leiter), true, { prio: 0 });

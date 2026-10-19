@@ -1,6 +1,6 @@
 // Jonny als Comic-Figur (nach Fotos vom Betreiber): etwa so groß wie Dennis, etwas breiter, lange braune Haare,
-// Vollbart, olivgrüne Cap verkehrt herum, runde goldene Brille, Nasenring, weißes Shirt mit offenem Kragen und
-// haariger Brust, hellbraune Zimmermannsweste (Cord, Perlmuttknöpfe), sehr kurze schwarze Arbeitshose mit Zollstock
+// Vollbart, olivgrüne grüne Cap mit Schirm nach vorn, runde goldene Brille, weißes kurzärmliges Hemd weit offen mit viel
+// Brusthaar, hellbraune Zimmermannsweste (Cord, Perlmuttknöpfe) bis über die Schultern, sehr kurze schwarze Arbeitshose mit Zollstock
 // und Stift in der Seitentasche, weiße Socken, grüne Sneaker mit drei weißen Streifen, goldener Ring.
 import * as THREE from 'three';
 import { toon, teil, quader, zylinder, kugel, setze, leinwandTextur } from './toon.js';
@@ -8,7 +8,7 @@ import { toon, teil, quader, zylinder, kugel, setze, leinwandTextur } from './to
 const HAUT = 0xeebda0;
 const HAAR = 0x5a3a22;
 const BART = 0x4e321d;
-const CAP = 0x7d8a5c;
+const CAP = 0x5f7d3e;
 const SHIRT = 0xf4f2ec;
 const WESTE = 0xb98d5c;
 const HOSE = 0x1f2024;
@@ -81,68 +81,90 @@ export function baueJonny(scene) {
   tasche.add(setze(zylinder(0.006, 0.006, 0.16, 0xc8352a, { umriss: 0.0015 }, 6), 0.005, 0.07, 0.025));
   tasche.position.set(0.235, 0.82, 0.0);
   koerper.add(tasche);
-  // Gürtel
-  const guertel = new THREE.Mesh(new THREE.CylinderGeometry(0.235, 0.235, 0.035, 20, 1, true), toon(0x2a2018));
-  guertel.scale.set(1, 1, 0.8);
-  guertel.position.y = 0.97;
-  koerper.add(guertel);
-
-  // ---------- Oberkörper: weißes Shirt, hellbraune Cordweste mit Knöpfen ----------
+  // ---------- Oberkörper: weißes, kurzärmliges Hemd weit offen mit viel Brusthaar, hellbraune Cord-Zimmermannsweste ----------
   const rumpf = new THREE.Group();
   rumpf.position.y = 0.92;
   koerper.add(rumpf);
-  const shirt = teil(new THREE.CapsuleGeometry(0.225, 0.38, 6, 14), SHIRT);
+  const RS = [1.06, 1, 0.7]; // Rumpf flacher, kein Bauch
+  const shirt = teil(new THREE.CapsuleGeometry(0.2, 0.4, 6, 18), SHIRT);
   shirt.position.y = 0.36;
-  shirt.scale.set(1.05, 1, 0.78);
+  shirt.scale.set(...RS);
   rumpf.add(shirt);
-  const schultern = teil(new THREE.SphereGeometry(0.22, 16, 10), SHIRT);
-  schultern.scale.set(1.38, 0.52, 0.8);
-  schultern.position.y = 0.68;
+  const schultern = teil(new THREE.SphereGeometry(0.2, 16, 10), SHIRT);
+  schultern.scale.set(1.28, 0.4, 0.7);
+  schultern.position.y = 0.64;
   rumpf.add(schultern);
-  // offener Kragen mit Brusthaar
-  const brustTex = leinwandTextur(64, 64, (g) => {
-    g.fillStyle = '#eebda0'; g.fillRect(0, 0, 64, 64);
-    g.strokeStyle = '#4e321d'; g.lineWidth = 1.5;
-    const r = (() => { let s = 5; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; })();
-    for (let i = 0; i < 90; i++) { const x = 6 + r() * 52, y = 10 + r() * 50; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + 3, y - 3, x + (r() - 0.5) * 6, y - 6); g.stroke(); }
+  // offenes Hemd: haarige Brust als V bis zur Brustmitte (liegt auf der Rundung des Rumpfs)
+  const brustTex = leinwandTextur(256, 256, (g, b, h) => {
+    g.clearRect(0, 0, b, h);
+    g.fillStyle = '#eebda0';
+    g.beginPath(); g.moveTo(0, 0); g.lineTo(b, 0); g.lineTo(b * 0.62, h * 0.7); g.lineTo(b * 0.5, h); g.lineTo(b * 0.38, h * 0.7); g.closePath(); g.fill();
+    g.save(); g.clip();
+    const r = (() => { let q = 5; return () => { q = (q * 1664525 + 1013904223) >>> 0; return q / 4294967296; }; })();
+    g.lineCap = 'round';
+    for (let i = 0; i < 1400; i++) {
+      const x = r() * b, y = 10 + r() * (h - 10);
+      g.strokeStyle = r() < 0.5 ? 'rgba(62,40,24,0.9)' : 'rgba(92,62,36,0.85)'; g.lineWidth = 1.2 + r();
+      g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + (r() - 0.5) * 8, y - 5, x + (r() - 0.5) * 10, y - 9 - r() * 4); g.stroke();
+    }
+    g.restore();
   });
-  const ausschnitt = new THREE.Mesh(new THREE.CircleGeometry(0.075, 3), new THREE.MeshBasicMaterial({ map: brustTex }));
-  ausschnitt.rotation.z = -Math.PI / 2;
-  ausschnitt.scale.set(1, 0.9, 1);
-  ausschnitt.position.set(0, 0.69, 0.178);
-  rumpf.add(ausschnitt);
-  // Weste: zwei Vorderteile mit Lücke in der Mitte, Rückenteil, Cord-Rillen, Knöpfe
+  const brust = new THREE.Mesh(new THREE.CylinderGeometry(0.202, 0.202, 0.3, 20, 1, true, -0.75, 1.5), new THREE.MeshBasicMaterial({ map: brustTex, transparent: true }));
+  brust.scale.set(...RS);
+  brust.position.y = 0.52;
+  rumpf.add(brust);
+  // Hemdkragen-Ecken klappen nach außen
+  for (const s of [-1, 1]) rumpf.add(setze(quader(0.07, 0.09, 0.012, SHIRT, { umriss: 0.003 }), s * 0.085, 0.64, 0.135, -0.35, s * 0.35, s * -0.4));
+  // Weste: offene Hülle um den Rumpf (vorne Spalt), reicht hoch bis über die Schultern, Revers, Knöpfe, Taschen
   const cordTex = leinwandTextur(64, 64, (g) => {
     g.fillStyle = '#b98d5c'; g.fillRect(0, 0, 64, 64);
-    for (let x = 0; x < 64; x += 4) { g.fillStyle = 'rgba(90,60,30,0.35)'; g.fillRect(x, 0, 1.5, 64); }
-  }, [3, 3]);
-  const westeMat = toon(0xffffff, { map: cordTex });
+    for (let x = 0; x < 64; x += 4) { g.fillStyle = 'rgba(90,60,30,0.38)'; g.fillRect(x, 0, 1.6, 64); g.fillStyle = 'rgba(255,230,190,0.12)'; g.fillRect(x + 2, 0, 1, 64); }
+  }, [8, 2]);
+  const westeMat = toon(0xffffff, { map: cordTex, side: THREE.DoubleSide });
+  const weste = teil(new THREE.CylinderGeometry(0.205, 0.215, 0.56, 24, 1, true, 0.42, Math.PI * 2 - 0.84), 0, { material: westeMat, umriss: 0.003 });
+  weste.scale.set(RS[0] * 1.04, 1, RS[2] * 1.12);
+  weste.position.y = 0.38;
+  rumpf.add(weste);
+  // Weste-Schulterteile über die Schultern nach hinten
   for (const s of [-1, 1]) {
-    const teilWeste = teil(new THREE.CapsuleGeometry(0.2, 0.34, 6, 12, 1), 0, { material: westeMat, umriss: 0.004 });
-    teilWeste.scale.set(0.62, 1, 0.82);
-    teilWeste.position.set(s * 0.115, 0.36, 0.01);
-    rumpf.add(teilWeste);
-    for (let i = 0; i < 4; i++) rumpf.add(setze(zylinder(0.012, 0.012, 0.006, 0xf2efe6, { umriss: 0.0015 }, 10), s * 0.055, 0.22 + i * 0.075, 0.176, Math.PI / 2, 0, 0));
-    // Revers
-    rumpf.add(setze(quader(0.05, 0.22, 0.02, WESTE, { umriss: 0.003 }), s * 0.085, 0.58, 0.16, 0, 0, s * -0.25));
+    const sch = teil(new THREE.CylinderGeometry(0.06, 0.06, 0.3, 12, 1, false, 0, Math.PI), 0, { material: westeMat, umriss: 0.003 });
+    sch.rotation.set(Math.PI / 2, 0, 0);
+    sch.scale.set(1.3, 1, 0.5);
+    sch.position.set(s * 0.15, 0.66, -0.01);
+    rumpf.add(sch);
+    // Revers entlang der Öffnung
+    rumpf.add(setze(quader(0.035, 0.36, 0.014, 0xa77a4b, { umriss: 0.002 }), s * 0.075, 0.47, 0.158, 0.05, s * 0.3, s * 0.12));
+    for (let i = 0; i < 4; i++) rumpf.add(setze(zylinder(0.012, 0.012, 0.006, 0xf2efe6, { umriss: 0.0015 }, 10), s * 0.07, 0.16 + i * 0.07, 0.165, Math.PI / 2, 0, 0));
+    // Paspeltasche
+    rumpf.add(setze(quader(0.08, 0.012, 0.01, 0x8d6a40, { umriss: false }), s * 0.13, 0.22, 0.152, 0, s * 0.45, 0));
   }
   // Aufnäher an der Weste
   const patchTex = leinwandTextur(64, 64, (g) => { g.fillStyle = '#f4f2ec'; g.fillRect(0, 0, 64, 64); g.fillStyle = '#111'; g.beginPath(); g.moveTo(10, 50); g.lineTo(24, 18); g.lineTo(32, 34); g.lineTo(40, 14); g.lineTo(54, 50); g.fill(); });
-  const patch = new THREE.Mesh(new THREE.PlaneGeometry(0.05, 0.06), new THREE.MeshBasicMaterial({ map: patchTex }));
-  patch.position.set(-0.13, 0.42, 0.172);
-  patch.rotation.y = -0.25;
+  const patch = new THREE.Mesh(new THREE.PlaneGeometry(0.045, 0.055), new THREE.MeshBasicMaterial({ map: patchTex }));
+  patch.position.set(-0.14, 0.32, 0.158);
+  patch.rotation.y = -0.45;
   rumpf.add(patch);
 
-  // ---------- Arme: Hemdsärmel, Hände; Arme verschränkt wie auf dem Foto ----------
+  // ---------- Arme: kurze Hemdsärmel, nackte behaarte Unterarme; Arme verschränkt wie auf dem Foto ----------
+  const armHaarTex = leinwandTextur(64, 64, (g) => {
+    g.fillStyle = '#eebda0'; g.fillRect(0, 0, 64, 64);
+    const r = (() => { let q = 8; return () => { q = (q * 1664525 + 1013904223) >>> 0; return q / 4294967296; }; })();
+    g.strokeStyle = 'rgba(78,50,29,0.55)'; g.lineWidth = 1;
+    for (let i = 0; i < 140; i++) { const x = r() * 64, y = r() * 64; g.beginPath(); g.moveTo(x, y); g.lineTo(x + 1, y + 4); g.stroke(); }
+  });
+  const armHaut = toon(0xffffff, { map: armHaarTex });
   function arm(seite) {
     const schulter = new THREE.Group();
-    schulter.position.set(0.29 * seite, 0.66, 0);
-    schulter.add(kugel(0.07, SHIRT, { umriss: 0.004 }, 10));
-    schulter.add(setze(teil(new THREE.CapsuleGeometry(0.066, 0.2, 4, 10), SHIRT), 0, -0.13, 0));
+    schulter.position.set(0.27 * seite, 0.62, 0);
+    schulter.add(kugel(0.066, SHIRT, { umriss: 0.004 }, 10));
+    // kurzer Ärmel mit Umschlag
+    schulter.add(setze(teil(new THREE.CylinderGeometry(0.07, 0.078, 0.13, 12), SHIRT), 0, -0.07, 0));
+    schulter.add(setze(zylinder(0.08, 0.08, 0.02, 0xe6e3dc, { umriss: 0.002 }, 12), 0, -0.13, 0));
+    schulter.add(setze(teil(new THREE.CapsuleGeometry(0.056, 0.12, 4, 10), 0, { material: armHaut }), 0, -0.19, 0));
     const ellbogen = new THREE.Group();
     ellbogen.position.y = -0.27;
-    ellbogen.add(kugel(0.06, SHIRT, { umriss: 0.004 }, 10));
-    ellbogen.add(setze(teil(new THREE.CapsuleGeometry(0.058, 0.17, 4, 10), SHIRT), 0, -0.12, 0));
+    ellbogen.add(teil(new THREE.SphereGeometry(0.052, 10, 8), 0, { material: armHaut }));
+    ellbogen.add(setze(teil(new THREE.CapsuleGeometry(0.05, 0.16, 4, 10), 0, { material: armHaut }), 0, -0.11, 0));
     const hand = new THREE.Group();
     const flaeche = teil(new THREE.CapsuleGeometry(0.04, 0.03, 4, 10), HAUT);
     flaeche.scale.set(1.15, 1, 0.65);
@@ -154,7 +176,7 @@ export function baueJonny(scene) {
     }
     // goldener Ring rechts
     if (seite > 0) hand.add(setze(teil(new THREE.TorusGeometry(0.014, 0.004, 6, 12), GOLD, { umriss: false }), 0.009, -0.045, 0.006, Math.PI / 2, 0, 0));
-    hand.position.y = -0.26;
+    hand.position.y = -0.25;
     ellbogen.add(hand);
     schulter.add(ellbogen);
     rumpf.add(schulter);
@@ -183,7 +205,23 @@ export function baueJonny(scene) {
   const rauchTex = leinwandTextur(32, 32, (g) => { const gr = g.createRadialGradient(16, 16, 1, 16, 16, 15); gr.addColorStop(0, 'rgba(230,230,230,0.8)'); gr.addColorStop(1, 'rgba(230,230,230,0)'); g.fillStyle = gr; g.fillRect(0, 0, 32, 32); });
   const rauch = [0, 1, 2].map((i) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: rauchTex, transparent: true, depthWrite: false })); sp.visible = false; sp.userData.t = i / 3; scene.add(sp); return sp; });
 
-  // ---------- Kopf: breites Gesicht, Vollbart, runde Brille, Nasenring, lange Haare, Cap verkehrt herum ----------
+  // Bierflasche (braun, Etikett, Kronkorken) für die linke Hand
+  const bier = new THREE.Group();
+  bier.add(zylinder(0.03, 0.03, 0.15, 0x6b3a14, { umriss: 0.002 }, 12));
+  bier.add(setze(zylinder(0.012, 0.03, 0.05, 0x6b3a14, { umriss: 0.002 }, 12), 0, 0.1, 0));
+  bier.add(setze(zylinder(0.013, 0.013, 0.03, 0x6b3a14, { umriss: 0.002 }, 10), 0, 0.14, 0));
+  bier.add(setze(zylinder(0.0305, 0.0305, 0.06, 0xf2e6c4, { umriss: false }, 12), 0, -0.01, 0));
+  bier.add(setze(zylinder(0.0306, 0.0306, 0.012, 0xc8352a, { umriss: false }, 12), 0, -0.01, 0));
+  bier.position.set(0, -0.08, 0.03);
+  bier.visible = false;
+  links.hand.add(bier);
+  // Pinkelstrahl (nur ganz selten sichtbar)
+  const strahlMat = new THREE.MeshBasicMaterial({ color: 0xe8d23a, transparent: true, opacity: 0.85 });
+  const strahl = new THREE.Mesh(new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(new THREE.Vector3(0, 0.86, 0.2), new THREE.Vector3(0, 0.9, 0.7), new THREE.Vector3(0, 0.0, 1.0)), 20, 0.008, 5, false), strahlMat);
+  strahl.visible = false;
+  wurzel.add(strahl);
+
+  // ---------- Kopf: breites Gesicht, Vollbart, runde Brille, lange Haare, grüne Cap mit Schirm ----------
   const kopf = new THREE.Group();
   kopf.position.y = 0.95;
   rumpf.add(kopf);
@@ -197,8 +235,6 @@ export function baueJonny(scene) {
   nase.position.set(0, 0.1, 0.162);
   nase.scale.set(0.9, 1.1, 1.0);
   kopf.add(nase);
-  // Nasenring (links)
-  kopf.add(setze(teil(new THREE.TorusGeometry(0.011, 0.0025, 6, 14), 0xc9cdd2, { umriss: false }), -0.022, 0.075, 0.172, 0, 0.5, 0));
   // Augen, blau
   const augen = [];
   for (const x of [-0.06, 0.06]) {
@@ -259,20 +295,20 @@ export function baueJonny(scene) {
     straehne.rotation.set(-0.15, 0, Math.sin(w) * 0.25);
     kopf.add(straehne);
   }
-  // olivgrüne Cap verkehrt herum (Schirm hinten), mit Verschluss
+  // grüne Cap, Schirm nach vorn, hinten Verschluss
   const cap = new THREE.Group();
   const kuppel = teil(new THREE.SphereGeometry(0.172, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2), CAP, { umriss: 0.004 });
   kuppel.scale.set(1.02, 0.78, 1.02);
   cap.add(kuppel);
-  const schirm = teil(new THREE.CylinderGeometry(0.15, 0.15, 0.014, 20, 1, false, Math.PI * 0.75, Math.PI * 0.5), CAP, { umriss: 0.003 });
+  const schirm = teil(new THREE.CylinderGeometry(0.15, 0.15, 0.014, 20, 1, false, -Math.PI * 0.27, Math.PI * 0.54), CAP, { umriss: 0.003 });
   schirm.scale.set(1, 1, 1.15);
-  schirm.position.set(0, 0.0, -0.06);
-  schirm.rotation.x = 0.18;
+  schirm.position.set(0, 0.005, 0.075);
+  schirm.rotation.x = -0.12;
   cap.add(schirm);
   cap.add(setze(kugel(0.014, CAP, { umriss: 0.002 }, 8), 0, 0.135, 0));
   cap.add(setze(quader(0.05, 0.012, 0.008, 0x5d6340, { umriss: false }), 0, 0.03, -0.172));
   cap.position.set(0, 0.2, -0.005);
-  cap.rotation.x = -0.12;
+  cap.rotation.x = 0.05;
   kopf.add(cap);
 
   // ---------- Verhalten ----------
@@ -280,6 +316,12 @@ export function baueJonny(scene) {
   let blinzeln = 3;
   let raucht = false;
   let blickZiel = null;
+  let ziel = null;
+  let zielFertig = null;
+  let tempo = 1.1;
+  let schritt = 0;
+  let kitzelt = false;
+  let trinkt = false;
   const api = {
     wurzel,
     get position() { return wurzel.position; },
@@ -287,15 +329,71 @@ export function baueJonny(scene) {
     rauchen(an) {
       raucht = an;
       kippe.visible = an;
-      for (const r of rauch) r.visible = an;
+      for (const r of rauch) r.visible = an && wurzel.visible;
       if (an) {
         rechts.schulter.rotation.set(-0.2, 0, 0.15);
         rechts.ellbogen.rotation.set(-1.9, 0, -0.5);
       } else armeVerschraenkt();
     },
     schauZu(punkt) { blickZiel = punkt; },
+    heimPlatz: PLATZ.clone(),
+    gehZu(x, z, t = 1.1) {
+      if (zielFertig) zielFertig(false);
+      ziel = new THREE.Vector3(x, 0, z);
+      tempo = t;
+      return new Promise((r) => { zielFertig = r; });
+    },
+    heim() { return api.gehZu(PLATZ.x, PLATZ.z).then(() => { wurzel.rotation.y = Math.PI * 1.08; }); },
+    get geht() { return !!ziel; },
+    dreheZu(p) { wurzel.rotation.y = Math.atan2(p.x - wurzel.position.x, p.z - wurzel.position.z); },
+    sichtbar(an) { wurzel.visible = an; for (const r of rauch) r.visible = an && raucht; },
+    bier(an) { bier.visible = an; if (!an && !kitzelt) armeVerschraenkt(); },
+    trinken(an) { trinkt = an; },
+    kitzeln(an) {
+      kitzelt = an;
+      if (!an) armeVerschraenkt();
+    },
+    pinkeln(an) { strahl.visible = an; },
     update(dt) {
       zeit += dt;
+      // Laufen: zum Ziel drehen und hingehen, Beine schwingen
+      if (ziel) {
+        const d = new THREE.Vector3().subVectors(ziel, wurzel.position);
+        d.y = 0;
+        const rest = d.length();
+        if (rest < 0.05) {
+          ziel = null;
+          const r = zielFertig; zielFertig = null;
+          if (r) r(true);
+        } else {
+          const soll = Math.atan2(d.x, d.z);
+          let diff = soll - wurzel.rotation.y;
+          while (diff > Math.PI) diff -= Math.PI * 2;
+          while (diff < -Math.PI) diff += Math.PI * 2;
+          wurzel.rotation.y += diff * Math.min(1, dt * 8);
+          wurzel.position.addScaledVector(d.normalize(), Math.min(rest, tempo * dt));
+          schritt += dt * tempo * 7;
+        }
+      }
+      const schwung = ziel ? Math.sin(schritt) * 0.5 : 0;
+      beine[0].huefte.rotation.x += (schwung - beine[0].huefte.rotation.x) * Math.min(1, dt * 10);
+      beine[1].huefte.rotation.x += (-schwung - beine[1].huefte.rotation.x) * Math.min(1, dt * 10);
+      beine[0].k.rotation.x = Math.max(0, -schwung) * 0.6;
+      beine[1].k.rotation.x = Math.max(0, schwung) * 0.6;
+      // Kitzeln: beide Arme nach vorn, Finger zappeln
+      if (kitzelt) {
+        for (const [a, s] of [[links, -1], [rechts, 1]]) {
+          a.schulter.rotation.set(-1.2 + Math.sin(zeit * 25 + s) * 0.15, 0, s * 0.1);
+          a.ellbogen.rotation.set(-0.4, 0, 0);
+        }
+      }
+      // Bier trinken: linker Arm zur Flasche an den Mund (alle 4 s ein Schluck)
+      if (bier.visible && !kitzelt) {
+        const schluck = trinkt && (zeit % 4) < 1.2;
+        links.schulter.rotation.set(schluck ? -0.9 : -0.45, 0, -0.12);
+        links.ellbogen.rotation.set(schluck ? -2.3 : -1.4, 0, 0.5);
+        bier.rotation.x = schluck ? -1.0 : 0;
+      }
       // atmen, leicht wippen
       rumpf.scale.y = 1 + Math.sin(zeit * 1.6) * 0.008;
       koerper.rotation.y = Math.sin(zeit * 0.4) * 0.04;

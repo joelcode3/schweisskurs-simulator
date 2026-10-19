@@ -666,6 +666,57 @@ export function baueWelt(scene) {
   objekte.traeger = traeger;
   hindernis(2.2, 4.9, RAUM.zMax - 0.9, RAUM.zMax);
 
+  // Kleiner weißer Kühlschrank in Dennis' Pausenecke (neben dem Kaffeetisch), Bier drin
+  const kuehl = new THREE.Group();
+  kuehl.add(setze(quader(0.46, 0.84, 0.48, 0xf4f4f0), 0, 0.42, 0));
+  const kTuer = new THREE.Group();
+  kTuer.add(setze(quader(0.44, 0.8, 0.04, 0xf7f7f3, { umriss: 0.003 }), 0.22, 0, 0.02));
+  kTuer.add(setze(quader(0.025, 0.25, 0.03, 0xb8bcc2, { umriss: 0.002 }), 0.4, 0.15, 0.05));
+  kTuer.add(setze(quader(0.08, 0.025, 0.004, 0x2f5fa8, { umriss: false }), 0.1, 0.32, 0.042));
+  kTuer.position.set(-0.22, 0.43, 0.24);
+  kuehl.add(kTuer);
+  // innen: Bierflaschen im Kasten, dunkles Inneres
+  kuehl.add(setze(quader(0.4, 0.72, 0.02, 0xd9dde0, { umriss: false }), 0, 0.43, -0.2));
+  for (let i = 0; i < 6; i++) kuehl.add(setze(zylinder(0.028, 0.028, 0.2, 0x6b3a14, { umriss: 0.0015 }, 10), -0.13 + (i % 3) * 0.13, 0.2 + Math.floor(i / 3) * 0.32, -0.05 + (i % 2) * 0.06));
+  kuehl.add(setze(quader(0.42, 0.012, 0.4, 0xc9cdd2, { umriss: false }), 0, 0.42, 0));
+  for (const sx of [-0.18, 0.18]) for (const sz of [-0.18, 0.18]) kuehl.add(setze(zylinder(0.02, 0.02, 0.03, 0x333333, { umriss: false }, 8), sx, 0.015, sz));
+  setze(kuehl, -4.66, 0, 2.42, 0, Math.PI / 2, 0);
+  scene.add(kuehl);
+  merke(kuehl, 'kuehlschrank', 'Kühlschrank', null);
+  objekte.kuehlschrank = kuehl;
+  hindernis(-4.92, -4.4, 2.17, 2.67);
+  let kuehlAuf = false;
+  animiert.push((dt) => {
+    const zielW = kuehlAuf ? -1.6 : 0;
+    kTuer.rotation.y += (zielW - kTuer.rotation.y) * Math.min(1, dt * 6);
+  });
+  // leere Bierflaschen, die Jonny rumliegen lässt
+  const leereFlaschen = [];
+  function leereFlasche(x, z) {
+    const f = new THREE.Group();
+    f.add(zylinder(0.03, 0.03, 0.15, 0x6b3a14, { umriss: 0.002 }, 10));
+    f.add(setze(zylinder(0.012, 0.03, 0.06, 0x6b3a14, { umriss: 0.002 }, 10), 0, 0.1, 0));
+    f.add(setze(zylinder(0.0305, 0.0305, 0.06, 0xf2e6c4, { umriss: false }, 10), 0, -0.01, 0));
+    // liegt umgekippt auf dem Boden
+    setze(f, x, 0.03, z, Math.PI / 2, Math.random() * Math.PI, 0);
+    f.rotation.order = 'YXZ';
+    scene.add(f);
+    merke(f, 'leereflasche', 'Leere Bierflasche', null);
+    leereFlaschen.push(f);
+    return f;
+  }
+
+  // Waldos Kackepumpe (Tauchpumpe mit aufgerolltem Schlauch), versteckt hinter dem Kompressor
+  const kackPumpe = new THREE.Group();
+  kackPumpe.add(setze(zylinder(0.09, 0.1, 0.26, 0x2f5fa8, {}, 16), 0, 0.13, 0));
+  kackPumpe.add(setze(zylinder(0.1, 0.1, 0.03, 0x1d1d1f, {}, 16), 0, 0.015, 0));
+  kackPumpe.add(setze(teil(new THREE.TorusGeometry(0.05, 0.012, 6, 12, Math.PI), 0x1d1d1f, { umriss: 0.002 }), 0, 0.27, 0));
+  for (let i = 0; i < 3; i++) kackPumpe.add(setze(teil(new THREE.TorusGeometry(0.16, 0.022, 6, 20), 0x1d1d1f, { umriss: 0.002 }), 0.22, 0.03 + i * 0.04, 0.0, Math.PI / 2, 0, 0));
+  kackPumpe.add(setze(quader(0.05, 0.04, 0.005, 0xf2c21c, { umriss: false }), 0, 0.15, 0.1));
+  setze(kackPumpe, -4.5, 0, -2.85);
+  scene.add(kackPumpe);
+  objekte.kackPumpe = kackPumpe;
+
   // Johnnys Alu-Leiter (Kofferraumleiter von einem alten Camper) hängt an der rechten Wand:
   // zwei schmale Holme, 6 geriffelte Sprossen, oben zum Wohnmobil-Dach hin gebogen, Gummifüße, zwei Wandhaken
   const leiter = new THREE.Group();
@@ -2511,6 +2562,16 @@ export function baueWelt(scene) {
     },
     imBad(x, z) { return x > BAD.xMin && x < BAD.xMax && z > BAD.zMin && z < BAD.zMax; },
     kloTuer(offen) { kloOffen = offen; },
+    kuehlschrank(auf) { kuehlAuf = auf; },
+    leereFlasche,
+    flascheWeg(f) {
+      scene.remove(f);
+      const i = leereFlaschen.indexOf(f);
+      if (i >= 0) leereFlaschen.splice(i, 1);
+      const j = interaktiv.indexOf(f);
+      if (j >= 0) interaktiv.splice(j, 1);
+    },
+    get leereFlaschen() { return leereFlaschen.length; },
     // Stromwürfel: welcher ist nah an (x, z)? anstossen() lässt ihn pendeln
     stromWuerfelBei(x, z, r) { return stromWuerfel.find((s) => Math.hypot(s.x - x, s.z - z) < r) || null; },
     anstossen(s) { s.schwung = 0.35; s.t = 0; },

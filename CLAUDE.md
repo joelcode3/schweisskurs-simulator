@@ -131,18 +131,27 @@
   gelbliche unregelmäßige Pfütze davor. Bilderrahmen über dem Klo: Profilrahmen mit Goldleiste, Passepartout, Glasreflex, Nagel.
 - Feuer und Wasserrohrbruch mit mindestens 90 s Abstand (z.letztesEreignis). Waschmaschine/Trockner: Scheibe schlicht blau.
 - Geworfene/fallen gelassene längliche Dinge liegen flach (userData.liegend: Rohrzange, Pömpel, Besen, Hula-Hoop-Reifen).
-- Jonny (js/jonny.js, nach Fotos vom Betreiber): so groß wie Dennis, etwas breiter, lange braune Haare, Vollbart, olivgrüne
-  Cap verkehrt herum, runde goldene Brille, Nasenring, weißes Shirt mit haariger Brust, hellbraune Cord-Zimmermannsweste mit
-  Perlmuttknöpfen, sehr kurze schwarze Arbeitshose mit gelbem Zollstock und Stift in der Seitentasche, weiße Socken, grüne
-  Sneaker mit drei Streifen, goldener Ring. Steht an der Tor-Ecke (0,45 | 3,2), Arme verschränkt, schaut zum Spieler.
-  Raucht alle 1–2 min ca. 20 s (Kippe, Rauch), Dennis meckert manchmal (DENNIS.jonnyRaucht). Anklicken: Quatschen /
-  Nach der Leiter fragen (Sprüche in JONNY in texte.js, Blase rechts mit Name JONNY, ui.jonnySagt). Feuer durch Kippe:
-  Jonny sagt kurz danach „Upsi. War ich das?“. Weitere Ideen offen (Leiter abholen, Störenfried, Nähte kommentieren).
-- Waldo (js/waldo.js, nach Fotos): kleiner als Dennis/Jonny (Skala 0,85), breit, kurze dunkle Haare, großer dunkler Vollbart
-  mit Essensresten (Krümel, Salat, Mayo), beige Cap, dunkelroter Pulli mit weißem Feine-Sahne-Fischfilet-Schriftzug + Fisch
-  (eigene Fläche auf der Brust), kurze zerfetzte graue Jogginghose (Löcher, Fransen, Kordel), behaarte Beine, weiße Söckchen,
-  beige Sneaker. Steht bei (2,6 | 2,75) zwischen Trägern und Bad-Tür, isst Toast (beißt alle 7 s ab). Anklicken: Quatschen,
-  Krümel im Bart (WALDO in texte.js, ui.waldoSagt). Dennis meckert alle 3–5 min über Krümel (DENNIS.waldoKruemel).
+- Jonny (js/jonny.js, nach Fotos): so groß wie Dennis, etwas breiter, lange braune Haare, Vollbart, grüne Cap mit Schirm nach
+  vorn, runde goldene Brille (kein Nasenring), weißes KURZärmliges Hemd weit offen mit viel Brusthaar (V-Textur auf dem Rumpf),
+  hellbraune Cord-Weste bis über die Schultern (offene Hülle), kein Gürtel, flacher Bauch, sehr kurze schwarze Arbeitshose mit
+  Zollstock und Stift, weiße Socken, grüne Sneaker, goldener Ring. Kann laufen (gehZu). Heim: Tor-Ecke (0,45 | 3,2).
+  Verhalten (spiel.js, Objekt jz): raucht zwischendurch; holt sich alle 70–130 s ein Bier aus dem Kühlschrank (oder lässt sich
+  über das Menü sofort überreden), trinkt, lässt leere Flasche liegen (anklicken = wegräumen, Wut -2); Dennis nervt das (+3).
+  Ab 4 Bier: Sodbrennen, geht nach Hause (durchs Tor, weg für den Rest des Spiels); vorher mit 15 % pinkelt er in den Ofen
+  (Dennis +10). Kitzelt Dennis alle 2–3,5 min (Dennis: Ton stimme/aergern-2.mp3 = ärgernleicht2, schickt ihn weg, +4).
+  Einmal pro Spiel will er die Leiter abholen: stellt sich drunter, Spieler klickt die Leiter = runterholen (Leiter weg, Wut -10,
+  Dennis jubelt), sonst nach 45 s „nächste Woche“. Störenfried: kommt zum Spieler an Werkbank/Schweißplatz und quatscht;
+  „Antworten“ = Fehler (+5, Dennis sauer), ignorieren/15 s warten = Jonny beleidigt. aerger(n) = Wut ohne Fehler, max. 99.
+- Kühlschrank (klein, weiß, Bier drin) in der Pausenecke neben dem Kaffeetisch.
+- Waldo (js/waldo.js, nach Fotos): kleiner (Skala 0,85), breit, kurze dunkle Haare, sehr dunkler, zotteliger Vollbart (Büschel als
+  InstancedMesh) mit vielen Essensresten (Krümel, Salat, Tomate, Käse, Sesam, Mayo), beige Cap, dunkelroter Pulli OHNE Logo
+  (Betreiber), weite, detaillierte kurze graue Jogginghose (meliert, Steppnähte, Löcher mit Fäden, Risse, Fransen, Rippenbund,
+  Kordel, Taschen, Flecken), breite stark behaarte Beine mit Knie und Wade, weiße Söckchen, beige Sneaker.
+  Anfangs NICHT da. Besuch alle 1,5–3 min: kommt durchs Tor, stellt sich hin (Handy) oder setzt sich aufs Sofa / auf die
+  Stahlträger und guckt aufs Handy, bleibt 50–90 s. Dennis mag keinen Besuch (+3 beim Kommen, alle 30–50 s Gemecker +2).
+  Menü: Quatschen, Krümel, „Sagen, dass Dennis keinen Besuch will“ (geht, Wut -4). Mittagspause: muss vom Sofa.
+  Kackepumpe (einmal pro Spiel, 70 %): rennt rein, Tank im Garten voll; Dennis und Waldo suchen hektisch (Regal, Werkbank),
+  finden sie hinter dem Kompressor (blaue Tauchpumpe), Waldo rennt raus. Spieler ist solange kurz blockiert.
 - Stahlträger (HEB 200, rostig) liegen vorne rechts zwischen Waschplatz und Bad-Tür, ohne Funktion. Anklicken oder in der Nähe
   (max. alle 45 s): Dennis „Schwere Stahlträger sind Torbens Job!“.
 - Bedienung: Hat ein Ding nur eine Aktion, wird sie beim Klick direkt ausgeführt (kein Menü). Box und Licht schalten

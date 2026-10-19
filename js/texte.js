@@ -205,7 +205,20 @@ export const DENNIS = {
   eingeschissen: ['RAUS DA! RAUS! Ich muss ... oh nein. OH NEIN. Zu spät. ZU SPÄT!!', 'Was machst du im Bad?! Ich muss DRINGEND ... ach du Scheiße. Wortwörtlich.', 'Ich hab doch gesagt, ich muss! Jetzt ist es passiert! Die ganze Hose!'],
   eingeschissenRaus: ['Ich hab mir wegen dir in die Hose geschissen! In MEINE kurze Hose! RAUS! Und komm nie wieder!', 'Eingeschissen! Wegen DIR! Das wars, du fliegst! Pack deine Sachen!'],
   leiter: ['Hängt die Leiter von Johnny immer noch da?! Der soll die endlich abholen!', 'Johnny! Deine Camper-Leiter! Seit Monaten hängt die hier rum!', 'Ich schmeiß die Leiter bald auf den Schrott. Johnny holt die ja eh nie ab.', 'Wer braucht denn eine Leiter für einen Camper, den es gar nicht mehr gibt? Johnny!'],
+  waldoBesuch: ['Waldo?! Was machst DU denn hier? Hier ist Schweißkurs, kein Wartezimmer!', 'Och nee, Besuch. Ausgerechnet heute. Waldo, nicht im Weg stehen!', 'Waldo! Kein Besuch während dem Kurs, das hab ich hundertmal gesagt!'],
+  waldoMecker: ['Waldo, leg mal das Handy weg oder geh nach Hause!', 'Waldo, du sitzt hier nur rum und guckst aufs Handy. Mach das woanders!', 'Wenn du schon da bist, Waldo, dann fass wenigstens nix an.', 'Waldo, du krümelst mir die ganze Werkstatt voll!'],
+  waldoDanke: ['Danke. Endlich Ruhe hier.', 'Gut so. Besuch nach Feierabend!'],
+  pumpeWo: ['Was?! Der Tank ist SCHON WIEDER voll?! Wo ist die Pumpe?! Such mit!', 'Die Kackepumpe?! Oh nein, oh nein, die war doch ... such, such!'],
+  pumpeGefunden: ['Hinterm Kompressor! Da hab ich sie zuletzt hingestellt!', 'Moment ... HINTERM KOMPRESSOR! Natürlich!'],
+  pumpeWeg: ['Immer dieser Tank. Jede Woche das Gleiche.', 'Und bring die Pumpe diesmal sauber zurück, Waldo!'],
   waldoKruemel: ['Waldo! Du krümelst mir die ganze Werkstatt voll!', 'Waldo, isst du schon wieder? Wir haben grad erst Mittag gemacht!', 'Waldo, du hast da was im Bart. Also ... eigentlich alles.'],
+  jonnyBier: ['Jonny! Das ist MEIN Bier! Und das hier ist ein Schweißkurs!', 'Jonny, schon wieder ein Bier? Du störst hier den ganzen Kurs!', 'Und die leeren Flaschen räumst du nachher weg, klar?!'],
+  jonnyKitzeln: ['Ey! Lass das! Hau ab, Jonny! Geh woanders spielen!', 'JONNY! Nicht kitzeln! Verschwinde!', 'Finger weg! Raus hier, du Spinner!'],
+  jonnyPisst: ['JONNY?! PISST DU IN DEN OFEN?! Bist du komplett bescheuert?!', 'Das ist ein Ofen und kein Pissoir! Raus! Sofort!'],
+  jonnyWeg: ['Endlich ist Ruhe. Jonny ist weg.', 'Sodbrennen, ja klar. Vom Bier, du Held.'],
+  jonnyQuatschen: ['Nicht quatschen, arbeiten! Jonny, lass den in Ruhe!', 'Du bist hier zum Schweißen, nicht zum Labern!'],
+  leiterEndlich: ['Die Leiter ist WEG? Endlich! Danke dir!', 'Halleluja, die Leiter ist raus. Das feier ich.'],
+  kuehlschrank: ['Finger weg, das ist kein Selbstbedienungsladen!', 'Da drin ist nix für dich. Erst arbeiten, dann Bier.'],
   jonnyRaucht: ['Jonny! Da hängt ein Rauchen-verboten-Schild! Direkt neben dir!', 'Jonny, mach die Kippe aus! Hier steht Gas rum!', 'Und die Kippe NICHT in den Mülleimer, Jonny!'],
   traeger: ['Halt! Nicht anfassen! Schwere Stahlträger sind Torbens Job!', 'Finger weg von den Trägern! Das macht Torben.', 'Die Träger lässt du liegen. Das ist Torbens Job, nicht deiner!'],
   verstopft: {
@@ -246,12 +259,27 @@ export function satzId(text) {
 export const JONNY = {
   quatschen: ['Na, Schweißer? Läuft bei dir?', 'Ich bin nur kurz hier. Seit drei Stunden.', 'Holz ist ehrlicher als Stahl. Sag ich nur.', 'Hast du mal Feuer? Nee, war Spaß. Hab selbst.', 'Dennis ist heute wieder voll in seinem Element, oder?'],
   leiter: ['Die Leiter? Die hol ich nächste Woche. Ganz sicher.', 'Welche Leiter? Ach DIE. Ja, irgendwann.', 'Der Camper ist weg, aber die Leiter ist noch gut. Die bleibt hier.'],
+  bierJa: ['Na gut, eins geht immer!', 'Überredet. Ich hol mir eins.', 'Bier? Du musst nicht zweimal fragen.'],
+  bierSelbst: ['Ich hol mir mal eben ein Bierchen.', 'Durst. Kurz zum Kühlschrank.', 'Ein Bier geht noch.'],
+  sodbrennen: ['Uff. Sodbrennen. Ich glaub, ich geh nach Hause.', 'Oh Mann, mein Magen. Ich bin raus für heute.'],
+  kitzeln: ['Kille kille, Dennis!', 'Dennis! Guck mal ... KITZEL!'],
+  stoeren: ['Na, was schweißt du da? Zeig mal!', 'Ey, hast du schon gehört, was Waldo gestern gemacht hat?', 'Sieht schief aus. Aber was weiß ich, ich bin Zimmermann.'],
+  beleidigt: ['Pff. Dann eben nicht.', 'Okay, ich merk schon, du bist beschäftigt.'],
+  leiterHolen: ['Heute nehm ich die Leiter echt mit! Hilfst du mir? Ich komm da nicht ran.', 'Holst du mir mal die Leiter runter? Ich nehm sie heute mit. Ehrlich.'],
+  leiterDanke: ['Danke! Die kommt jetzt endlich ins Auto.', 'Super, danke! Dennis wird sich freuen.'],
+  leiterNix: ['Na gut. Dann nächste Woche.', 'Egal, die hängt da ja gut.'],
   feuer: ['Upsi. War ich das?', 'Die Kippe war doch aus! Glaub ich.'],
 };
 
 // Waldo (Kumpel, isst eigentlich immer)
 export const WALDO = {
   quatschen: ['Mmh. Willst du auch was? Nee, ist meins.', 'Ich hab Hunger. Ich hab immer Hunger.', 'Feine Sahne live, das war so gut. Warst du dabei?', 'Schweißen macht hungrig. Auch vom Zugucken.'],
+  pumpe: ['Dennis! DENNIS! Die Kackepumpe! Der Tank im Garten ist schon wieder voll! Ich muss umpumpen!', 'Dennis, schnell! Wo ist die Kackepumpe?! Der Tank läuft gleich über!'],
+  pumpeNicht: ['Hier ist sie nicht!', 'Nix! Wo ist das Ding?!'],
+  pumpeDanke: ['Hab sie! Danke! Ich muss los, sonst schwimmt der Garten!', 'JA! Gefunden! Bin weg!'],
+  sofaRunter: ['Schon gut, schon gut, ich geh ja vom Sofa.'],
+  tschuess: ['So, ich bin dann mal wieder weg.', 'Okay, ich lass euch mal.', 'Tschö. Viel Spaß noch beim Schweißen.'],
+  rausgeschickt: ['Ja ja, ich geh ja schon.', 'Pff. Ich wollte eh grad los.'],
   kruemel: ['Was? Wo? ... Ach, das spar ich mir für später.', 'Das ist kein Krümel, das ist Vorrat.', 'Lass mal, der Bart isst mit.'],
   antwort: ['Ich krümel doch gar nicht. Mampf.', 'Ist doch nur ein Toast, Dennis!', 'Kann man auch wieder auffegen. Also du.'],
 };

@@ -31,7 +31,6 @@ const jonny = baueJonny(scene);
 jonny.wurzel.userData.interaktiv = { id: 'jonny', name: 'Jonny', station: null };
 const waldo = baueWaldo(scene);
 waldo.wurzel.userData.interaktiv = { id: 'waldo', name: 'Waldo', station: null };
-welt.hindernisse.push({ xMin: waldo.position.x - 0.25, xMax: waldo.position.x + 0.25, zMin: waldo.position.z - 0.25, zMax: waldo.position.z + 0.25 });
 welt.hindernisse.push({ xMin: jonny.position.x - 0.25, xMax: jonny.position.x + 0.25, zMin: jonny.position.z - 0.25, zMax: jonny.position.z + 0.25 });
 
 const zielListe = scene.children;
@@ -104,7 +103,7 @@ async function spielStarten() {
   await Promise.all([clipsGeladen, new Promise((r) => setTimeout(r, mitSchloss ? 1200 : 0))]);
   document.getElementById('start').classList.add('versteckt');
   document.getElementById('start-einfach').classList.add('versteckt');
-  spiel = baueSpiel({ welt, dennis, jonny, steuerung, kamera, hand });
+  spiel = baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand });
   ui.zeigeHud(true);
   stationAlt = undefined;
   spiel.intro();
