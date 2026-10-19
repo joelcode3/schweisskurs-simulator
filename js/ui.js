@@ -235,6 +235,7 @@ export function pauseZeigen(an, text = '') {
 // Warnsymbole unten rechts (Feuer, Wasser), blinken, solange etwas los ist
 const WARN_SYMBOL = {
   feuer: '<svg viewBox="0 0 24 24" class="ico"><path d="M12 2c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 2-5 3-7 0 3 2 4 3 4-1-3 0-6 0-9z"/></svg>',
+  klo: '<svg viewBox="0 0 24 24" class="ico"><path d="M6 3h7v6H6z"/><path d="M4 11h14a5 5 0 0 1-5 5h-1l1 5H8l1-5a5 5 0 0 1-5-5z"/></svg>',
   wasser: '<svg viewBox="0 0 24 24" class="ico"><path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/><path d="M9 14a3 3 0 0 0 3 3"/></svg>',
 };
 export function warnung(art, an) {

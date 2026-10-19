@@ -2,7 +2,7 @@
 // Was man hält, wird in einer eigenen kleinen Szene vor der Kamera gezeichnet (kein Durchstecken durch Wände).
 import * as THREE from 'three';
 import { toon, teil, quader, zylinder, kugel, setze, leinwandTextur } from './toon.js';
-import { RAUM } from './world.js';
+import { RAUM, BAD } from './world.js';
 
 // Haltung in der Hand: Position vor der Kamera, Drehung, Größe, beidhändig, schwer
 const HALTUNG = {
@@ -22,6 +22,7 @@ const HALTUNG = {
   waeschetasche: { pos: [0.42, -0.78, -0.95], rot: [0.1, 0.5, 0], griff: [-0.02, 0.58, -0.08], name: 'Dennis’ Wäschetasche', nichtWerfen: true, nichtAblegen: true, ablegenHinweis: 'Die Wäsche kommt in die Maschine (oder zu Dennis).' },
   sieb: { pos: [0.16, -0.18, -0.48], rot: [0.2, 1.3, 0.2], skala: 1.3, name: 'Flusensieb', nichtWerfen: true, nichtAblegen: true, ablegenHinweis: 'Das Sieb gehört in den Trockner. Dreckig erst am Kompressor ausblasen.' },
   hulahup: { pos: [0.3, -0.5, -1.05], rot: [0.35, 1.1, 0], skala: 0.85, name: 'Hula-Hoop-Reifen', benutzen: 'Dennis bringen' },
+  poempel: { pos: [0.22, -0.45, -0.62], rot: [0.35, 0, -0.25], name: 'Pömpel', benutzen: 'Pömpeln' },
   rohrzange: { pos: [0.24, -0.22, -0.52], rot: [0.4, 0.3, -0.9], name: 'Rohrzange', benutzen: 'Reparieren' },
   schlauch: { pos: [0.2, -0.2, -0.55], rot: [0.1, 0.12, 0], skala: 1.2, name: 'Wasserschlauch', benutzen: 'Spritzen (halten)', nichtWerfen: true, nichtAblegen: true },
   kaffee: { pos: [0.2, -0.17, -0.45], rot: [0.1, 2.2, 0], skala: 1.3, name: 'Kaffee für Dennis', nichtWerfen: true, nichtAblegen: true },
@@ -218,8 +219,10 @@ export function baueHand(scene, kamera) {
         const p = f.obj.position;
         // Wände
         const r = 0.15;
-        if (p.x < RAUM.xMin + r || p.x > RAUM.xMax - r) { f.v.x *= -0.4; p.x = THREE.MathUtils.clamp(p.x, RAUM.xMin + r, RAUM.xMax - r); }
-        if (p.z < RAUM.zMin + r || p.z > RAUM.zMax - r) { f.v.z *= -0.4; p.z = THREE.MathUtils.clamp(p.z, RAUM.zMin + r, RAUM.zMax - r); }
+        // im Bad an den Badwänden abprallen, sonst an den Werkstattwänden
+        const q = p.x > BAD.xMin && p.x < BAD.xMax && p.z > BAD.zMin ? BAD : RAUM;
+        if (p.x < q.xMin + r || p.x > q.xMax - r) { f.v.x *= -0.4; p.x = THREE.MathUtils.clamp(p.x, q.xMin + r, q.xMax - r); }
+        if (p.z < q.zMin + r || p.z > q.zMax - r) { f.v.z *= -0.4; p.z = THREE.MathUtils.clamp(p.z, q.zMin + r, q.zMax - r); }
         // Möbel (grob als Kästen bis 0.9 m Höhe)
         if (p.y < 0.95) {
           for (const h of hindernisse) {

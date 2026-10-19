@@ -184,7 +184,7 @@ export const DENNIS = {
   waesche: {
     anleitung: [
       'Ach, du machst meine Wäsche? Super! Hier, die blaue Tasche.',
-      'Ab in die Waschmaschine rechts neben dem Waschplatz. 40 Grad! Nicht mehr, sonst passt mir nix mehr.',
+      'Die Waschmaschine steht im Bad, hinter der WC-Tür. 40 Grad! Nicht mehr, sonst passt mir nix mehr.',
       'Wenn sie fertig ist, kommt alles in den Trockner obendrauf. Aber vorher das Flusensieb rausziehen, das ist immer dicht.',
       'Das Sieb am Kompressor mit Druckluft ausblasen, wieder rein, dann Trockner an. Und dann bringst du mir die Wäsche.',
     ],
@@ -193,6 +193,13 @@ export const DENNIS = {
     sieb: ['Halt! Erst das Flusensieb sauber machen! Sonst fängt der Trockner Feuer!', 'Flusensieb! Raus damit und ausblasen, sonst brennt die Bude!'],
     danke: ['Ah, frische Wäsche! Riecht ja wie neu. Danke dir, echt.', 'Trocken und warm! Du bist ein Schatz. Das vergess ich dir nicht.'],
     dankeHalb: ['Danke. Auch wenn mein Hoodie jetzt kneift.'],
+  },
+  traeger: ['Halt! Nicht anfassen! Schwere Stahlträger sind Torbens Job!', 'Finger weg von den Trägern! Das macht Torben.', 'Die Träger lässt du liegen. Das ist Torbens Job, nicht deiner!'],
+  verstopft: {
+    hilfe: ['Oh oh. Das Klo ist verstopft. Hilf mir mal! Der Pömpel steht oben auf dem Regal.', 'Mist, Klo ist dicht! Hol mal den Pömpel, oben im Regal. Ich geh da nicht nochmal rein.'],
+    danke: ['Läuft wieder! Danke, du bist ein Held.', 'Respekt. Das macht nicht jeder. Danke!'],
+    selbst: ['Na super. Dann mach ich das halt selbst.', 'Keiner hilft mir. Dann pömpel ich eben selber.'],
+    sauer: ['Nächstes Mal holst du den Pömpel, klar?!', 'Das war ekelhaft. Und du hast nur zugeguckt!'],
   },
   ofenBringen: ['Schön! Dann bring ihn mal her, ich will ihn in die Hand nehmen.', 'Na dann her damit! Hochheben und zu mir bringen.', 'Bring ihn rüber, dann gucken wir.'],
   nichtLackiert: ['Und lackieren? So rostet der dir doch weg. Ofenlack drauf, dann reden wir.', 'Ohne Lack nehm ich den nicht. Schwarz muss er sein!', 'Lackieren fehlt noch. Ofenlack, mattschwarz!'],

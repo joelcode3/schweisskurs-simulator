@@ -1,7 +1,7 @@
 // Ich-Perspektive: Computer = Umschauen, indem man die Maus an den Bildrand fährt (ohne Klicken), Ziehen geht auch;
 // Touch = Wischen. Gehen per WASD, Stationen per Knopf, Klick = benutzen.
 import * as THREE from 'three';
-import { RAUM, AUGENHOEHE, STATIONEN } from './world.js';
+import { AUGENHOEHE, STATIONEN } from './world.js';
 
 export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
   let gier = 0;
@@ -173,7 +173,8 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
   function kollidiert(x, z) {
     const r = 0.3;
     const p = kamera.position;
-    if (x < RAUM.xMin + r || x > RAUM.xMax - r || z < RAUM.zMin + r || z > RAUM.zMax - r) return true;
+    // Werkstatt, Bad und offene WC-Tür sind begehbar
+    if (!welt.begehbar(x, z, r)) return true;
     const drin = (h, px, pz) => px > h.xMin - r && px < h.xMax + r && pz > h.zMin - r && pz < h.zMax + r;
     for (const h of welt.hindernisse) {
       if (drin(h, x, z) && !drin(h, p.x, p.z)) return true;

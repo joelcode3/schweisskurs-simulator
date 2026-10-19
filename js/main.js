@@ -30,6 +30,7 @@ const zielListe = scene.children;
 const hand = baueHand(scene, kamera);
 const steuerung = baueSteuerung(kamera, canvas, {
   hindernisse: welt.hindernisse,
+  begehbar: welt.begehbar,
   alleZiele: () => zielListe,
   dennisPosition: () => dennis.position,
 }, (t) => spiel && spiel.klick(t), (t, x, y) => ui.hoverName(t ? t.info.name : '', x, y));

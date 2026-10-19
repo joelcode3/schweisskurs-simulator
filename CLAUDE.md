@@ -84,8 +84,8 @@
   40-Grad-Wäsche!! (kein „Fußmatte waschen“ mehr).
 - Nebenaufgabe 40-Grad-Wäsche (Dennis helfen, freut ihn: Wut -15, bei zu heiß nur -5): Klemmbrett in der Hand, E = übernehmen.
   Dennis kommt, gibt die blaue Einkaufstasche (wie IKEA: gewebte Plane, gelbe Gurtbänder, flache Henkel; darin
-  grauer Hoodie mit raushängendem Ärmel, Jeans mit Hosenbein, schwarzes Shirt, Handtuch, rote Socke) mit Wäsche und erklärt in 4 Blasen den Ablauf. Waschmaschine rechts
-  neben dem Waschplatz (Ecke vorne rechts), Trockner obendrauf, beide mit Anzeige (Restzeit/ENDE) und drehender Trommel.
+  grauer Hoodie mit raushängendem Ärmel, Jeans mit Hosenbein, schwarzes Shirt, Handtuch, rote Socke) mit Wäsche und erklärt in 4 Blasen den Ablauf. Waschmaschine im Bad
+  (vorne rechts), Trockner obendrauf, beide mit Anzeige (Restzeit/ENDE) und drehender Trommel.
   Temperatur wählbar 30/40/60/90 (über 40 = Fehler, Dennis merkt es spätestens beim Rausholen). Waschen 50 s, Trocknen 35 s.
   Flusensieb (unten in der Trocknertür, voller Fusseln) ausbauen, am Kompressor (Ecke rechts neben dem Regal, 50-l-Kessel mit
   Motor, Kühlrippen, Manometern, Spiralschlauch und Ausblaspistole) mit Druckluft ausblasen,
@@ -112,6 +112,13 @@
   (`wandMalen`): Putz, grüngrauer Sockel bis 1,25 m, Putz bröckelt stellenweise (Ziegel sichtbar), Risse, Wasserflecken.
   KEINE Graffiti und Zahlen (Betreiber: wieder weg). Eingang vorne: breites grünes Scheunentor (2 Flügel, helle Z-Streben,
   schwarze Bänder) mit Rauchen-verboten-Schild; Lichtschalter zwischen Tor und WC-Tür.
+- Bad (begehbar) hinter der WC-Tür vorne rechts (BAD in world.js, x 0,7–3,9, z 4,0–6,8): Schachbrett-Boden, Fliesen bis 1,4 m,
+  Milchglasfenster, Klo (hinten links), Dusche (hinten rechts), Waschbecken mit Spiegel, Waschmaschine + Trockner (vorne rechts).
+  WC-Tür offen, nur zu während Dennis drin ist. Bild über dem Klo: assets/bad-bild.jpg (Foto vom Betreiber, fehlt noch).
+  Verstopfung: nach Dennis' Klo einmal pro Spiel mit 30 % Wahrscheinlichkeit; Pömpel steht oben im Regal, in die Hand, aufs Klo
+  klicken (Wut -10). Nach 70 s macht Dennis es selbst (+8 Wut).
+- Stahlträger (HEB 200, rostig) liegen vorne rechts zwischen Waschplatz und Bad-Tür, ohne Funktion. Anklicken oder in der Nähe
+  (max. alle 45 s): Dennis „Schwere Stahlträger sind Torbens Job!“.
 - Bedienung: Hat ein Ding nur eine Aktion, wird sie beim Klick direkt ausgeführt (kein Menü). Box und Licht schalten
   sofort beim Klick (ohne Hinlaufen). Abbrechen-Knöpfe hell mit dunkler Schrift.
 - Dennis hält seinen Becher immer aufrecht, Schuhsohlen rund (keine eckigen Platten).
