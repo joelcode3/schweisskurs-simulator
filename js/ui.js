@@ -198,6 +198,13 @@ export function blaseRechts(text, ms = 4000, art = 'normal') {
 }
 export function sprechzeile(text, ms, sauer = false) { blaseRechts(text, ms, sauer ? 'sauer' : 'normal'); }
 export function lobZeigen(text) { blaseRechts(text, 5000, 'lob'); }
+// Jonny spricht: gleiche Blase rechts, mit seinem Namen und einem kleinen Gesicht (Cap, Bart, Brille)
+const JONNY_MINI = '<circle cx="20" cy="22" r="14" fill="#eebda0" stroke="#111" stroke-width="2"/><path d="M8 26 Q20 42 32 26 Q30 36 20 37 Q10 36 8 26z" fill="#4e321d" stroke="#111" stroke-width="1.5"/><path d="M6 16 Q20 2 34 16 Z" fill="#7d8a5c" stroke="#111" stroke-width="2"/><circle cx="15" cy="21" r="4" fill="none" stroke="#c9a13b" stroke-width="1.5"/><circle cx="25" cy="21" r="4" fill="none" stroke="#c9a13b" stroke-width="1.5"/>';
+export function jonnySagt(text, ms = 4500) {
+  blaseRechts(text, ms, 'normal');
+  $('lobblase').querySelector('b').textContent = 'JONNY';
+  $('lob-gesicht').innerHTML = JONNY_MINI;
+}
 
 // Lautstärke-Leiste unten links
 export function lautstaerkeLeiste(beiAenderung) {

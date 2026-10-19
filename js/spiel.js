@@ -5,7 +5,7 @@ import { auftritt, hatClip, buehneBelegt } from './clips.js';
 import { pfadSpiel, schlackeSpiel, hulaSpiel, DENNIS_HULA_REKORD } from './minispiele.js';
 import { blip, kratzen, jingle, klonk, brummeln, dauer as dauerTon, technoAn, technoAus, technoBeat, klospuelung, mampfen, klick as schalterKlick, stimmeAbspielen, stimmenVorladen } from './audio.js';
 import * as ui from './ui.js';
-import { DENNIS, satzId } from './texte.js';
+import { DENNIS, JONNY, satzId } from './texte.js';
 import { SYMBOL } from './gesicht.js';
 
 const zufallAus = (liste) => liste[Math.floor(Math.random() * liste.length)];
@@ -172,7 +172,7 @@ const NAEHTE = {
   rohr: { name: 'Ofenrohr', form: 'kreis', text: 'Einmal komplett rundherum. Nicht hetzen, nicht trödeln.' },
 };
 
-export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
+export function baueSpiel({ welt, dennis, jonny, steuerung, kamera, hand }) {
   const z = {
     ppe: { brille: false, handschuhe: false, helm: false },
     ventilAuf: false,
@@ -1308,6 +1308,7 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
     z.letztesEreignis = sekundenSeitStart();
     z.feuer = 'brennt';
     z.feuerGrund = z.geschnitten ? 'funken' : 'kippe';
+    if (z.feuerGrund === 'kippe') { jonny.rauchen(false); z.jonnyRaucht = false; z.jonnyNaechsteKippe = sekundenSeitStart() + 90; setTimeout(() => ui.jonnySagt(sag(JONNY.feuer)), 6000); }
     z.feuerSeit = sekundenSeitStart();
     welt.feuer(true);
     feuerTon = dauerTon('schweissen');
@@ -1979,6 +1980,14 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
         return ['Dusche', 'Jetzt nicht. Erst wird gearbeitet.', []];
       case 'waschbecken':
         return ['Waschbecken', 'Mit Spiegel. Siehst müde aus.', [A('Hände waschen', 'wasser', haendeWaschen)]];
+      case 'jonny':
+        return ['Jonny', 'Zimmermann. Steht gern rum. Raucht gern. Seine Leiter hängt immer noch hier.', [
+          A('Quatschen', 'frage', () => ui.jonnySagt(sag(JONNY.quatschen))),
+          A('Nach der Leiter fragen', 'frage', () => {
+            ui.jonnySagt(sag(JONNY.leiter));
+            if (dennisSiehts()) setTimeout(() => dennisSagt(sag(DENNIS.leiter), true, { prio: 1 }), 2500);
+          }),
+        ]];
       case 'leiter':
         return ['Johnnys Leiter', 'Alu-Leiter von einem alten Camper. Hängt hier schon ewig.', [A('Anfassen', 'hand', () => {
           z.leiterZuletzt = sekundenSeitStart();
@@ -2278,6 +2287,19 @@ export function baueSpiel({ welt, dennis, steuerung, kamera, hand }) {
         murmeln();
       }
       // Feuer im Mülleimer: einmal pro Spiel, nach dem Flexen bald, sonst irgendwann
+      // Jonny raucht zwischendurch an der Tor-Ecke (obwohl das Schild direkt daneben hängt)
+      if (z.jonnyRauchtBis === undefined) { z.jonnyRauchtBis = 0; z.jonnyNaechsteKippe = 40 + Math.random() * 40; }
+      if (!z.jonnyRaucht && sekundenSeitStart() > z.jonnyNaechsteKippe) {
+        z.jonnyRaucht = true;
+        z.jonnyRauchtBis = sekundenSeitStart() + 18 + Math.random() * 10;
+        jonny.rauchen(true);
+      } else if (z.jonnyRaucht && sekundenSeitStart() > z.jonnyRauchtBis) {
+        z.jonnyRaucht = false;
+        z.jonnyNaechsteKippe = sekundenSeitStart() + 60 + Math.random() * 60;
+        jonny.rauchen(false);
+        // manchmal ruft Dennis rüber
+        if (dennisSiehts() && ruhig() && !z.beschaeftigt && Math.random() < 0.5) dennisSagt(sag(DENNIS.jonnyRaucht), true, { prio: 0 });
+      }
       // Dennis läuft gegen einen tief hängenden Stromwürfel
       if (dennis.wurzel.visible && dennis.modus !== 'liegen' && dennis.modus !== 'sitzen' && dennis.modus !== 'schlafen') {
         const w = welt.stromWuerfelBei(dennis.position.x, dennis.position.z, 0.32);

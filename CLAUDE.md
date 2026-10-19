@@ -131,6 +131,13 @@
   gelbliche unregelmäßige Pfütze davor. Bilderrahmen über dem Klo: Profilrahmen mit Goldleiste, Passepartout, Glasreflex, Nagel.
 - Feuer und Wasserrohrbruch mit mindestens 90 s Abstand (z.letztesEreignis). Waschmaschine/Trockner: Scheibe schlicht blau.
 - Geworfene/fallen gelassene längliche Dinge liegen flach (userData.liegend: Rohrzange, Pömpel, Besen, Hula-Hoop-Reifen).
+- Jonny (js/jonny.js, nach Fotos vom Betreiber): so groß wie Dennis, etwas breiter, lange braune Haare, Vollbart, olivgrüne
+  Cap verkehrt herum, runde goldene Brille, Nasenring, weißes Shirt mit haariger Brust, hellbraune Cord-Zimmermannsweste mit
+  Perlmuttknöpfen, sehr kurze schwarze Arbeitshose mit gelbem Zollstock und Stift in der Seitentasche, weiße Socken, grüne
+  Sneaker mit drei Streifen, goldener Ring. Steht an der Tor-Ecke (0,45 | 3,2), Arme verschränkt, schaut zum Spieler.
+  Raucht alle 1–2 min ca. 20 s (Kippe, Rauch), Dennis meckert manchmal (DENNIS.jonnyRaucht). Anklicken: Quatschen /
+  Nach der Leiter fragen (Sprüche in JONNY in texte.js, Blase rechts mit Name JONNY, ui.jonnySagt). Feuer durch Kippe:
+  Jonny sagt kurz danach „Upsi. War ich das?“. Weitere Ideen offen (Leiter abholen, Störenfried, Nähte kommentieren).
 - Stahlträger (HEB 200, rostig) liegen vorne rechts zwischen Waschplatz und Bad-Tür, ohne Funktion. Anklicken oder in der Nähe
   (max. alle 45 s): Dennis „Schwere Stahlträger sind Torbens Job!“.
 - Bedienung: Hat ein Ding nur eine Aktion, wird sie beim Klick direkt ausgeführt (kein Menü). Box und Licht schalten
