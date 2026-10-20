@@ -109,7 +109,7 @@
   Nicht drehen, solange ein Menü/Dialog/Minispiel/Dennis-Fenster offen ist.
 - Dennis aufhelfen (Hüfte) nur mit leeren Händen (Ausnahme: Kaffee, Wäschetasche, Sieb, die man nicht hinlegen kann).
 - Kaffee kann man werfen (Q) und fallen lassen (G); dann ist er weg (neuen kochen), Dennis meckert, wenn er es sieht.
-- Werkstatt-Optik: Deckenhöhe 3,9 m (RAUM.hoehe), helle Putzdecke (MeshBasic) mit Holzbalken, Leuchtstoffröhren an Ketten auf 3,25 m. Wände mit eigener Leinwand je Wand
+- Werkstatt-Optik: Deckenhöhe 3,9 m (RAUM.hoehe), helle Putzdecke (MeshBasic), KEINE Holzbalken (Betreiber), Leuchtstoffröhren an Ketten auf 3,25 m. Wände mit eigener Leinwand je Wand
   (`wandMalen`): Putz, grüngrauer Sockel bis 1,25 m, Putz bröckelt stellenweise (Ziegel sichtbar), Risse, Wasserflecken.
   KEINE Graffiti und Zahlen (Betreiber: wieder weg). Eingang vorne: breites Scheunentor komplett grün (2 Flügel, Z-Streben,
   nur die Scharniere/Bänder schwarz) mit Rauchen-verboten-Schild; Lichtschalter zwischen Tor und WC-Tür.
@@ -118,7 +118,7 @@
   WC-Tür offen, nur zu während Dennis drin ist. Bild über dem Klo: assets/bad-bild.jpg (Foto vom Betreiber, Dennis oben ohne mit Handy, Holzrahmen).
   Verstopfung: nach Dennis' Klo einmal pro Spiel mit 30 % Wahrscheinlichkeit; Pömpel steht oben im Regal, in die Hand, aufs Klo
   klicken (Wut -10). Nach 70 s macht Dennis es selbst (+8 Wut).
-- Zwei gelbe Stromverteiler-Würfel (Steckdosen an jeder Seite) hängen an Kabeln tief von der Decke (Unterkante 1,75 m, bei
+- Zwei kleine gelbe Stromverteiler-Würfel (18 cm, genau eine Steckdose pro Seite, ein Stecker mit Kabel) hängen an Kabeln tief von der Decke (Unterkante 1,75 m, bei
   (-0,9 | 2,35) und (0 | -1,05)). Läuft Dennis dagegen: pendelt, Klonk, Spruch (DENNIS.stromwuerfel, max. alle 35 s).
 - Johnnys Leiter (Alu-Kofferraumleiter vom Camper, 6 Sprossen, oben gebogen) hängt quer, hoch und leicht schräg an der rechten
   Wand auf zwei Konsolen. Dennis regt sich alle 2,5–4 min darüber auf (DENNIS.leiter) und beim Anklicken.
@@ -131,6 +131,42 @@
   gelbliche unregelmäßige Pfütze davor. Bilderrahmen über dem Klo: Profilrahmen mit Goldleiste, Passepartout, Glasreflex, Nagel.
 - Feuer und Wasserrohrbruch mit mindestens 90 s Abstand (z.letztesEreignis). Waschmaschine/Trockner: Scheibe schlicht blau.
 - Geworfene/fallen gelassene längliche Dinge liegen flach (userData.liegend: Rohrzange, Pömpel, Besen, Hula-Hoop-Reifen).
+- Jonny (js/jonny.js, nach Fotos): so groß wie Dennis, etwas breiter, lange braune Haare, Vollbart, grüne Cap mit Schirm nach
+  vorn, runde goldene Brille (kein Nasenring), weißes KURZärmliges Hemd bis oben offen (Brust und Hals durchgehend, Haare nur
+  auf der Brust, Hals ohne Haare), hellbraune Cord-Weste eng an Brust und Schultern bis an den Hals, Hemd/Weste/Körper als
+  saubere Hüllen (`huelle`, `aufHuelle` in jonny.js, R(y)/T(y) = Rumpfform), große Hände (dicke Finger mit zwei Gliedern, Nägel, Daumen), Arme richtig verschränkt (links unten, rechts darüber),
+  kein Gürtel, dünner, flacher Bauch, sehr kurze schwarze Arbeitshose mit
+  Zollstock und Stift, weiße Socken, grüne Sneaker, goldener Ring. Kann laufen (gehZu). Heim: Tor-Ecke (0,45 | 3,2).
+  Verhalten (spiel.js, Objekt jz): raucht zwischendurch; holt sich alle 70–130 s ein Bier aus dem Kühlschrank (oder lässt sich
+  über das Menü sofort überreden), trinkt, lässt leere Flasche liegen (anklicken = wegräumen, Wut -2); Dennis nervt das (+3).
+  Ab 4 Bier: Sodbrennen, geht nach Hause (durchs Tor, weg für den Rest des Spiels); vorher mit 15 % pinkelt er in den Ofen
+  (Dennis +10). Kitzelt Dennis alle 2–3,5 min (Dennis: Ton stimme/aergern-2.mp3 = ärgernleicht2, schickt ihn weg, +4).
+  Einmal pro Spiel will er die Leiter abholen: stellt sich drunter, Spieler klickt die Leiter = runterholen (Leiter weg, Wut -10,
+  Dennis jubelt), sonst nach 45 s „nächste Woche“. Störenfried: kommt zum Spieler an Werkbank/Schweißplatz und quatscht;
+  „Antworten“ = Fehler (+5, Dennis sauer), ignorieren/15 s warten = Jonny beleidigt. aerger(n) = Wut ohne Fehler, max. 99.
+  Jonny geht alle 2–3,5 min raus (Camper/Kiosk, jonnyRaus/jonnyRein, jz.draussen) und kommt nach 70–130 s wieder.
+  Jonny und Waldo sind selten gleichzeitig da: Waldo kommt meist nur, wenn Jonny draußen ist (85 %), Jonny kommt erst
+  zurück, wenn Waldo weg ist (85 %), und geht nicht raus, solange Waldo da ist. Kippen-Feuer nur, wenn Jonny da ist.
+- Kühlschrank (klein, weiß, Bier drin) in der Pausenecke neben dem Kaffeetisch.
+- Waldo (js/waldo.js, nach Fotos): kleiner (Skala 0,85), breit, kurze dunkle Haare (ganzer Hinterkopf bis Nacken, gehen hinter
+  den Ohren und über die Koteletten nahtlos in den Bart über, gleiche Farbe/Textur), langer voller braun-dunkler Vollbart mit
+  vielen Essensresten (Krümel, Salat, Tomate, Käse, Sesam, Mayo), beige Cap, dunkelroter Pulli OHNE Logo mit geradem Saum
+  (Betreiber), weite, detaillierte kurze graue Jogginghose (meliert, Löcher mit Fäden, Risse, Fransen, sauberer gerippter
+  Gummibund direkt unter dem Pulli, KEIN Gürtel, Kordel, Taschen, Flecken), breite Beine OHNE Haare mit Knie und Wade,
+  weiße Söckchen, beige Sneaker. Sitzt normal nach vorn (Sofa: z 3,42, Höhe 0,52; Träger: z 3,36, Höhe 0,57), Oberschenkel
+  leicht abfallend, Füße auf dem Boden (Neigung aus der Sitzhöhe berechnet).
+  Anfangs NICHT da. Besuch alle 1,5–3 min: kommt durchs Tor, stellt sich hin (Handy) oder setzt sich aufs Sofa / auf die
+  Stahlträger und guckt aufs Handy, bleibt 50–90 s. Dennis mag keinen Besuch (+3 beim Kommen, alle 30–50 s Gemecker +2).
+  Menü: Quatschen, Krümel, „Sagen, dass Dennis keinen Besuch will“ (geht, Wut -4). Sofa-Streit: sitzt Waldo zur Mittagspause
+  auf dem Sofa, streiten Dennis und Waldo (bis 3 Runden); Klick auf Waldo = „Streit schlichten“ (Waldo geht, Wut -6, Dennis
+  dankt), sonst wirft Dennis ihn raus (+8). Danach geht die Mittagspause normal weiter.
+  Kackepumpe (einmal pro Spiel, 70 %): rennt rein, Tank im Garten voll; Dennis und Waldo suchen hektisch (Regal, Werkbank),
+  finden sie hinter dem Kompressor (blaue Tauchpumpe), Waldo rennt raus. Spieler ist solange kurz blockiert.
+  Pumpe zurück: 100–160 s später bringt Waldo sie dreckig zurück (Güllekleckse, Pfütze, grüne Stinkewolken, Fliegen) und
+  stellt sie mitten in den Weg (-0,7 | 0,9). Spieler: in die Hand (Menü Kackepumpe), im Bad in der Dusche oder am Waschbecken
+  abwaschen (Klick oder E, Halten-Dialog), dann Klick auf den Kompressor = zurückstellen (Wut -8, Lob). Dreckig hinstellen
+  geht nicht (Dennis meckert). Nach 50 s meckert Dennis (+3), nach 120 s macht er es selbst (+8). wz.pumpe: daheim | weg |
+  imWeg | sauber | zurueck.
 - Stahlträger (HEB 200, rostig) liegen vorne rechts zwischen Waschplatz und Bad-Tür, ohne Funktion. Anklicken oder in der Nähe
   (max. alle 45 s): Dennis „Schwere Stahlträger sind Torbens Job!“.
 - Bedienung: Hat ein Ding nur eine Aktion, wird sie beim Klick direkt ausgeführt (kein Menü). Box und Licht schalten
