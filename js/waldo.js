@@ -1,13 +1,12 @@
 // Waldo als Comic-Figur (nach Fotos vom Betreiber): kleiner als Dennis und Jonny, breit gebaut, kurze dunkle Haare,
-// großer dunkler Vollbart mit Essensresten, beige Cap, dunkelroter Pulli mit weißem Bandlogo (Feine Sahne Fischfilet),
-// kurze zerfetzte graue Jogginghose (Löcher, ausgefranster Saum, Kordel), behaarte Beine, weiße Söckchen, beige Sneaker.
+// langer, voller braun-dunkler Vollbart mit Essensresten, beige Cap, dunkelroter Pulli (ohne Logo),
+// kurze zerfetzte graue Jogginghose (Löcher, ausgefranster Saum, Gummibund mit Kordel), weiße Söckchen, beige Sneaker.
 // Hält meist einen Toast in der Hand und beißt ab und zu ab.
 import * as THREE from 'three';
 import { toon, teil, quader, zylinder, kugel, setze, leinwandTextur, zufall as zufallsFolge } from './toon.js';
 
 const HAUT = 0xe9b896;
-const HAAR = 0x2e2018;
-const BART = 0x1f130b;
+const HAAR = 0x3a2416;
 const CAP = 0xcdb894;
 const PULLI = 0x7a1f26;
 const JOGGER = 0x9a9ea3;
@@ -53,27 +52,28 @@ export function baueWaldo(scene) {
     for (const [x, y, c] of [[30, 30, 'rgba(90,60,40,0.3)'], [170, 30, 'rgba(160,40,30,0.3)'], [200, 220, 'rgba(40,40,40,0.25)']]) { g.fillStyle = c; g.beginPath(); g.ellipse(x, y, 10 + r() * 8, 6 + r() * 5, r() * 3, 0, Math.PI * 2); g.fill(); }
   });
   const joggerMat = toon(0xffffff, { map: joggerTex });
-  const becken = teil(new THREE.CapsuleGeometry(0.165, 0.14, 6, 14), 0, { material: joggerMat });
-  becken.rotation.z = Math.PI / 2;
-  becken.scale.set(1, 1, 0.84);
-  becken.position.y = 0.9;
+  // Hosenoberteil (Gesäß/Hüfte) als leicht ausgestellter Zylinder, damit Bund und Beine sauber anschließen
+  const becken = teil(new THREE.CylinderGeometry(0.245, 0.27, 0.16, 32), 0, { material: joggerMat });
+  becken.scale.set(1.08, 1, 0.82);
+  becken.position.y = 0.8;
   koerper.add(becken);
-  // breiter Bund mit Gummizug (Rippen), Kordel mit Metallenden
-  const bund = new THREE.Mesh(new THREE.CylinderGeometry(0.275, 0.275, 0.06, 26, 1, true), toon(0x868a8f));
-  bund.scale.set(1, 1, 0.84);
-  bund.position.y = 0.99;
+  // Gummibund (fein gerippt) direkt unter dem Pullisaum, mit Kordel und Metallenden
+  const bundTex = leinwandTextur(256, 32, (g, b, h) => {
+    g.fillStyle = '#a3a7ac'; g.fillRect(0, 0, b, h);
+    for (let x = 0; x < b; x += 4) { g.fillStyle = 'rgba(80,84,90,0.35)'; g.fillRect(x, 0, 1.5, h); }
+    g.fillStyle = 'rgba(70,74,79,0.6)'; g.fillRect(0, 0, b, 2); g.fillRect(0, h - 2, b, 2);
+  }, [4, 1]);
+  const bund = teil(new THREE.CylinderGeometry(0.247, 0.247, 0.05, 32), 0, { material: toon(0xffffff, { map: bundTex }), umriss: 0.003 });
+  bund.scale.set(1.08, 1, 0.82);
+  bund.position.y = 0.895;
   koerper.add(bund);
-  for (let i = 0; i < 26; i++) {
-    const w = (i / 26) * Math.PI * 2;
-    koerper.add(setze(quader(0.004, 0.055, 0.004, 0x6d7176, { umriss: false, wirft: false }), Math.sin(w) * 0.276, 0.99, Math.cos(w) * 0.276 * 0.84, 0, w, 0));
-  }
   for (const s of [-1, 1]) {
-    const kordel = new THREE.CatmullRomCurve3([new THREE.Vector3(s * 0.012, 0.99, 0.232), new THREE.Vector3(s * 0.04, 0.93, 0.238), new THREE.Vector3(s * 0.025, 0.84, 0.234)]);
-    koerper.add(teil(new THREE.TubeGeometry(kordel, 10, 0.0055, 5, false), 0xf2f2ee, { umriss: 0.001 }));
-    koerper.add(setze(zylinder(0.008, 0.007, 0.025, 0xb8bcc2, { umriss: false }, 6), s * 0.025, 0.83, 0.234));
+    const kordel = new THREE.CatmullRomCurve3([new THREE.Vector3(s * 0.012, 0.9, 0.206), new THREE.Vector3(s * 0.035, 0.86, 0.212), new THREE.Vector3(s * 0.028, 0.79, 0.214)]);
+    koerper.add(teil(new THREE.TubeGeometry(kordel, 10, 0.005, 5, false), 0xf2f2ee, { umriss: 0.001 }));
+    koerper.add(setze(zylinder(0.007, 0.006, 0.022, 0xb8bcc2, { umriss: false }, 6), s * 0.028, 0.778, 0.214));
   }
   // Eingriffstaschen vorne (schräge Kante)
-  for (const s of [-1, 1]) koerper.add(setze(quader(0.012, 0.13, 0.01, 0x7a7e83, { umriss: false }), s * 0.19, 0.88, 0.19, 0.2, s * 0.6, s * 0.35));
+  for (const s of [-1, 1]) koerper.add(setze(quader(0.01, 0.12, 0.008, 0x7a7e83, { umriss: false }), s * 0.2, 0.8, 0.165, 0.15, s * 0.75, s * 0.35));
   const beine = [];
   for (const x of [-0.14, 0.14]) {
     const huefte = new THREE.Group();
@@ -102,7 +102,7 @@ export function baueWaldo(scene) {
       g.fillStyle = '#e9b896'; g.fillRect(0, 0, 128, 128);
       const r = zufallsFolge(x > 0 ? 3 : 4);
       g.lineCap = 'round';
-      for (let i = 0; i < 520; i++) { const px = r() * 128, py = r() * 128; g.strokeStyle = r() < 0.6 ? 'rgba(40,26,16,0.75)' : 'rgba(70,46,28,0.6)'; g.lineWidth = 1 + r() * 0.6; g.beginPath(); g.moveTo(px, py); g.quadraticCurveTo(px + 2, py + 3, px + 1 + r() * 2, py + 6 + r() * 3); g.stroke(); }
+      for (let i = 0; i < 160; i++) { g.fillStyle = `rgba(200,140,110,${r() * 0.15})`; g.fillRect(r() * 128, r() * 128, 4, 4); }
       // Mückenstich, blauer Fleck
       g.fillStyle = 'rgba(200,80,70,0.5)'; g.beginPath(); g.arc(40, 80, 3, 0, Math.PI * 2); g.fill();
       g.fillStyle = 'rgba(90,80,140,0.25)'; g.beginPath(); g.ellipse(90, 30, 8, 6, 0, 0, Math.PI * 2); g.fill();
@@ -163,16 +163,16 @@ export function baueWaldo(scene) {
   pulli.scale.set(1.08, 1, 0.85);
   pulli.rotation.y = 0;
   rumpf.add(pulli);
+  // gerader Pullisaum (fällt locker über den Hosenbund)
+  const saum = teil(new THREE.CylinderGeometry(0.25, 0.258, 0.2, 32), 0, { material: pulliMat });
+  saum.scale.set(1.08, 1, 0.85);
+  saum.position.y = 0.06;
+  rumpf.add(saum);
 
   const schultern = teil(new THREE.SphereGeometry(0.24, 16, 10), PULLI);
   schultern.scale.set(1.4, 0.55, 0.85);
   schultern.position.y = 0.62;
   rumpf.add(schultern);
-  // Rippbund unten
-  const ripp = new THREE.Mesh(new THREE.CylinderGeometry(0.262, 0.262, 0.05, 22, 1, true), toon(0x6a1a20));
-  ripp.scale.set(1.08, 1, 0.85);
-  ripp.position.y = 0.06;
-  rumpf.add(ripp);
 
   // ---------- Arme: Hände in die Hüften, eine Hand hält einen Toast ----------
   function arm(seite) {
@@ -225,114 +225,166 @@ export function baueWaldo(scene) {
   }
   toastHalten(false);
 
-  // ---------- Kopf: breit, kurze dunkle Haare, riesiger Vollbart mit Krümeln, beige Cap ----------
+  // ---------- Kopf (nach Fotos): breites, rundes Gesicht, volle Wangen, gerade dicke Brauen, braune Augen, breite Nase,
+  // kurze dunkle Haare an Seiten und Hinterkopf, die über die Koteletten nahtlos in einen vollen dunklen Bart übergehen ----------
   const kopf = new THREE.Group();
   kopf.position.y = 0.88;
   rumpf.add(kopf);
-  rumpf.add(setze(zylinder(0.08, 0.09, 0.1, HAUT, { umriss: 0.004 }), 0, 0.8, 0));
-  const schaedel = teil(new THREE.SphereGeometry(0.17, 22, 18), HAUT);
-  schaedel.scale.set(1.05, 1.08, 1.0);
+  rumpf.add(setze(zylinder(0.085, 0.095, 0.12, HAUT, { umriss: 0.004 }), 0, 0.8, 0));
+  // Teil einer Kugel zuschneiden: behält Dreiecke, deren Mitte behalten(x, y, z) erfüllt
+  function zuschnitt(geo, behalten) {
+    const g = geo.toNonIndexed();
+    const pos = g.attributes.position, nor = g.attributes.normal, uv = g.attributes.uv;
+    const P = [], N = [], U = [];
+    for (let i = 0; i < pos.count; i += 3) {
+      let cx = 0, cy = 0, cz = 0;
+      for (let k = 0; k < 3; k++) { cx += pos.getX(i + k); cy += pos.getY(i + k); cz += pos.getZ(i + k); }
+      if (!behalten(cx / 3, cy / 3, cz / 3)) continue;
+      for (let k = 0; k < 3; k++) { P.push(pos.getX(i + k), pos.getY(i + k), pos.getZ(i + k)); N.push(nor.getX(i + k), nor.getY(i + k), nor.getZ(i + k)); U.push(uv.getX(i + k), uv.getY(i + k)); }
+    }
+    const n = new THREE.BufferGeometry();
+    n.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
+    n.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
+    n.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2));
+    return n;
+  }
+  const schaedel = teil(new THREE.SphereGeometry(0.17, 26, 20), HAUT);
+  schaedel.scale.set(1.07, 1.04, 1.0);
   schaedel.position.y = 0.12;
   kopf.add(schaedel);
-  for (const x of [-0.175, 0.175]) kopf.add(setze(teil(new THREE.SphereGeometry(0.038, 10, 8), HAUT), x, 0.1, -0.01));
-  const nase = teil(new THREE.SphereGeometry(0.034, 12, 10), 0xe2a684);
-  nase.position.set(0, 0.105, 0.17);
-  nase.scale.set(1, 1.05, 1.0);
+  // volle Wangen
+  for (const sx of [-1, 1]) kopf.add(setze(teil(new THREE.SphereGeometry(0.06, 12, 10), HAUT, { umriss: false }), sx * 0.09, 0.115, 0.115));
+  for (const x of [-0.18, 0.18]) {
+    const ohr = teil(new THREE.SphereGeometry(0.036, 10, 8), HAUT, { umriss: 0.002 });
+    ohr.scale.set(0.55, 1.15, 0.85);
+    ohr.position.set(x, 0.12, -0.01);
+    kopf.add(ohr);
+  }
+  const nase = teil(new THREE.SphereGeometry(0.034, 14, 10), 0xe4a886, { umriss: 0.002 });
+  nase.position.set(0, 0.11, 0.172);
+  nase.scale.set(1.2, 1.05, 1.0);
   kopf.add(nase);
+  kopf.add(setze(teil(new THREE.CylinderGeometry(0.014, 0.02, 0.06, 8), 0xe4a886, { umriss: false }), 0, 0.14, 0.165, -0.25, 0, 0));
+  for (const sx of [-1, 1]) kopf.add(setze(kugel(0.006, 0x8a4a3a, { umriss: false }, 6), sx * 0.014, 0.095, 0.188));
   const augen = [];
-  for (const x of [-0.06, 0.06]) {
+  for (const x of [-0.062, 0.062]) {
     const a = new THREE.Group();
-    a.add(kugel(0.02, 0xffffff, { umriss: 0.003 }, 10));
-    const pupille = kugel(0.012, 0x4a3a2a, { umriss: false }, 8);
-    pupille.position.z = 0.014;
+    const weiss = kugel(0.019, 0xffffff, { umriss: 0.0025 }, 12);
+    weiss.scale.set(1.15, 0.85, 0.7);
+    a.add(weiss);
+    const iris = kugel(0.0105, 0x5a3a22, { umriss: false }, 10);
+    iris.position.z = 0.011;
+    a.add(iris);
+    const pupille = kugel(0.005, 0x111111, { umriss: false }, 6);
+    pupille.position.z = 0.017;
     a.add(pupille);
-    a.position.set(x, 0.155, 0.142);
+    // Oberlid (leicht müder Blick)
+    a.add(setze(quader(0.046, 0.008, 0.012, 0xd99d7c, { umriss: false }), 0, 0.014, 0.008, 0.2, 0, 0));
+    a.position.set(x, 0.158, 0.163);
     kopf.add(a);
     augen.push(a);
   }
-  for (const x of [-0.064, 0.064]) kopf.add(setze(quader(0.052, 0.016, 0.02, 0x3a2618, { umriss: false }), x, 0.198, 0.152, 0, 0, x > 0 ? 0.12 : -0.12));
-  // kurze dunkle Haare an den Seiten und hinten
-  const haarSeite = teil(new THREE.SphereGeometry(0.176, 18, 12, Math.PI * 0.9, Math.PI * 1.2, Math.PI * 0.25, Math.PI * 0.35), HAAR, { umriss: 0.003 });
-  haarSeite.scale.set(1.05, 1.08, 1.0);
-  haarSeite.position.y = 0.12;
-    kopf.add(haarSeite);
-  // großer Vollbart: Wangen, langes Kinn, Schnurrbart
-  const bartTex = leinwandTextur(64, 64, (g) => {
-    g.fillStyle = '#1f130b'; g.fillRect(0, 0, 64, 64);
-    const r = zufallsFolge(12);
-    g.lineWidth = 1;
-    for (let i = 0; i < 260; i++) { const px = r() * 64, py = r() * 64; g.strokeStyle = r() < 0.7 ? 'rgba(70,46,30,0.7)' : 'rgba(10,6,3,0.8)'; g.beginPath(); g.moveTo(px, py); g.quadraticCurveTo(px + (r() - 0.5) * 6, py + 5, px + (r() - 0.5) * 5, py + 10 + r() * 4); g.stroke(); }
-  }, [2, 2]);
-  const bartMat = toon(0xffffff, { map: bartTex });
-  const bart = teil(new THREE.SphereGeometry(0.16, 18, 14, -Math.PI * 0.2, Math.PI * 1.4, Math.PI * 0.5, Math.PI * 0.4), 0, { material: bartMat, umriss: 0.004 });
-  bart.scale.set(1.08, 1.12, 1.08);
-  bart.position.set(0, 0.06, 0.015);
-  kopf.add(bart);
-  const kinnBart = teil(new THREE.CapsuleGeometry(0.095, 0.1, 6, 14), 0, { material: bartMat, umriss: 0.004 });
-  kinnBart.scale.set(1.25, 1, 0.85);
-  kinnBart.position.set(0, -0.07, 0.085);
-  kinnBart.rotation.x = 0.25;
-  kopf.add(kinnBart);
-  const schnurrbart = teil(new THREE.CapsuleGeometry(0.02, 0.08, 4, 8), 0, { material: bartMat, umriss: 0.003 });
-  schnurrbart.rotation.z = Math.PI / 2;
-  schnurrbart.position.set(0, 0.06, 0.168);
-  kopf.add(schnurrbart);
-  // Bart-Strähnen: viele kleine, nach unten zeigende Büschel auf Wangen und Kinn (wirkt dicht und zottelig)
-  {
-    const buschelGeo = new THREE.ConeGeometry(0.014, 0.05, 5);
-    buschelGeo.rotateX(Math.PI);
-    const lagen = [];
-    for (let i = 0; i < 260 && lagen.length < 150; i++) {
-      const w = (zufall() - 0.5) * Math.PI * 1.25;
-      const y = -0.13 + zufall() * 0.2;
-      // Oberfläche grob: Wangen (Kugel) oben, Kinn (länglich) unten
-      const rad = y > 0 ? 0.165 : 0.12 + (y + 0.13) * 0.3;
-      const x = Math.sin(w) * rad * 1.1;
-      const zz = Math.cos(w) * rad * (y > 0 ? 1.0 : 0.95) + (y > 0 ? 0.015 : 0.06);
-      if (y > 0.05 && Math.abs(x) < 0.07) continue; // Mund und Schnurrbart frei
-      lagen.push([x, y, zz, w]);
-    }
-    const buschel = new THREE.InstancedMesh(buschelGeo, toon(0xffffff), lagen.length);
-    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), sk = new THREE.Vector3(), f = new THREE.Color();
-    lagen.forEach(([x, y, zz, w], i) => {
-      e.set(-0.3 + (zufall() - 0.5) * 0.5, w, (zufall() - 0.5) * 0.6);
-      q.setFromEuler(e);
-      const g = 0.8 + zufall() * 0.7;
-      sk.set(g, g * (1 + zufall() * 0.6), g);
-      m.compose(new THREE.Vector3(x, y, zz), q, sk);
-      buschel.setMatrixAt(i, m);
-      buschel.setColorAt(i, f.setHex(zufall() < 0.75 ? 0x24160d : 0x3d2817));
-    });
-    kopf.add(buschel);
+  // dicke, gerade dunkle Brauen
+  for (const x of [-0.066, 0.066]) kopf.add(setze(teil(new THREE.CapsuleGeometry(0.011, 0.045, 3, 6), HAAR, { umriss: 0.0015 }), x, 0.195, 0.165, 0, 0, Math.PI / 2 + (x > 0 ? -0.06 : 0.06)));
+  // Bart und Haare teilen sich dieselben Farben, damit der Übergang (Koteletten, hinter den Ohren, Nacken) nahtlos ist
+  function haarTextur(saat, laenge, dichte, hell) {
+    return leinwandTextur(128, 128, (g) => {
+      g.fillStyle = '#34200f'; g.fillRect(0, 0, 128, 128);
+      const r = zufallsFolge(saat);
+      g.lineCap = 'round';
+      for (let i = 0; i < dichte; i++) {
+        const px = r() * 128, py = r() * 128;
+        const t = r();
+        g.strokeStyle = t < 0.5 ? `rgba(84,54,30,${hell})` : t < 0.58 ? `rgba(120,80,46,${hell * 0.6})` : 'rgba(22,12,6,0.7)';
+        g.lineWidth = 0.9 + r() * 0.8;
+        g.beginPath(); g.moveTo(px, py); g.quadraticCurveTo(px + (r() - 0.5) * laenge * 0.5, py + laenge * 0.5, px + (r() - 0.5) * laenge * 0.5, py + laenge * (0.8 + r() * 0.4)); g.stroke();
+      }
+    }, [2, 2]);
   }
-  const mund = new THREE.Mesh(new THREE.CircleGeometry(0.022, 12, Math.PI, Math.PI), new THREE.MeshBasicMaterial({ color: 0x5a1a14 }));
-  mund.position.set(0, 0.04, 0.178);
+  const haarMat = toon(0xffffff, { map: haarTextur(21, 6, 700, 0.45) });
+  const bartMat = toon(0xffffff, { map: haarTextur(12, 14, 650, 0.7) });
+  // kurze Haare: ganzer Hinterkopf bis in den Nacken, an den Seiten über und hinter den Ohren,
+  // vorne von der Cap verdeckt; vor den Ohren gehen sie in die Koteletten über
+  const haarGeo = zuschnitt(new THREE.SphereGeometry(0.176, 36, 26, 0, Math.PI * 2, Math.PI * 0.12, Math.PI * 0.7), (x, y, z) => z < 0.02 || (Math.abs(x) > 0.15 && y > -0.02 && z < 0.09));
+  const haar = teil(haarGeo, 0, { material: haarMat, umriss: 0.003 });
+  haar.scale.set(1.08, 1.05, 1.03);
+  haar.position.y = 0.12;
+  kopf.add(haar);
+  // Vollbart (wie auf den Fotos: lang, voll, mittelbraun bis dunkel): Schale über Kiefer und Wangen mit klarer,
+  // schräger Wangenlinie; vor den Ohren hoch bis zu den Haaren, unter den Ohren nach hinten bis in die Nackenhaare
+  const bartGeo = zuschnitt(new THREE.SphereGeometry(0.168, 36, 26, 0, Math.PI * 2, Math.PI * 0.36, Math.PI * 0.6), (x, y, z) => {
+    if (z < -0.06) return false;                       // hinten übernehmen die Nackenhaare
+    if (z < 0.0 && y > -0.06) return false;            // Ohren bleiben frei
+    const vorne = Math.max(0, z) / 0.168;              // 0 an den Seiten, 1 vorne
+    return y < 0.06 - vorne * 0.1;                     // Wangenlinie: an den Seiten hoch, vorne bis unter die Nase
+  });
+  const bart = teil(bartGeo, 0, { material: bartMat, umriss: 0.004 });
+  bart.scale.set(1.12, 1.08, 1.12);
+  bart.position.set(0, 0.12, 0.012);
+  kopf.add(bart);
+  // volles Kinn (Bart hängt gut 10 cm unters Kinn)
+  const kinnBart = teil(new THREE.SphereGeometry(0.12, 18, 14), 0, { material: bartMat, umriss: 0.004 });
+  kinnBart.scale.set(1.12, 1.05, 0.9);
+  kinnBart.position.set(0, -0.03, 0.07);
+  kopf.add(kinnBart);
+  const kinnSpitze = teil(new THREE.SphereGeometry(0.08, 14, 10), 0, { material: bartMat, umriss: 0.004 });
+  kinnSpitze.scale.set(1.05, 1.4, 0.8);
+  kinnSpitze.position.set(0, -0.13, 0.1);
+  kopf.add(kinnSpitze);
+  // Schnurrbart (dicht, über der Lippe, geht seitlich in den Bart)
+  const schnurr = new THREE.CatmullRomCurve3([new THREE.Vector3(-0.07, 0.045, 0.15), new THREE.Vector3(-0.035, 0.075, 0.178), new THREE.Vector3(0, 0.072, 0.185), new THREE.Vector3(0.035, 0.075, 0.178), new THREE.Vector3(0.07, 0.045, 0.15)]);
+  kopf.add(teil(new THREE.TubeGeometry(schnurr, 20, 0.019, 8, false), 0, { material: bartMat, umriss: 0.003 }));
+  // Unterlippe schaut etwas raus
+  const mund = teil(new THREE.CapsuleGeometry(0.008, 0.03, 3, 6), 0xb5605a, { umriss: false });
+  mund.rotation.z = Math.PI / 2;
+  mund.position.set(0, 0.045, 0.18);
   kopf.add(mund);
+  // ein paar abstehende Barthaare an der Kontur (wirkt dicht, aber sauber)
+  {
+    const geoH = new THREE.IcosahedronGeometry(0.02, 0);
+    const lagen = [];
+    for (let i = 0; i < 45; i++) {
+      const w = (zufall() - 0.5) * Math.PI * 0.7;
+      const y = -0.17 + zufall() * 0.13;
+      lagen.push([Math.sin(w) * (0.12 + (y + 0.17) * 0.25), y, Math.cos(w) * 0.12 + 0.06]);
+    }
+    const flusen = new THREE.InstancedMesh(geoH, toon(0x4a2e1a), lagen.length);
+    const m = new THREE.Matrix4();
+    lagen.forEach(([x, y, zz], i) => {
+      m.compose(new THREE.Vector3(x, y, zz), new THREE.Quaternion().setFromEuler(new THREE.Euler(zufall(), zufall(), zufall())), new THREE.Vector3(0.6, 1.3, 0.6).multiplyScalar(0.6 + zufall() * 0.5));
+      flusen.setMatrixAt(i, m);
+    });
+    kopf.add(flusen);
+  }
+  // Essensreste im Bart (Gruppe etwas vor die Bartoberfläche)
+  const essen = new THREE.Group();
+  essen.position.set(0, -0.01, 0.03);
+  kopf.add(essen);
   // Essensreste im Bart: Brotkrümel, ein Stück Salat, ein Klecks Mayo
   for (let i = 0; i < 9; i++) {
     const kr = quader(0.01 + zufall() * 0.008, 0.008, 0.008, i % 3 ? 0xd9a35a : 0xb07a3a, { umriss: false });
     kr.position.set((zufall() - 0.5) * 0.17, -0.05 + zufall() * 0.1, 0.16 + zufall() * 0.02);
     kr.rotation.set(zufall() * 3, zufall() * 3, zufall() * 3);
-    kopf.add(kr);
+    essen.add(kr);
   }
   for (let i = 0; i < 10; i++) {
     const kr = quader(0.006 + zufall() * 0.008, 0.006, 0.007, 0xc98f48, { umriss: false });
     kr.position.set((zufall() - 0.5) * 0.2, -0.12 + zufall() * 0.12, 0.13 + zufall() * 0.03);
     kr.rotation.set(zufall() * 3, zufall() * 3, zufall() * 3);
-    kopf.add(kr);
+    essen.add(kr);
   }
   // Salatblatt, Tomatenstück, Käsefetzen, Sesam, Mayo-Kleckse, ein Stück Brotkruste
-  kopf.add(setze(quader(0.03, 0.004, 0.02, 0x5aa83a, { umriss: 0.001 }), 0.04, -0.03, 0.18, 0.4, 0.3, 0.6));
-  kopf.add(setze(quader(0.018, 0.012, 0.006, 0xd8352a, { umriss: 0.001 }), -0.06, -0.06, 0.155, 0.2, -0.4, 0.3));
-  kopf.add(setze(quader(0.022, 0.003, 0.016, 0xf2c94a, { umriss: 0.001 }), 0.02, -0.1, 0.16, 0.5, 0, -0.4));
-  for (let i = 0; i < 8; i++) kopf.add(setze(kugel(0.003, 0xf4ecd0, { umriss: false }, 4), (zufall() - 0.5) * 0.14, -0.1 + zufall() * 0.12, 0.17 + zufall() * 0.012));
+  essen.add(setze(quader(0.03, 0.004, 0.02, 0x5aa83a, { umriss: 0.001 }), 0.04, -0.03, 0.18, 0.4, 0.3, 0.6));
+  essen.add(setze(quader(0.018, 0.012, 0.006, 0xd8352a, { umriss: 0.001 }), -0.06, -0.06, 0.155, 0.2, -0.4, 0.3));
+  essen.add(setze(quader(0.022, 0.003, 0.016, 0xf2c94a, { umriss: 0.001 }), 0.02, -0.1, 0.16, 0.5, 0, -0.4));
+  for (let i = 0; i < 8; i++) essen.add(setze(kugel(0.003, 0xf4ecd0, { umriss: false }, 4), (zufall() - 0.5) * 0.14, -0.1 + zufall() * 0.12, 0.17 + zufall() * 0.012));
   for (const [x, y] of [[-0.03, 0.01], [0.055, -0.07], [-0.01, -0.12]]) {
     const mayo = kugel(0.008, 0xf6f1d8, { umriss: false }, 6);
     mayo.scale.set(1.3, 0.7, 0.6);
     mayo.position.set(x, y, 0.178);
-    kopf.add(mayo);
+    essen.add(mayo);
   }
-  kopf.add(setze(quader(0.03, 0.01, 0.01, 0x8a5a26, { umriss: 0.001 }), -0.08, -0.02, 0.15, 0, -0.6, 0.5));
+  essen.add(setze(quader(0.03, 0.01, 0.01, 0x8a5a26, { umriss: 0.001 }), -0.08, -0.02, 0.15, 0, -0.6, 0.5));
   // beige Cap nach vorne, mit kleinem Logo
   const cap = new THREE.Group();
   const kuppel = teil(new THREE.SphereGeometry(0.18, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2), CAP, { umriss: 0.004 });
@@ -422,13 +474,15 @@ export function baueWaldo(scene) {
         }
       }
       const sitzt = haltung === 'sitzen' && !ziel;
+      // im Sitzen: Oberschenkel nach vorn, leicht abfallend, so dass die Unterschenkel senkrecht auf den Boden reichen
+      const neigung = sitzt ? Math.asin(THREE.MathUtils.clamp((sitzHoehe - 0.42) / 0.357, 0, 1)) : 0;
       // Beine: laufen, rennen oder sitzen
       const schwung = ziel ? Math.sin(schritt) * (tempo > 2 ? 0.8 : 0.5) : 0;
       for (const [i, b] of beine.entries()) {
-        const zielH = sitzt ? -1.5 : (i ? -schwung : schwung);
+        const zielH = sitzt ? -(Math.PI / 2 - neigung) : (i ? -schwung : schwung);
         b.rotation.x += (zielH - b.rotation.x) * Math.min(1, dt * 10);
         const knie = b.children.find((c) => c.position.y === -0.42);
-        if (knie) knie.rotation.x = sitzt ? 1.5 : Math.max(0, i ? schwung : -schwung) * 0.7;
+        if (knie) knie.rotation.x = sitzt ? Math.PI / 2 - neigung : Math.max(0, i ? schwung : -schwung) * 0.7;
       }
       const zielY = sitzt ? sitzHoehe - 0.88 * 0.85 : 0;
       wurzel.position.y += (zielY - wurzel.position.y) * Math.min(1, dt * 6);

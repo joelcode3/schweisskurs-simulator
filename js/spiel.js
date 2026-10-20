@@ -1075,8 +1075,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
     pumpeAb: Math.random() < 0.7 ? 220 + Math.random() * 200 : Infinity };
   const WALDO_ORTE = [
     { ort: 'stehen', x: 2.6, z: 2.75, haltung: 'handy' },
-    { ort: 'traeger', x: 3.2, z: 3.42, haltung: 'sitzen', hoehe: 0.46, rot: Math.PI },
-    { ort: 'sofa', x: -2.75, z: 3.5, haltung: 'sitzen', hoehe: 0.5, rot: Math.PI },
+    { ort: 'traeger', x: 3.2, z: 3.36, haltung: 'sitzen', hoehe: 0.57, rot: Math.PI },
+    { ort: 'sofa', x: -3.58, z: 3.42, haltung: 'sitzen', hoehe: 0.52, rot: Math.PI },
     { ort: 'mitte', x: -1.2, z: -0.4, haltung: 'handy' },
   ];
   async function waldoBesuch() {
