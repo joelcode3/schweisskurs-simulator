@@ -239,33 +239,36 @@ export function baueJonny(scene) {
     ellbogen.add(teil(new THREE.SphereGeometry(0.052, 10, 8), 0, { material: armHaut }));
     ellbogen.add(setze(teil(new THREE.CapsuleGeometry(0.05, 0.16, 4, 10), 0, { material: armHaut }), 0, -0.11, 0));
     const hand = new THREE.Group();
-    // Hand: Handrücken, Knöchel, Finger mit zwei Gliedern und Nägeln, Daumen; etwas größer, damit man sie erkennt
-    const flaeche = teil(new THREE.BoxGeometry(0.085, 0.08, 0.035, 2, 2, 1), HAUT, { umriss: 0.003 });
-    flaeche.position.y = -0.02;
+    // Hand: kräftiger Handrücken, dicke Knöchel, große Finger mit zwei Gliedern und Nägeln, Daumen (gut erkennbar)
+    const flaeche = teil(new THREE.BoxGeometry(0.1, 0.09, 0.042, 2, 2, 1), HAUT, { umriss: 0.0035 });
+    flaeche.position.y = -0.025;
     hand.add(flaeche);
     for (let f = 0; f < 4; f++) {
-      const x = (-0.03 + f * 0.02) * seite;
-      const lang = [0.03, 0.036, 0.034, 0.026][f];
-      hand.add(setze(kugel(0.011, 0xe2ab8c, { umriss: false }, 6), x, -0.06, 0.012));
-      const glied1 = teil(new THREE.CapsuleGeometry(0.0095, lang, 3, 6), HAUT, { umriss: 0.0018 });
-      glied1.position.set(x, -0.075 - lang / 2, 0.004);
+      const x = (-0.036 + f * 0.024) * seite;
+      const lang = [0.042, 0.05, 0.047, 0.036][f];
+      hand.add(setze(kugel(0.0145, 0xe2ab8c, { umriss: 0.0015 }, 8), x, -0.07, 0.014));
+      const glied1 = teil(new THREE.CapsuleGeometry(0.0135, lang, 4, 8), HAUT, { umriss: 0.0025 });
+      glied1.position.set(x, -0.08 - lang / 2, 0.006);
       hand.add(glied1);
-      const glied2 = teil(new THREE.CapsuleGeometry(0.009, lang * 0.7, 3, 6), HAUT, { umriss: 0.0018 });
-      glied2.position.set(x, -0.085 - lang - lang * 0.3, -0.01);
+      const glied2 = teil(new THREE.CapsuleGeometry(0.0125, lang * 0.75, 4, 8), HAUT, { umriss: 0.0025 });
+      glied2.position.set(x, -0.088 - lang - lang * 0.33, -0.014);
       glied2.rotation.x = 0.6;
       hand.add(glied2);
-      hand.add(setze(quader(0.012, 0.012, 0.003, 0xf4d8c8, { umriss: false }), x, -0.088 - lang * 1.55, -0.022, 0.6, 0, 0));
+      // Fingernagel und Gelenkfalte
+      hand.add(setze(quader(0.015, 0.016, 0.004, 0xf4d8c8, { umriss: 0.001 }), x, -0.092 - lang * 1.7, -0.03, 0.6, 0, 0));
+      hand.add(setze(quader(0.016, 0.002, 0.002, 0xb97a5c, { umriss: false }), x, -0.08 - lang, 0.02));
     }
-    const daumen1 = teil(new THREE.CapsuleGeometry(0.011, 0.03, 3, 6), HAUT, { umriss: 0.0018 });
-    daumen1.position.set(0.05 * seite, -0.03, 0.015);
+    const daumen1 = teil(new THREE.CapsuleGeometry(0.015, 0.04, 4, 8), HAUT, { umriss: 0.0025 });
+    daumen1.position.set(0.058 * seite, -0.035, 0.018);
     daumen1.rotation.set(0.3, 0, -0.7 * seite);
     hand.add(daumen1);
-    const daumen2 = teil(new THREE.CapsuleGeometry(0.0105, 0.022, 3, 6), HAUT, { umriss: 0.0018 });
-    daumen2.position.set(0.07 * seite, -0.058, 0.022);
+    const daumen2 = teil(new THREE.CapsuleGeometry(0.014, 0.03, 4, 8), HAUT, { umriss: 0.0025 });
+    daumen2.position.set(0.083 * seite, -0.07, 0.026);
     daumen2.rotation.set(0.5, 0, -0.25 * seite);
     hand.add(daumen2);
+    hand.add(setze(quader(0.016, 0.016, 0.004, 0xf4d8c8, { umriss: 0.001 }), 0.09 * seite, -0.088, 0.04, 0.5, 0, -0.25 * seite));
     // goldener Ring rechts
-    if (seite > 0) hand.add(setze(teil(new THREE.TorusGeometry(0.012, 0.004, 6, 12), GOLD, { umriss: false }), 0.01, -0.095, 0.004, Math.PI / 2, 0, 0));
+    if (seite > 0) hand.add(setze(teil(new THREE.TorusGeometry(0.016, 0.0045, 6, 14), GOLD, { umriss: false }), 0.012, -0.112, 0.006, Math.PI / 2, 0, 0));
     hand.position.y = -0.25;
     ellbogen.add(hand);
     schulter.add(ellbogen);
@@ -275,10 +278,11 @@ export function baueJonny(scene) {
   const links = arm(-1);
   const rechts = arm(1);
   function armeVerschraenkt() {
-    for (const [a, s] of [[links, -1], [rechts, 1]]) {
-      a.schulter.rotation.set(-0.35, 0, s * 0.18);
-      a.ellbogen.rotation.set(-1.75, 0, s * -1.2);
-    }
+    // richtig verschränkt: linker Unterarm unten, rechter darüber und etwas weiter vorn, Hände liegen am anderen Oberarm
+    links.schulter.rotation.set(-0.3, 0, -0.16);
+    links.ellbogen.rotation.set(-1.6, 0, 1.38);
+    rechts.schulter.rotation.set(-0.48, 0, 0.16);
+    rechts.ellbogen.rotation.set(-1.95, 0, -1.38);
   }
   armeVerschraenkt();
   // Kippe in der rechten Hand (nur beim Rauchen)

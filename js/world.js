@@ -189,7 +189,7 @@ export function baueWelt(scene) {
   wandStueck(8, RAUM.xMin, 0, Math.PI / 2, 13);
   wandStueck(8, RAUM.xMax, 0, -Math.PI / 2, 14);
 
-  // Decke: heller Putz zwischen Holzbalken (MeshBasic, damit sie von unten nicht dunkel wirkt)
+  // Decke: heller Putz, ohne Balken (MeshBasic, damit sie von unten nicht dunkel wirkt)
   const deckenTex = leinwandTextur(512, 512, (g, b, h) => {
     g.fillStyle = '#ece6d8'; g.fillRect(0, 0, b, h);
     const r = zufall(41);
@@ -200,14 +200,6 @@ export function baueWelt(scene) {
   decke.rotation.x = Math.PI / 2;
   decke.position.y = RAUM.hoehe;
   scene.add(decke);
-  for (let x = -4; x <= 4; x += 2) {
-    const balken = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.22, 8), new THREE.MeshBasicMaterial({ color: 0x9a7650 }));
-    balken.position.set(x, RAUM.hoehe - 0.11, 0);
-    scene.add(balken);
-    const kante = new THREE.LineSegments(new THREE.EdgesGeometry(balken.geometry), new THREE.LineBasicMaterial({ color: 0x3a2a1a }));
-    kante.position.copy(balken.position);
-    scene.add(kante);
-  }
 
   // Leuchtstoffröhren
   const roehrenMat = new THREE.MeshBasicMaterial({ color: 0xfffbea });
@@ -227,27 +219,29 @@ export function baueWelt(scene) {
   const steckdosenTex = leinwandTextur(128, 128, (g, b, h) => {
     g.fillStyle = '#f2c21c'; g.fillRect(0, 0, b, h);
     g.strokeStyle = '#8a6a00'; g.lineWidth = 3; g.strokeRect(2, 2, b - 4, h - 4);
-    for (const [x, y] of [[36, 36], [92, 36], [36, 92], [92, 92]]) {
-      g.fillStyle = '#e9e9e4'; g.beginPath(); g.arc(x, y, 22, 0, Math.PI * 2); g.fill();
-      g.strokeStyle = '#333'; g.lineWidth = 2; g.stroke();
-      g.fillStyle = '#c8c8c0'; g.beginPath(); g.arc(x, y, 15, 0, Math.PI * 2); g.fill();
-      g.fillStyle = '#111'; g.beginPath(); g.arc(x - 6, y, 3, 0, Math.PI * 2); g.fill(); g.beginPath(); g.arc(x + 6, y, 3, 0, Math.PI * 2); g.fill();
-      g.fillStyle = '#9aa0a6'; g.fillRect(x - 2, y - 15, 4, 4); g.fillRect(x - 2, y + 11, 4, 4);
-    }
+    // eine Schutzkontakt-Steckdose pro Seite
+    const x = 64, y = 64;
+    g.fillStyle = '#e9e9e4'; g.beginPath(); g.arc(x, y, 46, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = '#333'; g.lineWidth = 3; g.stroke();
+    g.fillStyle = '#c8c8c0'; g.beginPath(); g.arc(x, y, 31, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 2; g.stroke();
+    g.fillStyle = '#111'; g.beginPath(); g.arc(x - 13, y, 6, 0, Math.PI * 2); g.fill(); g.beginPath(); g.arc(x + 13, y, 6, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#9aa0a6'; g.fillRect(x - 4, y - 31, 8, 8); g.fillRect(x - 4, y + 23, 8, 8);
   });
   const steckdosenMat = toon(0xffffff, { map: steckdosenTex });
   const stromWuerfel = [];
   for (const [x, z] of [[-0.9, 2.35], [0.0, -1.05]]) {
     const pendel = new THREE.Group();
     pendel.position.set(x, RAUM.hoehe, z);
-    const kabelLaenge = RAUM.hoehe - 2.05;
+    const kabelLaenge = RAUM.hoehe - 1.93;
     pendel.add(setze(zylinder(0.012, 0.012, kabelLaenge, 0x1d1d1f, { umriss: false, wirft: false }, 6), 0, -kabelLaenge / 2, 0));
-    const w = teil(new THREE.BoxGeometry(0.3, 0.3, 0.3), 0, { material: steckdosenMat, umriss: 0.004 });
-    w.position.y = -kabelLaenge - 0.15;
+    const w = teil(new THREE.BoxGeometry(0.18, 0.18, 0.18), 0, { material: steckdosenMat, umriss: 0.003 });
+    w.position.y = -kabelLaenge - 0.09;
     pendel.add(w);
-    pendel.add(setze(zylinder(0.03, 0.04, 0.04, 0x1d1d1f, { umriss: 0.002 }, 8), 0, -kabelLaenge + 0.02, 0));
+    pendel.add(setze(zylinder(0.025, 0.032, 0.03, 0x1d1d1f, { umriss: 0.002 }, 8), 0, -kabelLaenge + 0.015, 0));
     // eingesteckter Stecker mit Kabel an einer Seite
-    pendel.add(setze(quader(0.05, 0.05, 0.06, 0x1d1d1f, { umriss: 0.002 }), 0.05, -kabelLaenge - 0.1, 0.18));
+    pendel.add(setze(zylinder(0.03, 0.026, 0.05, 0x1d1d1f, { umriss: 0.002 }, 12), 0, -kabelLaenge - 0.09, 0.115, Math.PI / 2, 0, 0));
+    pendel.add(setze(zylinder(0.008, 0.008, 0.5, 0x1d1d1f, { umriss: false }, 6), 0, -kabelLaenge - 0.33, 0.14));
     scene.add(pendel);
     merke(pendel, 'stromwuerfel', 'Stromverteiler', null);
     stromWuerfel.push({ pendel, x, z, schwung: 0, t: 0 });
@@ -716,6 +710,59 @@ export function baueWelt(scene) {
   setze(kackPumpe, -4.5, 0, -2.85);
   scene.add(kackPumpe);
   objekte.kackPumpe = kackPumpe;
+  kackPumpe.userData.wand = { pos: kackPumpe.position.clone(), rot: kackPumpe.rotation.clone() };
+  merke(kackPumpe, 'kackpumpe', 'Kackepumpe', null);
+  // dreckig zurückgebracht: Güllekleckse, Laufspuren, Stinkewolken, Fliegen
+  const pumpeDreck = new THREE.Group();
+  {
+    const r = zufall(91);
+    const guelle = [0x4a3418, 0x5c4220, 0x3a2a12];
+    for (let i = 0; i < 16; i++) {
+      const w = r() * Math.PI * 2, y = 0.03 + r() * 0.24;
+      const k = kugel(0.018 + r() * 0.022, guelle[i % 3], { umriss: false }, 7);
+      k.scale.set(1.2, 0.6 + r() * 0.5, 0.5);
+      k.position.set(Math.sin(w) * 0.098, y, Math.cos(w) * 0.098);
+      k.rotation.y = w;
+      pumpeDreck.add(k);
+    }
+    for (let i = 0; i < 6; i++) {
+      const w = r() * Math.PI * 2, l = 0.06 + r() * 0.08;
+      pumpeDreck.add(setze(zylinder(0.006, 0.01, l, 0x4a3418, { umriss: false }, 5), Math.sin(w) * 0.101, 0.26 - l / 2 - r() * 0.05, Math.cos(w) * 0.101));
+    }
+    for (let i = 0; i < 6; i++) { const k = kugel(0.025, 0x4a3418, { umriss: false }, 7); k.scale.set(1.2, 0.35, 1); k.position.set(0.1 + r() * 0.2, 0.05 + (i % 3) * 0.04, (r() - 0.5) * 0.3); pumpeDreck.add(k); }
+    // Pfütze drunter
+    const pf = kugel(0.2, 0x4f3a1c, { umriss: false }, 12);
+    pf.scale.set(1.3, 0.03, 1);
+    pf.position.set(0.05, 0.002, 0);
+    pumpeDreck.add(pf);
+    // Stinkewolken (grüne Schlängel) und Fliegen
+    const stinke = [];
+    for (let i = 0; i < 3; i++) {
+      const pts = [];
+      for (let k = 0; k < 6; k++) pts.push(new THREE.Vector3(Math.sin(k * 1.4 + i) * 0.03, 0.32 + k * 0.05, 0));
+      const t = teil(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 20, 0.006, 5, false), 0x7fa83a, { umriss: false });
+      t.position.set((i - 1) * 0.07, 0, (i % 2) * 0.03);
+      pumpeDreck.add(t);
+      stinke.push(t);
+    }
+    const fliegen = [];
+    for (let i = 0; i < 4; i++) {
+      const f = new THREE.Group();
+      f.add(kugel(0.007, 0x111111, { umriss: false }, 5));
+      for (const sx of [-1, 1]) { const fl = kugel(0.006, 0xd8e4ee, { umriss: false }, 5); fl.scale.set(1.4, 0.2, 0.8); fl.position.set(sx * 0.007, 0.004, 0); f.add(fl); }
+      f.userData.phase = r() * 10;
+      pumpeDreck.add(f);
+      fliegen.push(f);
+    }
+    animiert.push((dt) => {
+      if (!pumpeDreck.visible || !kackPumpe.visible) return;
+      const t = performance.now() / 1000;
+      fliegen.forEach((f, i) => { const p = t * (2.2 + i * 0.4) + f.userData.phase; f.position.set(Math.sin(p) * 0.18, 0.35 + Math.sin(p * 1.7) * 0.08, Math.cos(p * 1.3) * 0.18); f.children[1].visible = f.children[2].visible = Math.sin(t * 60 + i) > 0; });
+      stinke.forEach((s, i) => { s.position.y = ((t * 0.08 + i * 0.05) % 0.12); s.rotation.y = t * 0.5 + i; });
+    });
+  }
+  pumpeDreck.visible = false;
+  kackPumpe.add(pumpeDreck);
 
   // Johnnys Alu-Leiter (Kofferraumleiter von einem alten Camper) hängt an der rechten Wand:
   // zwei schmale Holme, 6 geriffelte Sprossen, oben zum Wohnmobil-Dach hin gebogen, Gummifüße, zwei Wandhaken
@@ -1898,6 +1945,7 @@ export function baueWelt(scene) {
   setze(dusche, BAD.xMax - 0.45, 0, BAD.zMax - 0.45, 0, 0, 0);
   scene.add(dusche);
   merke(dusche, 'dusche', 'Dusche', null);
+  objekte.dusche = dusche;
   hindernis(BAD.xMax - 0.92, BAD.xMax, BAD.zMax - 0.92, BAD.zMax);
 
   // Waschbecken an der linken Wand mit Spiegel und Hahn
@@ -1922,6 +1970,7 @@ export function baueWelt(scene) {
   setze(becken2, BAD.xMin + 0.23, 0, 5.35, 0, Math.PI / 2, 0);
   scene.add(becken2);
   merke(becken2, 'waschbecken', 'Waschbecken', null);
+  objekte.waschbecken = becken2;
 
   // Dennis' Lockencreme auf der Ablage unter dem Spiegel: Tiegel mit Etikett, daneben Tube und Kamm
   const cremeTex = leinwandTextur(256, 64, (g, b, h) => {
@@ -2600,6 +2649,8 @@ export function baueWelt(scene) {
     LECK: { x: 4.93, z: 1.6, vorX: 4.05, vorZ: 1.6 },
     ROHRZANGE: { x: 1.32, z: -3.3 },
     loescherSichtbar(an) { loescher.visible = an; },
+    pumpeDreckig(an) { pumpeDreck.visible = an; },
+    get pumpeIstDreckig() { return pumpeDreck.visible; },
     // Ding wieder an seinen festen Platz (Wandhalter) hängen
     zurueckAnDieWand(obj) {
       scene.add(obj);

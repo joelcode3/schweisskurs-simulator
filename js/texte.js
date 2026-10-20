@@ -211,6 +211,15 @@ export const DENNIS = {
   pumpeWo: ['Was?! Der Tank ist SCHON WIEDER voll?! Wo ist die Pumpe?! Such mit!', 'Die Kackepumpe?! Oh nein, oh nein, die war doch ... such, such!'],
   pumpeGefunden: ['Hinterm Kompressor! Da hab ich sie zuletzt hingestellt!', 'Moment ... HINTERM KOMPRESSOR! Natürlich!'],
   pumpeWeg: ['Immer dieser Tank. Jede Woche das Gleiche.', 'Und bring die Pumpe diesmal sauber zurück, Waldo!'],
+  sofaStreit: ['Waldo! Runter von meinem Sofa! Ich hab Mittagspause!', 'Das ist MEIN Sofa, Waldo. Hoch da!', 'Waldo, ich zähl bis drei. Eins ...'],
+  sofaStreit2: ['Hast du mich nicht gehört?! RUNTER!', 'Mit deinen Krümeln auf meinem Sofa, ja?! Raus!', 'Ich schlaf gleich im Stehen, Waldo! Mach Platz!'],
+  sofaDanke: ['Danke. Endlich Ruhe.', 'Na also. Geht doch. Danke dir.'],
+  sofaRauswurf: ['So, jetzt reicht es! RAUS!', 'Ich zieh dich gleich am Bart vom Sofa! Raus jetzt!'],
+  pumpeIstDa: ['Was ist das denn?! Waldo! Die Pumpe ist ja voller Scheiße!', 'Boah, wie das stinkt! Das Ding ist ja voll Gülle!'],
+  pumpeMecker: ['Die Kackepumpe steht immer noch mitten im Weg. Das stinkt bis hier!', 'Mach mal einer die Pumpe sauber und räum sie weg. Ich riech das bis hier hin!'],
+  pumpeSelbst: ['Muss ich hier ALLES selbst machen?! Jetzt hab ich Gülle an den Händen!', 'Bäh! Ich wasch die jetzt selbst ab. Danke für nix.'],
+  pumpeSauber: ['Sauber abgewaschen und weggeräumt? Stark, danke dir!', 'Super. So gehört sich das. Danke!'],
+  pumpeDreckigZurueck: ['Die ist doch noch dreckig! Erst abwaschen, dann hinstellen!', 'Nee, nee. Die stinkt. Erst in die Dusche damit!'],
   waldoKruemel: ['Waldo! Du krümelst mir die ganze Werkstatt voll!', 'Waldo, isst du schon wieder? Wir haben grad erst Mittag gemacht!', 'Waldo, du hast da was im Bart. Also ... eigentlich alles.'],
   jonnyBier: ['Jonny! Das ist MEIN Bier! Und das hier ist ein Schweißkurs!', 'Jonny, schon wieder ein Bier? Du störst hier den ganzen Kurs!', 'Und die leeren Flaschen räumst du nachher weg, klar?!'],
   jonnyKitzeln: ['Ey! Lass das! Hau ab, Jonny! Geh woanders spielen!', 'JONNY! Nicht kitzeln! Verschwinde!', 'Finger weg! Raus hier, du Spinner!'],
@@ -269,6 +278,8 @@ export const JONNY = {
   leiterDanke: ['Danke! Die kommt jetzt endlich ins Auto.', 'Super, danke! Dennis wird sich freuen.'],
   leiterNix: ['Na gut. Dann nächste Woche.', 'Egal, die hängt da ja gut.'],
   feuer: ['Upsi. War ich das?', 'Die Kippe war doch aus! Glaub ich.'],
+  raus: ['Ich guck mal kurz nach meinem Camper.', 'Bin mal kurz draußen, telefonieren.', 'Ich hol mir mal Kippen vom Kiosk.'],
+  zurueck: ['Bin wieder da. Hab ich was verpasst?', 'So. Wo war ich?', 'Kiosk hatte zu. Egal.'],
 };
 
 // Waldo (Kumpel, isst eigentlich immer)
@@ -282,4 +293,9 @@ export const WALDO = {
   rausgeschickt: ['Ja ja, ich geh ja schon.', 'Pff. Ich wollte eh grad los.'],
   kruemel: ['Was? Wo? ... Ach, das spar ich mir für später.', 'Das ist kein Krümel, das ist Vorrat.', 'Lass mal, der Bart isst mit.'],
   antwort: ['Ich krümel doch gar nicht. Mampf.', 'Ist doch nur ein Toast, Dennis!', 'Kann man auch wieder auffegen. Also du.'],
+  sofaNein: ['Ich sitz hier grad so gut.', 'Fünf Minuten noch, Dennis!', 'Das Sofa ist groß genug für zwei.'],
+  sofaNein2: ['Mann, du bist heute wieder empfindlich.', 'Ich hab aber auch Mittag. Mampf.'],
+  sofaGeschlichtet: ['Na gut, für dich. Ich geh ja schon.', 'Okay, okay. Schlaf schön, Dennis.'],
+  sofaRaus: ['Ist ja gut! Nicht am Bart!', 'Pff. Ich komm nie wieder. Bis morgen.'],
+  pumpeZurueck: ['Hier, die Pumpe. Danke fürs Leihen! Ist noch ein bisschen ... naja.', 'Pumpe zurück! Tank ist leer. Die Pumpe ... nicht so ganz.'],
 };
