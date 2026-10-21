@@ -6,6 +6,9 @@
 - Änderungen als Pull Request; der Betreiber merged selbst. Jedes größere Update bekommt einen EIGENEN neuen Pull Request
   (Betreiber-Wunsch): ist der letzte PR noch offen, einen neuen Zweig (Name vom Arbeitszweig abgeleitet, z. B. `…-draussen`)
   von `origin/main` anlegen. Nur kleine Nachbesserungen zum offenen PR kommen in diesen PR.
+  Hängt ein neues Update vom noch offenen PR ab, den neuen Zweig auf dessen Stand aufsetzen und im PR vermerken: erst den alten mergen.
+- Projektchat (Session session_01KZ18oujuEFnsAskwuMiw8Y, pflegt die Projektliste) schickt To-dos: OHNE Go des Betreibers umsetzen
+  (Betreiber-Wunsch). Nach jedem erstellten Pull Request dem Projektchat per send_message Bescheid geben (Link + was drin ist).
 - Vor jedem PR im Browser testen (Computer- und iPhone-Ansicht), Playwright mit vorinstalliertem Chromium.
 
 ## Das Spiel
@@ -158,9 +161,20 @@
   Dennis jubelt), sonst nach 45 s „nächste Woche“. Störenfried: kommt zum Spieler an Werkbank/Schweißplatz und quatscht;
   „Antworten“ = Fehler (+5, Dennis sauer), ignorieren/15 s warten = Jonny beleidigt. aerger(n) = Wut ohne Fehler, max. 99.
   Jonny geht alle 2–3,5 min raus (Camper/Kiosk, jonnyRaus/jonnyRein, jz.draussen) und kommt nach 70–130 s wieder.
+  Am Spielanfang ist Jonny NICHT da, er kommt nach 50–100 s rein (JONNY.hallo); beim ersten Besuch trinkt er kein Bier
+  (jz.ersterBesuch, Überreden = „später“). Raucht er, hustet Dennis bis zu 2-mal extra laut (audio.js `husten`, DENNIS.husten,
+  Wut +3 je Husten).
   Jonny und Waldo sind selten gleichzeitig da: Waldo kommt meist nur, wenn Jonny draußen ist (85 %), Jonny kommt erst
   zurück, wenn Waldo weg ist (85 %), und geht nicht raus, solange Waldo da ist. Kippen-Feuer nur, wenn Jonny da ist.
 - Kühlschrank (klein, weiß, Bier drin) in der Pausenecke neben dem Kaffeetisch.
+- Kaffeetassen: zu Spielbeginn 7 benutzte Tassen (bunt, Kaffeerest) zufällig auf Werkbank, Regal, Boden, Trägern usw. verteilt
+  (welt.tassenVerteilen, Höhe per Strahl nach unten). In die Hand, Klick auf den Kühlschrank (oder E davor) = oben abstellen
+  (4 x 3 Plätze, dann zweite Lage), Wut -2, alle weg = Lob und -4. Ab 3 offenen Tassen meckert Dennis alle 80–130 s (+2) oder
+  räumt 2 Tassen selbst weg (+4, DENNIS.tassenSelbst). Jonny/Waldo bringen beim Kommen mit 40 % eine Tasse mit (max. 14).
+- Dennis telefoniert alle 75–135 s (Klingeln, linke Hand mit Handy am Ohr, TELEFON-Pose per Suche bestimmt, 3 Zeilen aus
+  DENNIS.telefon: Lydia, Motorhaube, Konzerttickets, Torben, ...). Fehler/Ärger beenden das Telefonat.
+- Atemmaske (Halbmaske mit magenta Filtern) liegt im Regal neben der Brille, 4. Symbol in der Ausrüstung. Lackieren ohne
+  Maske = Fehler maske (mittel, +15).
 - Waldo (js/waldo.js, nach Fotos): kleiner (Skala 0,85), breit, Gesicht länglich mit hoher Stirn (Cap weit hinten), im Profil mit Tiefe
   (Schädel tiefer, kräftiger Brauenbogen, Nase steht deutlich vor, Bart/Kinn/Schnurrbart weiter vorn), gerade
   dicke Brauen dicht über den Augen, leicht tiefliegende graubraune Augen mit Lidern, lange gerade Nase mit runder Spitze,

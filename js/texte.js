@@ -108,6 +108,10 @@ export const DENNIS = {
     schlacke: [
       'Und die Schlacke? Soll ich die wegklopfen? Hammer nehmen!',
     ],
+    maske: [
+      'Ohne Atemmaske lackieren?! Willst du dir die Lunge schwarz sprühen? Maske auf, die liegt im Regal!',
+      'Halt! Lackdämpfe atmet man nicht ein! Atemmaske aus dem Regal, aber zack!',
+    ],
     ventilDrinnen: [
       'BIST DU BEKLOPPT?! Gas in der Halle ablassen?! Raus mit der Flasche, VOR die Tür!',
       'HALT! Nicht hier drin aufdrehen! Hier wird geschweißt, Mensch! Die Flasche kommt RAUS!',
@@ -200,6 +204,7 @@ export const DENNIS = {
     schweissen: 'Scharniere, Beine und Rohr anschweißen. Ruhige Hand!',
     schlacke: 'Schlacke abklopfen. Hammer liegt auf dem Tisch. Brille auf!',
     lackieren: 'Jetzt noch schwarz lackieren. Ofenlack, nicht irgendwas!',
+    lackierenMaske: 'Jetzt lackieren. Aber vorher die Atemmaske aus dem Regal auf! Die Dämpfe sind übel.',
     fertig: 'Fertig? Dann gib her, ich guck mir das an.',
   },
   nichtFertig: ['Das ist doch noch kein Ofen. Mach erst fertig!', 'Fertig? Da fehlt ja noch die Hälfte!', 'Nee nee. Erst alles anschweißen, dann reden wir.'],
@@ -248,6 +253,21 @@ export const DENNIS = {
   jonnyQuatschen: ['Nicht quatschen, arbeiten! Jonny, lass den in Ruhe!', 'Du bist hier zum Schweißen, nicht zum Labern!'],
   leiterEndlich: ['Die Leiter ist WEG? Endlich! Danke dir!', 'Halleluja, die Leiter ist raus. Das feier ich.'],
   kuehlschrank: ['Finger weg, das ist kein Selbstbedienungsladen!', 'Da drin ist nix für dich. Erst arbeiten, dann Bier.'],
+  // Telefonate (Dennis' Seite des Gesprächs, Zeile für Zeile)
+  telefon: [
+    ['Ja? ... Ja, Dennis hier.', 'Nee, ich hab gerade Kurs. Gasflaschen-Ofen.', 'Ja ... ja ... Ich ruf dich nachher zurück, ja?'],
+    ['Lydia? ... Ja, ich weiß.', 'Ja, die Hüfte. Hinten links. Wie immer.', 'Nee, ich hab den Orthopäden noch nicht angerufen. Mach ich. Morgen.'],
+    ['Moin! ... Die Motorhaube für den Benz?', 'Wie viel?! Für das Geld kauf ich mir nen neuen Benz!', 'Nee, lass mal. Ich guck selbst.'],
+    ['Ja? ... Wer? ... Ach, die Konzerttickets!', 'Zwei Stück, ja. Stehplatz. Was bietest du?', 'Pff. Da muss noch was gehen. Überleg dir das.'],
+    ['Hallo? ... Torben?', 'Die Stahlträger liegen hier immer noch rum, Torben!', 'Ja, das ist dein Job. ... Ja. ... Morgen. Ganz sicher. Tschüss.'],
+    ['Ja, Dennis. ... Bestellung?', 'Nee, ich hab keine Pizza bestellt. Ich ESSE TK-Pizza.', 'Falsch verbunden. Tschüss.'],
+  ],
+  tassenMecker: ['Wem gehören die ganzen Tassen hier?! Das ist doch kein Café!', 'Überall Tassen! Ab auf den Kühlschrank damit!', 'Ich hab gleich keine Tasse mehr, weil alle hier rumstehen!'],
+  tassenSelbst: ['Muss ich die Tassen jetzt auch noch wegräumen?! Unglaublich.', 'Na toll. Tassen-Dienst. Ich mach das ja gern. NICHT.'],
+  tassenAlle: ['Alle Tassen weg? Endlich mal Ordnung hier. Danke!', 'Sauber! Alle Tassen auf dem Kühlschrank. So mag ich das.'],
+  tasseMitgebracht: ['Und noch eine Tasse. Bringt ihr die von zu Hause mit, oder was?!', 'Schon wieder eine Tasse mehr. Ich werd verrückt.'],
+  husten: ['*HUST* *HUST* ... Jonny! Ich krieg hier keine Luft!', '*HUST HUST HUST* Muss das HIER drinnen sein?!', '*KCHH* *HUST* Jonny, ich ersticke gleich!'],
+  hustenNochmal: ['*HUST* Ernsthaft jetzt! Raus mit der Kippe!', '*HUST* *KEUCH* Ich schmeiß dich gleich mitsamt Kippe raus!'],
   jonnyRaucht: ['Jonny! Da hängt ein Rauchen-verboten-Schild! Direkt neben dir!', 'Jonny, mach die Kippe aus! Hier steht Gas rum!', 'Und die Kippe NICHT in den Mülleimer, Jonny!'],
   traeger: ['Halt! Nicht anfassen! Schwere Stahlträger sind Torbens Job!', 'Finger weg von den Trägern! Das macht Torben.', 'Die Träger lässt du liegen. Das ist Torbens Job, nicht deiner!'],
   verstopft: {
@@ -298,6 +318,8 @@ export const JONNY = {
   leiterDanke: ['Danke! Die kommt jetzt endlich ins Auto.', 'Super, danke! Dennis wird sich freuen.'],
   leiterNix: ['Na gut. Dann nächste Woche.', 'Egal, die hängt da ja gut.'],
   feuer: ['Upsi. War ich das?', 'Die Kippe war doch aus! Glaub ich.'],
+  hallo: ['Moin moin! Na, wird hier geschweißt? Ich guck nur mal.', 'Tach zusammen! Ich bin nur kurz hier. Ehrlich.'],
+  bierNochNicht: ['Nee, ich bin doch gerade erst gekommen. Später vielleicht.', 'Jetzt noch nicht. Erst mal ankommen.'],
   raus: ['Ich guck mal kurz nach meinem Camper.', 'Bin mal kurz draußen, telefonieren.', 'Ich hol mir mal Kippen vom Kiosk.'],
   zurueck: ['Bin wieder da. Hab ich was verpasst?', 'So. Wo war ich?', 'Kiosk hatte zu. Egal.'],
 };
