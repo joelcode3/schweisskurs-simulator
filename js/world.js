@@ -239,9 +239,6 @@ export function baueWelt(scene) {
     w.position.y = -kabelLaenge - 0.09;
     pendel.add(w);
     pendel.add(setze(zylinder(0.025, 0.032, 0.03, 0x1d1d1f, { umriss: 0.002 }, 8), 0, -kabelLaenge + 0.015, 0));
-    // eingesteckter Stecker mit Kabel an einer Seite
-    pendel.add(setze(zylinder(0.03, 0.026, 0.05, 0x1d1d1f, { umriss: 0.002 }, 12), 0, -kabelLaenge - 0.09, 0.115, Math.PI / 2, 0, 0));
-    pendel.add(setze(zylinder(0.008, 0.008, 0.5, 0x1d1d1f, { umriss: false }, 6), 0, -kabelLaenge - 0.33, 0.14));
     scene.add(pendel);
     merke(pendel, 'stromwuerfel', 'Stromverteiler', null);
     stromWuerfel.push({ pendel, x, z, schwung: 0, t: 0 });

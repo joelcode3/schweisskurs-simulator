@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { STATIONEN, AUGENHOEHE } from './world.js';
 import { auftritt, hatClip, buehneBelegt } from './clips.js';
-import { pfadSpiel, schlackeSpiel, hulaSpiel, DENNIS_HULA_REKORD } from './minispiele.js';
+import { pfadSpiel, schlackeSpiel, hulaSpiel, DENNIS_HULA_REKORD, ventilSpiel, spuelSpiel, anzeichnenSpiel, lackierSpiel } from './minispiele.js';
 import { blip, kratzen, jingle, klonk, brummeln, dauer as dauerTon, technoAn, technoAus, technoBeat, klospuelung, mampfen, klick as schalterKlick, stimmeAbspielen, stimmenVorladen } from './audio.js';
 import * as ui from './ui.js';
 import { DENNIS, JONNY, WALDO, satzId } from './texte.js';
@@ -49,6 +49,18 @@ const FEHLER = {
   schnitt: {
     stufe: 'leicht', wut: 6, clip: 'fehler_schnitt', name: 'Schiefer Schnitt',
     texte: DENNIS.fehler.schnitt,
+  },
+  ventilSchnell: {
+    stufe: 'leicht', wut: 6, clip: 'fehler_gasflasche', name: 'Ventil zu schnell aufgerissen',
+    texte: DENNIS.fehler.ventilSchnell,
+  },
+  anzeichnen: {
+    stufe: 'leicht', wut: 5, clip: 'fehler_schnitt', name: 'Tür krakelig angezeichnet',
+    texte: DENNIS.fehler.anzeichnen,
+  },
+  lacknasen: {
+    stufe: 'leicht', wut: 5, clip: 'fehler_naht', name: 'Lacknasen am Ofen',
+    texte: DENNIS.fehler.lacknasen,
   },
   schlacke: {
     stufe: 'leicht', wut: 6, clip: 'fehler_schlacke', name: 'Schlacke nicht entfernt',
@@ -473,20 +485,29 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
 
   async function ventilAufdrehen() {
     if (ohneAufsicht()) return;
-    const ok = await ui.haltenDialog({ titel: 'Restgas ablassen', text: 'Ventil langsam aufdrehen und das restliche Gas entweichen lassen. Draußen wäre besser, aber Dennis hat das Tor aufgemacht.', knopf: 'Gedrückt halten', sekunden: 2.5, geraeusch: 'gas' });
-    if (!ok) return;
+    steuerung.sperre(true);
+    z.beschaeftigt = true;
+    const e = await ventilSpiel();
+    steuerung.sperre(false);
+    z.beschaeftigt = false;
+    if (!e || e.abgebrochen) return;
     z.ventilAuf = true;
     welt.objekte.flasche.ventil.rotation.z += Math.PI * 3;
     ui.hinweis('Zischt nicht mehr. Restgas ist raus.');
     aktualisieren();
+    if (e.zuSchnell) await fehler('ventilSchnell');
   }
 
   async function spuelen() {
     if (ohneAufsicht()) return;
     if (z.ort !== 'wasch') { ui.hinweis('Die Flasche muss dafür zum Waschplatz.'); return; }
     if (!z.ventilAuf) { ui.hinweis('Das Ventil ist noch zu. Da kommt kein Wasser rein.'); return; }
-    const ok = await ui.haltenDialog({ titel: 'Flasche spülen', text: 'Randvoll mit Wasser füllen, schütteln, auskippen. Das drückt die letzten Gasreste raus.', knopf: 'Wasser marsch (halten)', sekunden: 3, geraeusch: 'wasser' });
-    if (!ok) return;
+    steuerung.sperre(true);
+    z.beschaeftigt = true;
+    const e = await spuelSpiel();
+    steuerung.sperre(false);
+    z.beschaeftigt = false;
+    if (!e || e.abgebrochen) return;
     z.gespuelt = true;
     ui.hinweis('Gespült und ausgekippt. Jetzt ist kein Gas mehr drin.');
     aktualisieren();
@@ -497,10 +518,19 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
     if (z.ort !== 'werkbank') { ui.hinweis('Erst die Flasche auf die Werkbank legen.'); return; }
     if (z.angezeichnet) { ui.hinweis('Ist schon angezeichnet.'); return; }
     if (hand.item?.id !== 'edding') { ui.hinweis('Nimm den blauen Edding in die Hand (liegt auf der Werkbank).'); return; }
+    steuerung.sperre(true);
+    z.beschaeftigt = true;
+    const e = await anzeichnenSpiel();
+    steuerung.sperre(false);
+    z.beschaeftigt = false;
+    if (!e || e.abgebrochen) return;
     kratzen();
     z.angezeichnet = true;
-    ui.hinweis('Mit dem Edding eine Tür angezeichnet.');
+    z.anzeichnenQ = e.qualitaet;
+    ui.hinweis(`Tür angezeichnet. Genauigkeit ${e.qualitaet} %.`);
     aktualisieren();
+    if (e.qualitaet < 50) await fehler('anzeichnen');
+    else if (e.qualitaet >= 90) await lob(sag(DENNIS.lobAnzeichnen));
   }
 
   async function schneiden() {
@@ -598,11 +628,18 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
   async function lackieren() {
     if (ohneAufsicht()) return;
     if (!alleNaehte() || !z.schlackeWeg) { ui.hinweis('Erst alles fertig schweißen und die Schlacke abklopfen.'); return; }
-    const ok = await ui.haltenDialog({ titel: 'Ofen lackieren', text: 'Hitzefester Ofenlack, mattschwarz. Gleichmäßig aus 20 cm Abstand sprühen.', knopf: 'Sprühen (halten)', sekunden: 3, geraeusch: 'gas' });
-    if (!ok) return;
+    steuerung.sperre(true);
+    z.beschaeftigt = true;
+    const e = await lackierSpiel();
+    steuerung.sperre(false);
+    z.beschaeftigt = false;
+    if (!e || e.abgebrochen) return;
     z.lackiert = true;
-    ui.hinweis('Schick! Ab zu Dennis damit.');
+    z.lackQ = e.qualitaet;
+    ui.hinweis(e.nasen ? `Lackiert, aber ${e.nasen} Lacknasen. Ab zu Dennis damit.` : 'Schick! Ab zu Dennis damit.');
     aktualisieren();
+    if (e.nasen >= 3) await fehler('lacknasen');
+    else if (!e.nasen) await lob(sag(DENNIS.lobLack));
   }
 
   function naechsterTipp() {
@@ -2569,7 +2606,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
   }
 
   function note() {
-    const qs = [z.schnittQ ?? 0, ...Object.values(z.naehte).map((q) => q ?? 0)];
+    const qs = [z.anzeichnenQ ?? 0, z.schnittQ ?? 0, ...Object.values(z.naehte).map((q) => q ?? 0), z.lackQ ?? 0];
     const qualitaet = qs.reduce((a, b) => a + b, 0) / qs.length;
     // Arbeit zählt 75 Punkte, Dennis' Laune 25 (Mittel aus höchster Wut und Wut am Ende), dazu Abzüge
     const wut = (z.wutMax + z.wut) / 2;
@@ -2606,7 +2643,9 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
       <img class="ende-foto" src="assets/ende-${bestanden ? 'bestanden' : 'nichtbestanden'}.webp" alt="">
       <div class="note" style="color:${n <= 2 ? '#2b7a2b' : n <= 4 ? '#b5641b' : '#b3170d'}">Note ${n}</div>
       <ul class="wertung-liste">
+        <li><span>Anzeichnen</span><b>${z.anzeichnenQ ?? 0} %</b></li>
         <li><span>Schnitt</span><b>${z.schnittQ} %</b></li>${naehte}
+        <li><span>Lack</span><b>${z.lackQ ?? 0} %</b></li>
         <li><span>Verarbeitung gesamt</span><b>${qualitaet} %</b></li>
         <li><span>Dennis-Wut am Ende</span><b>${Math.round(z.wut)} %</b></li>
         <li><span>Höchste Dennis-Wut</span><b>${Math.round(z.wutMax)} %</b></li>
@@ -2659,7 +2698,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
   return {
     zustand: z,
     klick,
-    test: { hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
+    test: { ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
     stationWaehlen,
     intro,
     aktualisieren,

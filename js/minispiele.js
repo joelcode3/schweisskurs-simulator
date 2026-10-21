@@ -987,3 +987,528 @@ export function hulaSpiel() {
   requestAnimationFrame(schleife);
   return versprechen;
 }
+
+// ---------------------------------------------------------------------------
+// Gasflasche: Ventil aufdrehen, Spülen, Tür anzeichnen, Lackieren
+// ---------------------------------------------------------------------------
+function zeigerPos(canvas, e) {
+  const r = canvas.getBoundingClientRect();
+  return { x: e.clientX - r.left, y: e.clientY - r.top };
+}
+function textMitte(ctx, t, x, y, groesse = 20, farbe = '#fff') {
+  ctx.font = `bold ${groesse}px system-ui, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = 'rgba(0,0,0,0.75)';
+  ctx.strokeText(t, x, y);
+  ctx.fillStyle = farbe;
+  ctx.fillText(t, x, y);
+}
+// gemeinsamer Rahmen: Größe, Schleife, Abbrechen/Weiter, Aufräumen
+function spielRahmen(titel, text, { beiGroesse, schritt, zeichnen, events }) {
+  const v = vorbereiten(titel, text);
+  const { el, canvas, ctx, unten, masse: m } = v;
+  let laeuft = true;
+  let ergebnis = null;
+  let aufloesen;
+  const versprechen = new Promise((r) => { aufloesen = r; });
+  let letzte = performance.now();
+  function neuGroesse() {
+    m.b = window.innerWidth; m.h = window.innerHeight;
+    canvas.width = Math.round(m.b * m.dpr); canvas.height = Math.round(m.h * m.dpr);
+    ctx.setTransform(m.dpr, 0, 0, m.dpr, 0, 0);
+    beiGroesse(m);
+  }
+  beiGroesse(m);
+  window.addEventListener('resize', neuGroesse);
+  for (const [n, f] of Object.entries(events)) (n === 'keydown' || n === 'keyup' ? window : canvas).addEventListener(n, f);
+  const api = {
+    m, ctx, canvas, unten,
+    schliessen(abgebrochen, daten = {}) {
+      if (!laeuft) return;
+      laeuft = false;
+      window.removeEventListener('resize', neuGroesse);
+      for (const [n, f] of Object.entries(events)) (n === 'keydown' || n === 'keyup' ? window : canvas).removeEventListener(n, f);
+      el.classList.add('versteckt');
+      aufloesen({ abgebrochen, ...daten, ...(ergebnis || {}) });
+    },
+    fertig(daten) {
+      ergebnis = daten;
+      unten.innerHTML = '';
+      unten.appendChild(knopf('Weiter', '', () => api.schliessen(false)));
+      blip(660, 0.12);
+    },
+    get istFertig() { return !!ergebnis; },
+  };
+  unten.appendChild(knopf('Abbrechen', 'leise klein', () => api.schliessen(true)));
+  function schleife(jetzt) {
+    if (!laeuft) return;
+    const dt = Math.min(0.05, (jetzt - letzte) / 1000);
+    letzte = jetzt;
+    schritt(dt);
+    ctx.clearRect(0, 0, m.b, m.h);
+    zeichnen(dt);
+    requestAnimationFrame(schleife);
+  }
+  requestAnimationFrame(schleife);
+  return { api, versprechen };
+}
+
+// A) Restgas ablassen: Handrad mit der Maus linksrum drehen (aufdrehen), Gas zischt raus. Zu schnell = Dennis meckert.
+export function ventilSpiel() {
+  let mx = 0, my = 0, r = 100;
+  let winkel = 0; // gezeichnete Drehung
+  let offen = 0; // 0..1 (2,5 Umdrehungen)
+  let druck = 100;
+  let tempo = 0; // geglättete Drehgeschwindigkeit rad/s
+  let zuSchnellZeit = 0;
+  let zuSchnell = false;
+  let warnung = 0;
+  let zieht = null;
+  let gas = null;
+  const UMDREHUNGEN = 2.5;
+  const MAX_TEMPO = 9;
+  const gasWolken = [];
+  const { api, versprechen } = spielRahmen('Restgas ablassen',
+    'Handrad gedrückt halten und linksrum drehen (gegen den Uhrzeigersinn). Langsam! Warten, bis das Manometer auf null ist.', {
+      beiGroesse(m) { mx = m.b / 2; my = m.h * 0.48; r = Math.min(m.b, m.h) * 0.2; },
+      events: {
+        pointerdown(e) { const p = zeigerPos(api.canvas, e); zieht = Math.atan2(p.y - my, p.x - mx); api.canvas.setPointerCapture?.(e.pointerId); },
+        pointermove(e) {
+          if (zieht === null || api.istFertig) return;
+          const p = zeigerPos(api.canvas, e);
+          const a = Math.atan2(p.y - my, p.x - mx);
+          let d = a - zieht;
+          while (d > Math.PI) d -= Math.PI * 2;
+          while (d < -Math.PI) d += Math.PI * 2;
+          zieht = a;
+          // linksrum (gegen den Uhrzeiger) = auf
+          if (d < 0) offen = Math.min(1, offen + -d / (Math.PI * 2 * UMDREHUNGEN));
+          else offen = Math.max(0, offen - d / (Math.PI * 2 * UMDREHUNGEN) * 0.5);
+          winkel += d;
+          tempo += (Math.abs(d) / 0.016 - tempo) * 0.25;
+        },
+        pointerup() { zieht = null; },
+        pointercancel() { zieht = null; },
+      },
+      schritt(dt) {
+        tempo *= Math.pow(0.02, dt);
+        if (tempo > MAX_TEMPO) {
+          zuSchnellZeit += dt;
+          warnung = 1;
+          if (zuSchnellZeit > 0.7) zuSchnell = true;
+        }
+        warnung = Math.max(0, warnung - dt);
+        druck = Math.max(0, druck - offen * 24 * dt);
+        const zischt = offen > 0.02 && druck > 0;
+        if (zischt && !gas) gas = dauer('gas', 0.7);
+        if (gas) gas.staerke?.(Math.min(1, offen * (druck / 100) * 1.5));
+        if (!zischt && gas) { gas.stopp(); gas = null; }
+        if (zischt && Math.random() < offen * 0.8) gasWolken.push({ x: mx + (Math.random() - 0.5) * 20, y: my - r * 0.15, vx: (Math.random() - 0.5) * 80, vy: -60 - Math.random() * 90, t: 0 });
+        for (let i = gasWolken.length - 1; i >= 0; i--) { const g = gasWolken[i]; g.t += dt; g.x += g.vx * dt; g.y += g.vy * dt; if (g.t > 1.4) gasWolken.splice(i, 1); }
+        if (druck <= 0 && offen >= 0.98 && !api.istFertig) { if (gas) { gas.stopp(); gas = null; } api.fertig({ zuSchnell }); }
+      },
+      zeichnen() {
+        const { ctx, m } = api;
+        ctx.fillStyle = '#2a2622'; ctx.fillRect(0, 0, m.b, m.h);
+        // Flaschenschulter von oben (rot) und Ventilkörper (Messing)
+        ctx.fillStyle = '#b8352a'; ctx.beginPath(); ctx.arc(mx, my, r * 1.9, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#111'; ctx.lineWidth = 4; ctx.stroke();
+        ctx.fillStyle = '#c9a24a'; ctx.beginPath(); ctx.arc(mx, my, r * 0.45, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        // Handrad mit Speichen
+        ctx.save(); ctx.translate(mx, my); ctx.rotate(winkel);
+        ctx.strokeStyle = '#111'; ctx.lineWidth = r * 0.2 + 6; ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = '#d23a2e'; ctx.lineWidth = r * 0.2; ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.stroke();
+        for (let i = 0; i < 5; i++) {
+          const a = (i / 5) * Math.PI * 2;
+          ctx.strokeStyle = '#111'; ctx.lineWidth = r * 0.13 + 5; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); ctx.stroke();
+          ctx.strokeStyle = '#d23a2e'; ctx.lineWidth = r * 0.13; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); ctx.stroke();
+          // Griffmulden auf dem Rad
+          ctx.fillStyle = '#9a2a20'; ctx.beginPath(); ctx.arc(Math.cos(a + 0.6) * r, Math.sin(a + 0.6) * r, r * 0.05, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.fillStyle = '#c9a24a'; ctx.strokeStyle = '#111'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, r * 0.18, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.restore();
+        // Pfeil: linksrum = auf
+        ctx.strokeStyle = '#ffc81e'; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(mx, my, r * 1.35, -0.3, -1.6, true); ctx.stroke();
+        const pa = -1.6; ctx.fillStyle = '#ffc81e'; ctx.beginPath();
+        ctx.moveTo(mx + Math.cos(pa) * r * 1.35 - 14, my + Math.sin(pa) * r * 1.35); ctx.lineTo(mx + Math.cos(pa) * r * 1.35 + 6, my + Math.sin(pa) * r * 1.35 - 14); ctx.lineTo(mx + Math.cos(pa) * r * 1.35 + 6, my + Math.sin(pa) * r * 1.35 + 14); ctx.fill();
+        textMitte(ctx, 'AUF', mx + Math.cos(-0.95) * r * 1.6, my + Math.sin(-0.95) * r * 1.6, 18, '#ffc81e');
+        // Gaswolken
+        for (const g of gasWolken) { ctx.fillStyle = `rgba(230,236,240,${0.35 * (1 - g.t / 1.4)})`; ctx.beginPath(); ctx.arc(g.x, g.y, 10 + g.t * 30, 0, Math.PI * 2); ctx.fill(); }
+        // Manometer rechts
+        const gx = Math.min(m.b - 90, mx + r * 2.4), gy = my - r * 0.4, gr = Math.max(46, r * 0.55);
+        ctx.fillStyle = '#f2f0e6'; ctx.strokeStyle = '#111'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(gx, gy, gr, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        for (let i = 0; i <= 10; i++) { const a = Math.PI * 0.75 + (i / 10) * Math.PI * 1.5; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(gx + Math.cos(a) * gr * 0.75, gy + Math.sin(a) * gr * 0.75); ctx.lineTo(gx + Math.cos(a) * gr * 0.9, gy + Math.sin(a) * gr * 0.9); ctx.stroke(); }
+        const za = Math.PI * 0.75 + (druck / 100) * Math.PI * 1.5;
+        ctx.strokeStyle = '#c8352a'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(gx, gy); ctx.lineTo(gx + Math.cos(za) * gr * 0.8, gy + Math.sin(za) * gr * 0.8); ctx.stroke();
+        textMitte(ctx, 'Restdruck', gx, gy + gr + 24, 15);
+        // Anzeigen
+        const bb = Math.min(m.b * 0.6, 420);
+        balken(ctx, mx - bb / 2, my + r * 2.05, bb, 12, offen, '#ffc81e');
+        textMitte(ctx, offen >= 0.98 ? (druck > 0 ? 'Ganz auf. Gas zischt raus ...' : 'Kein Gas mehr drin.') : 'Ventil ' + Math.round(offen * 100) + ' % offen', mx, my + r * 2.05 - 10, 17);
+        if (warnung > 0) textMitte(ctx, 'LANGSAM! Nicht so reißen!', mx, my - r * 1.75, 26, '#ff6a4a');
+        if (zuSchnell) textMitte(ctx, 'Zu schnell aufgerissen. Dennis hat es gesehen.', mx, m.h - 120, 17, '#ffb0a0');
+      },
+    });
+  return versprechen;
+}
+
+// B) Flasche spülen: bis zur Markierung füllen, schütteln (A/D oder links/rechts tippen), auskippen (Flasche umkippen)
+export function spuelSpiel() {
+  let f;
+  let phase = 'fuellen';
+  let stand = 0; // 0..1.05
+  let haelt = false;
+  let ueberlauf = false;
+  let schuettel = 0; // 0..1
+  let erwartet = null;
+  let kipp = 0; // Grad, beim Auskippen
+  let kippZiel = 0;
+  let wackel = 0, wackelV = 0;
+  let welle = 0;
+  let zieh = null;
+  let ton = null;
+  let meldung = '', meldungZeit = 0;
+  const tropfen = [];
+  const meld = (t) => { meldung = t; meldungZeit = 1.8; };
+  const BAND = [0.85, 0.97];
+  function schuettelDruck(seite) {
+    if (phase !== 'schuetteln') return;
+    if (erwartet && seite !== erwartet) { meld('Abwechselnd!'); return; }
+    erwartet = seite === 'l' ? 'r' : 'l';
+    schuettel = Math.min(1, schuettel + 0.065);
+    wackelV += seite === 'l' ? -5 : 5;
+    blip(seite === 'l' ? 260 : 300, 0.04, 0.12);
+    if (schuettel >= 1) { phase = 'auskippen'; meld('Gut durchgeschüttelt. Jetzt auskippen!'); }
+  }
+  const { api, versprechen } = spielRahmen('Flasche spülen', 'Wasser bis zur Markierung einfüllen, gut schütteln, dann auskippen. Das drückt die letzten Gasreste raus.', {
+    beiGroesse(m) { f = flaeche(m); },
+    events: {
+      pointerdown(e) {
+        const p = zeigerPos(api.canvas, e);
+        if (phase === 'fuellen') { haelt = true; }
+        else if (phase === 'schuetteln') schuettelDruck(p.x < api.m.b / 2 ? 'l' : 'r');
+        else if (phase === 'auskippen') { zieh = p.x; api.canvas.setPointerCapture?.(e.pointerId); }
+      },
+      pointermove(e) {
+        if (phase !== 'auskippen' || zieh === null) return;
+        const p = zeigerPos(api.canvas, e);
+        kippZiel = Math.max(0, Math.min(150, (p.x - zieh) / (f.b * 0.35) * 150));
+      },
+      pointerup() {
+        if (phase === 'fuellen' && haelt) {
+          haelt = false;
+          if (stand >= BAND[0]) { phase = 'schuetteln'; meld(ueberlauf ? 'Übergelaufen, aber voll ist voll.' : 'Voll! Jetzt schütteln.'); }
+          else if (stand > 0.05) meld('Noch nicht voll genug. Bis zur Markierung!');
+        }
+        zieh = null;
+      },
+      pointercancel() { haelt = false; zieh = null; },
+      keydown(e) {
+        const k = e.key.toLowerCase();
+        if (k === 'a' || k === 'arrowleft') schuettelDruck('l');
+        if (k === 'd' || k === 'arrowright') schuettelDruck('r');
+      },
+    },
+    schritt(dt) {
+      meldungZeit = Math.max(0, meldungZeit - dt);
+      welle += dt;
+      // Wasserlaufen
+      const laeuft = (phase === 'fuellen' && haelt) || (phase === 'auskippen' && kipp > 95 && stand > 0);
+      if (laeuft && !ton) ton = dauer('wasser', 0.6);
+      if (!laeuft && ton) { ton.stopp(); ton = null; }
+      if (phase === 'fuellen' && haelt) {
+        stand += dt * 0.25;
+        if (stand > 1) { stand = 1; if (!ueberlauf) { ueberlauf = true; meld('Läuft über! Loslassen!'); } }
+      }
+      // Schütteln: Federpendel
+      wackelV += -wackel * 60 * dt;
+      wackelV *= Math.pow(0.15, dt);
+      wackel += wackelV * dt;
+      if (phase === 'auskippen') {
+        if (zieh === null && stand > 0) kippZiel = Math.max(0, kippZiel - dt * 60);
+        kipp += (kippZiel - kipp) * Math.min(1, dt * 6);
+        if (kipp > 95 && stand > 0) {
+          stand = Math.max(0, stand - dt * (kipp - 90) / 60 * 0.45);
+          if (Math.random() < 0.8) tropfen.push({ t: 0, vx: 60 + Math.random() * 80, vy: -20 + Math.random() * 40 });
+          if (stand <= 0) { phase = 'fertig'; meld('Leer. Kein Gas mehr drin.'); api.fertig({ ueberlauf }); }
+        }
+      }
+      for (let i = tropfen.length - 1; i >= 0; i--) { const t = tropfen[i]; t.t += dt; t.vy += 900 * dt; if (t.t > 0.9) tropfen.splice(i, 1); }
+    },
+    zeichnen() {
+      const { ctx, m } = api;
+      ctx.fillStyle = '#2a2622'; ctx.fillRect(0, 0, m.b, m.h);
+      // Ablaufrinne
+      ctx.fillStyle = '#4a5560'; ctx.fillRect(f.x, f.y + f.h * 0.98, f.b, 14);
+      const fb = f.h * 0.42, fh = f.h * 0.86; // Flasche: Breite, Höhe
+      const cx = f.x + f.b * 0.42, boden = f.y + f.h * 0.98;
+      const winkel = (kipp * Math.PI) / 180 + wackel * 0.06;
+      // beim Auskippen hebt man die Flasche an und dreht sie um die Mitte, das Ventil zeigt in die Rinne
+      const heben = Math.min(1, kipp / 90) * fh * 0.32;
+      const px = cx, py = boden - fh / 2 - heben;
+      ctx.save();
+      ctx.translate(0, -heben);
+      ctx.translate(px, py + heben); ctx.rotate(winkel); ctx.translate(-px, -(py + heben));
+      const x0 = cx - fb / 2, y0 = boden - fh;
+      // Flaschenkörper (Schnittbild: man sieht das Wasser innen)
+      ctx.fillStyle = '#c8402f'; ctx.strokeStyle = '#111'; ctx.lineWidth = 5;
+      ctx.beginPath(); ctx.roundRect(x0, y0 + fh * 0.08, fb, fh * 0.92, fb * 0.32); ctx.fill(); ctx.stroke();
+      const ix = x0 + fb * 0.12, iy = y0 + fh * 0.14, ib = fb * 0.76, ih = fh * 0.8;
+      ctx.fillStyle = '#5a1a14'; ctx.beginPath(); ctx.roundRect(ix, iy, ib, ih, ib * 0.28); ctx.fill();
+      // Wasser (Oberfläche bleibt waagerecht, gegen die Flaschendrehung)
+      ctx.save();
+      ctx.beginPath(); ctx.roundRect(ix, iy, ib, ih, ib * 0.28); ctx.clip();
+      // Wasser sammelt sich immer unten: aufrecht am Boden, umgedreht am Hals
+      const umg = (1 - Math.cos(winkel)) / 2;
+      const st = Math.min(1, stand);
+      const wy = iy + ih * ((1 - st) * (1 - umg) + st * umg);
+      ctx.translate(ix + ib / 2, wy); ctx.rotate(-winkel); ctx.translate(-(ix + ib / 2), -wy);
+      ctx.fillStyle = '#4aa3df';
+      ctx.beginPath(); ctx.moveTo(ix - ib, wy);
+      for (let i = 0; i <= 30; i++) { const xx = ix - ib + (i / 30) * ib * 3; ctx.lineTo(xx, wy + Math.sin(welle * 8 + i * 0.8) * (2 + Math.abs(wackelV) * 1.2)); }
+      ctx.lineTo(ix + ib * 2, wy + ih * 3); ctx.lineTo(ix - ib, wy + ih * 3); ctx.fill();
+      ctx.restore();
+      // Markierung „voll“
+      for (const b of BAND) { const yy = iy + ih * (1 - b); ctx.strokeStyle = '#ffc81e'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(ix - 4, yy); ctx.lineTo(ix + 18, yy); ctx.stroke(); }
+      textMitte(ctx, 'voll', ix + 40, iy + ih * (1 - BAND[1]) + 14, 14, '#ffc81e');
+      // Kragen und Ventil oben
+      ctx.fillStyle = '#9aa1a8'; ctx.beginPath(); ctx.roundRect(cx - fb * 0.22, y0 - fh * 0.02, fb * 0.44, fh * 0.12, 6); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#c9a24a'; ctx.fillRect(cx - fb * 0.07, y0 - fh * 0.08, fb * 0.14, fh * 0.12); ctx.strokeRect(cx - fb * 0.07, y0 - fh * 0.08, fb * 0.14, fh * 0.12);
+      ctx.restore();
+      // Schlauch und Strahl beim Füllen
+      if (phase === 'fuellen') {
+        const sx = cx + fb * 0.6, sy = y0 - fh * 0.22;
+        ctx.strokeStyle = '#2f7a3a'; ctx.lineWidth = 12; ctx.beginPath(); ctx.moveTo(m.b, sy - 30); ctx.quadraticCurveTo(sx + 80, sy - 40, sx, sy); ctx.stroke();
+        ctx.fillStyle = '#ffc81e'; ctx.fillRect(sx - 26, sy - 8, 30, 16);
+        if (haelt) { ctx.strokeStyle = 'rgba(120,190,240,0.9)'; ctx.lineWidth = 7; ctx.beginPath(); ctx.moveTo(sx - 26, sy); ctx.quadraticCurveTo(cx + 10, sy, cx, y0 - fh * 0.06); ctx.stroke(); }
+        if (ueberlauf && haelt) for (let i = 0; i < 4; i++) { ctx.fillStyle = 'rgba(120,190,240,0.8)'; ctx.beginPath(); ctx.arc(cx + (Math.random() - 0.5) * fb, y0 + Math.random() * fh * 0.4, 3 + Math.random() * 4, 0, Math.PI * 2); ctx.fill(); }
+      }
+      // Ausgekipptes Wasser
+      const ax = px + Math.sin(winkel) * fh * 0.56, ay = py - Math.cos(winkel) * fh * 0.56;
+      for (const t of tropfen) { ctx.fillStyle = 'rgba(120,190,240,0.85)'; ctx.beginPath(); ctx.arc(ax + (t.vx - 90) * t.t * 0.4, ay + t.vy * t.t, 5, 0, Math.PI * 2); ctx.fill(); }
+      // Anleitung je Phase
+      const tipp = { fuellen: 'Gedrückt halten = Wasser rein. Loslassen an der gelben Markierung.', schuetteln: 'Schütteln: abwechselnd A und D drücken (Handy: links und rechts tippen).', auskippen: 'Auskippen: Flasche greifen und nach rechts umkippen (ziehen).', fertig: 'Gespült!' }[phase];
+      textMitte(ctx, tipp, m.b / 2, f.y - 18, 18, '#ffe9a8');
+      if (phase === 'schuetteln') balken(ctx, f.x, f.y + f.h + 30, f.b, 12, schuettel, '#4aa3df');
+      if (phase === 'auskippen' || phase === 'fertig') balken(ctx, f.x, f.y + f.h + 30, f.b, 12, 1 - stand, '#ffc81e');
+      if (meldungZeit > 0) textMitte(ctx, meldung, m.b / 2, f.y + f.h * 0.15, 24);
+    },
+  });
+  return versprechen;
+}
+
+// C) Ofentür anzeichnen: die gestrichelte Vorlage mit dem Edding nachfahren. Wie genau, zählt in die Note.
+export function anzeichnenSpiel() {
+  let f, platte;
+  let vorlage = []; // Punkte der Vorlage
+  let gedeckt = [];
+  let striche = []; // gezeichnete Linien (Arrays von Punkten)
+  let aktuell = null;
+  let abstandSumme = 0, abstandZahl = 0;
+  let zeiger = null;
+  const TOL = 14;
+  function vorlageBauen() {
+    const x0 = f.x + f.b * 0.34, x1 = f.x + f.b * 0.66, y0 = f.y + f.h * 0.2, y1 = f.y + f.h * 0.8, rr = f.h * 0.08;
+    const ecken = [];
+    const bogen = (cx, cy, a0) => { for (let i = 0; i <= 8; i++) { const a = a0 + (i / 8) * Math.PI / 2; ecken.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr]); } };
+    bogen(x1 - rr, y0 + rr, -Math.PI / 2); bogen(x1 - rr, y1 - rr, 0); bogen(x0 + rr, y1 - rr, Math.PI / 2); bogen(x0 + rr, y0 + rr, Math.PI);
+    ecken.push(ecken[0]);
+    vorlage = [];
+    for (let i = 1; i < ecken.length; i++) {
+      const [ax, ay] = ecken[i - 1], [bx, by] = ecken[i];
+      const n = Math.max(1, Math.ceil(Math.hypot(bx - ax, by - ay) / 4));
+      for (let k = 0; k < n; k++) vorlage.push({ x: ax + (bx - ax) * (k / n), y: ay + (by - ay) * (k / n) });
+    }
+    gedeckt = vorlage.map(() => false);
+  }
+  function naechster(p) { let d = Infinity; for (const v of vorlage) d = Math.min(d, Math.hypot(v.x - p.x, v.y - p.y)); return d; }
+  function anteil() { return gedeckt.filter(Boolean).length / gedeckt.length; }
+  function qualitaet() {
+    const mittel = abstandZahl ? abstandSumme / abstandZahl : 30;
+    return Math.round(Math.max(0, Math.min(100, 108 - mittel * 7)));
+  }
+  function punkt(p) {
+    aktuell.push(p);
+    abstandSumme += Math.min(40, naechster(p));
+    abstandZahl++;
+    vorlage.forEach((v, i) => { if (!gedeckt[i] && Math.hypot(v.x - p.x, v.y - p.y) < TOL) gedeckt[i] = true; });
+    if (anteil() >= 0.96 && !api.istFertig) api.fertig({ qualitaet: qualitaet() });
+  }
+  const { api, versprechen } = spielRahmen('Ofentür anzeichnen', 'Mit dem Edding die gestrichelte Vorlage nachfahren: gedrückt halten und ziehen. So genau wie möglich!', {
+    beiGroesse(m) {
+      const alt = f;
+      f = flaeche(m);
+      platte = flaschenFlaeche(m, f);
+      vorlageBauen();
+      if (alt) striche = striche.map((s) => s.map((p) => ({ x: f.x + (p.x - alt.x) * (f.b / alt.b), y: f.y + (p.y - alt.y) * (f.h / alt.h) })));
+    },
+    events: {
+      pointerdown(e) { if (api.istFertig) return; aktuell = []; striche.push(aktuell); punkt(zeigerPos(api.canvas, e)); api.canvas.setPointerCapture?.(e.pointerId); },
+      pointermove(e) {
+        zeiger = zeigerPos(api.canvas, e);
+        if (!aktuell || api.istFertig) return;
+        const l = aktuell[aktuell.length - 1];
+        const n = Math.max(1, Math.ceil(Math.hypot(zeiger.x - l.x, zeiger.y - l.y) / 4));
+        for (let k = 1; k <= n; k++) punkt({ x: l.x + (zeiger.x - l.x) * (k / n), y: l.y + (zeiger.y - l.y) * (k / n) });
+        if (Math.random() < 0.15) kratzerTon();
+      },
+      pointerup() { aktuell = null; },
+      pointercancel() { aktuell = null; },
+    },
+    schritt() {},
+    zeichnen() {
+      const { ctx, m } = api;
+      ctx.drawImage(platte, 0, 0, m.b, m.h);
+      // Vorlage gestrichelt
+      ctx.setLineDash([10, 9]); ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.lineWidth = 3;
+      ctx.beginPath(); vorlage.forEach((v, i) => (i ? ctx.lineTo(v.x, v.y) : ctx.moveTo(v.x, v.y))); ctx.closePath(); ctx.stroke();
+      ctx.setLineDash([]);
+      // Edding-Striche
+      ctx.strokeStyle = '#1d3fa8'; ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      for (const s of striche) { ctx.beginPath(); s.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y))); if (s.length === 1) ctx.lineTo(s[0].x + 0.1, s[0].y); ctx.stroke(); }
+      // Edding am Zeiger
+      if (zeiger) {
+        ctx.save(); ctx.translate(zeiger.x, zeiger.y); ctx.rotate(-0.7);
+        ctx.fillStyle = '#1d3fa8'; ctx.fillRect(-4, -6, 8, 6);
+        ctx.fillStyle = '#e8e8e8'; ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.fillRect(-9, -70, 18, 64); ctx.strokeRect(-9, -70, 18, 64);
+        ctx.fillStyle = '#1d3fa8'; ctx.fillRect(-10, -86, 20, 18); ctx.strokeRect(-10, -86, 20, 18);
+        ctx.restore();
+      }
+      balken(ctx, f.x, f.y + f.h + 18, f.b, 10, anteil(), '#ffc81e');
+      textMitte(ctx, `Genauigkeit: ${qualitaet()} %`, m.b / 2, f.y + f.h + 52, 16, '#ffe9a8');
+    },
+  });
+  // Aufräumen-Knopf zum Wegwischen
+  api.unten.appendChild(knopf('Wegwischen', 'leise klein', () => { if (api.istFertig) return; striche = []; aktuell = null; abstandSumme = 0; abstandZahl = 0; gedeckt = vorlage.map(() => false); }));
+  return versprechen;
+}
+let kratzerZuletzt = 0;
+function kratzerTon() { const t = performance.now(); if (t - kratzerZuletzt < 90) return; kratzerZuletzt = t; blip(1800 + Math.random() * 600, 0.02, 0.03); }
+
+// E) Ofen lackieren: mit der Sprühdose über den Ofen fahren, bis alles schwarz ist. Zu lange auf einer Stelle = Lacknasen.
+export function lackierSpiel() {
+  let f;
+  const SP = 44, ZE = 46; // Raster (Spalten, Zeilen)
+  let lack = new Float32Array(SP * ZE);
+  let maske = new Uint8Array(SP * ZE);
+  let maskeZahl = 1;
+  let nasen = []; // { i, laenge }
+  let zeiger = null;
+  let spruehen = false;
+  let ton = null;
+  const nebel = [];
+  // Umriss des Ofens in Flächen-Koordinaten (u 0..1 Breite, v 0..1 Höhe)
+  const U0 = 0.26, U1 = 0.74;
+  function imOfen(u, v) {
+    if (u > 0.33 && u < 0.67 && v > 0.14 && v < 0.84) return true; // Körper
+    if (u > 0.47 && u < 0.53 && v > 0.0 && v < 0.15) return true; // Ofenrohr
+    if (v > 0.83 && v < 0.98) { // drei Beine
+      for (const lu of [0.36, 0.5, 0.64]) if (Math.abs(u - (lu + (lu - 0.5) * (v - 0.83) * 1.2)) < 0.016) return true;
+    }
+    if (v > 0.38 && v < 0.46 && (Math.abs(u - 0.3) < 0.035 || Math.abs(u - 0.7) < 0.035)) return true; // Tragegriffe
+    return false;
+  }
+  function zelle(i) { const c = i % SP, r = Math.floor(i / SP); return { u: U0 + (c + 0.5) / SP * (U1 - U0), v: (r + 0.5) / ZE }; }
+  function bauen() { maskeZahl = 0; for (let i = 0; i < SP * ZE; i++) { const { u, v } = zelle(i); maske[i] = imOfen(u, v) ? 1 : 0; maskeZahl += maske[i]; } }
+  bauen();
+  const px = (u) => f.x + u * f.b;
+  const py = (v) => f.y + v * f.h;
+  function bedeckt() { let n = 0; for (let i = 0; i < SP * ZE; i++) if (maske[i] && lack[i] >= 1) n++; return n / maskeZahl; }
+  function qualitaet() { return Math.round(Math.max(0, Math.min(100, bedeckt() * 100 - nasen.length * 7))); }
+  const { api, versprechen } = spielRahmen('Ofen lackieren', 'Gedrückt halten = sprühen. Gleichmäßig über den ganzen Ofen fahren, bis alles mattschwarz ist. Nicht zu lange auf eine Stelle, sonst gibt es Lacknasen!', {
+    beiGroesse(m) { f = flaeche(m); f = { x: f.x, y: f.y - m.h * 0.04, b: f.b, h: f.h * 1.18 }; },
+    events: {
+      pointerdown(e) { if (api.istFertig) return; spruehen = true; zeiger = zeigerPos(api.canvas, e); api.canvas.setPointerCapture?.(e.pointerId); },
+      pointermove(e) { zeiger = zeigerPos(api.canvas, e); },
+      pointerup() { spruehen = false; },
+      pointercancel() { spruehen = false; },
+    },
+    schritt(dt) {
+      if (spruehen && !ton) ton = dauer('gas', 0.5);
+      if (!spruehen && ton) { ton.stopp(); ton = null; }
+      if (spruehen && zeiger && !api.istFertig) {
+        const R = f.b * 0.055;
+        for (let i = 0; i < SP * ZE; i++) {
+          if (!maske[i]) continue;
+          const { u, v } = zelle(i);
+          const d = Math.hypot(px(u) - zeiger.x, py(v) - zeiger.y);
+          if (d > R) continue;
+          const vorher = lack[i];
+          lack[i] += dt * 2.6 * (1 - d / R);
+          if (vorher < 3.2 && lack[i] >= 3.2 && !nasen.some((n) => Math.abs((n.i % SP) - (i % SP)) < 3 && Math.abs(Math.floor(n.i / SP) - Math.floor(i / SP)) < 4)) {
+            nasen.push({ i, laenge: 0 });
+          }
+        }
+        for (let k = 0; k < 4; k++) nebel.push({ x: zeiger.x + (Math.random() - 0.5) * R * 1.6, y: zeiger.y + (Math.random() - 0.5) * R * 1.6, t: 0 });
+        if (bedeckt() >= 0.95) { spruehen = false; api.fertig({ qualitaet: qualitaet(), nasen: nasen.length }); }
+      }
+      for (const n of nasen) n.laenge = Math.min(1, n.laenge + dt * 0.8);
+      for (let i = nebel.length - 1; i >= 0; i--) { nebel[i].t += dt; if (nebel[i].t > 0.5) nebel.splice(i, 1); }
+    },
+    zeichnen() {
+      const { ctx, m } = api;
+      ctx.fillStyle = '#3a3530'; ctx.fillRect(0, 0, m.b, m.h);
+      // Abdeckpappe hinten
+      ctx.fillStyle = '#b89a6a'; ctx.fillRect(px(0.2), py(-0.02), f.b * 0.6, f.h * 1.02);
+      // Ofen roh (rot, rostige Flecken), dann der Lack darüber (weiche Kleckse je Rasterzelle, auf den Ofen beschnitten)
+      const ofenPfad = () => {
+        ctx.beginPath();
+        ctx.rect(px(0.33), py(0.14), f.b * 0.34, f.h * 0.7);
+        ctx.rect(px(0.47), py(0.0), f.b * 0.06, f.h * 0.15);
+        for (const hu of [0.3, 0.7]) ctx.rect(px(hu - 0.035), py(0.38), f.b * 0.07, f.h * 0.08);
+        for (const lu of [0.36, 0.5, 0.64]) {
+          const o = (lu - 0.5) * 0.15 * 1.2;
+          ctx.moveTo(px(lu - 0.016), py(0.83)); ctx.lineTo(px(lu + 0.016), py(0.83));
+          ctx.lineTo(px(lu + o + 0.016), py(0.98)); ctx.lineTo(px(lu + o - 0.016), py(0.98)); ctx.closePath();
+        }
+      };
+      ctx.save();
+      ofenPfad();
+      ctx.fillStyle = '#b8402e'; ctx.fill();
+      ctx.clip();
+      for (let i = 0; i < 26; i++) { ctx.fillStyle = 'rgba(110,45,25,0.35)'; ctx.beginPath(); ctx.arc(px(0.34 + ((i * 37) % 32) / 100), py(0.16 + ((i * 53) % 66) / 100), 6 + (i % 5) * 4, 0, Math.PI * 2); ctx.fill(); }
+      // Deckung je Zelle ehrlich anzeigen: halb gesprüht = gesprenkelt, voll = mattschwarz
+      const cw = (U1 - U0) / SP * f.b + 0.6, ch = f.h / ZE + 0.6;
+      for (let i = 0; i < SP * ZE; i++) {
+        if (!maske[i] || lack[i] <= 0) continue;
+        const { u, v } = zelle(i);
+        const a = Math.min(1, lack[i]);
+        const sprenkel = a < 1 ? 0.75 + ((i * 7919) % 11) / 40 : 1;
+        ctx.fillStyle = `rgba(22,22,24,${Math.min(0.97, a * a * sprenkel)})`;
+        ctx.fillRect(px(u) - cw / 2, py(v) - ch / 2, cw, ch);
+      }
+      ctx.restore();
+      ctx.save(); ofenPfad(); ctx.strokeStyle = '#111'; ctx.lineWidth = 3; ctx.stroke(); ctx.restore();
+      // Konturen: Körper, Tür mit Holzgriff, Schweißnähte
+      ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.roundRect(px(0.4), py(0.5), f.b * 0.2, f.h * 0.28, 8); ctx.stroke();
+      ctx.fillStyle = '#9a6a3a'; ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.fillRect(px(0.555), py(0.6), f.b * 0.02, f.h * 0.08); ctx.strokeRect(px(0.555), py(0.6), f.b * 0.02, f.h * 0.08);
+      ctx.strokeStyle = 'rgba(160,160,160,0.5)'; ctx.lineWidth = 2;
+      for (const v of [0.14, 0.84]) { ctx.beginPath(); for (let u = 0.33; u < 0.67; u += 0.01) ctx.arc(px(u), py(v), 3, 0, Math.PI); ctx.stroke(); }
+      // Lacknasen
+      for (const n of nasen) {
+        const { u, v } = zelle(n.i);
+        const x = px(u), y = py(v), l = 12 + n.laenge * 30;
+        ctx.fillStyle = '#0c0c0e';
+        ctx.beginPath(); ctx.moveTo(x - 5, y); ctx.lineTo(x + 5, y); ctx.lineTo(x + 3, y + l); ctx.arc(x, y + l, 4, 0, Math.PI); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(x - 1, y + 4, 2, l * 0.6);
+      }
+      // Sprühnebel und Dose
+      for (const n of nebel) { ctx.fillStyle = `rgba(30,30,30,${0.25 * (1 - n.t / 0.5)})`; ctx.beginPath(); ctx.arc(n.x, n.y, 3 + n.t * 10, 0, Math.PI * 2); ctx.fill(); }
+      if (zeiger) {
+        const x = zeiger.x + 70, y = zeiger.y + 30;
+        ctx.save(); ctx.translate(x, y); ctx.rotate(-0.35);
+        ctx.fillStyle = '#1d1d1f'; ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.roundRect(-20, -40, 40, 110, 6); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#ffc81e'; ctx.fillRect(-20, -5, 40, 30);
+        ctx.fillStyle = '#111'; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center'; ctx.fillText('OFEN', 0, 9); ctx.fillText('LACK', 0, 21);
+        ctx.fillStyle = '#e8e8e8'; ctx.fillRect(-9, -54, 18, 14); ctx.strokeRect(-9, -54, 18, 14);
+        ctx.restore();
+      }
+      balken(ctx, f.x, f.y + f.h + 12, f.b, 10, bedeckt() / 0.95, '#ffc81e');
+      textMitte(ctx, `Lackiert: ${Math.round(bedeckt() * 100)} %${nasen.length ? `  ·  Lacknasen: ${nasen.length}` : ''}`, m.b / 2, f.y + f.h + 44, 16, nasen.length ? '#ffb0a0' : '#ffe9a8');
+    },
+  });
+  return versprechen;
+}

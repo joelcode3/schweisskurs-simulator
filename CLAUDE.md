@@ -118,7 +118,7 @@
   WC-Tür offen, nur zu während Dennis drin ist. Bild über dem Klo: assets/bad-bild.jpg (Foto vom Betreiber, Dennis oben ohne mit Handy, Holzrahmen).
   Verstopfung: nach Dennis' Klo einmal pro Spiel mit 30 % Wahrscheinlichkeit; Pömpel steht oben im Regal, in die Hand, aufs Klo
   klicken (Wut -10). Nach 70 s macht Dennis es selbst (+8 Wut).
-- Zwei kleine gelbe Stromverteiler-Würfel (18 cm, genau eine Steckdose pro Seite, ein Stecker mit Kabel) hängen an Kabeln tief von der Decke (Unterkante 1,75 m, bei
+- Zwei kleine gelbe Stromverteiler-Würfel (18 cm, genau eine Steckdose pro Seite, KEIN eingesteckter Stecker) hängen an Kabeln tief von der Decke (Unterkante 1,75 m, bei
   (-0,9 | 2,35) und (0 | -1,05)). Läuft Dennis dagegen: pendelt, Klonk, Spruch (DENNIS.stromwuerfel, max. alle 35 s).
 - Johnnys Leiter (Alu-Kofferraumleiter vom Camper, 6 Sprossen, oben gebogen) hängt quer, hoch und leicht schräg an der rechten
   Wand auf zwei Konsolen. Dennis regt sich alle 2,5–4 min darüber auf (DENNIS.leiter) und beim Anklicken.
@@ -137,6 +137,8 @@
   saubere Hüllen (`huelle`, `aufHuelle` in jonny.js, R(y)/T(y) = Rumpfform), große Hände (dicke Finger mit zwei Gliedern, Nägel, Daumen), Arme richtig verschränkt (links unten, rechts darüber),
   kein Gürtel, dünner, flacher Bauch, sehr kurze schwarze Arbeitshose mit
   Zollstock und Stift, weiße Socken, grüne Sneaker, goldener Ring. Kann laufen (gehZu). Heim: Tor-Ecke (0,45 | 3,2).
+  Bier: Flasche in der linken Faust (Finger um den Flaschenbauch, offene Finger ausgeblendet), Trinkzug alle 5 s weich zum Mund
+  (BIER_UNTEN/BIER_MUND in jonny.js, per Suche bestimmt, Kopf geht leicht in den Nacken, guckt dabei geradeaus).
   Verhalten (spiel.js, Objekt jz): raucht zwischendurch; holt sich alle 70–130 s ein Bier aus dem Kühlschrank (oder lässt sich
   über das Menü sofort überreden), trinkt, lässt leere Flasche liegen (anklicken = wegräumen, Wut -2); Dennis nervt das (+3).
   Ab 4 Bier: Sodbrennen, geht nach Hause (durchs Tor, weg für den Rest des Spiels); vorher mit 15 % pinkelt er in den Ofen
@@ -148,7 +150,11 @@
   Jonny und Waldo sind selten gleichzeitig da: Waldo kommt meist nur, wenn Jonny draußen ist (85 %), Jonny kommt erst
   zurück, wenn Waldo weg ist (85 %), und geht nicht raus, solange Waldo da ist. Kippen-Feuer nur, wenn Jonny da ist.
 - Kühlschrank (klein, weiß, Bier drin) in der Pausenecke neben dem Kaffeetisch.
-- Waldo (js/waldo.js, nach Fotos): kleiner (Skala 0,85), breit, kurze dunkle Haare (ganzer Hinterkopf bis Nacken, gehen hinter
+- Waldo (js/waldo.js, nach Fotos): kleiner (Skala 0,85), breit, Gesicht länglich mit hoher Stirn (Cap weit hinten), gerade
+  dicke Brauen dicht über den Augen, leicht tiefliegende graubraune Augen mit Lidern, lange gerade Nase mit runder Spitze,
+  Bart beginnt hoch auf den Wangen (keine Bartbüschel-Kugeln mehr), große Hände (Fingerglieder, Nägel, Daumen). Handy mit
+  beiden Händen vor der Brust, Bildschirm zu den Augen gedreht (lookAt), Kopf gesenkt, Daumen wischt, Feed scrollt
+  (HANDY_R/HANDY_L per Suche bestimmt). Kurze dunkle Haare (ganzer Hinterkopf bis Nacken, gehen hinter
   den Ohren und über die Koteletten nahtlos in den Bart über, gleiche Farbe/Textur), langer voller braun-dunkler Vollbart mit
   vielen Essensresten (Krümel, Salat, Tomate, Käse, Sesam, Mayo), beige Cap, dunkelroter Pulli OHNE Logo mit geradem Saum
   (Betreiber), weite, detaillierte kurze graue Jogginghose (meliert, Löcher mit Fäden, Risse, Fransen, sauberer gerippter
@@ -171,10 +177,16 @@
   (max. alle 45 s): Dennis „Schwere Stahlträger sind Torbens Job!“.
 - Bedienung: Hat ein Ding nur eine Aktion, wird sie beim Klick direkt ausgeführt (kein Menü). Box und Licht schalten
   sofort beim Klick (ohne Hinlaufen). Abbrechen-Knöpfe hell mit dunkler Schrift.
-- Dennis hält seinen Becher immer aufrecht, Schuhsohlen rund (keine eckigen Platten).
+- Dennis hält seinen Becher immer aufrecht (Weltmatrix vor dem Ausrichten aktualisieren, beim Schluck nur leicht angekippt), Schuhsohlen rund (keine eckigen Platten).
 - Ofen abgeben: fertigen Ofen anklicken = hochheben (HALTUNG ofen), zu Dennis tragen, auf Dennis klicken; er wird neben Dennis
   abgestellt, dann Bewertung. Ohne Ofen in der Hand sagt Dennis „bring ihn her“.
-- Note: Arbeit (Verarbeitung) max. 75 Punkte + Dennis' Laune max. 25 (100 minus Mittel aus höchster Wut und Wut am Ende)
+- Gasflasche als Minispiele (minispiele.js, gemeinsamer `spielRahmen`): Restgas = Handrad linksrum drehen (ventilSpiel,
+  Manometer läuft runter, zu schnell = Fehler ventilSchnell), Spülen = bis zur gelben Markierung füllen (halten), schütteln
+  (A/D bzw. links/rechts tippen), Flasche nach rechts umkippen (ziehen), Anzeichnen = gestrichelte Tür mit dem Edding
+  nachfahren (Genauigkeit z.anzeichnenQ, unter 50 % Fehler, ab 90 % Lob, Wegwischen-Knopf), Lackieren = mit der Sprühdose
+  über den Ofen fahren bis 95 % schwarz (zu lange auf einer Stelle = Lacknase, z.lackQ, ab 3 Nasen Fehler, ohne Nasen Lob).
+  Schweißgerät einstellen und Tragen bleiben wie bisher (Betreiber-Wahl A, B, C, E).
+- Note: Arbeit (Verarbeitung = Mittel aus Anzeichnen, Schnitt, Nähten, Lack) max. 75 Punkte + Dennis' Laune max. 25 (100 minus Mittel aus höchster Wut und Wut am Ende)
   - 1,5 je Fehler (max. 15) - Werkstatt (dreckig 4, Dennis gefegt 2). Note 1 ab 85, 2 ab 72, 3 ab 58, 4 ab 45, 5 ab 30.
   Die Aufschlüsselung steht im Ende-Fenster.
 - clips.json enthält nur noch ausraster-1..4 und rausgeflogen-1 (alle anderen Listen leer, Betreiber-Wunsch).

@@ -108,6 +108,18 @@ export const DENNIS = {
     schlacke: [
       'Und die Schlacke? Soll ich die wegklopfen? Hammer nehmen!',
     ],
+    ventilSchnell: [
+      'Langsam mit dem Ventil! Wenn da noch Druck drauf ist, fliegt dir das um die Ohren!',
+      'Nicht so reißen am Ventil! Gefühl, Mensch!',
+    ],
+    anzeichnen: [
+      'Was ist das denn für ein Gekrakel? Danach schneidest du gleich?!',
+      'Die Tür sieht ja aus wie von meinem Neffen gemalt. Und der ist drei.',
+    ],
+    lacknasen: [
+      'Lacknasen! Nicht so lange auf eine Stelle halten, gleichmäßig!',
+      'Der Ofen tropft ja. Das ist Lack, kein Honig!',
+    ],
     schlackeBrille: [
       'Schlacke klopfen ohne Brille? Die Splitter fliegen dir direkt ins Auge! Brille auf!',
     ],
@@ -163,6 +175,8 @@ export const DENNIS = {
     'Na also. Da kann man nicht meckern.',
     'Hätte ich nicht besser gemacht. Fast.',
   ],
+  lobAnzeichnen: ['Sauber angezeichnet. So wird das was.', 'Schöne Linie. Ruhige Hand hast du.'],
+  lobLack: ['Gleichmäßig lackiert, keine Nasen. Sieht aus wie gekauft.', 'Mattschwarz und sauber. Schick!'],
   lobSchnitt: ['Sauberer Schnitt. Respekt.', 'Schnurgerade. Da kann man nicht meckern.', 'Der Schnitt sitzt. Gut gemacht.'],
 
   tipp: {
