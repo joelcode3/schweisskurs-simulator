@@ -1400,13 +1400,27 @@ export function lackierSpiel() {
   const nebel = [];
   // Umriss des Ofens in Flächen-Koordinaten (u 0..1 Breite, v 0..1 Höhe)
   const U0 = 0.26, U1 = 0.74;
+  // Der Ofen wie gebaut: stehende rote Gasflasche (runde Kuppeln oben und unten), Halsring, langes Ofenrohr oben,
+  // Fußring mit drei schrägen Beinen, zwei Tragegriffe, Tür unten mit Holzgriff
+  const KOERPER = { u0: 0.37, u1: 0.63, v0: 0.2, v1: 0.85, ru: 0.13, rv: 0.085 };
+  const RECHTECKE = [
+    [0.44, 0.56, 0.165, 0.215], // Halsring
+    [0.475, 0.525, 0.015, 0.18], // Ofenrohr
+    [0.465, 0.535, 0.0, 0.025], // Rohrkappe
+    [0.4, 0.6, 0.83, 0.885], // Fußring
+    [0.345, 0.372, 0.36, 0.44], [0.628, 0.655, 0.36, 0.44], // Tragegriffe
+  ];
+  const BEINE = [0.42, 0.5, 0.58].map((lu) => ({ lu, o: (lu - 0.5) * 1.4 }));
+  function imKoerper(u, v) {
+    const k = KOERPER;
+    if (u < k.u0 || u > k.u1 || v < k.v0 || v > k.v1) return false;
+    const cu = Math.min(Math.max(u, k.u0 + k.ru), k.u1 - k.ru), cv = Math.min(Math.max(v, k.v0 + k.rv), k.v1 - k.rv);
+    return ((u - cu) / k.ru) ** 2 + ((v - cv) / k.rv) ** 2 <= 1;
+  }
   function imOfen(u, v) {
-    if (u > 0.33 && u < 0.67 && v > 0.14 && v < 0.84) return true; // Körper
-    if (u > 0.47 && u < 0.53 && v > 0.0 && v < 0.15) return true; // Ofenrohr
-    if (v > 0.83 && v < 0.98) { // drei Beine
-      for (const lu of [0.36, 0.5, 0.64]) if (Math.abs(u - (lu + (lu - 0.5) * (v - 0.83) * 1.2)) < 0.016) return true;
-    }
-    if (v > 0.38 && v < 0.46 && (Math.abs(u - 0.3) < 0.035 || Math.abs(u - 0.7) < 0.035)) return true; // Tragegriffe
+    if (imKoerper(u, v)) return true;
+    for (const [a, b, c, d] of RECHTECKE) if (u > a && u < b && v > c && v < d) return true;
+    if (v > 0.875 && v < 0.985) for (const { lu, o } of BEINE) if (Math.abs(u - (lu + o * (v - 0.875) / 0.11 * 0.11)) < 0.014) return true;
     return false;
   }
   function zelle(i) { const c = i % SP, r = Math.floor(i / SP); return { u: U0 + (c + 0.5) / SP * (U1 - U0), v: (r + 0.5) / ZE }; }
@@ -1453,14 +1467,14 @@ export function lackierSpiel() {
       ctx.fillStyle = '#b89a6a'; ctx.fillRect(px(0.2), py(-0.02), f.b * 0.6, f.h * 1.02);
       // Ofen roh (rot, rostige Flecken), dann der Lack darüber (weiche Kleckse je Rasterzelle, auf den Ofen beschnitten)
       const ofenPfad = () => {
+        const k = KOERPER;
         ctx.beginPath();
-        ctx.rect(px(0.33), py(0.14), f.b * 0.34, f.h * 0.7);
-        ctx.rect(px(0.47), py(0.0), f.b * 0.06, f.h * 0.15);
-        for (const hu of [0.3, 0.7]) ctx.rect(px(hu - 0.035), py(0.38), f.b * 0.07, f.h * 0.08);
-        for (const lu of [0.36, 0.5, 0.64]) {
-          const o = (lu - 0.5) * 0.15 * 1.2;
-          ctx.moveTo(px(lu - 0.016), py(0.83)); ctx.lineTo(px(lu + 0.016), py(0.83));
-          ctx.lineTo(px(lu + o + 0.016), py(0.98)); ctx.lineTo(px(lu + o - 0.016), py(0.98)); ctx.closePath();
+        ctx.roundRect(px(k.u0), py(k.v0), (k.u1 - k.u0) * f.b, (k.v1 - k.v0) * f.h, [{ x: k.ru * f.b, y: k.rv * f.h }]);
+        for (const [a, b, c, d] of RECHTECKE) ctx.rect(px(a), py(c), (b - a) * f.b, (d - c) * f.h);
+        for (const { lu, o } of BEINE) {
+          const ue = lu + o * 0.11;
+          ctx.moveTo(px(lu - 0.014), py(0.875)); ctx.lineTo(px(lu + 0.014), py(0.875));
+          ctx.lineTo(px(ue + 0.014), py(0.985)); ctx.lineTo(px(ue - 0.014), py(0.985)); ctx.closePath();
         }
       };
       ctx.save();
@@ -1480,12 +1494,17 @@ export function lackierSpiel() {
       }
       ctx.restore();
       ctx.save(); ofenPfad(); ctx.strokeStyle = '#111'; ctx.lineWidth = 3; ctx.stroke(); ctx.restore();
-      // Konturen: Körper, Tür mit Holzgriff, Schweißnähte
-      ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.roundRect(px(0.4), py(0.5), f.b * 0.2, f.h * 0.28, 8); ctx.stroke();
-      ctx.fillStyle = '#9a6a3a'; ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.fillRect(px(0.555), py(0.6), f.b * 0.02, f.h * 0.08); ctx.strokeRect(px(0.555), py(0.6), f.b * 0.02, f.h * 0.08);
-      ctx.strokeStyle = 'rgba(160,160,160,0.5)'; ctx.lineWidth = 2;
-      for (const v of [0.14, 0.84]) { ctx.beginPath(); for (let u = 0.33; u < 0.67; u += 0.01) ctx.arc(px(u), py(v), 3, 0, Math.PI); ctx.stroke(); }
+      // Konturen: Tür unten mit Scharnieren und Holzgriff, Mittelnaht der Flasche, Schweißraupen an Halsring, Fußring, Beinen, Rohr
+      ctx.strokeStyle = 'rgba(0,0,0,0.65)'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.roundRect(px(0.42), py(0.58), f.b * 0.16, f.h * 0.2, 8); ctx.stroke();
+      ctx.fillStyle = '#2a2a2c'; for (const v of [0.6, 0.74]) ctx.fillRect(px(0.412), py(v), f.b * 0.016, f.h * 0.035);
+      ctx.fillStyle = '#9a6a3a'; ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.roundRect(px(0.555), py(0.64), f.b * 0.016, f.h * 0.085, 3); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(px(0.37), py(0.5)); ctx.lineTo(px(0.63), py(0.5)); ctx.stroke();
+      ctx.strokeStyle = 'rgba(170,170,170,0.55)';
+      const raupe = (u0, u1, v) => { ctx.beginPath(); for (let u = u0; u < u1; u += 0.008) ctx.arc(px(u), py(v), 2.5, 0, Math.PI); ctx.stroke(); };
+      raupe(0.44, 0.56, 0.212); raupe(0.4, 0.6, 0.832); raupe(0.475, 0.525, 0.168);
       // Lacknasen
       for (const n of nasen) {
         const { u, v } = zelle(n.i);

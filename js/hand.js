@@ -5,6 +5,9 @@ import { toon, teil, quader, zylinder, kugel, setze, leinwandTextur } from './to
 import { RAUM, BAD } from './world.js';
 
 // Haltung in der Hand: Position vor der Kamera, Drehung, Größe, beidhändig, schwer
+// Wurfgrenzen draußen auf dem Hof
+const AUSSEN = { xMin: -9.5, xMax: 9.5, zMin: RAUM.zMax, zMax: 12.5 };
+
 const HALTUNG = {
   brille: { pos: [0.18, -0.15, -0.45], rot: [0.25, 0.4, 0], skala: 0.55, name: 'Schutzbrille', tragen: 'Aufsetzen' },
   handschuhe: { pos: [0.25, -0.24, -0.55], rot: [0.3, 0.5, 0], skala: 0.7, name: 'Handschuhe', tragen: 'Anziehen' },
@@ -222,7 +225,8 @@ export function baueHand(scene, kamera) {
         // Wände
         const r = 0.15;
         // im Bad an den Badwänden abprallen, sonst an den Werkstattwänden
-        const q = p.x > BAD.xMin && p.x < BAD.xMax && p.z > BAD.zMin ? BAD : RAUM;
+        const draussen = p.z > RAUM.zMax + 0.1 && !(p.x > BAD.xMin - 0.1 && p.x < BAD.xMax + 0.1 && p.z < BAD.zMax + 0.1);
+        const q = draussen ? AUSSEN : p.x > BAD.xMin && p.x < BAD.xMax && p.z > BAD.zMin ? BAD : RAUM;
         if (p.x < q.xMin + r || p.x > q.xMax - r) { f.v.x *= -0.4; p.x = THREE.MathUtils.clamp(p.x, q.xMin + r, q.xMax - r); }
         if (p.z < q.zMin + r || p.z > q.zMax - r) { f.v.z *= -0.4; p.z = THREE.MathUtils.clamp(p.z, q.zMin + r, q.zMax - r); }
         // Möbel (grob als Kästen bis 0.9 m Höhe)

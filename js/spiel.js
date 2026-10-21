@@ -50,6 +50,10 @@ const FEHLER = {
     stufe: 'leicht', wut: 6, clip: 'fehler_schnitt', name: 'Schiefer Schnitt',
     texte: DENNIS.fehler.schnitt,
   },
+  ventilDrinnen: {
+    stufe: 'voll', wut: 30, clip: 'fehler_gasflasche', name: 'Gas in der Werkstatt abgelassen',
+    texte: DENNIS.fehler.ventilDrinnen,
+  },
   ventilSchnell: {
     stufe: 'leicht', wut: 6, clip: 'fehler_gasflasche', name: 'Ventil zu schnell aufgerissen',
     texte: DENNIS.fehler.ventilSchnell,
@@ -244,7 +248,9 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
 
   function aufgaben() {
     return [
-      { text: 'Restgas ablassen (Ventil auf)', fertig: z.ventilAuf },
+      { text: 'Flasche nach draußen tragen', fertig: z.ventilAuf || z.ort === 'draussen' },
+      { text: 'Draußen Restgas ablassen (Ventil auf)', fertig: z.ventilAuf },
+      { text: 'Zurück zum Waschplatz tragen', fertig: z.gespuelt || (z.ventilAuf && z.ort === 'wasch') },
       { text: 'Flasche mit Wasser spülen', fertig: z.gespuelt },
       { text: 'Flasche zur Werkbank tragen', fertig: z.ort === 'werkbank' || z.geschnitten },
       { text: 'Ofentür anzeichnen', fertig: z.angezeichnet },
@@ -485,6 +491,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
 
   async function ventilAufdrehen() {
     if (ohneAufsicht()) return;
+    // Restgas nur draußen ablassen! Drinnen gibt es sofort Ärger
+    if (z.ort !== 'draussen') return fehler('ventilDrinnen');
     steuerung.sperre(true);
     z.beschaeftigt = true;
     const e = await ventilSpiel();
@@ -644,8 +652,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
 
   function naechsterTipp() {
     const t = DENNIS.tipp;
-    if (!z.ventilAuf) return t.ventil;
-    if (!z.gespuelt) return t.spuelen;
+    if (!z.ventilAuf) return z.ort === 'draussen' ? t.ventilDraussen : t.ventil;
+    if (!z.gespuelt) return z.ort === 'wasch' ? t.spuelen : t.zurueckWasch;
     if (z.ort === 'wasch') return t.werkbank;
     if (!z.angezeichnet) return t.anzeichnen;
     if (!z.geschnitten) return z.ppe.brille && z.ppe.handschuhe ? t.schneiden : t.schneidenAusruestung;
@@ -2223,13 +2231,13 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
     z.ort = 'hand';
     klonk(0.3);
     aktualisieren();
-    ui.hinweis('Schwer! Jetzt auf die Werkbank, den Schweißtisch oder den Waschplatz klicken.', 3200);
+    ui.hinweis('Schwer! Jetzt auf die Werkbank, den Schweißtisch, den Waschplatz oder draußen auf den Boden klicken.', 3600);
   }
   async function flascheAbstellen(punkt) {
     const beine = z.naehte.beine !== null;
     let ort = punkt ? welt.flaschenOrtBei(punkt, beine) : null;
     if (ort && (irgendeineNaht() || beine) && ort !== 'schweiss') ort = null;
-    if (!ort) { ui.hinweis('Da passt die Flasche nicht hin. Werkbank, Schweißtisch oder Waschplatz.'); return; }
+    if (!ort) { ui.hinweis('Da passt die Flasche nicht hin. Werkbank, Schweißtisch, Waschplatz oder draußen auf den Boden.'); return; }
     hand.loslassen();
     z.ort = ort;
     klonk(0.5);
@@ -2363,7 +2371,10 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
       }
       case 'flasche': {
         const a = [];
-        if (z.ort === 'wasch') {
+        if (z.ort === 'draussen') {
+          if (!z.ventilAuf) a.push(A('Ventil aufdrehen, Restgas ablassen', 'ventil', ventilAufdrehen));
+          a.push(A('Hochheben und tragen', 'tragen', flascheHochheben));
+        } else if (z.ort === 'wasch') {
           if (!z.ventilAuf) a.push(A('Ventil aufdrehen, Restgas ablassen', 'ventil', ventilAufdrehen));
           if (!z.gespuelt) a.push(A('Mit Wasser spülen', 'wasser', spuelen));
           a.push(A('Hochheben und tragen', 'tragen', flascheHochheben));
@@ -2378,7 +2389,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
           if (!irgendeineNaht()) a.push(A('Hochheben und tragen', 'tragen', flascheHochheben));
           if (z.lackiert) a.push(A('Hochheben und zu Dennis bringen', 'tragen', ofenHochheben));
         }
-        const info = z.ort === 'wasch'
+        const info = z.ort === 'draussen' ? `Steht draußen vor der Werkstatt. ${z.ventilAuf ? 'Ventil offen, Restgas ist raus.' : 'Ventil zu. Hier darf das Gas raus.'}`
+          : z.ort === 'wasch'
           ? `Propanflasche 11 kg, angeblich leer. ${z.ventilAuf ? 'Ventil offen.' : 'Ventil zu.'} ${z.gespuelt ? 'Gespült.' : 'Nicht gespült.'}`
           : z.ort === 'werkbank' ? (z.geschnitten ? 'Tür ist raus.' : z.angezeichnet ? 'Tür ist angezeichnet.' : 'Liegt bereit.') : z.lackiert ? 'Fertig lackiert. Bring ihn zu Dennis.'
             : z.naehte.beine !== null ? 'Steht auf seinen Beinen vor dem Schweißtisch.' : 'Liegt auf dem Schweißtisch.';
@@ -2698,7 +2710,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
   return {
     zustand: z,
     klick,
-    test: { ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
+    test: { flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
     stationWaehlen,
     intro,
     aktualisieren,

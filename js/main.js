@@ -22,7 +22,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
-const kamera = new THREE.PerspectiveCamera(70, 1, 0.05, 40);
+const kamera = new THREE.PerspectiveCamera(70, 1, 0.05, 220);
 
 const welt = baueWelt(scene);
 const dennis = baueDennis(scene);

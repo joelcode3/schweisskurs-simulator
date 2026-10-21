@@ -108,6 +108,10 @@ export const DENNIS = {
     schlacke: [
       'Und die Schlacke? Soll ich die wegklopfen? Hammer nehmen!',
     ],
+    ventilDrinnen: [
+      'BIST DU BEKLOPPT?! Gas in der Halle ablassen?! Raus mit der Flasche, VOR die Tür!',
+      'HALT! Nicht hier drin aufdrehen! Hier wird geschweißt, Mensch! Die Flasche kommt RAUS!',
+    ],
     ventilSchnell: [
       'Langsam mit dem Ventil! Wenn da noch Druck drauf ist, fliegt dir das um die Ohren!',
       'Nicht so reißen am Ventil! Gefühl, Mensch!',
@@ -180,7 +184,9 @@ export const DENNIS = {
   lobSchnitt: ['Sauberer Schnitt. Respekt.', 'Schnurgerade. Da kann man nicht meckern.', 'Der Schnitt sitzt. Gut gemacht.'],
 
   tipp: {
-    ventil: 'Erst mal das Restgas ablassen. Ventil an der Flasche aufdrehen, die steht am Waschplatz.',
+    ventil: 'Erst mal raus mit der Flasche! Restgas wird DRAUSSEN abgelassen, nicht hier drin. Flasche steht am Waschplatz.',
+    ventilDraussen: 'Gut, draußen. Jetzt Ventil aufdrehen und das Restgas ablassen. Langsam!',
+    zurueckWasch: 'Restgas ist raus. Jetzt die Flasche zurück zum Waschplatz und mit Wasser spülen.',
     spuelen: 'Jetzt die Flasche mit Wasser spülen. Schlauch hängt an der Wand. Ohne Spülen fasst die keiner an!',
     werkbank: 'Flasche rüber auf die Werkbank.',
     anzeichnen: 'Mit dem blauen Edding die Tür anzeichnen. Liegt auf der Werkbank.',

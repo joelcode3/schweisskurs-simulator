@@ -267,15 +267,16 @@ export function baueWaldo(scene) {
   // Gesicht nach den Fotos: eher länglich mit hoher Stirn (Cap sitzt weit hinten), gerade dicke Brauen dicht über den Augen,
   // mittelgroße, leicht tiefliegende Augen, lange gerade Nase mit etwas runder Spitze, Bart beginnt hoch auf den Wangen
   const schaedel = teil(new THREE.SphereGeometry(0.17, 30, 24), HAUT);
-  schaedel.scale.set(1.0, 1.12, 0.98);
-  schaedel.position.y = 0.13;
+  schaedel.scale.set(1.0, 1.12, 1.06);
+  schaedel.position.set(0, 0.13, -0.008);
   kopf.add(schaedel);
   // Wangenknochen und Brauenbogen (leichte Wölbungen, ohne Umriss)
   for (const sx of [-1, 1]) kopf.add(setze(teil(new THREE.SphereGeometry(0.045, 12, 10), HAUT, { umriss: false }), sx * 0.085, 0.13, 0.118));
-  const brauenBogen = teil(new THREE.CapsuleGeometry(0.022, 0.12, 4, 10), HAUT, { umriss: false });
+  // kräftiger Brauenbogen und Stirn, die nach oben zurückweicht (Profil!)
+  const brauenBogen = teil(new THREE.CapsuleGeometry(0.026, 0.12, 4, 10), HAUT, { umriss: false });
   brauenBogen.rotation.z = Math.PI / 2;
-  brauenBogen.scale.set(1, 1, 0.7);
-  brauenBogen.position.set(0, 0.188, 0.148);
+  brauenBogen.scale.set(1, 1, 0.75);
+  brauenBogen.position.set(0, 0.19, 0.155);
   kopf.add(brauenBogen);
   for (const x of [-0.17, 0.17]) {
     const ohr = teil(new THREE.SphereGeometry(0.04, 12, 10), HAUT, { umriss: 0.002 });
@@ -286,17 +287,18 @@ export function baueWaldo(scene) {
   }
   // Nase: langer gerader Rücken, etwas runde Spitze, Nasenflügel, Nasenlöcher
   const NASE = 0xe2a887;
-  const nasenRuecken = teil(new THREE.CapsuleGeometry(0.015, 0.06, 4, 8), NASE, { umriss: 0.0015 });
-  nasenRuecken.rotation.x = -0.22;
-  nasenRuecken.position.set(0, 0.135, 0.17);
+  // Nase steht im Profil deutlich vor: Rücken schräg nach vorn-unten, Spitze weit vorn
+  const nasenRuecken = teil(new THREE.CapsuleGeometry(0.016, 0.07, 4, 8), NASE, { umriss: 0.0015 });
+  nasenRuecken.rotation.x = -0.5;
+  nasenRuecken.position.set(0, 0.132, 0.186);
   kopf.add(nasenRuecken);
-  const nase = teil(new THREE.SphereGeometry(0.023, 14, 10), NASE, { umriss: 0.002 });
-  nase.scale.set(1.1, 0.95, 1.0);
-  nase.position.set(0, 0.098, 0.19);
+  const nase = teil(new THREE.SphereGeometry(0.025, 14, 10), NASE, { umriss: 0.002 });
+  nase.scale.set(1.1, 0.95, 1.05);
+  nase.position.set(0, 0.098, 0.212);
   kopf.add(nase);
   for (const sx of [-1, 1]) {
-    kopf.add(setze(teil(new THREE.SphereGeometry(0.0135, 10, 8), NASE, { umriss: 0.0012 }), sx * 0.02, 0.094, 0.177));
-    kopf.add(setze(kugel(0.005, 0x7a3f30, { umriss: false }, 6), sx * 0.01, 0.086, 0.188));
+    kopf.add(setze(teil(new THREE.SphereGeometry(0.0145, 10, 8), NASE, { umriss: 0.0012 }), sx * 0.021, 0.093, 0.195));
+    kopf.add(setze(kugel(0.005, 0x7a3f30, { umriss: false }, 6), sx * 0.01, 0.084, 0.21));
   }
   const augen = [];
   for (const x of [-0.055, 0.055]) {
@@ -366,23 +368,23 @@ export function baueWaldo(scene) {
   // volles Kinn (Bart hängt gut 10 cm unters Kinn)
   const kinnBart = teil(new THREE.SphereGeometry(0.12, 18, 14), 0, { material: bartMat, umriss: 0.004 });
   kinnBart.scale.set(1.12, 1.05, 0.9);
-  kinnBart.position.set(0, -0.03, 0.07);
+  kinnBart.position.set(0, -0.03, 0.085);
   kopf.add(kinnBart);
   const kinnSpitze = teil(new THREE.SphereGeometry(0.08, 14, 10), 0, { material: bartMat, umriss: 0.004 });
-  kinnSpitze.scale.set(1.25, 1.5, 0.8);
-  kinnSpitze.position.set(0, -0.15, 0.085);
+  kinnSpitze.scale.set(1.25, 1.5, 0.95);
+  kinnSpitze.position.set(0, -0.15, 0.11);
   kopf.add(kinnSpitze);
   // Schnurrbart (dicht, über der Lippe, geht seitlich in den Bart)
-  const schnurr = new THREE.CatmullRomCurve3([new THREE.Vector3(-0.07, 0.045, 0.15), new THREE.Vector3(-0.035, 0.075, 0.178), new THREE.Vector3(0, 0.072, 0.185), new THREE.Vector3(0.035, 0.075, 0.178), new THREE.Vector3(0.07, 0.045, 0.15)]);
+  const schnurr = new THREE.CatmullRomCurve3([new THREE.Vector3(-0.07, 0.045, 0.155), new THREE.Vector3(-0.035, 0.074, 0.19), new THREE.Vector3(0, 0.07, 0.2), new THREE.Vector3(0.035, 0.074, 0.19), new THREE.Vector3(0.07, 0.045, 0.155)]);
   kopf.add(teil(new THREE.TubeGeometry(schnurr, 20, 0.019, 8, false), 0, { material: bartMat, umriss: 0.003 }));
   // Unterlippe schaut etwas raus
   const mund = teil(new THREE.CapsuleGeometry(0.008, 0.03, 3, 6), 0xb5605a, { umriss: false });
   mund.rotation.z = Math.PI / 2;
-  mund.position.set(0, 0.045, 0.18);
+  mund.position.set(0, 0.045, 0.196);
   kopf.add(mund);
   // Essensreste im Bart (Gruppe etwas vor die Bartoberfläche)
   const essen = new THREE.Group();
-  essen.position.set(0, -0.01, 0.03);
+  essen.position.set(0, -0.01, 0.05);
   kopf.add(essen);
   // Essensreste im Bart: Brotkrümel, ein Stück Salat, ein Klecks Mayo
   for (let i = 0; i < 9; i++) {

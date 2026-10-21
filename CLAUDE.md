@@ -113,6 +113,15 @@
   (`wandMalen`): Putz, grüngrauer Sockel bis 1,25 m, Putz bröckelt stellenweise (Ziegel sichtbar), Risse, Wasserflecken.
   KEINE Graffiti und Zahlen (Betreiber: wieder weg). Eingang vorne: breites Scheunentor komplett grün (2 Flügel, Z-Streben,
   nur die Scharniere/Bänder schwarz) mit Rauchen-verboten-Schild; Lichtschalter zwischen Tor und WC-Tür.
+  Das Tor steht weit offen (Flügel um die Bänder gedreht), man kann nach draußen gehen.
+- Draußen (js/draussen.js, `baueDraussen`): rotes Backsteingebäude mit flachem Satteldach aus schwarzem Wellblech (Giebel vorne/
+  hinten, Regenrinnen, Fallrohre), Bad als Anbau mit flachem Dach und Milchglasfenster, Fenster links außen. Kaputte Betonfläche
+  vor der Werkstatt (Fugen, Risse mit Unkraut, ausgebrochene Stellen mit Schotter, lose Brocken), Wiese, Bäume, Horizont
+  (Hügel + Waldrand), Himmel mit Wolken (Kamera-Sichtweite 220). Mülltonnen (grau, blau, braun) links vom Tor, Schild
+  „NICHT STÖREN! SCHWEISSKURS“ (Holz) an der Fassade, roter Weidemann-Hoflader mit geschlossener Kabine und Palettengabel
+  rechts neben der Werkstatt, rosa Mini-Jeep (Wrangler-Look, ohne Dach, Elektro-Kinderauto), Feuerschale mit Dreibein, Kette,
+  rundem Grillrost und alter schwarzer Bratwurst. Begehbar: Vorplatz, Streifen rechts neben der Halle, Durchgang durchs Tor
+  (Bad-Anbau ausgespart). Würfe draußen prallen an den Hofgrenzen ab (hand.js AUSSEN).
 - Bad (begehbar) hinter der WC-Tür vorne rechts (BAD in world.js, x 0,7–3,9, z 4,0–6,8): Schachbrett-Boden, Fliesen bis 1,4 m,
   Milchglasfenster, Klo (hinten links), Dusche (hinten rechts), Waschbecken mit Spiegel, Waschmaschine + Trockner (vorne rechts).
   WC-Tür offen, nur zu während Dennis drin ist. Bild über dem Klo: assets/bad-bild.jpg (Foto vom Betreiber, Dennis oben ohne mit Handy, Holzrahmen).
@@ -150,7 +159,8 @@
   Jonny und Waldo sind selten gleichzeitig da: Waldo kommt meist nur, wenn Jonny draußen ist (85 %), Jonny kommt erst
   zurück, wenn Waldo weg ist (85 %), und geht nicht raus, solange Waldo da ist. Kippen-Feuer nur, wenn Jonny da ist.
 - Kühlschrank (klein, weiß, Bier drin) in der Pausenecke neben dem Kaffeetisch.
-- Waldo (js/waldo.js, nach Fotos): kleiner (Skala 0,85), breit, Gesicht länglich mit hoher Stirn (Cap weit hinten), gerade
+- Waldo (js/waldo.js, nach Fotos): kleiner (Skala 0,85), breit, Gesicht länglich mit hoher Stirn (Cap weit hinten), im Profil mit Tiefe
+  (Schädel tiefer, kräftiger Brauenbogen, Nase steht deutlich vor, Bart/Kinn/Schnurrbart weiter vorn), gerade
   dicke Brauen dicht über den Augen, leicht tiefliegende graubraune Augen mit Lidern, lange gerade Nase mit runder Spitze,
   Bart beginnt hoch auf den Wangen (keine Bartbüschel-Kugeln mehr), große Hände (Fingerglieder, Nägel, Daumen). Handy mit
   beiden Händen vor der Brust, Bildschirm zu den Augen gedreht (lookAt), Kopf gesenkt, Daumen wischt, Feed scrollt
@@ -180,11 +190,15 @@
 - Dennis hält seinen Becher immer aufrecht (Weltmatrix vor dem Ausrichten aktualisieren, beim Schluck nur leicht angekippt), Schuhsohlen rund (keine eckigen Platten).
 - Ofen abgeben: fertigen Ofen anklicken = hochheben (HALTUNG ofen), zu Dennis tragen, auf Dennis klicken; er wird neben Dennis
   abgestellt, dann Bewertung. Ohne Ofen in der Hand sagt Dennis „bring ihn her“.
+- Restgas NUR DRAUSSEN: Flasche hochheben, rausgehen, auf den Boden klicken (Ort 'draussen', Station draussen vor dem Tor).
+  Ventil drinnen aufdrehen = Fehler ventilDrinnen (voll, +30, Dennis rastet aus). Danach zurück zum Waschplatz zum Spülen.
+  Aufgabenliste: nach draußen tragen, draußen Ventil auf, zurück zum Waschplatz, spülen, ...
 - Gasflasche als Minispiele (minispiele.js, gemeinsamer `spielRahmen`): Restgas = Handrad linksrum drehen (ventilSpiel,
   Manometer läuft runter, zu schnell = Fehler ventilSchnell), Spülen = bis zur gelben Markierung füllen (halten), schütteln
   (A/D bzw. links/rechts tippen), Flasche nach rechts umkippen (ziehen), Anzeichnen = gestrichelte Tür mit dem Edding
   nachfahren (Genauigkeit z.anzeichnenQ, unter 50 % Fehler, ab 90 % Lob, Wegwischen-Knopf), Lackieren = mit der Sprühdose
-  über den Ofen fahren bis 95 % schwarz (zu lange auf einer Stelle = Lacknase, z.lackQ, ab 3 Nasen Fehler, ohne Nasen Lob).
+  über den Ofen (gezeichnet wie gebaut: stehende rote Gasflasche mit Kuppeln, Halsring, langem Ofenrohr, Fußring mit drei
+  schrägen Beinen, Tragegriffen, Tür unten mit Scharnieren und Holzgriff) fahren bis 95 % schwarz (zu lange auf einer Stelle = Lacknase, z.lackQ, ab 3 Nasen Fehler, ohne Nasen Lob).
   Schweißgerät einstellen und Tragen bleiben wie bisher (Betreiber-Wahl A, B, C, E).
 - Note: Arbeit (Verarbeitung = Mittel aus Anzeichnen, Schnitt, Nähten, Lack) max. 75 Punkte + Dennis' Laune max. 25 (100 minus Mittel aus höchster Wut und Wut am Ende)
   - 1,5 je Fehler (max. 15) - Werkstatt (dreckig 4, Dennis gefegt 2). Note 1 ab 85, 2 ab 72, 3 ab 58, 4 ab 45, 5 ab 30.

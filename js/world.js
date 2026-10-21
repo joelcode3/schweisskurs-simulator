@@ -1,6 +1,7 @@
 // Die Werkstatt: Raum, Möbel, Werkzeuge, Gasflasche.
 import * as THREE from 'three';
 import { toon, teil, quader, zylinder, kugel, setze, leinwandTextur, zufall, umriss } from './toon.js';
+import { baueDraussen } from './draussen.js';
 
 export const RAUM = { xMin: -5, xMax: 5, zMin: -4, zMax: 4, hoehe: 3.9 };
 // Bad hinter der WC-Tür (vorne rechts), begehbar
@@ -11,6 +12,7 @@ export const AUGENHOEHE = 1.65;
 // Stationen: Kameraposition und Blickziel
 export const STATIONEN = {
   eingang:  { name: 'Eingang',     pos: [0, AUGENHOEHE, 3.0],    blick: [0, 1.1, -2] },
+  draussen: { name: 'Draußen',     pos: [-0.75, AUGENHOEHE, 4.95], blick: [-0.55, 0.45, 6.1] },
   regal:    { name: 'Regal',       pos: [-3.1, AUGENHOEHE, -0.6], blick: [-4.7, 1.15, -0.6] },
   wasch:    { name: 'Waschplatz',  pos: [2.9, AUGENHOEHE, 1.6],   blick: [4.6, 0.75, 1.6] },
   werkbank: { name: 'Werkbank',    pos: [0, AUGENHOEHE, -0.8],    blick: [0, 1.0, -2.9] },
@@ -183,7 +185,11 @@ export function baueWelt(scene) {
   };
   wandStueck(10, 0, RAUM.zMin, 0, 11);
   // Vorderwand mit Öffnung für die WC-Tür
-  wandStueck(KLO_TUER.xMin - RAUM.xMin, (RAUM.xMin + KLO_TUER.xMin) / 2, RAUM.zMax, Math.PI, 12);
+  // links vom Tor, zwischen Tor und WC-Tür, Sturz über dem Tor (das Tor steht offen, dahinter ist draußen)
+  const TOR_L = -0.85 - 1.3, TOR_R = -0.85 + 1.3, TOR_HOEHE = 3.0;
+  wandStueck(TOR_L - RAUM.xMin, (RAUM.xMin + TOR_L) / 2, RAUM.zMax, Math.PI, 12);
+  wandStueck(KLO_TUER.xMin - TOR_R, (TOR_R + KLO_TUER.xMin) / 2, RAUM.zMax, Math.PI, 17);
+  wandStueck(TOR_R - TOR_L, -0.85, RAUM.zMax, Math.PI, 18, RAUM.hoehe - TOR_HOEHE, TOR_HOEHE);
   wandStueck(RAUM.xMax - KLO_TUER.xMax, (KLO_TUER.xMax + RAUM.xMax) / 2, RAUM.zMax, Math.PI, 15);
   wandStueck(KLO_TUER.xMax - KLO_TUER.xMin, (KLO_TUER.xMin + KLO_TUER.xMax) / 2, RAUM.zMax, Math.PI, 16, RAUM.hoehe - KLO_TUER.hoehe, KLO_TUER.hoehe);
   wandStueck(8, RAUM.xMin, 0, Math.PI / 2, 13);
@@ -282,6 +288,7 @@ export function baueWelt(scene) {
   }, [1.5, 1.5]);
   const brettMat = toon(0xffffff, { map: bretter });
   const TOR_B = 1.3, TOR_H = 3.0;
+  let fluegelRechts = null;
   for (const seite of [-1, 1]) {
     const fluegel = new THREE.Group();
     fluegel.add(setze(teil(new THREE.BoxGeometry(TOR_B, TOR_H, 0.07), 0, { material: brettMat, umriss: 0.004 }), 0, TOR_H / 2, 0));
@@ -300,11 +307,15 @@ export function baueWelt(scene) {
     // Griffstange an der Mittelkante
     fluegel.add(setze(zylinder(0.018, 0.018, 0.5, torGruen, { umriss: 0.002 }, 8), -seite * (TOR_B / 2 - 0.12), 1.15, 0.11));
     for (const y of [0.92, 1.38]) fluegel.add(setze(quader(0.03, 0.03, 0.08, torGruen, { umriss: false }), -seite * (TOR_B / 2 - 0.12), y, 0.08));
-    fluegel.position.x = seite * TOR_B / 2;
-    tuer.add(fluegel);
+    // Drehpunkt am Band (Außenkante), das Tor steht weit offen nach draußen
+    const angel = new THREE.Group();
+    angel.position.x = seite * TOR_B;
+    fluegel.position.x = -seite * TOR_B / 2;
+    angel.add(fluegel);
+    angel.rotation.y = -seite * Math.PI * 0.5;
+    tuer.add(angel);
+    if (seite === 1) fluegelRechts = fluegel;
   }
-  // Riegel über beide Flügel
-  tuer.add(setze(quader(0.5, 0.07, 0.05, torGruen, { umriss: 0.002 }), 0, 1.6, 0.13));
   tuer.add(setze(quader(2 * TOR_B + 0.2, 0.12, 0.1, torGruen), 0, TOR_H + 0.06, 0.0));
   // Rauchen-verboten-Schild
   const verbotTex = leinwandTextur(256, 320, (g) => {
@@ -325,10 +336,13 @@ export function baueWelt(scene) {
     g.fillText('RAUCHEN', 128, 270); g.fillText('VERBOTEN', 128, 304);
   });
   const rauchSchild = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.525), new THREE.MeshBasicMaterial({ map: verbotTex }));
-  rauchSchild.position.set(TOR_B / 2, 1.85, 0.081);
-  tuer.add(rauchSchild);
+  rauchSchild.position.set(0, 1.85, 0.081);
+  fluegelRechts.add(rauchSchild);
   setze(tuer, -0.85, 0, RAUM.zMax - 0.05, 0, Math.PI, 0);
   scene.add(tuer);
+
+  // ---------- Draußen (js/draussen.js) ----------
+  const draussen = baueDraussen(scene, { merke, hindernis, RAUM });
 
   // Feuerlöscher an der rechten Wand zwischen Schweißplatz und Waschplatz
   const loescher = new THREE.Group();
@@ -2547,6 +2561,7 @@ export function baueWelt(scene) {
     wasch:    { pos: [4.05, 0.335, 1.95], rot: [0, -0.4, 0], station: 'wasch' },
     werkbank: { pos: [0.05, 1.05, -2.85], rot: [0, 0.0, Math.PI / 2], station: 'werkbank' },
     schweiss: { pos: [3.05, 1.185, -2.95], rot: [0, -Math.PI / 2, 0], station: 'schweiss' },
+    draussen: { pos: [-0.55, 0.335, 6.1], rot: [0, 0.4, 0], station: 'draussen' },
   };
   const ofenPlatz = { xMin: 2.9, xMax: 3.4, zMin: -2.3, zMax: -1.75 };
   function setzeFlasche(ort, beine) {
@@ -2604,8 +2619,10 @@ export function baueWelt(scene) {
     begehbar(x, z, r) {
       const drin = (q, rr) => x > q.xMin + rr && x < q.xMax - rr && z > q.zMin + rr && z < q.zMax - rr;
       if (drin(RAUM, r) || drin(BAD, r)) return true;
+      if (draussen.begehbar(x, z, r)) return true;
       return kloOffen && x > KLO_TUER.xMin + 0.15 && x < KLO_TUER.xMax - 0.15 && z > RAUM.zMax - 0.7 && z < BAD.zMin + 0.7;
     },
+    istDraussen: (x, z) => draussen.istDraussen(x, z),
     imBad(x, z) { return x > BAD.xMin && x < BAD.xMax && z > BAD.zMin && z < BAD.zMax; },
     kloTuer(offen) { kloOffen = offen; },
     kuehlschrank(auf) { kuehlAuf = auf; },
@@ -2661,6 +2678,7 @@ export function baueWelt(scene) {
       if (p.x > 2.25 && p.x < 3.95 && p.z > -3.5 && p.z < -2.4 && p.y > 0.75) return mitBeinen ? 'schweiss' : 'schweiss';
       if (mitBeinen && p.x > 2.3 && p.x < 4.0 && p.z > -2.5 && p.z < -1.4) return 'schweiss';
       if (p.x > 3.2 && p.z > 0.6 && p.z < 2.9) return 'wasch';
+      if (!mitBeinen && p.z > RAUM.zMax + 0.3 && p.y < 0.4) return 'draussen';
       return null;
     },
     // Freier Boden für die Hüfte (liegend ca. 2,3 m lang, Kopf Richtung Werkstattmitte)
