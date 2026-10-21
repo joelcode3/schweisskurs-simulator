@@ -173,6 +173,13 @@
   räumt 2 Tassen selbst weg (+4, DENNIS.tassenSelbst). Jonny/Waldo bringen beim Kommen mit 40 % eine Tasse mit (max. 14).
 - Dennis telefoniert alle 75–135 s (Klingeln, linke Hand mit Handy am Ohr, TELEFON-Pose per Suche bestimmt, 3 Zeilen aus
   DENNIS.telefon: Lydia, Motorhaube, Konzerttickets, Torben, ...). Fehler/Ärger beenden das Telefonat.
+- Bitsatz (Nebenaufgabe, wird NICHT angekündigt, muss man selbst finden): offene schwarze Kassette im Regal (mittleres Brett),
+  Bits durcheinander. Menü „Bitsatz sortieren“ = Minispiel (12 Bits: Kreuz PH, Pozi PZ, Torx TX, Schlitz je Größe 1–3 per
+  Ziehen ins passende Fach), danach ordentlich, Lob, Wut -8, erscheint als erledigte Nebenaufgabe.
+- Waldos nasser Akkuschrauber (einmal pro Spiel nach 2,5–4,5 min, nur wenn Jonny nicht da ist): Waldo kommt mit dem Schrauber,
+  fragt Dennis, Dennis: „Nicht meine Branche.“ Waldo legt ihn trotzdem auf Dennis' Werkbank, Dennis regt sich auf (+5),
+  meckert später bis zu 2-mal. Reparieren (Menü am Schrauber) = Minispiel: 4 Schrauben raus, Wasser mit Lappen wegwischen,
+  grüne Akku-Kontakte blank kratzen, zuschrauben. Danach Lob, Wut -8. Nebenaufgabe in der Liste. waldo.trage(obj).
 - Atemmaske (Halbmaske mit magenta Filtern) liegt im Regal neben der Brille, 4. Symbol in der Ausrüstung. Lackieren ohne
   Maske = Fehler maske (mittel, +15).
 - Waldo (js/waldo.js, nach Fotos): kleiner (Skala 0,85), breit, Gesicht länglich mit hoher Stirn (Cap weit hinten), im Profil mit Tiefe
