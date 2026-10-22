@@ -491,3 +491,30 @@ export function mampfen() {
 export function klick() {
   blip(1500, 0.03, 0.15);
 }
+
+// Husten: kurze, kräftige Rauschstöße mit Brust-Resonanz (laut = Dennis hustet demonstrativ)
+export function husten(lautst = 1, stoesse = 3) {
+  if (!ctx) return;
+  let t = ctx.currentTime + 0.02;
+  for (let i = 0; i < stoesse; i++) {
+    const q = rauschQuelle();
+    const f = ctx.createBiquadFilter();
+    f.type = 'bandpass';
+    f.frequency.value = 420 + Math.random() * 160;
+    f.Q.value = 1.1;
+    const g = ctx.createGain();
+    huelle(g, t, 0.012, 0.05, 0.16, lautst * (i === 0 ? 1 : 0.8));
+    q.connect(f).connect(g).connect(master);
+    // tiefer „Kehl“-Anteil
+    const o = ctx.createOscillator();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(150, t);
+    o.frequency.exponentialRampToValueAtTime(90, t + 0.18);
+    const og = ctx.createGain();
+    huelle(og, t, 0.01, 0.03, 0.14, lautst * 0.18);
+    o.connect(og).connect(master);
+    q.start(t); q.stop(t + 0.3);
+    o.start(t); o.stop(t + 0.25);
+    t += 0.24 + Math.random() * 0.12;
+  }
+}

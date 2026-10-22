@@ -11,6 +11,7 @@ const AUSSEN = { xMin: -9.5, xMax: 9.5, zMin: RAUM.zMax, zMax: 12.5 };
 const HALTUNG = {
   brille: { pos: [0.18, -0.15, -0.45], rot: [0.25, 0.4, 0], skala: 0.55, name: 'Schutzbrille', tragen: 'Aufsetzen' },
   handschuhe: { pos: [0.25, -0.24, -0.55], rot: [0.3, 0.5, 0], skala: 0.7, name: 'Handschuhe', tragen: 'Anziehen' },
+  maske: { pos: [0.2, -0.18, -0.48], rot: [0.2, 0.3, 0], skala: 1.2, name: 'Atemmaske', tragen: 'Aufsetzen' },
   helm: { pos: [0.28, -0.26, -0.62], rot: [0.1, -0.5, 0], skala: 0.8, name: 'Schweißhelm', tragen: 'Aufsetzen' },
   flex: { pos: [0.26, -0.22, -0.6], rot: [0.25, -Math.PI / 2 + 0.25, 0], name: 'Winkelschleifer', benutzen: 'Anwerfen' },
   edding: { pos: [0.2, -0.15, -0.42], rot: [0.5, 0.9, 0.3], skala: 1.0, name: 'Edding' },
@@ -27,6 +28,7 @@ const HALTUNG = {
   hulahup: { pos: [0.3, -0.5, -1.05], rot: [0.35, 1.1, 0], skala: 0.85, name: 'Hula-Hoop-Reifen', benutzen: 'Dennis bringen' },
   creme: { pos: [0.18, -0.16, -0.42], rot: [0.2, 0.4, 0], skala: 1.5, name: 'Lockencreme', benutzen: 'Dennis geben (auf Dennis klicken)' },
   poempel: { pos: [0.22, -0.45, -0.62], rot: [0.35, 0, -0.25], name: 'Pömpel', benutzen: 'Pömpeln' },
+  tasse: { pos: [0.2, -0.2, -0.45], rot: [0.1, 2.0, 0], skala: 1.3, name: 'Benutzte Kaffeetasse', benutzen: 'Auf den Kühlschrank stellen' },
   kackpumpe: { pos: [0.3, -0.5, -0.85], rot: [0.15, 0.6, 0], skala: 0.85, name: 'Kackepumpe', benutzen: 'Abwaschen (Bad) / zurückstellen (Kompressor)' },
   rohrzange: { pos: [0.24, -0.22, -0.52], rot: [0.4, 0.3, -0.9], name: 'Rohrzange', benutzen: 'Reparieren' },
   schlauch: { pos: [0.2, -0.2, -0.55], rot: [0.1, 0.12, 0], skala: 1.2, name: 'Wasserschlauch', benutzen: 'Spritzen (halten)', nichtWerfen: true, nichtAblegen: true },

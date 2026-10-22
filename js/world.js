@@ -890,6 +890,24 @@ export function baueWelt(scene) {
   merke(brille, 'brille', 'Schutzbrille', 'regal');
   objekte.brille = brille;
 
+  // Atemmaske (Halbmaske, graues Gummi, zwei magentafarbene Filter, Kopfbänder) liegt im Regal neben der Brille
+  const maske = new THREE.Group();
+  const maskenKoerper = teil(new THREE.SphereGeometry(0.06, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), 0x5a5d62, { mat: { side: THREE.DoubleSide }, umriss: 0.003 });
+  maskenKoerper.scale.set(1.1, 1.25, 0.9);
+  maskenKoerper.rotation.x = Math.PI / 2;
+  maske.add(maskenKoerper);
+  maske.add(setze(zylinder(0.022, 0.022, 0.025, 0x3a3c40, { umriss: 0.002 }, 12), 0, -0.02, 0.055, Math.PI / 2, 0, 0));
+  for (const sx of [-1, 1]) {
+    maske.add(setze(zylinder(0.032, 0.032, 0.03, 0xd0307a, { umriss: 0.002 }, 16), sx * 0.062, -0.01, 0.025, 0, 0, Math.PI / 2 - sx * 0.5));
+    maske.add(setze(zylinder(0.026, 0.026, 0.032, 0xf2f2ee, { umriss: false }, 16), sx * 0.066, -0.012, 0.025, 0, 0, Math.PI / 2 - sx * 0.5));
+  }
+  maske.add(setze(teil(new THREE.TorusGeometry(0.07, 0.004, 4, 20, Math.PI), 0x1d1d1f, { umriss: false }), 0, 0.02, -0.01, 0, 0, 0));
+  maske.add(setze(teil(new THREE.TorusGeometry(0.075, 0.004, 4, 20, Math.PI), 0x1d1d1f, { umriss: false }), 0, -0.03, -0.01, 0, 0, Math.PI));
+  setze(maske, -4.6, 1.325, -1.15, -Math.PI / 2 + 0.2, Math.PI / 2, 0);
+  scene.add(maske);
+  merke(maske, 'maske', 'Atemmaske', 'regal');
+  objekte.maske = maske;
+
   // Schweißerhandschuhe: flach nebeneinander auf dem Regalbrett, Finger zur Wand
   const handschuhe = new THREE.Group();
   for (const seite of [-1, 1]) {
@@ -2596,7 +2614,89 @@ export function baueWelt(scene) {
     }
   }
 
+  // ---------- Benutzte Kaffeetassen: stehen überall rum, gehören auf den Kühlschrank ----------
+  const tassen = [];
+  const TASSEN_FARBEN = [[0xf4f0e6, 0x2f5fa8], [0x2f5fa8, 0xf4f0e6], [0xc8352a, 0xf4f0e6], [0x3f7a35, 0xf2c21c], [0xf2c21c, 0x1d1d1f], [0x1d1d1f, 0xf4f0e6], [0xe98bb8, 0xf4f0e6], [0x8a5a2a, 0xf4f0e6]];
+  // mögliche Abstellplätze (x, z): Werkbank, Schweißtisch-Ecke, Regal, Waschplatz, Boden, Träger, Sofalehne, Kaffeetisch, Fensterbank
+  const TASSEN_PLAETZE = [[-0.95, -3.1], [0.85, -3.15], [3.75, -3.2], [-4.75, -1.4], [-4.75, 0.3], [4.55, 0.95], [-2.6, 1.6], [1.6, 0.6], [-1.6, -1.7],
+    [3.3, 3.5], [-4.05, 3.55], [-2.4, 3.55], [-4.55, 2.95], [2.2, -1.2], [-3.4, -3.4], [0.2, 1.9]];
+  const strahl = new THREE.Raycaster();
+  strahl.camera = new THREE.PerspectiveCamera(); // nötig, sonst stolpert der Strahl über Sprites (Rauch, Wolken)
+  function oberflaecheBei(x, z) {
+    strahl.set(new THREE.Vector3(x, 2.3, z), new THREE.Vector3(0, -1, 0));
+    // Tassen, Figuren (Dennis, Jonny, Waldo), Unsichtbares, Umrisse und Sprites zählen nicht als Abstellfläche
+    const figur = ['dennis', 'jonny', 'waldo'];
+    const ignor = (o) => {
+      if (o.isSprite || o.userData.umriss) return true;
+      for (let p = o; p; p = p.parent) if (!p.visible || tassen.includes(p) || figur.includes(p.userData.interaktiv?.id)) return true;
+      return false;
+    };
+    for (const h of strahl.intersectObjects(scene.children, true)) if (!ignor(h.object)) return h.point.y;
+    return 0;
+  }
+  function tasseBauen(i) {
+    const [farbe, druck] = TASSEN_FARBEN[i % TASSEN_FARBEN.length];
+    const t = new THREE.Group();
+    t.add(setze(zylinder(0.042, 0.038, 0.1, farbe, { umriss: 0.002 }, 14), 0, 0.05, 0));
+    t.add(setze(teil(new THREE.TorusGeometry(0.026, 0.008, 6, 12), farbe, { umriss: 0.0015 }), 0.048, 0.055, 0));
+    // eingetrockneter Kaffeerest und brauner Rand
+    t.add(setze(zylinder(0.036, 0.036, 0.004, 0x3a2414, { umriss: false }, 14), 0, 0.075, 0));
+    t.add(setze(teil(new THREE.TorusGeometry(0.037, 0.003, 4, 16), 0x5a3a20, { umriss: false }), 0, 0.085, 0, Math.PI / 2, 0, 0));
+    // Aufdruck (Streifen oder Punkt)
+    if (i % 2) t.add(setze(zylinder(0.0425, 0.0405, 0.018, druck, { umriss: false }, 14), 0, 0.06, 0));
+    else t.add(setze(kugel(0.012, druck, { umriss: false }, 6), 0, 0.055, -0.039));
+    t.userData.aufgeraeumt = false;
+    merke(t, 'tasse', 'Kaffeetasse', null);
+    tassen.push(t);
+    return t;
+  }
+  function tasseHinstellen(t, x, z) {
+    scene.add(t);
+    t.visible = true;
+    t.position.set(x, oberflaecheBei(x, z) + 0.001, z);
+    t.rotation.set(0, Math.random() * Math.PI * 2, 0);
+    t.userData.ruhe = undefined;
+  }
+  function freierPlatz(naheBei) {
+    const belegt = (x, z) => tassen.some((t) => t.parent === scene && t.visible && !t.userData.aufgeraeumt && Math.hypot(t.position.x - x, t.position.z - z) < 0.25);
+    let liste = TASSEN_PLAETZE.map(([x, z]) => [x + (Math.random() - 0.5) * 0.2, z + (Math.random() - 0.5) * 0.2]).filter(([x, z]) => !belegt(x, z));
+    if (naheBei) liste.sort((a, b) => Math.hypot(a[0] - naheBei.x, a[1] - naheBei.z) - Math.hypot(b[0] - naheBei.x, b[1] - naheBei.z));
+    else liste.sort(() => Math.random() - 0.5);
+    return liste[0] || [(Math.random() - 0.5) * 4, (Math.random() - 0.5) * 3];
+  }
+  // auf dem Kühlschrank: 4 x 3 Plätze, danach zweite Lage
+  const kuehlOben = 0.845;
+  function tasseAufKuehlschrank(t) {
+    const n = tassen.filter((x) => x.userData.aufgeraeumt).length;
+    const lage = Math.floor(n / 12), i = n % 12;
+    const lx = -0.16 + (i % 4) * 0.105, lz = -0.13 + Math.floor(i / 4) * 0.13;
+    scene.add(t);
+    t.visible = true;
+    // Kühlschrank ist um 90° gedreht: lokale x/z vertauscht
+    t.position.set(-4.66 + lz, kuehlOben + lage * 0.105, 2.42 - lx);
+    t.rotation.set(0, Math.PI / 2 + (Math.random() - 0.5) * 0.4, 0);
+    if (t.userData.ruhe) t.scale.copy(t.userData.ruhe.skala);
+    t.userData.aufgeraeumt = true;
+  }
+  let tassenGestellt = false;
+  function tassenVerteilen(anzahl = 7) {
+    if (tassenGestellt) return;
+    tassenGestellt = true;
+    scene.updateMatrixWorld(true);
+    for (let i = 0; i < anzahl; i++) { const [x, z] = freierPlatz(); tasseHinstellen(tasseBauen(i), x, z); }
+  }
+
   return {
+    tassen,
+    tassenVerteilen,
+    tasseAufKuehlschrank,
+    neueTasse(bei) {
+      if (tassen.length >= 14) return null;
+      const t = tasseBauen(tassen.length);
+      const [x, z] = freierPlatz(bei);
+      tasseHinstellen(t, x, z);
+      return t;
+    },
     interaktiv,
     hindernisse,
     objekte,

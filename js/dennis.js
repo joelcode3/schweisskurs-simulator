@@ -290,6 +290,17 @@ export function baueDennis(scene) {
   rechts.ellbogen.add(becher);
   const becherQ = new THREE.Quaternion();
 
+  // Handy fürs Telefonieren (linke Hand am Ohr)
+  const telefonHandy = new THREE.Group();
+  telefonHandy.add(quader(0.07, 0.14, 0.012, 0x1d1d1f, { umriss: 0.002 }));
+  telefonHandy.add(setze(quader(0.06, 0.12, 0.002, 0x3a6fb0, { umriss: false }), 0, 0, 0.007));
+  telefonHandy.position.set(0.01, -0.06, 0.035);
+  telefonHandy.rotation.set(0.2, 0, 0.1);
+  telefonHandy.visible = false;
+  links.hand.add(telefonHandy);
+  let telefoniert = false;
+  const TELEFON = { s: [-2.0, -0.47, 0.3], e: [-1.82, 0, 0.8] }; // per Suche bestimmt: Handy am linken Ohr
+
   // Hula-Hoop-Reifen (nur beim Hula-Hoop sichtbar), kreist um die Hüfte
   const reifen = new THREE.Group();
   reifen.add(teil(new THREE.TorusGeometry(0.45, 0.016, 8, 48), 0xe84a9a, { umriss: 0.004 }));
@@ -543,6 +554,9 @@ export function baueDennis(scene) {
     feuerloescher(an) { loescherHand.visible = an; },
     // Auf dem Sofa schlafen: eingeknickte Haltung (Wurzel auf den Hintern setzen)
     sofa(an) { aufSofa = an; },
+    telefon(an) { telefoniert = an; telefonHandy.visible = an; },
+    get telefoniert() { return telefoniert; },
+    _test: { links, kopf, TELEFON, telefonHandy },
     mittagspause(an) { dose.visible = an; tomate.visible = an; essen = an; },
     // Löst mit true auf, wenn er ankommt, mit false, wenn ein neues Ziel dazwischenkommt
     gehZu(x, z, schnell = 1.3) {
@@ -797,6 +811,11 @@ export function baueDennis(scene) {
         const schwing = laeuft ? Math.sin(schrittPhase) * 0.45 : 0;
         links.schulter.rotation.set(-schwing, 0, -0.12);
         links.ellbogen.rotation.set(-0.15 - (laeuft ? 0.3 : 0), 0, 0);
+        // telefoniert: linke Hand mit Handy am Ohr, Kopf leicht schräg
+        if (telefoniert) {
+          links.schulter.rotation.set(...TELEFON.s);
+          links.ellbogen.rotation.set(...TELEFON.e);
+        }
         // Schluck Kaffee ab und zu
         schluckTimer -= dt;
         if (!laeuft && schluckTimer < 0) {
