@@ -281,6 +281,21 @@ export const DENNIS = {
   grillDanke: ['Danke, dass du den Grill aufgestellt hast. Einer muss ja.', 'Grill steht wieder? Gut. Torben kriegt Grillverbot.'],
   anstoss: ['RUMMS! Was machst du da draußen?!', 'Hab ich da gerade was scheppern gehört?!'],
   weidemannZu: ['Finger weg vom Hoflader! Den Schlüssel kriegst du, wenn du ihn brauchst.', 'Der Hoflader ist abgeschlossen. Und das bleibt erst mal so.'],
+  // Vorzeichen: Gähnen (Kaffee wäre jetzt gut), Hüfte reiben, Blick auf die Uhr vor der Mittagspause
+  gaehnen: ['Uaaaaah ... Ich bräucht jetzt nen Kaffee.', '*gähn* ... Die Nacht war zu kurz. Danke, Wind.', 'Uaah. Wenn mir jetzt einer nen Kaffee bringen würde ...'],
+  kaffeeMuede: ['Genau DAS hab ich jetzt gebraucht. Du bist ein Schatz.', 'Kaffee, genau als ich wegpenne. Du hast es verstanden!'],
+  huefteVorzeichen: ['Aua ... die Hüfte zwickt schon wieder. Hinten links.', 'Hmm. Meine Hüfte. Das fühlt sich gar nicht gut an.'],
+  huefteVermieden: ['Gut, dass du fragst. Die zwickt schon den ganzen Morgen. Ich mach mal kurz Dehnübungen.', 'Ja, die Hüfte. Danke der Nachfrage. Ich setz mich gleich mal anders hin, dann geht das.'],
+  huefteTrotzdem: ['Ich lieg hier mit kaputter Hüfte und muss trotzdem alles selber machen!', 'Mit DER Hüfte jetzt aufstehen?! Unglaublich!'],
+  mittagBald: ['Schon so spät? Gleich ist Mittag.', 'Hm. Gleich Mittagspause. Wo ist meine Brotdose?'],
+  // Nett sein zu Dennis (Menü an Dennis): entspannt freut er sich, gestresst wird er stinkig
+  nett: {
+    huefte: ['Die Hüfte? Geht so. Hinten links, wie immer. Nett, dass du fragst.', 'Der Orthopäde sagt, ich soll mich mehr bewegen. Ich sag: Ich schweiß den ganzen Tag!', 'Heute geht es eigentlich. Nur wenn ich mich bücke. Und wenn ich stehe.'],
+    zuhoeren: ['Der W123, das ist ein Auto. Den fährst du, bis du umfällst. Wenn keiner ne Gehwegplatte drauf schmeißt.', 'Früher hab ich auf der Werft geschweißt. Dagegen ist das hier Kindergeburtstag.', 'Das Feine-Sahne-Konzert damals, ey. Ich war drei Tage heiser.', 'Eigentlich wollte ich nur einen Ofen für den Wohnwagen. Jetzt bauen hier alle Öfen.'],
+    lydia: ['Lydia? Die ist super. Die hält mich aus. Das muss man erst mal schaffen.', 'Lydia sagt, ich soll weniger fluchen. Ich sag: Ich fluche nicht, ich erkläre laut.', 'Lydia will, dass ich den Benz verkaufe. Niemals. NIEMALS.'],
+  },
+  nettGestresst: ["Geh mir nicht auf'n Sack, ich hab zu tun!", 'Bin gestresst! Später!', 'Kann jetzt nicht!', 'Nicht jetzt! Mach lieber deine Arbeit!', 'Siehst du nicht, dass ich gerade voll unter Strom stehe?!'],
+  nettNerven: ["Jetzt reicht's aber mit dem Gequatsche. Arbeite!", 'Hab ich dir doch gerade erst erzählt. Hörst du nicht zu?', 'Du laberst mir ein Ohr ab. Ran an die Flasche!'],
   traeger: ['Halt! Nicht anfassen! Schwere Stahlträger sind Torbens Job!', 'Finger weg von den Trägern! Das macht Torben.', 'Die Träger lässt du liegen. Das ist Torbens Job, nicht deiner!'],
   verstopft: {
     hilfe: ['Oh oh. Das Klo ist verstopft. Hilf mir mal! Der Pömpel steht oben auf dem Regal.', 'Mist, Klo ist dicht! Hol mal den Pömpel, oben im Regal. Ich geh da nicht nochmal rein.'],

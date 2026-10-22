@@ -473,9 +473,10 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     await warte(250);
   }
 
-  async function lob(text) {
+  // Lob: senkt die Wut (Standard 5, richtig gute Arbeit bis 12)
+  async function lob(text, minus = 5) {
     z.beschaeftigt = true;
-    z.wut = Math.max(0, z.wut - 5);
+    z.wut = Math.max(0, z.wut - minus);
     dennis.stimmung('froh');
     jingle(true);
     ui.lobZeigen(text || zufallAus(LOB));
@@ -546,7 +547,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     ui.hinweis(`Tür angezeichnet. Genauigkeit ${e.qualitaet} %.`);
     aktualisieren();
     if (e.qualitaet < 50) await fehler('anzeichnen');
-    else if (e.qualitaet >= 90) await lob(sag(DENNIS.lobAnzeichnen));
+    else if (e.qualitaet >= 90) await lob(sag(DENNIS.lobAnzeichnen), e.qualitaet >= 97 ? 12 : 10);
   }
 
   async function schneiden() {
@@ -571,7 +572,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     if (z.feuer === 'nie') z.feuerAb = Math.min(z.feuerAb, sekundenSeitStart() + 15 + Math.random() * 25);
     aktualisieren();
     if (e.qualitaet < 55) await fehler('schnitt');
-    else if (e.qualitaet >= 88) await lob(sag(DENNIS.lobSchnitt));
+    else if (e.qualitaet >= 88) await lob(sag(DENNIS.lobSchnitt), e.qualitaet >= 95 ? 12 : 10);
   }
 
   async function stromEinstellen() {
@@ -619,7 +620,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     } else if (e.qualitaet < 50) {
       await fehler('naht');
     } else if (e.qualitaet >= 82) {
-      await lob();
+      await lob(undefined, e.qualitaet >= 92 ? 12 : 10);
     }
   }
 
@@ -657,7 +658,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     ui.hinweis(e.nasen ? `Lackiert, aber ${e.nasen} Lacknasen. Ab zu Dennis damit.` : 'Schick! Ab zu Dennis damit.');
     aktualisieren();
     if (e.nasen >= 3) await fehler('lacknasen');
-    else if (!e.nasen) await lob(sag(DENNIS.lobLack));
+    else if (!e.nasen) await lob(sag(DENNIS.lobLack), e.qualitaet >= 97 ? 12 : 10);
   }
 
   function naechsterTipp() {
@@ -1549,6 +1550,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
       if (t > wz.naechsterBesuch) {
         // ist Jonny da, kommt Waldo meist später (die beiden sind selten gleichzeitig hier)
         if (jz.da && Math.random() > 0.15) wz.naechsterBesuch = t + 20;
+        else if (!ruhigeLage() && !z.ueberlappOk) wz.naechsterBesuch = t + 20;
         else waldoBesuch();
       }
       return;
@@ -1650,10 +1652,13 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
       return;
     }
     if (z.kaffees === 1) z.wut = Math.max(0, z.wut - 20);
+    // hat er gerade gegähnt, wirkt der Kaffee besser
+    const muede = sekundenSeitStart() < (z.muedeBis ?? 0);
+    if (muede) { z.wut = Math.max(0, z.wut - 10); z.muedeBis = 0; }
     dennis.stimmung('froh');
     jingle(true);
     aktualisieren();
-    ui.lobZeigen(z.kaffeesSeitKlo === 1 ? sag(DENNIS.kaffee.danke) : sag(DENNIS.kaffee.nochmal));
+    ui.lobZeigen(muede ? sag(DENNIS.kaffeeMuede) : z.kaffeesSeitKlo === 1 ? sag(DENNIS.kaffee.danke) : sag(DENNIS.kaffee.nochmal));
     dennis.stimmung('ruhig');
   }
 
@@ -1993,6 +1998,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     if (z.dennisLoescht || z.feuer !== 'brennt') return;
     z.dennisLoescht = true;
     dennisSagt(z.feuerGrund === 'kippe' ? sag(DENNIS.feuer.rufJohnny) : sag(DENNIS.feuer.ruf), true, { prio: 1 });
+    if (z.huefte === 'liegt') { z.huefte = 'erledigt'; aerger(6); setTimeout(() => dennisSagt(sag(DENNIS.huefteTrotzdem), true, { prio: 1 }), 1500); }
     // aus Pause, Klo, Schlaf oder Liegen raus
     if (dennis.modus === 'sitzen' || dennis.modus === 'schlafen') { mittagGeweckt = true; z.mittag = 'erledigt'; welt.objekte.brotdose.visible = true; }
     if (dennis.modus !== 'normal') dennis.aufstehen(dennis.position.x, dennis.position.z);
@@ -2319,6 +2325,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
   async function dennisRepariert() {
     if (z.dennisRepariert || z.leck !== 'spritzt') return;
     z.dennisRepariert = true;
+    if (z.huefte === 'liegt') { z.huefte = 'erledigt'; aerger(6); setTimeout(() => dennisSagt(sag(DENNIS.huefteTrotzdem), true, { prio: 1 }), 1500); }
     if (dennis.modus === 'sitzen' || dennis.modus === 'schlafen') { mittagGeweckt = true; z.mittag = 'erledigt'; welt.objekte.brotdose.visible = true; }
     if (dennis.modus !== 'normal') dennis.aufstehen(dennis.position.x, dennis.position.z);
     if (!dennis.wurzel.visible) { dennis.springZu(welt.KLO.x, welt.KLO.z); dennis.sichtbar(true); }
@@ -2765,7 +2772,10 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
         if (dennis.modus === 'liegen') return ['Dennis', 'Liegt auf dem Boden und hält sich die Hüfte.', [A('Dennis aufhelfen', 'hand', aufhelfen)]];
         if (dennis.modus === 'schlafen') return ['Dennis', 'Schläft. Schnarcht leise.', [A('Wecken', 'hand', wecken)]];
         if (dennis.modus === 'sitzen') return ['Dennis', 'Isst gerade. Lass ihn.', []];
-        const a = [A('Fragen, was als Nächstes dran ist', 'frage', dennisFragen)];
+        const a = [A('Fragen, was als Nächstes dran ist', 'frage', dennisFragen),
+          A('Nach der Hüfte fragen', 'frage', () => nettSein('huefte')),
+          A('Zuhören (er erzählt was)', 'frage', () => nettSein('zuhoeren')),
+          A('Über Lydia reden', 'frage', () => nettSein('lydia'))];
         if (alleNaehte()) a.unshift(A('Ofen abgeben', 'abgeben', abgeben));
         if (z.kaffeeInHand) a.unshift(A('Kaffee geben', 'tasse', kaffeeGeben));
         return ['Dennis', 'Dein Schweißkurslehrer.', a];
@@ -2942,6 +2952,82 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
   let dennisZuletztGelaufen = 0;
   const sekundenSeitStart = () => (performance.now() - z.start) / 1000;
 
+  // ---------- Wut baut sich ab, Vorzeichen (Gähnen, Hüfte, Uhr), überlappende Ereignisse ----------
+  // Läuft gerade kein anderes Ereignis?
+  function ruhigeLage() {
+    return z.feuer !== 'brennt' && z.leck !== 'spritzt' && z.huefte !== 'liegt' && z.huefte !== 'geht' && z.huefte !== 'vorzeichen'
+      && z.mittag !== 'gerade' && z.mittag !== 'vorzeichen' && !z.aufKlo && z.verstopft !== 'ja' && !waldo.da;
+  }
+  function wutUndVorzeichen(dt) {
+    const t = sekundenSeitStart();
+    // Wut sinkt von selbst: kommt 20 s lang kein neuer Ärger dazu, alle 10 s um 1 Punkt
+    if (z.wut > (z.wutVorher ?? z.wut) + 0.01) z.letzterAerger = t;
+    if (t - (z.letzterAerger ?? 0) > 20 && z.wut > 0) {
+      if (z.abbauSeit === undefined) z.abbauSeit = t;
+      if (t - z.abbauSeit >= 10) {
+        z.abbauSeit = t;
+        z.wut = Math.max(0, z.wut - 1);
+        ui.wutZeigen(z.wut, stimmungAusWut());
+      }
+    } else z.abbauSeit = undefined;
+    z.wutVorher = z.wut;
+    // Überlappende Ereignisse: in den ersten 4 Minuten nie, danach immer öfter (alle 20 s neu gewürfelt, höchstens 55 %)
+    if (t > (z.ueberlappWurf ?? 0)) {
+      z.ueberlappWurf = t + 20;
+      z.ueberlappOk = t > 240 && Math.random() < Math.min(0.55, (t - 240) / 600);
+    }
+    const kannGeste = dennis.modus === 'normal' && dennis.wurzel.visible && !z.beschaeftigt && !dennis.telefoniert && !z.hula && !z.dennisFegt && !z.dennisLoescht;
+    // Vorzeichen-Gesten: Hüfte reiben bzw. auf die Uhr schauen, alle paar Sekunden
+    if ((z.huefte === 'vorzeichen' || z.mittag === 'vorzeichen') && kannGeste && t > (z.naechsteGeste ?? 0)) {
+      z.naechsteGeste = t + 6;
+      dennis.geste(z.huefte === 'vorzeichen' ? 'huefte' : 'uhr', 3.5);
+    }
+    // Gähnen: alle 100–160 s; danach 40 s lang wirkt Kaffee besser
+    if (z.naechstesGaehnen === undefined) z.naechstesGaehnen = 70 + Math.random() * 40;
+    if (t > z.naechstesGaehnen && kannGeste && !buehneBelegt()) {
+      z.naechstesGaehnen = t + 100 + Math.random() * 60;
+      z.muedeBis = t + 40;
+      dennis.geste('gaehnen', 3.2);
+      brummeln(2, 0, 0.6);
+      if (ruhig() && Math.random() < 0.6) setTimeout(() => dennisSagt(sag(DENNIS.gaehnen), false, { prio: 0 }), 1400);
+      // ein zweites Mal gähnen, wenn noch kein Kaffee kam
+      setTimeout(() => { if (sekundenSeitStart() < (z.muedeBis ?? 0) && dennis.modus === 'normal') dennis.geste('gaehnen', 3); }, 18000);
+    }
+  }
+  // Nett sein: entspannt (unter „sauer“) sinkt die Wut, gestresst wird er stinkig; nicht beliebig oft
+  function nettSein(was) {
+    const t = sekundenSeitStart();
+    if (!dennisSiehts()) return;
+    z.nett = z.nett || {};
+    // Hüfte fragen, während er sie sich reibt: man kommt ihm zuvor, das Ereignis fällt aus
+    if (was === 'huefte' && z.huefte === 'vorzeichen') {
+      z.huefte = 'vermieden';
+      z.nett.zuletzt = t; z.nett.huefte = t;
+      z.wut = Math.max(0, z.wut - 8);
+      aktualisieren();
+      dennis.stimmung('froh');
+      ui.lobZeigen(sag(DENNIS.huefteVermieden));
+      setTimeout(() => dennis.stimmung('ruhig'), 4000);
+      return;
+    }
+    // Spam: dasselbe Thema innerhalb von 60 s oder irgendwas innerhalb von 15 s nervt
+    if (t - (z.nett[was] ?? -999) < 60 || t - (z.nett.zuletzt ?? -999) < 15) {
+      z.nett.zuletzt = t;
+      aerger(3);
+      dennisSagt(sag(DENNIS.nettNerven), true, { prio: 2 });
+      return;
+    }
+    z.nett[was] = t; z.nett.zuletzt = t;
+    if (z.wut >= 40) {
+      aerger(4);
+      dennisSagt(sag(DENNIS.nettGestresst), true, { prio: 2 });
+      return;
+    }
+    z.wut = Math.max(0, z.wut - 5);
+    aktualisieren();
+    dennisSagt(sag(DENNIS.nett[was]), false, { prio: 2, minMs: 5500 });
+  }
+
   // ---------- Fahrzeuge: selbst fahren, Jonny/Waldo/Torben fahren rum (js/fahrten.js) ----------
   const fahrten = baueFahrten({
     fz, welt, scene: dennis.wurzel.parent, dennis, jonny, waldo, torben, steuerung, kamera, hand, z, jz, wz, sag, dennisSagt, aerger, lob,
@@ -2953,7 +3039,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
   return {
     zustand: z,
     klick,
-    test: { fahrten, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
+    test: { fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
     stationWaehlen,
     intro,
     aktualisieren,
@@ -2962,6 +3048,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
       spritzUpdate(dt);
       if (z.vorbei) return;
       fahrten.update();
+      wutUndVorzeichen(dt);
       waescheUpdate(dt);
       jonnyUpdate();
       waldoUpdate();
@@ -3090,10 +3177,11 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
       }
       // Feuer und Wasserrohrbruch nie kurz hintereinander: mindestens 90 s Abstand
       const ereignisPause = sekundenSeitStart() - (z.letztesEreignis ?? -999) > 90;
-      if (z.feuer === 'nie' && sekundenSeitStart() > z.feuerAb && (z.geschnitten || jz.da) && ereignisPause && !z.beschaeftigt && !z.aufKlo && !z.dennisFegt && z.mittag !== 'gerade' && dennis.modus === 'normal' && !buehneBelegt()) feuerStart();
+      const dennisBereit = (dennis.modus === 'normal' && z.mittag !== 'gerade') || (z.ueberlappOk && (dennis.modus === 'liegen' || z.mittag === 'gerade'));
+      if (z.feuer === 'nie' && sekundenSeitStart() > z.feuerAb && (z.geschnitten || jz.da) && ereignisPause && !z.beschaeftigt && !z.aufKlo && !z.dennisFegt && dennisBereit && (ruhigeLage() || z.ueberlappOk) && !buehneBelegt()) feuerStart();
       // Wasserrohrbruch (Frost): einmal pro Spiel, irgendwann
       if (!z.leckAb) z.leckAb = 160 + Math.random() * 140;
-      if (!z.leck && sekundenSeitStart() > z.leckAb && ereignisPause && !z.beschaeftigt && !z.aufKlo && z.feuer !== 'brennt' && !z.hula && dennis.modus === 'normal' && !buehneBelegt()) leckStart();
+      if (!z.leck && sekundenSeitStart() > z.leckAb && ereignisPause && !z.beschaeftigt && !z.aufKlo && z.feuer !== 'brennt' && !z.hula && dennisBereit && (ruhigeLage() || z.ueberlappOk) && !buehneBelegt()) leckStart();
       // Der Schlauch reicht nicht durch die ganze Werkstatt
       if (hand.item?.id === 'schlauch' && Math.hypot(kamera.position.x - 4.6, kamera.position.z - 1.8) > 5.2) {
         spritzStopp();
@@ -3101,11 +3189,19 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
         ui.hinweis(DENNIS.schlauch.zuKurz);
       }
       // Klo-Pause: einmal pro Spiel, nicht gleich am Anfang
-      if (z.klo === 'nie' && !z.aufKlo && sekundenSeitStart() > 100 && !z.beschaeftigt && !z.dennisFegt && !z.dennisLoescht && z.mittag !== 'gerade' && dennis.modus === 'normal' && dennis.istDaheim() && !buehneBelegt() && Math.random() < dt * 0.03) {
+      if (z.klo === 'nie' && !z.aufKlo && sekundenSeitStart() > 100 && (ruhigeLage() || z.ueberlappOk) && !z.beschaeftigt && !z.dennisFegt && !z.dennisLoescht && z.mittag !== 'gerade' && dennis.modus === 'normal' && dennis.istDaheim() && !buehneBelegt() && Math.random() < dt * 0.03) {
         kloPause();
       }
       // Mittagspause: Dennis kommt mit Brotdose rüber und isst eine Tomate (einmal pro Spiel)
-      if (z.mittag === 'nie' && sekundenSeitStart() > 140 && !z.beschaeftigt && !z.dennisFegt && !z.dennisLoescht && !z.aufKlo && dennis.modus === 'normal' && dennis.istDaheim() && !buehneBelegt() && Math.random() < dt * 0.03) {
+      if (z.mittag === 'nie' && sekundenSeitStart() > 140 && (ruhigeLage() || z.ueberlappOk) && !z.beschaeftigt && !z.dennisFegt && !z.dennisLoescht && !z.aufKlo && dennis.modus === 'normal' && dennis.istDaheim() && !buehneBelegt() && Math.random() < dt * 0.03) {
+        // erst ein paar Mal auf die Uhr schauen, dann Mittagspause
+        z.mittag = 'vorzeichen';
+        z.vorzeichenBis = sekundenSeitStart() + 20;
+        z.naechsteGeste = 0;
+        if (ruhig()) dennisSagt(sag(DENNIS.mittagBald), false, { prio: 0 });
+      }
+      if (z.mittag === 'vorzeichen' && sekundenSeitStart() > z.vorzeichenBis && !z.beschaeftigt && !z.dennisFegt && !z.dennisLoescht && !z.aufKlo && dennis.modus === 'normal' && !buehneBelegt()) {
+        z.mittag = 'nie';
         mittagspause();
       }
       // Hula-Hoop ab und zu (Reifen hängt an der Wand)
@@ -3122,7 +3218,14 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
       }
       // Hüfte: einmal pro Spiel legt sich Dennis hin und jammert, bis man ihm aufhilft
       const sekunden = (performance.now() - z.start) / 1000;
-      if (z.huefte === 'nie' && sekunden > 75 && dennis.modus === 'normal' && !z.beschaeftigt && !z.dennisFegt && !z.dennisLoescht && dennis.istDaheim() && !buehneBelegt() && Math.random() < dt * 0.04) {
+      if (z.huefte === 'nie' && sekunden > 75 && (ruhigeLage() || z.ueberlappOk) && dennis.modus === 'normal' && !z.beschaeftigt && !z.dennisFegt && !z.dennisLoescht && dennis.istDaheim() && !buehneBelegt() && Math.random() < dt * 0.04) {
+        // erst reibt er sich eine Weile die Hüfte: Wer jetzt nachfragt, kommt ihm zuvor
+        z.huefte = 'vorzeichen';
+        z.huefteVorBis = sekunden + 28;
+        z.naechsteGeste = 0;
+        if (ruhig()) setTimeout(() => dennisSagt(sag(DENNIS.huefteVorzeichen), true, { prio: 0 }), 1200);
+      }
+      if (z.huefte === 'vorzeichen' && sekunden > z.huefteVorBis && dennis.modus === 'normal' && !z.beschaeftigt && !z.dennisFegt && !z.dennisLoescht && !buehneBelegt()) {
         hueftePlatt();
       }
       if (z.huefte === 'liegt' && dennis.modus === 'liegen') {

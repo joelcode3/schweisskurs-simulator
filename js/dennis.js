@@ -279,6 +279,12 @@ export function baueDennis(scene) {
   }
   const links = arm(-1);
   const rechts = arm(1);
+  // Armbanduhr am linken Handgelenk (für den Blick auf die Uhr vor der Mittagspause)
+  const uhr = new THREE.Group();
+  uhr.add(zylinder(0.047, 0.047, 0.03, 0x1d1d1f, { umriss: false }, 12));
+  uhr.add(setze(zylinder(0.022, 0.022, 0.012, 0xc9cdd2, { umriss: 0.001 }, 12), 0, 0, 0.045, Math.PI / 2, 0, 0));
+  uhr.position.set(0, -0.02, 0);
+  links.hand.add(uhr);
   links.schulter.rotation.z = -0.1;
   rechts.schulter.rotation.z = 0.1;
 
@@ -299,6 +305,7 @@ export function baueDennis(scene) {
   telefonHandy.visible = false;
   links.hand.add(telefonHandy);
   let telefoniert = false;
+  let geste = null;
   const TELEFON = { s: [-2.0, -0.47, 0.3], e: [-1.82, 0, 0.8] }; // per Suche bestimmt: Handy am linken Ohr
 
   // Hula-Hoop-Reifen (nur beim Hula-Hoop sichtbar), kreist um die Hüfte
@@ -555,6 +562,9 @@ export function baueDennis(scene) {
     // Auf dem Sofa schlafen: eingeknickte Haltung (Wurzel auf den Hintern setzen)
     sofa(an) { aufSofa = an; },
     telefon(an) { telefoniert = an; telefonHandy.visible = an; },
+    // kurze Gesten als Vorzeichen: 'gaehnen' (Arme hoch, Mund weit auf), 'huefte' (Hand reibt hinten links die Hüfte), 'uhr'
+    geste(name, dauer = 3) { geste = { name, start: zeit, dauer }; },
+    get aktuelleGeste() { return geste && zeit - geste.start < geste.dauer ? geste.name : null; },
     get telefoniert() { return telefoniert; },
     _test: { links, kopf, TELEFON, telefonHandy },
     mittagspause(an) { dose.visible = an; tomate.visible = an; essen = an; },
@@ -740,6 +750,11 @@ export function baueDennis(scene) {
         kopfNick = -0.3;
       }
       if (tanzt) kopfNick += Math.pow(Math.abs(Math.cos((beat % 1) * Math.PI)), 3) * 0.3 - 0.1;
+      const g = geste && zeit - geste.start < geste.dauer && modus === 'normal' && !telefoniert ? geste : null;
+      // Hülle für Gesten: weich rein und raus
+      const gk = g ? Math.min(1, (zeit - g.start) / 0.5, (g.start + g.dauer - zeit) / 0.5) : 0;
+      if (g && g.name === 'gaehnen') kopfNick = kopfNick * (1 - gk) - 0.45 * gk;
+      if (g && g.name === 'uhr') { kopfNick = kopfNick * (1 - gk) + 0.45 * gk; kopfSoll = kopfSoll * (1 - gk) - 0.3 * gk; }
       kopf.rotation.y += (kopfSoll - kopf.rotation.y) * Math.min(1, dt * 6);
       kopf.rotation.x += (kopfNick - kopf.rotation.x) * Math.min(1, dt * (tanzt ? 20 : 6));
 
@@ -796,6 +811,30 @@ export function baueDennis(scene) {
         links.ellbogen.rotation.set(hoch ? -0.3 : -1.6 + pump * 0.4, 0, 0);
         rechts.schulter.rotation.set(!hoch ? -2.7 - pump * 0.3 : -0.8, 0, 0.3);
         rechts.ellbogen.rotation.set(!hoch ? -0.3 : -1.6 + pump * 0.4, 0, 0);
+      } else if (g) {
+        const m = (a, b) => a + (b - a) * gk;
+        if (g.name === 'gaehnen') {
+          // beide Arme hoch, strecken
+          const w = Math.sin(zeit * 2) * 0.05;
+          links.schulter.rotation.set(m(-0.1, -2.75 + w), 0, m(-0.12, -0.65));
+          links.ellbogen.rotation.set(m(-0.15, -0.5), 0, 0);
+          rechts.schulter.rotation.set(m(-0.25, -2.75 - w), 0, m(0.12, 0.65));
+          rechts.ellbogen.rotation.set(m(-0.9, -0.5), 0, 0);
+        } else if (g.name === 'huefte') {
+          // linke Hand nach hinten an die Hüfte, reibt; leicht schief, Gesicht verzogen
+          const reib = Math.sin(zeit * 9) * 0.12;
+          links.schulter.rotation.set(m(-0.1, 0.75 + reib), 0, m(-0.12, -0.45));
+          links.ellbogen.rotation.set(m(-0.15, -1.45), 0, 0);
+          rechts.schulter.rotation.set(-0.25, 0, 0.12);
+          rechts.ellbogen.rotation.set(-0.9, 0, 0);
+          rumpf.rotation.z = -0.1 * gk;
+        } else {
+          // Blick auf die Armbanduhr: linker Unterarm quer vor die Brust
+          links.schulter.rotation.set(m(-0.1, -1.05), m(0, 0.55), m(-0.12, 0.1));
+          links.ellbogen.rotation.set(m(-0.15, -1.75), 0, 0);
+          rechts.schulter.rotation.set(-0.25, 0, 0.12);
+          rechts.ellbogen.rotation.set(-0.9, 0, 0);
+        }
       } else if (wuetend) {
         const z = Math.sin(zeit * 18) * 0.15;
         links.schulter.rotation.set(-2.4 + z, 0, -0.3);
@@ -849,7 +888,8 @@ export function baueDennis(scene) {
       const mundAuf = schlaeft ? 0.014 + Math.max(0, Math.sin(zeit * 1.3)) * 0.012 : essen ? 0.014 + Math.max(0, Math.sin(zeit * 9)) * 0.02 : leidet ? 0.02 + Math.abs(Math.sin(zeit * 5)) * 0.03
         : tanzt ? 0.025
           : wuetend ? 0.03 + Math.abs(Math.sin(zeit * 14)) * 0.035 : stimmung === 'sauer' ? 0.02 + Math.abs(Math.sin(zeit * 10)) * 0.02 : 0.014;
-      mund.scale.set(stimmung === 'froh' || tanzt ? 1.3 : 1, mundAuf / 0.014, 1);
+      const gaehnt = g && g.name === 'gaehnen' ? gk : 0;
+      mund.scale.set(stimmung === 'froh' || tanzt ? 1.3 : 1 + gaehnt * 0.4, (mundAuf + gaehnt * 0.06) / 0.014, 1);
       hautFarbe.lerp(zielFarbe, Math.min(1, dt * 4));
       for (const m of hautMats) m.color.copy(hautFarbe);
       kopf.position.x = wuetend ? Math.sin(zeit * 40) * 0.008 : 0;
