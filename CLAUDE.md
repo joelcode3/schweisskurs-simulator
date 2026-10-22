@@ -118,9 +118,9 @@
   (`wandMalen`): Putz, grüngrauer Sockel bis 1,25 m, Putz bröckelt stellenweise (Ziegel sichtbar), Risse, Wasserflecken.
   KEINE Graffiti und Zahlen (Betreiber: wieder weg). Eingang vorne: breites Scheunentor komplett grün (2 Flügel, Z-Streben,
   nur die Scharniere/Bänder schwarz) mit Rauchen-verboten-Schild; Lichtschalter zwischen Tor und WC-Tür.
-  Das Tor ist ZU; im linken Flügel (leicht aus der Mitte) eine normale grüne Schlupftür, steht offen (nach außen), Durchgang
-  nur dort (DURCHGANG x -0,68 bis -0,02). Daneben auf dem Tor klein ein handgeschriebenes Pappschild „Schweisskurs, nicht stören!“
-  mit Nagel (Caveat). Jonny/Waldo gehen durch die Schlupftür (-0,35 | 3,55).
+  Das Tor ist ZU; im linken Flügel (leicht aus der Mitte) eine normale grüne Schlupftür, Band an der Außenkante (zur Torecke),
+  steht offen nach außen, Durchgang nur dort (DURCHGANG x -0,68 bis -0,02). Neben der Tür auf dem anderen Flügel klein ein
+  handgeschriebenes Pappschild „Schweisskurs, nicht stören!“ mit Nagel (Caveat). Jonny/Waldo gehen durch die Schlupftür (-0,35 | 3,55).
 - Draußen (js/draussen.js, `baueDraussen`): rotes Backsteingebäude mit flachem Satteldach aus schwarzem Wellblech (Giebel vorne/
   hinten, Regenrinnen, Fallrohre), Bad als Anbau mit flachem Dach und Milchglasfenster, Fenster links außen. Kaputte Betonfläche
   vor der Werkstatt (Fugen, Risse mit Unkraut, ausgebrochene Stellen mit Schotter, lose Brocken), Wiese, Bäume, Horizont
@@ -131,10 +131,12 @@
   rundem Grillrost und alter schwarzer Bratwurst. Begehbar: Vorplatz, Streifen rechts neben der Halle, Durchgang durchs Tor
   (Bad-Anbau ausgespart). Würfe draußen prallen an den Hofgrenzen ab (hand.js AUSSEN).
 - Dennis' Wohnwagen (js/carport.js, `baueCarport`): links auf der Wiese neben der Betonfläche unter einer Eiche ein großes Carport
-  (Holz, Wellplatten-Dach) mit Wohnwagen, kleiner Holzterrasse (Campingstühle, Bierkiste), Lichterkette davor. Auf dem
-  Carport-Dach alte blaue Turnmatten mit Gehwegplatten beschwert (gegen Eicheln-Lärm), Eicheln im Gras. Hinter dem Wohnwagen
-  ein schief angebautes kleines Carport mit blauer Plane als Dach (Loch drin), darunter Dennis' weißer Mercedes W123 mit
-  Gehwegplatte IN der Motorhaube (Delle, Risse). Eine Turnmatte liegt heruntergeweht im Gras. Geschichte: heute Nacht um 4 bei
+  (Holz, Wellplatten-Dach) mit Wohnwagen (Deichsel zur Werkstatt hin), kleiner Holzterrasse OHNE Geländer (kleines altes
+  Zweisitzer-Sofa mit Decke und Kissen, Bierkiste als Tisch, Aschenbecher), Lichterkette davor. Auf dem
+  Carport-Dach alte blaue Turnmatten mit Gehwegplatten beschwert (gegen Eicheln-Lärm), Eicheln im Gras. SEITLICH am großen
+  Carport (gegenüber der Terrasse) ein schief angebautes kleines Carport mit blauer Plane als Dach (Loch drin), darunter Dennis'
+  weißer Mercedes W123 (detailliert: Radläufe, Radkappen, Türfugen, Chromleisten, Spiegel, Wischer, geriffelte Rückleuchten,
+  Kennzeichen, Auspuff, Antenne) mit Gehwegplatte IN der Motorhaube (Delle, Risse). Eine Turnmatte liegt heruntergeweht im Gras. Geschichte: heute Nacht um 4 bei
   Wind passiert, deshalb ist Dennis heute gereizt (Wut startet bei 15, Begrüßung erwähnt es). Anklicken: Benz (Dennis stöhnt,
   DENNIS.benz), Wohnwagen, Carport, Turnmatte.
 - Bad (begehbar) hinter der WC-Tür vorne rechts (BAD in world.js, x 0,7–3,9, z 4,0–6,8): Schachbrett-Boden, Fliesen bis 1,4 m,
@@ -177,12 +179,14 @@
   Jonny und Waldo sind selten gleichzeitig da: Waldo kommt meist nur, wenn Jonny draußen ist (85 %), Jonny kommt erst
   zurück, wenn Waldo weg ist (85 %), und geht nicht raus, solange Waldo da ist. Kippen-Feuer nur, wenn Jonny da ist.
 - Kühlschrank (klein, weiß, Bier drin) in der Pausenecke neben dem Kaffeetisch.
-- Kaffeetassen: zu Spielbeginn 7 benutzte Tassen (bunt, Kaffeerest) zufällig auf Werkbank, Regal, Boden, Trägern usw. verteilt
-  (welt.tassenVerteilen, Höhe per Strahl nach unten). In die Hand, Klick auf den Kühlschrank (oder E davor) = oben abstellen
+- Kaffeetassen: zu Spielbeginn 7 benutzte Tassen (bunt, Kaffeerest) zufällig verteilt, NIE auf dem Boden: Spülkasten im Bad,
+  Regal (3 Bretter), Sofa-Armlehnen, Stahlträger, Erste-Hilfe-Kasten, Werkbank, Schweißtisch (TASSEN_PLAETZE mit Strahl-
+  Starthöhe, Linien/Umrisse zählen nicht als Fläche). In die Hand, Klick auf den Kühlschrank (oder E davor) = oben abstellen
   (4 x 3 Plätze, dann zweite Lage), Wut -2, alle weg = Lob und -4. Ab 3 offenen Tassen meckert Dennis alle 80–130 s (+2) oder
   räumt 2 Tassen selbst weg (+4, DENNIS.tassenSelbst). Jonny/Waldo bringen beim Kommen mit 40 % eine Tasse mit (max. 14).
-- Dennis telefoniert alle 75–135 s (Klingeln, linke Hand mit Handy am Ohr, TELEFON-Pose per Suche bestimmt, 3 Zeilen aus
-  DENNIS.telefon: Lydia, Motorhaube, Konzerttickets, Torben, ...). Fehler/Ärger beenden das Telefonat.
+- Dennis RUFT SELBST AN, alle 75–135 s (kein Klingeln: Handy ans Ohr, Wähltöne, Freizeichen; linke Hand mit Handy am Ohr,
+  TELEFON-Pose per Suche bestimmt). Gespräche (DENNIS.telefon, der Reihe nach gemischt): Lydia (Motorhauben-Dilemma),
+  Versicherung (Schaden an der Motorhaube), Metallhändler (Bestellung mit sehr genauen Details). Fehler/Ärger beenden das Telefonat.
 - Bitsatz (Nebenaufgabe, wird NICHT angekündigt, muss man selbst finden): offene schwarze Kassette im Regal (mittleres Brett),
   Bits durcheinander. Menü „Bitsatz sortieren“ = Minispiel (12 Bits: Kreuz PH, Pozi PZ, Torx TX, Schlitz je Größe 1–3 per
   Ziehen ins passende Fach), danach ordentlich, Lob, Wut -8, erscheint als erledigte Nebenaufgabe.

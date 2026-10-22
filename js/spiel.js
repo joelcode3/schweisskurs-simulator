@@ -1423,13 +1423,19 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
     const t = welt.neueTasse(wer.position);
     if (t && dennisSiehts() && Math.random() < 0.5) setTimeout(() => dennisSagt(sag(DENNIS.tasseMitgebracht), true, { prio: 0 }), 1500);
   }
-  // ---------- Dennis telefoniert zwischendurch (Handy am Ohr, steht still, brabbelt) ----------
+  // ---------- Dennis ruft zwischendurch selbst an (Handy am Ohr, steht still, brabbelt) ----------
+  const telefonReihe = [];
   async function dennisTelefoniert() {
     z.telefon = true;
-    for (let i = 0; i < 3; i++) { blip(1320, 0.12, 0.18); await warte(180); blip(1480, 0.12, 0.18); await warte(650); }
-    if (dennis.modus !== 'normal' || z.vorbei) { z.telefon = false; return; }
     dennis.telefon(true);
-    const satz = DENNIS.telefon[Math.floor(Math.random() * DENNIS.telefon.length)];
+    // wählen (kurze Tastentöne), dann zweimal Freizeichen
+    for (let i = 0; i < 7; i++) { blip(700 + Math.random() * 700, 0.07, 0.08); await warte(140 + Math.random() * 90); }
+    await warte(500);
+    for (let i = 0; i < 2; i++) { blip(425, 0.9, 0.06); await warte(1900); }
+    if (!dennis.telefoniert || dennis.modus !== 'normal' || z.vorbei) { dennis.telefon(false); z.telefon = false; z.naechstesTelefon = sekundenSeitStart() + 30; return; }
+    // jedes Gespräch erst wieder, wenn alle anderen dran waren
+    if (!telefonReihe.length) telefonReihe.push(...DENNIS.telefon.map((_, i) => i).sort(() => Math.random() - 0.5));
+    const satz = DENNIS.telefon[telefonReihe.shift()];
     for (const zeile of satz) {
       if (!dennis.telefoniert || dennis.modus !== 'normal' || z.vorbei) break;
       await dennisSagt(zeile, false, { prio: 0, minMs: 3200 });

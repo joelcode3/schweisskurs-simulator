@@ -254,14 +254,11 @@ export const DENNIS = {
   jonnyQuatschen: ['Nicht quatschen, arbeiten! Jonny, lass den in Ruhe!', 'Du bist hier zum Schweißen, nicht zum Labern!'],
   leiterEndlich: ['Die Leiter ist WEG? Endlich! Danke dir!', 'Halleluja, die Leiter ist raus. Das feier ich.'],
   kuehlschrank: ['Finger weg, das ist kein Selbstbedienungsladen!', 'Da drin ist nix für dich. Erst arbeiten, dann Bier.'],
-  // Telefonate (Dennis' Seite des Gesprächs, Zeile für Zeile)
+  // Telefonate: Dennis ruft selbst an (seine Seite des Gesprächs, Zeile für Zeile)
   telefon: [
-    ['Ja? ... Ja, Dennis hier.', 'Nee, ich hab gerade Kurs. Gasflaschen-Ofen.', 'Ja ... ja ... Ich ruf dich nachher zurück, ja?'],
-    ['Lydia? ... Ja, ich weiß.', 'Ja, die Hüfte. Hinten links. Wie immer.', 'Nee, ich hab den Orthopäden noch nicht angerufen. Mach ich. Morgen.'],
-    ['Moin! ... Die Motorhaube für den Benz?', 'Wie viel?! Für das Geld kauf ich mir nen neuen Benz!', 'Nee, lass mal. Ich guck selbst.'],
-    ['Ja? ... Wer? ... Ach, die Konzerttickets!', 'Zwei Stück, ja. Stehplatz. Was bietest du?', 'Pff. Da muss noch was gehen. Überleg dir das.'],
-    ['Hallo? ... Torben?', 'Die Stahlträger liegen hier immer noch rum, Torben!', 'Ja, das ist dein Job. ... Ja. ... Morgen. Ganz sicher. Tschüss.'],
-    ['Ja, Dennis. ... Bestellung?', 'Nee, ich hab keine Pizza bestellt. Ich ESSE TK-Pizza.', 'Falsch verbunden. Tschüss.'],
+    ['Lydia? Ich bin\'s. Hast du kurz?', 'Heute Nacht um vier: Wind, Turnmatte weg, Gehwegplatte durch die Plane. Direkt in die Motorhaube vom Benz.', 'Ja, IN die Motorhaube. Die steckt da drin wie ein Messer in der Butter.', 'Und jetzt? Neue Haube kostet ein Vermögen, gebraucht findest du keine in Weiß ...', 'Nee, ausbeulen geht da nicht mehr. ... Ja. Ich meld mich. Tschüss.'],
+    ['Ja, guten Tag, Dennis hier. Ich hab einen Schaden zu melden.', 'Mercedes 123, weiß. Gehwegplatte auf die Motorhaube. Heute Nacht, Sturm.', 'Nee, die ist nicht runtergefallen. Die ist RUNTERGEWEHT. Von der Turnmatte.', 'Wieso fahrlässig?! Die Matte lag da wegen der Eicheln!', 'Teilkasko, ja. ... Wie, Selbstbeteiligung 500?! ... Ja, schicken Sie mir das Formular.'],
+    ['Moin, Dennis hier. Ich will was bestellen. Haben Sie was zum Schreiben?', 'Flachstahl S235, 40 mal 5. Sechs Meter. Aber gesägt auf zweimal 2,98, nicht 3 Meter.', 'Nee, NICHT geschnitten mit der Schere. Gesägt. Rechtwinklig. Plus minus ein Millimeter.', 'Und bitte nicht verzundert. Und bitte nicht aus dem hinteren Regal, die sind krumm.', 'Wann kommt das? ... Vormittags. Aber nicht vor neun und nicht nach halb elf. Danke.'],
   ],
   bitsatzLob: ['Hast du etwa den Bitsatz sortiert? Ohne dass ich was sagen musste? Respekt!', 'Der Bitsatz ist sortiert! Das hat seit Jahren keiner gemacht. Danke!'],
   nichtMeineBranche: ['Nicht meine Branche.', 'Hmm ... Nee. Nicht meine Branche.'],
