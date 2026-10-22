@@ -1,7 +1,7 @@
 # Schweißkurs mit Dennis – Notizen für Claude
 
 ## Zusammenarbeit
-- **Immer auf Deutsch antworten**, einfach und Schritt für Schritt (der Betreiber ist kein Entwickler).
+- **Immer auf Deutsch antworten** und den Betreiber **duzen**, einfach und Schritt für Schritt (der Betreiber ist kein Entwickler).
 - **Keine Emojis** – weder im Spiel (Symbole als SVG-Linien-Icons) noch in Antworten.
 - Änderungen als Pull Request; der Betreiber merged selbst. Jedes größere Update bekommt einen EIGENEN neuen Pull Request
   (Betreiber-Wunsch): ist der letzte PR noch offen, einen neuen Zweig (Name vom Arbeitszweig abgeleitet, z. B. `…-draussen`)
