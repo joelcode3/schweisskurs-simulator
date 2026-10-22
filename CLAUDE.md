@@ -143,8 +143,13 @@
   und fahren, Hände müssen frei sein). Steuerung: W/S fahren, A/D lenken bzw. knicken, R/F Gabel hoch/runter, Leertaste hupen,
   E aussteigen (Fahrhilfe oben eingeblendet). Kamera sitzt im Fahrerhaus und dreht mit. Nur Computer (keine Touch-Knöpfe).
   Jeep: Elektromotor, gedrosselt Schritttempo (1,4 m/s); Torben lieb fragen (Menü an Torben) = entdrosselt (7,5 m/s).
-  Hoflader: Knicklenker (Vorderwagen dreht im Gelenk z = 0, Formel Knicklenkung), Hubarm mit Gabel (hub/gabel, Gabel bleibt
-  waagerecht), Zinken bei x ±0,2. Abgeschlossen-Logik vorbereitet: LADER_SCHLUESSEL_STECKT in fahrten.js (zum Testen true;
+  Hoflader nach Fotos vom Weidemann 1280 (ohne Schriftzug): Knicklenker (Gelenk z = 0, Formel Knicklenkung), Hinterwagen mit
+  runder roter Motorhaube und schwarzen Lüftungsfenstern, Kabine auf dem Hinterwagen (grauer Rahmen, rundum Glas, Dach 2,25 m,
+  Sitz 1,05 m, Arbeitsscheinwerfer), schwarze Kotflügel, graue Felgen; Vorderwagen mit Turm (etwas rechts), roter geknickter
+  Hubarm, graue Hub- und Kippzylinder, die sich mitbewegen (hydraulik()), Schnellwechsler mit Gabelträger und kurzen Zinken
+  (0,8 m, x ±0,2). Gabel bleibt beim Heben waagerecht.
+  Mini-Jeep: großes Spaßauto (1,9 × 1,06 m), offene Wanne mit Fußraum, zwei Schalensitze, Armaturenbrett, Lenkrad links,
+  Überrollbügel, Scheibe, Kotflügel, Trittbretter, Reserverad, Kennzeichen „PINK 1“. Abgeschlossen-Logik vorbereitet: LADER_SCHLUESSEL_STECKT in fahrten.js (zum Testen true;
   später gibt Dennis den Schlüssel raus, wenn man etwas damit erledigen muss, sonst DENNIS.weidemannZu).
   Europaletten (3er-Stapel und einzelne im Hof) mit der Gabel aufnehmen (Zinken rein, heben), herumfahren, absetzen (auch stapeln).
   Fahrbar: Hof (draussen.fahrbar) plus Feldweg nach rechts (AUSFAHRT), nicht durch die Schlupftür.

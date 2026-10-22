@@ -147,7 +147,7 @@ export function baueFahrten(c) {
 
   // ---------- Figuren fahren ----------
   function parkt(f) { return !f.fahrer && Math.hypot(f.x - f.park.x, f.z - f.park.z) < 1.0 && f.g.visible; }
-  function einstiegPunkt(f) { return f.g.localToWorld(new THREE.Vector3(f.art === 'lader' ? 1.0 : 0.9, 0, f.sitz.z)); }
+  function einstiegPunkt(f) { return f.g.localToWorld(new THREE.Vector3(f.art === 'lader' ? 1.0 : 1.05, 0, f.sitz.z)); }
   async function geheWeg(figur, punkte, tempo = 1.3) {
     for (const p of punkte) if (!(await Promise.race([figur.gehZu(p.x, p.z, tempo), warte(12000).then(() => false)]))) return false;
     return true;

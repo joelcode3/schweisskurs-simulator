@@ -296,60 +296,27 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   merke(tonnen, 'muelltonnen', 'Mülltonnen', null);
   hindernis(-5.3, -2.85, RAUM.zMax, RAUM.zMax + 1.1);
 
-  // ---------- roter Hoflader (Weidemann-Art) mit geschlossener Kabine und Palettengabel, ohne Schriftzug ----------
-  const ROT = 0xc8261d, DUNKEL = 0x2a2c30;
+  // ---------- roter Hoflader (nach Fotos vom Weidemann 1280, ohne Schriftzug): Knicklenker, Kabine auf dem Hinterwagen,
+  // mittiger Hubarm vor der Kabine mit grauen Hub- und Kippzylindern, Schnellwechsler mit Palettengabel ----------
+  // Ursprung = Knickgelenk (z = 0); Hinterwagen z < 0 (Motorhaube, Kabine), Vorderwagen z > 0 (dreht im Gelenk)
+  const ROT = 0xd0261c, GRAU = 0x6c7075, GRAU_D = 0x45484d, SCHW = 0x1d1d1f;
   const lader = new THREE.Group();
-  // Hinterwagen: Motorhaube mit Lüftungsgitter, Gegengewicht, Auspuff, Rückleuchten
-  lader.add(setze(quader(0.95, 0.5, 1.05, ROT, { umriss: 0.005 }), 0, 0.78, -0.6));
-  const haube = teil(new THREE.CylinderGeometry(0.47, 0.47, 1.0, 16, 1, false, -Math.PI / 2, Math.PI), ROT, { umriss: 0.004 });
-  haube.rotation.z = Math.PI / 2; haube.rotation.y = Math.PI / 2;
-  haube.scale.set(1, 1, 0.28);
-  haube.position.set(0, 1.03, -0.62);
-  lader.add(haube);
-  for (let k = 0; k < 7; k++) for (const sx of [-1, 1]) lader.add(setze(quader(0.012, 0.18, 0.04, 0x1d1d1f, { umriss: false }), sx * 0.478, 0.86, -0.95 + k * 0.08));
-  lader.add(setze(quader(1.0, 0.32, 0.18, DUNKEL, { umriss: 0.004 }), 0, 0.58, -1.18));
-  for (let k = 0; k < 4; k++) lader.add(setze(quader(0.8, 0.02, 0.01, 0x1d1d1f, { umriss: false }), 0, 0.48 + k * 0.06, -1.275));
-  for (const sx of [-1, 1]) {
-    lader.add(setze(quader(0.1, 0.06, 0.02, 0xd8352a, { umriss: 0.002 }), sx * 0.38, 0.82, -1.14));
-    lader.add(setze(quader(0.06, 0.04, 0.02, 0xf2a21c, { umriss: false }), sx * 0.38, 0.76, -1.14));
+  const vorderwagen = new THREE.Group();
+  lader.add(vorderwagen);
+  // Stück zwischen zwei Punkten (Balken entlang z, Zylinder entlang y), für Arm und Hydraulik
+  const _a = new THREE.Vector3(), _b = new THREE.Vector3();
+  function strecke(obj, a, b, achse) {
+    _a.copy(a); _b.copy(b);
+    const d = _b.clone().sub(_a);
+    obj.position.copy(_a).addScaledVector(d, 0.5);
+    obj.quaternion.setFromUnitVectors(achse, d.clone().normalize());
+    obj.scale.set(1, 1, 1);
+    if (achse.y) obj.scale.y = d.length(); else obj.scale.z = d.length();
+    return obj;
   }
-  lader.add(setze(zylinder(0.035, 0.035, 0.45, 0x3a3c40, { umriss: 0.002 }, 10), 0.33, 1.3, -0.95));
-  lader.add(setze(zylinder(0.045, 0.035, 0.05, 0x1d1d1f, { umriss: 0.002 }, 10), 0.33, 1.54, -0.95, 0.4, 0, 0));
-  // Rahmen, Knickgelenk, Trittstufen
-  lader.add(setze(quader(0.7, 0.22, 1.1, DUNKEL, { umriss: 0.004 }), 0, 0.45, -0.6));
-  lader.add(setze(quader(0.6, 0.2, 1.05, DUNKEL, { umriss: 0.004 }), 0, 0.45, 0.56));
-  lader.add(setze(zylinder(0.09, 0.09, 0.3, 0x5a5d62, { umriss: 0.003 }, 12), 0, 0.52, 0.0));
-  for (const sx of [-1, 1]) {
-    lader.add(setze(quader(0.22, 0.03, 0.18, 0x1d1d1f, { umriss: 0.002 }), sx * 0.5, 0.42, -0.05));
-    lader.add(setze(quader(0.04, 0.2, 0.03, 0x1d1d1f, { umriss: false }), sx * 0.6, 0.52, -0.05));
-  }
-  // Vorderwagen mit Kotflügeln
-  lader.add(setze(quader(0.82, 0.38, 0.75, ROT, { umriss: 0.005 }), 0, 0.68, 0.62));
-  for (const sx of [-1, 1]) lader.add(setze(quader(0.28, 0.05, 0.72, DUNKEL, { umriss: 0.003 }), sx * 0.55, 0.78, 0.6));
-  // Kabine: Rahmen, große Scheiben, Dach mit Rundumleuchte, Spiegel, Wischer, Türgriff, Sitz, Lenkrad, Joystick
-  const kabine = new THREE.Group();
-  const scheibe = new THREE.MeshToonMaterial({ color: 0x9cc7e6, transparent: true, opacity: 0.5 });
-  kabine.add(setze(new THREE.Mesh(new THREE.BoxGeometry(0.86, 1.0, 0.95), scheibe), 0, 0.5, 0));
-  for (const [x, z] of [[-0.43, -0.47], [0.43, -0.47], [-0.43, 0.47], [0.43, 0.47]]) kabine.add(setze(quader(0.05, 1.05, 0.05, 0x1d1d1f, { umriss: 0.002 }), x, 0.5, z));
-  for (const y of [0.0, 1.0]) for (const z of [-0.47, 0.47]) kabine.add(setze(quader(0.9, 0.04, 0.04, 0x1d1d1f, { umriss: false }), 0, y, z));
-  kabine.add(setze(quader(0.04, 0.04, 0.95, 0x1d1d1f, { umriss: false }), 0.43, 0.55, 0));
-  kabine.add(setze(quader(0.98, 0.07, 1.08, ROT, { umriss: 0.004 }), 0, 1.04, 0));
-  kabine.add(setze(quader(0.9, 0.03, 1.0, 0xf4f4ef, { umriss: false }), 0, 1.08, 0));
-  kabine.add(setze(zylinder(0.05, 0.06, 0.09, 0xf2a21c, { umriss: 0.002 }, 10), 0.3, 1.15, -0.3));
-  for (const sx of [-1, 1]) {
-    kabine.add(setze(zylinder(0.008, 0.008, 0.2, 0x1d1d1f, { umriss: false }, 6), sx * 0.52, 0.85, 0.42, 0, 0, sx * 1.2));
-    kabine.add(setze(quader(0.03, 0.12, 0.08, 0x1d1d1f, { umriss: 0.002 }), sx * 0.62, 0.8, 0.42));
-    kabine.add(setze(quader(0.05, 0.05, 0.02, 0xfff6c8, { umriss: 0.001 }), sx * 0.36, 1.0, 0.5));
-  }
-  kabine.add(setze(quader(0.42, 0.012, 0.012, 0x1d1d1f, { umriss: false }), 0.08, 0.04, 0.5, 0, 0, 0.12));
-  kabine.add(setze(quader(0.03, 0.1, 0.03, 0x8a8f96, { umriss: false }), 0.46, 0.5, -0.1));
-  kabine.add(setze(quader(0.4, 0.08, 0.38, 0x1d1d1f, { umriss: 0.002 }), 0, 0.15, -0.15));
-  kabine.add(setze(quader(0.4, 0.42, 0.06, 0x1d1d1f, { umriss: 0.002 }), 0, 0.38, -0.33));
-  kabine.add(setze(teil(new THREE.TorusGeometry(0.11, 0.015, 6, 14), 0x1d1d1f, { umriss: 0.001 }), 0, 0.45, 0.2, -0.9, 0, 0));
-  kabine.add(setze(zylinder(0.012, 0.012, 0.14, 0x1d1d1f, { umriss: false }, 6), 0.22, 0.25, 0.05, 0.3, 0, 0));
-  kabine.position.set(0, 1.08, -0.3);
-  lader.add(kabine);
-  // Räder: grobe Traktorstollen, rote Felgen mit Radmuttern
+  const Y = new THREE.Vector3(0, 1, 0), Z = new THREE.Vector3(0, 0, 1);
+  const balken = (b, h, farbe) => quader(b, h, 1, farbe, { umriss: 0.004 });
+  // Räder: grobe Stollenreifen, graue Felgen mit Nabe und Radmuttern
   const stollenTex = leinwandTextur(256, 64, (g, b, h) => {
     g.fillStyle = '#1b1b1d'; g.fillRect(0, 0, b, h);
     g.fillStyle = '#34343a';
@@ -357,117 +324,254 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   }, [2, 1]);
   const reifenMat = toon(0xffffff, { map: stollenTex });
   const laderRaeder = [];
-  for (const z of [-0.68, 0.62]) for (const sx of [-1, 1]) {
-    const rad = new THREE.Group();
-    rad.add(teil(new THREE.CylinderGeometry(0.38, 0.38, 0.32, 24), 0, { material: reifenMat, umriss: 0.004 }));
-    rad.add(setze(zylinder(0.36, 0.36, 0.325, 0x1d1d1f, { umriss: false }, 24), 0, 0, 0));
-    rad.add(setze(zylinder(0.22, 0.22, 0.33, ROT, { umriss: 0.002 }, 16), 0, 0, 0));
-    rad.add(setze(zylinder(0.09, 0.09, 0.34, 0x8a8d92, { umriss: false }, 10), 0, 0, 0));
-    for (let k = 0; k < 6; k++) { const w = k / 6 * Math.PI * 2; rad.add(setze(zylinder(0.014, 0.014, 0.35, 0xc9cdd2, { umriss: false }, 6), Math.cos(w) * 0.13, 0, Math.sin(w) * 0.13)); }
-    rad.rotation.z = Math.PI / 2;
-    rad.position.set(sx * 0.58, 0.38, z);
-    lader.add(rad);
-    laderRaeder.push(rad);
+  const RR = 0.42, SPUR = 0.52;
+  function rad(eltern, z) {
+    for (const sx of [-1, 1]) {
+      const r = new THREE.Group();
+      r.add(teil(new THREE.CylinderGeometry(RR, RR, 0.3, 24), 0, { material: reifenMat, umriss: 0.004 }));
+      r.add(setze(zylinder(RR - 0.03, RR - 0.03, 0.305, SCHW, { umriss: false }, 24), 0, 0, 0));
+      r.add(setze(zylinder(0.25, 0.25, 0.31, 0xc9ccd0, { umriss: 0.002 }, 18), 0, 0, 0));
+      r.add(setze(zylinder(0.11, 0.11, 0.32, 0x8a8d92, { umriss: false }, 12), 0, 0, 0));
+      for (let k = 0; k < 6; k++) { const w = k / 6 * Math.PI * 2; r.add(setze(zylinder(0.013, 0.013, 0.325, 0xe0e2e5, { umriss: false }, 6), Math.cos(w) * 0.15, 0, Math.sin(w) * 0.15)); }
+      r.rotation.z = Math.PI / 2;
+      r.position.set(sx * SPUR, RR, z);
+      eltern.add(r);
+      laderRaeder.push(r);
+      // schwarzer Kotflügel als gebogene Schale über dem Rad
+      const kot = teil(new THREE.CylinderGeometry(RR + 0.07, RR + 0.07, 0.34, 20, 1, true, Math.PI * 0.08, Math.PI * 0.84), SCHW, { umriss: 0.003, mat: { side: THREE.DoubleSide } });
+      kot.rotation.z = Math.PI / 2;
+      kot.position.set(sx * SPUR, RR, z);
+      eltern.add(kot);
+    }
+    eltern.add(setze(quader(1.0, 0.14, 0.16, GRAU_D, { umriss: 0.003 }), 0, RR, z));
   }
-  // Hubarm (Schwinge) mit Hubzylinder, Kippzylinder, Schnellwechselplatte, Palettengabel mit L-Zinken
+  // --- Hinterwagen: Rahmen, Achse, Motorhaube hinten (rund, schwarze Lüftungsfenster), Heck mit Leuchten ---
+  lader.add(setze(quader(0.72, 0.34, 1.35, ROT, { umriss: 0.005 }), 0, 0.56, -0.78));
+  rad(lader, -0.75);
+  lader.add(setze(quader(1.0, 0.62, 0.58, ROT, { umriss: 0.005 }), 0, 0.98, -1.26));
+  const hutze = teil(new THREE.CylinderGeometry(0.29, 0.29, 1.0, 16, 1, false, 0, Math.PI), ROT, { umriss: 0.004 });
+  hutze.rotation.z = Math.PI / 2; hutze.rotation.y = Math.PI / 2;
+  hutze.scale.set(1, 1, 0.45);
+  hutze.position.set(0, 1.29, -1.26);
+  lader.add(hutze);
   for (const sx of [-1, 1]) {
-    const arm = quader(0.09, 0.14, 1.35, ROT, { umriss: 0.004 });
-    arm.position.set(sx * 0.37, 1.05, 0.62);
-    arm.rotation.x = 0.5;
-    lader.add(arm);
-    lader.add(setze(zylinder(0.045, 0.045, 0.5, ROT, { umriss: 0.003 }, 10), sx * 0.3, 0.8, 0.55, 1.05, 0, 0));
-    lader.add(setze(zylinder(0.02, 0.02, 0.36, 0xd9dde0, { umriss: 0.002 }, 8), sx * 0.3, 0.93, 0.83, 1.05, 0, 0));
-    lader.add(setze(zylinder(0.012, 0.012, 0.9, 0x1d1d1f, { umriss: false }, 6), sx * 0.27, 1.0, 0.45, 0.6, 0, 0));
+    lader.add(setze(quader(0.02, 0.36, 0.28, SCHW, { umriss: 0.002 }), sx * 0.505, 1.03, -1.22));
+    for (let k = 0; k < 5; k++) lader.add(setze(quader(0.024, 0.012, 0.26, 0x34363a, { umriss: false }), sx * 0.505, 0.9 + k * 0.065, -1.22));
   }
-  lader.add(setze(zylinder(0.06, 0.06, 0.66, 0x7a7d82, { umriss: 0.003 }, 10), 0, 0.98, 0.5, 0, 0, Math.PI / 2));
-  lader.add(setze(zylinder(0.04, 0.04, 0.5, ROT, { umriss: 0.003 }, 10), 0, 1.15, 0.8, 0.5, 0, 0));
-  lader.add(setze(zylinder(0.018, 0.018, 0.3, 0xd9dde0, { umriss: 0.002 }, 8), 0, 1.0, 1.05, 0.5, 0, 0));
-  const gabel = new THREE.Group();
-  gabel.add(setze(quader(0.95, 0.55, 0.06, DUNKEL, { umriss: 0.003 }), 0, 0.28, 0));
-  for (let k = 0; k < 4; k++) gabel.add(setze(quader(0.95, 0.04, 0.03, 0x1d1d1f, { umriss: false }), 0, 0.08 + k * 0.13, 0.04));
-  gabel.add(setze(quader(0.6, 0.08, 0.08, DUNKEL, { umriss: 0.002 }), 0, 0.5, -0.05));
-  for (const sx of [-0.3, 0.3]) {
-    gabel.add(setze(quader(0.1, 0.6, 0.05, 0x9aa1a8, { umriss: 0.003 }), sx, 0.3, 0.07));
-    const zinke = teil(new THREE.BoxGeometry(0.1, 0.05, 1.0), 0x9aa1a8, { umriss: 0.003 });
-    zinke.geometry.translate(0, 0, 0.5);
-    zinke.position.set(sx, 0.025, 0.07);
-    gabel.add(zinke);
-    gabel.add(setze(quader(0.1, 0.02, 0.12, 0x8a8f96, { umriss: false }), sx, 0.06, 0.95, 0.15, 0, 0));
+  lader.add(setze(quader(1.02, 0.3, 0.14, ROT, { umriss: 0.004 }), 0, 0.55, -1.6));
+  for (const sx of [-1, 1]) {
+    lader.add(setze(quader(0.12, 0.08, 0.02, 0xc8352a, { umriss: 0.001 }), sx * 0.36, 0.6, -1.675));
+    lader.add(setze(quader(0.06, 0.08, 0.02, 0xf2a21c, { umriss: false }), sx * 0.26, 0.6, -1.675));
   }
-  gabel.position.set(0, 0.06, 1.25);
-  lader.add(gabel);
-  // Knicklenker: alles vor dem Gelenk (z > 0) gehört zum Vorderwagen, der sich um das Gelenk dreht; Hubarm, Kippzylinder und
-  // Gabel hängen am Hubarm-Drehpunkt (HUB_P) und schwenken mit, die Gabel bleibt dabei waagerecht
-  const vorderwagen = new THREE.Group();
-  const HUB_P = new THREE.Vector3(0, 1.37, 0.03);
+  lader.add(setze(quader(0.3, 0.1, 0.02, SCHW, { umriss: false }), 0, 0.58, -1.675));
+  lader.add(setze(zylinder(0.03, 0.03, 0.06, SCHW, { umriss: false }, 8), 0.3, 0.44, -1.67, Math.PI / 2, 0, 0));
+  // Knickgelenk
+  lader.add(setze(zylinder(0.1, 0.1, 0.36, 0x5a5d62, { umriss: 0.003 }, 12), 0, 0.56, 0.0));
+  // --- Kabine (grauer Rahmen, rundum Glas, dunkles Dach mit Arbeitsscheinwerfern), Sitz, Lenkrad, Joystick ---
+  const kabine = new THREE.Group();
+  const K0 = -0.98, K1 = -0.06, KB = 0.98, KU = 0.78, KO = 2.25;
+  const kabinenGlas = new THREE.MeshToonMaterial({ color: 0xa8cde6, transparent: true, opacity: 0.32, side: THREE.DoubleSide, depthWrite: false });
+  kabine.add(setze(quader(KB, 0.06, K1 - K0, GRAU_D, { umriss: 0.003 }), 0, KU, (K0 + K1) / 2));
+  // untere graue Seitenteile und Front
+  for (const sx of [-1, 1]) kabine.add(setze(quader(0.04, 0.42, K1 - K0, GRAU, { umriss: 0.003 }), sx * (KB / 2), KU + 0.21, (K0 + K1) / 2));
+  kabine.add(setze(quader(KB, 0.24, 0.04, GRAU, { umriss: 0.003 }), 0, KU + 0.12, K1));
+  // Säulen, Dachrahmen, Türrahmen links
+  for (const sx of [-1, 1]) for (const z of [K0, K1]) kabine.add(setze(quader(0.06, KO - KU, 0.06, GRAU_D, { umriss: 0.003 }), sx * (KB / 2), (KU + KO) / 2, z));
+  kabine.add(setze(quader(0.05, KO - KU - 0.45, 0.04, GRAU_D, { umriss: 0.002 }), KB / 2 + 0.01, (KU + 0.45 + KO) / 2, (K0 + K1) / 2 + 0.05));
+  kabine.add(setze(quader(0.03, 0.12, 0.03, 0x8a8f96, { umriss: false }), KB / 2 + 0.03, 1.4, -0.3));
+  // Scheiben
+  const scheiben = [
+    [new THREE.PlaneGeometry(K1 - K0 - 0.06, KO - KU - 0.45), [KB / 2 + 0.005, (KU + 0.43 + KO) / 2, (K0 + K1) / 2], [0, Math.PI / 2, 0]],
+    [new THREE.PlaneGeometry(K1 - K0 - 0.06, KO - KU - 0.45), [-KB / 2 - 0.005, (KU + 0.43 + KO) / 2, (K0 + K1) / 2], [0, Math.PI / 2, 0]],
+    [new THREE.PlaneGeometry(KB - 0.06, KO - KU - 0.26), [0, (KU + 0.24 + KO) / 2, K1 + 0.005], [0, 0, 0]],
+    [new THREE.PlaneGeometry(KB - 0.06, 0.8), [0, KO - 0.45, K0 - 0.005], [0, 0, 0]],
+  ];
+  for (const [geo, pos, rot] of scheiben) { const m = new THREE.Mesh(geo, kabinenGlas); m.position.set(...pos); m.rotation.set(...rot); m.renderOrder = 2; kabine.add(m); }
+  kabine.add(setze(quader(KB + 0.08, 0.08, K1 - K0 + 0.1, 0x2f3236, { umriss: 0.004 }), 0, KO + 0.04, (K0 + K1) / 2));
+  for (const sx of [-1, 1]) {
+    // Arbeitsscheinwerfer vorne und hinten auf dem Dach, Außenspiegel an Bügeln
+    for (const z of [K1 + 0.02, K0 - 0.02]) {
+      kabine.add(setze(quader(0.12, 0.1, 0.08, SCHW, { umriss: 0.002 }), sx * 0.36, KO + 0.12, z));
+      kabine.add(setze(quader(0.09, 0.07, 0.01, 0xfff6c8, { umriss: false }), sx * 0.36, KO + 0.12, z + (z > K0 ? 0.045 : -0.045)));
+    }
+    kabine.add(setze(zylinder(0.01, 0.01, 0.2, SCHW, { umriss: false }, 6), sx * (KB / 2 + 0.08), 1.95, K1 + 0.02, 0, 0, Math.PI / 2));
+    kabine.add(setze(quader(0.03, 0.18, 0.1, SCHW, { umriss: 0.002 }), sx * (KB / 2 + 0.19), 1.9, K1 + 0.02));
+  }
+  kabine.add(setze(zylinder(0.045, 0.055, 0.08, 0xf2a21c, { umriss: 0.002 }, 10), -0.3, KO + 0.12, (K0 + K1) / 2));
+  // Sitz (Oberkante 1,05 m), Lenksäule mit Lenkrad, Joystick rechts, Trittstufe links
+  kabine.add(setze(quader(0.44, 0.1, 0.44, SCHW, { umriss: 0.002 }), 0, 1.0, -0.6));
+  kabine.add(setze(quader(0.3, 0.22, 0.3, GRAU_D, { umriss: 0.002 }), 0, 0.88, -0.6));
+  kabine.add(setze(quader(0.44, 0.56, 0.1, SCHW, { umriss: 0.002 }), 0, 1.33, -0.86, -0.12, 0, 0));
+  kabine.add(setze(zylinder(0.03, 0.04, 0.55, GRAU_D, { umriss: false }, 8), 0, 1.08, -0.16, -0.55, 0, 0));
+  kabine.add(setze(teil(new THREE.TorusGeometry(0.15, 0.018, 6, 18), SCHW, { umriss: 0.001 }), 0, 1.36, -0.28, -1.0, 0, 0));
+  kabine.add(setze(zylinder(0.012, 0.012, 0.18, SCHW, { umriss: false }, 6), -0.28, 1.12, -0.42, 0.25, 0, 0));
+  kabine.add(setze(kugel(0.03, SCHW, { umriss: false }, 8), -0.3, 1.21, -0.4));
+  kabine.add(setze(quader(0.18, 0.03, 0.22, SCHW, { umriss: 0.002 }), 0.62, 0.52, -0.45));
+  lader.add(kabine);
+  // --- Vorderwagen: Rahmen, Achse, Turm für den Hubarm (etwas rechts, damit man vorbeischauen kann) ---
+  vorderwagen.add(setze(quader(0.66, 0.34, 1.05, ROT, { umriss: 0.005 }), 0, 0.56, 0.58));
+  rad(vorderwagen, 0.75);
+  const BX = -0.12;
+  const HUB_P = new THREE.Vector3(BX, 1.38, 0.3);
+  vorderwagen.add(setze(quader(0.26, 0.88, 0.34, ROT, { umriss: 0.004 }), BX, 0.94, 0.3));
+  vorderwagen.add(setze(zylinder(0.07, 0.07, 0.34, 0x8a8d92, { umriss: 0.002 }, 10), BX, 1.38, 0.3, 0, 0, Math.PI / 2));
+  vorderwagen.add(setze(quader(0.3, 0.04, 0.2, 0xf2c21c, { umriss: false }), BX, 1.0, 0.475));
+  // Hubarm am Drehpunkt: zwei rote Kastenteile (geknickt), Hydraulikschläuche, gelbes Warnschild
   const hub = new THREE.Group();
   hub.position.copy(HUB_P);
   vorderwagen.add(hub);
-  for (const c of [...lader.children]) {
-    if (c === kabine || c.position.z <= 0.05) continue;
-    if (c === gabel || c.position.y >= 0.9) { c.position.sub(HUB_P); hub.add(c); } else vorderwagen.add(c);
+  const T_REL = new THREE.Vector3(0, -0.93, 1.15); // Werkzeugträger relativ zum Drehpunkt (Gabel unten)
+  const KNICK = new THREE.Vector3(0, 0.1, 0.6);
+  hub.add(strecke(balken(0.2, 0.22, ROT), new THREE.Vector3(0, 0, -0.08), KNICK, Z));
+  hub.add(strecke(balken(0.18, 0.2, ROT), KNICK, T_REL.clone().add(new THREE.Vector3(0, 0.12, -0.04)), Z));
+  hub.add(setze(quader(0.21, 0.12, 0.004, 0xf2c21c, { umriss: false }), 0, 0.05, 0.35, -0.1, Math.PI / 2, 0));
+  for (const sx of [-1, 1]) {
+    const schlauch = new THREE.CatmullRomCurve3([new THREE.Vector3(sx * 0.06, 0.13, -0.05), new THREE.Vector3(sx * 0.06, 0.22, 0.55), new THREE.Vector3(sx * 0.06, -0.3, 0.95), T_REL.clone().add(new THREE.Vector3(sx * 0.12, 0.3, 0))]);
+    hub.add(teil(new THREE.TubeGeometry(schlauch, 24, 0.012, 5, false), SCHW, { umriss: false }));
   }
-  lader.add(vorderwagen);
+  // Schnellwechsler und Palettengabel (Gabelträger mit Rahmen, kurze Zinken bei x ±0,2)
+  const gabel = new THREE.Group();
+  gabel.position.copy(T_REL);
+  hub.add(gabel);
+  gabel.add(setze(quader(0.24, 0.3, 0.1, GRAU_D, { umriss: 0.003 }), 0, 0.08, -0.02));
+  gabel.add(setze(zylinder(0.04, 0.04, 0.3, 0x8a8d92, { umriss: false }, 8), 0, 0.12, -0.04, 0, 0, Math.PI / 2));
+  gabel.add(setze(quader(0.82, 0.07, 0.06, GRAU, { umriss: 0.003 }), 0, 0.2, 0.08));
+  gabel.add(setze(quader(0.82, 0.07, 0.06, GRAU, { umriss: 0.003 }), 0, -0.3, 0.08));
+  for (const sx of [-1, 1]) gabel.add(setze(quader(0.06, 0.57, 0.06, GRAU, { umriss: 0.003 }), sx * 0.38, -0.05, 0.08));
+  gabel.add(setze(quader(0.14, 0.5, 0.05, GRAU_D, { umriss: 0.002 }), 0, -0.05, 0.06));
+  for (const sx of [-0.2, 0.2]) {
+    gabel.add(setze(quader(0.08, 0.6, 0.05, GRAU, { umriss: 0.003 }), sx, -0.12, 0.13));
+    gabel.add(setze(quader(0.08, 0.05, 0.8, GRAU, { umriss: 0.003 }), sx, -0.4, 0.53));
+    gabel.add(setze(quader(0.08, 0.02, 0.1, GRAU, { umriss: false }), sx, -0.39, 0.96, 0.18, 0, 0));
+  }
+  // Hub- und Kippzylinder (grau, mit blanker Kolbenstange): werden bei jeder Armbewegung neu ausgerichtet
+  const hubZyl = zylinder(0.055, 0.055, 1, GRAU, { umriss: 0.003 }, 10);
+  const hubStange = zylinder(0.03, 0.03, 1, 0xdfe3e7, { umriss: 0.002 }, 8);
+  const kippZyl = zylinder(0.045, 0.045, 1, GRAU, { umriss: 0.003 }, 10);
+  const kippStange = zylinder(0.025, 0.025, 1, 0xdfe3e7, { umriss: 0.002 }, 8);
+  vorderwagen.add(hubZyl, hubStange, kippZyl, kippStange);
+  const HUB_A = new THREE.Vector3(BX, 0.62, 0.62), KIPP_A = new THREE.Vector3(BX, 1.62, 0.36);
+  const _m = new THREE.Vector3(), _n = new THREE.Vector3();
+  function hydraulik() {
+    hub.updateMatrix(); gabel.updateMatrix();
+    // Hubzylinder: vom Rahmen zur Armmitte; Kippzylinder: vom Turm oben zum Gabelträger oben
+    _m.set(0, -0.32, 0.72).applyMatrix4(hub.matrix);
+    const mitte1 = HUB_A.clone().lerp(_m, 0.55);
+    strecke(hubZyl, HUB_A, mitte1, Y); strecke(hubStange, mitte1, _m, Y);
+    _n.set(0, 0.22, -0.02).applyMatrix4(gabel.matrix).applyMatrix4(hub.matrix);
+    const mitte2 = KIPP_A.clone().lerp(_n, 0.55);
+    strecke(kippZyl, KIPP_A, mitte2, Y); strecke(kippStange, mitte2, _n, Y);
+  }
+  hydraulik();
   setze(lader, 7.0, 0, 1.4, 0, 0.15, 0);
   scene.add(lader);
   merke(lader, 'weidemann', 'Hoflader', null);
   const laderHindernis = hindernis(6.2, 7.85, -0.1, 3.1);
 
   const profilTex = leinwandTextur(128, 32, (g, b, h) => { g.fillStyle = '#1b1b1d'; g.fillRect(0, 0, b, h); g.fillStyle = '#323236'; for (let x = 0; x < b; x += 16) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + 10, h / 2); g.lineTo(x, h); g.lineTo(x + 5, h / 2); g.fill(); } }, [3, 1]);
-  // ---------- rosa Mini-Jeep (Elektro-Kinderauto im Wrangler-Look, ohne Dach) ----------
-  const ROSA = 0xf08cc0;
+  // ---------- rosa Mini-Jeep (großes Elektro-Spaßauto im Wrangler-Look, ohne Dach, zwei Sitze) ----------
+  // offene Wanne mit Fußraum, damit Erwachsene drin sitzen können (Beine unter dem Armaturenbrett, nicht durch die Haube)
+  const ROSA = 0xf08cc0, ROSA_D = 0xd46fa4, SCHWARZ = 0x1d1d1f;
+  const JL = 1.9, JB = 1.06, JR = 0.24; // Länge, Breite, Radradius
   const jeep = new THREE.Group();
-  jeep.add(setze(quader(0.72, 0.28, 1.3, ROSA, { umriss: 0.004 }), 0, 0.42, 0));
-  jeep.add(setze(quader(0.72, 0.14, 0.42, ROSA, { umriss: 0.004 }), 0, 0.62, 0.42));
-  // Kühlergrill mit 7 Schlitzen und runden Scheinwerfern
-  jeep.add(setze(quader(0.6, 0.3, 0.04, 0x1d1d1f, { umriss: 0.003 }), 0, 0.5, 0.65));
-  for (let i = 0; i < 7; i++) jeep.add(setze(quader(0.035, 0.2, 0.02, ROSA, { umriss: false }), -0.18 + i * 0.06, 0.5, 0.675));
+  // Unterboden, Bodenblech im Fußraum
+  jeep.add(setze(quader(JB - 0.16, 0.08, JL - 0.3, 0x2a2c30, { umriss: 0.003 }), 0, 0.16, 0));
+  jeep.add(setze(quader(JB - 0.14, 0.03, 1.15, 0x3a3c40, { umriss: false }), 0, 0.215, -0.3));
+  // Wanne: Seitenwände (vorne bis zur Haube, hinten bis zum Heck), Heckwand, Ladefläche hinter den Sitzen
   for (const sx of [-1, 1]) {
-    jeep.add(setze(zylinder(0.065, 0.065, 0.04, 0x1d1d1f, { umriss: 0.002 }, 14), sx * 0.24, 0.52, 0.68, Math.PI / 2, 0, 0));
-    jeep.add(setze(zylinder(0.05, 0.05, 0.045, 0xfff6c8, { umriss: false }, 14), sx * 0.24, 0.52, 0.69, Math.PI / 2, 0, 0));
-    // ausgestellte Kotflügel
-    jeep.add(setze(quader(0.14, 0.05, 0.42, ROSA, { umriss: 0.003 }), sx * 0.4, 0.5, 0.42));
-    jeep.add(setze(quader(0.14, 0.05, 0.42, ROSA, { umriss: 0.003 }), sx * 0.4, 0.5, -0.42));
+    jeep.add(setze(quader(0.06, 0.36, 1.25, ROSA, { umriss: 0.004 }), sx * (JB / 2 - 0.03), 0.4, -0.3));
+    // Türausschnitt (dunkle Kante) und Haltegriff
+    jeep.add(setze(quader(0.065, 0.025, 0.55, ROSA_D, { umriss: false }), sx * (JB / 2 - 0.03), 0.57, -0.2));
+    jeep.add(setze(teil(new THREE.TorusGeometry(0.05, 0.01, 5, 10, Math.PI), SCHWARZ, { umriss: false }), sx * (JB / 2 - 0.08), 0.6, 0.1, 0, Math.PI / 2, 0));
+    // Trittbrett
+    jeep.add(setze(quader(0.1, 0.03, 0.75, SCHWARZ, { umriss: 0.002 }), sx * (JB / 2 + 0.03), 0.2, -0.2));
   }
-  jeep.add(setze(quader(0.76, 0.06, 0.1, 0x1d1d1f, { umriss: 0.002 }), 0, 0.33, 0.7));
-  // Windschutzscheibe (Rahmen), Überrollbügel, Sitze, Lenkrad
-  jeep.add(setze(quader(0.7, 0.3, 0.03, ROSA, { umriss: 0.003 }), 0, 0.84, 0.2, -0.25, 0, 0));
-  jeep.add(setze(new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.22), new THREE.MeshBasicMaterial({ color: 0xcfe6f4, transparent: true, opacity: 0.6, side: THREE.DoubleSide })), 0, 0.85, 0.215, -0.25, 0, 0));
+  jeep.add(setze(quader(JB - 0.06, 0.36, 0.06, ROSA, { umriss: 0.004 }), 0, 0.4, -JL / 2 + 0.06));
+  jeep.add(setze(quader(JB - 0.14, 0.03, 0.4, 0x3a3c40, { umriss: false }), 0, 0.38, -0.72));
+  // Motorhaube (vorne höher als die Wanne), Lüftungsschlitze, Haubenverschlüsse
+  jeep.add(setze(quader(JB - 0.04, 0.3, 0.62, ROSA, { umriss: 0.004 }), 0, 0.5, 0.62));
+  jeep.add(setze(quader(JB - 0.1, 0.03, 0.6, ROSA_D, { umriss: 0.002 }), 0, 0.665, 0.62));
+  for (let k = 0; k < 6; k++) jeep.add(setze(quader(0.012, 0.005, 0.22, 0x8a4a6a, { umriss: false }), -0.2 + k * 0.08, 0.683, 0.72));
+  for (const sx of [-1, 1]) jeep.add(setze(quader(0.04, 0.06, 0.03, SCHWARZ, { umriss: false }), sx * (JB / 2 - 0.02), 0.6, 0.82));
+  // Kühlergrill mit 7 Schlitzen, runde Scheinwerfer, Blinker, Stoßstange mit Abschlepphaken, Kennzeichen
+  jeep.add(setze(quader(JB - 0.14, 0.3, 0.04, SCHWARZ, { umriss: 0.003 }), 0, 0.5, JL / 2 - 0.02));
+  for (let i = 0; i < 7; i++) jeep.add(setze(quader(0.05, 0.22, 0.02, ROSA, { umriss: false }), -0.27 + i * 0.09, 0.5, JL / 2 + 0.005));
   for (const sx of [-1, 1]) {
-    jeep.add(setze(zylinder(0.025, 0.025, 0.42, 0x1d1d1f, { umriss: 0.002 }, 8), sx * 0.32, 0.77, -0.25));
-    jeep.add(setze(quader(0.24, 0.3, 0.22, 0x1d1d1f, { umriss: 0.002 }), sx * 0.15, 0.68, -0.12));
+    jeep.add(setze(zylinder(0.085, 0.085, 0.05, 0x1d1d1f, { umriss: 0.002 }, 16), sx * 0.38, 0.53, JL / 2 + 0.0, Math.PI / 2, 0, 0));
+    jeep.add(setze(zylinder(0.068, 0.068, 0.055, 0xfff6c8, { umriss: false }, 16), sx * 0.38, 0.53, JL / 2 + 0.01, Math.PI / 2, 0, 0));
+    jeep.add(setze(quader(0.07, 0.04, 0.02, 0xf2a21c, { umriss: false }), sx * 0.38, 0.4, JL / 2 + 0.01));
+    jeep.add(setze(teil(new THREE.TorusGeometry(0.03, 0.01, 5, 10), 0xc9cdd2, { umriss: false }), sx * 0.3, 0.22, JL / 2 + 0.1));
   }
-  jeep.add(setze(zylinder(0.025, 0.025, 0.66, 0x1d1d1f, { umriss: 0.002 }, 8), 0, 0.98, -0.25, 0, 0, Math.PI / 2));
-  jeep.add(setze(teil(new THREE.TorusGeometry(0.08, 0.014, 6, 14), 0x1d1d1f, { umriss: 0.001 }), -0.15, 0.78, 0.1, -1.0, 0, 0));
-  // Räder mit grobem Profil, Reserverad hinten; die Vorderräder sitzen in Lenk-Gruppen
+  jeep.add(setze(quader(JB + 0.06, 0.09, 0.12, SCHWARZ, { umriss: 0.003 }), 0, 0.27, JL / 2 + 0.04));
+  jeep.add(setze(quader(JB + 0.06, 0.09, 0.12, SCHWARZ, { umriss: 0.003 }), 0, 0.27, -JL / 2 - 0.02));
+  const schildJ = leinwandTextur(128, 32, (g, b, h) => { g.fillStyle = '#f4f4ef'; g.fillRect(0, 0, b, h); g.fillStyle = '#1f4fa8'; g.fillRect(0, 0, 14, h); g.fillStyle = '#1d1d1f'; g.font = 'bold 20px Arial'; g.fillText('PINK 1', 20, 24); g.strokeRect(1, 1, b - 2, h - 2); });
+  const kz = new THREE.Mesh(new THREE.PlaneGeometry(0.26, 0.065), new THREE.MeshBasicMaterial({ map: schildJ }));
+  kz.position.set(0, 0.36, -JL / 2 - 0.085); kz.rotation.y = Math.PI;
+  jeep.add(kz);
+  // Rückleuchten
+  for (const sx of [-1, 1]) jeep.add(setze(quader(0.08, 0.12, 0.02, 0xc8352a, { umriss: 0.001 }), sx * 0.42, 0.45, -JL / 2 + 0.02));
+  // ausgestellte Kotflügel über allen Rädern
+  for (const z of [JL / 2 - 0.42, -JL / 2 + 0.38]) for (const sx of [-1, 1]) {
+    jeep.add(setze(quader(0.18, 0.05, 0.56, ROSA, { umriss: 0.003 }), sx * (JB / 2 + 0.02), 0.52, z));
+    jeep.add(setze(quader(0.04, 0.12, 0.56, ROSA_D, { umriss: 0.002 }), sx * (JB / 2 + 0.1), 0.47, z));
+  }
+  // Armaturenbrett mit Tacho, Lenkrad auf der Fahrerseite (links), Schalthebel
+  jeep.add(setze(quader(JB - 0.12, 0.13, 0.14, 0x2a2c30, { umriss: 0.003 }), 0, 0.64, 0.24));
+  for (const sx of [-0.24, 0.0]) jeep.add(setze(zylinder(0.04, 0.04, 0.01, 0xf4f4ef, { umriss: false }, 12), sx, 0.67, 0.165, Math.PI / 2, 0, 0));
+  jeep.add(setze(zylinder(0.018, 0.018, 0.28, SCHWARZ, { umriss: false }, 8), -0.24, 0.66, 0.1, 1.0, 0, 0));
+  jeep.add(setze(teil(new THREE.TorusGeometry(0.12, 0.016, 6, 16), SCHWARZ, { umriss: 0.001 }), -0.24, 0.73, -0.01, -1.0, 0, 0));
+  jeep.add(setze(zylinder(0.012, 0.012, 0.2, 0x8a8f96, { umriss: false }, 6), 0.0, 0.32, -0.05, 0.3, 0, 0));
+  jeep.add(setze(kugel(0.03, SCHWARZ, { umriss: false }, 8), 0.0, 0.42, -0.08));
+  // zwei Schalensitze (Sitzfläche + Lehne)
+  for (const sx of [-0.24, 0.24]) {
+    jeep.add(setze(quader(0.38, 0.08, 0.4, 0x2f3136, { umriss: 0.002 }), sx, 0.46, -0.36));
+    jeep.add(setze(quader(0.38, 0.1, 0.12, 0x2f3136, { umriss: 0.002 }), sx, 0.38, -0.36));
+    jeep.add(setze(quader(0.38, 0.46, 0.08, 0x2f3136, { umriss: 0.002 }), sx, 0.72, -0.58, -0.15, 0, 0));
+    jeep.add(setze(quader(0.28, 0.12, 0.085, 0x45474d, { umriss: false }), sx, 0.88, -0.6, -0.15, 0, 0));
+  }
+  // Windschutzscheibe mit Rahmen (umgeklappt geht nicht, steht), Überrollbügel, Spiegel
+  const scheibeG = new THREE.Group();
+  scheibeG.add(setze(quader(JB - 0.04, 0.05, 0.05, ROSA, { umriss: 0.003 }), 0, 0.42, 0));
+  for (const sx of [-1, 1]) scheibeG.add(setze(quader(0.05, 0.42, 0.05, ROSA, { umriss: 0.003 }), sx * (JB / 2 - 0.04), 0.21, 0));
+  scheibeG.add(setze(new THREE.Mesh(new THREE.PlaneGeometry(JB - 0.14, 0.36), new THREE.MeshBasicMaterial({ color: 0xcfe6f4, transparent: true, opacity: 0.45, side: THREE.DoubleSide })), 0, 0.21, 0));
+  scheibeG.position.set(0, 0.66, 0.33); scheibeG.rotation.x = -0.22;
+  jeep.add(scheibeG);
+  for (const sx of [-1, 1]) {
+    jeep.add(setze(zylinder(0.028, 0.028, 0.62, SCHWARZ, { umriss: 0.002 }, 8), sx * (JB / 2 - 0.06), 0.88, -0.72));
+    jeep.add(setze(zylinder(0.024, 0.024, 0.55, SCHWARZ, { umriss: 0.002 }, 8), sx * (JB / 2 - 0.06), 1.0, -0.47, Math.PI / 2 - 0.35, 0, 0));
+    jeep.add(setze(quader(0.1, 0.07, 0.02, SCHWARZ, { umriss: 0.001 }), sx * (JB / 2 + 0.06), 0.82, 0.32));
+  }
+  jeep.add(setze(zylinder(0.028, 0.028, JB - 0.12, SCHWARZ, { umriss: 0.002 }, 8), 0, 1.19, -0.72, 0, 0, Math.PI / 2));
+  // Räder mit grobem Profil, weiße Felgen; die Vorderräder sitzen in Lenk-Gruppen; Reserverad hinten
   const jeepRaeder = [], jeepLenkung = [];
-  for (const z of [-0.42, 0.42]) for (const sx of [-1, 1]) {
+  for (const z of [-JL / 2 + 0.38, JL / 2 - 0.42]) for (const sx of [-1, 1]) {
     const rad = new THREE.Group();
-    rad.add(teil(new THREE.CylinderGeometry(0.19, 0.19, 0.14, 18), 0, { material: toon(0xffffff, { map: profilTex }), umriss: 0.003 }));
-    rad.add(setze(zylinder(0.09, 0.09, 0.15, 0xe9e9e4, { umriss: false }, 12), 0, 0, 0));
+    rad.add(teil(new THREE.CylinderGeometry(JR, JR, 0.18, 20), 0, { material: toon(0xffffff, { map: profilTex }), umriss: 0.003 }));
+    rad.add(setze(zylinder(0.13, 0.13, 0.19, 0xe9e9e4, { umriss: false }, 14), 0, 0, 0));
+    for (let k = 0; k < 5; k++) { const w = k / 5 * Math.PI * 2; rad.add(setze(zylinder(0.012, 0.012, 0.195, 0x9aa0a6, { umriss: false }, 6), Math.cos(w) * 0.07, 0, Math.sin(w) * 0.07)); }
     rad.rotation.z = Math.PI / 2;
     jeepRaeder.push(rad);
     if (z > 0) {
       const lenk = new THREE.Group();
-      lenk.position.set(sx * 0.39, 0.19, z);
+      lenk.position.set(sx * (JB / 2 + 0.02), JR, z);
       lenk.add(rad);
       jeep.add(lenk);
       jeepLenkung.push(lenk);
     } else {
-      rad.position.set(sx * 0.39, 0.19, z);
+      rad.position.set(sx * (JB / 2 + 0.02), JR, z);
       jeep.add(rad);
     }
   }
   const reserve = new THREE.Group();
-  reserve.add(teil(new THREE.CylinderGeometry(0.17, 0.17, 0.12, 18), 0, { material: toon(0xffffff, { map: profilTex }), umriss: 0.003 }));
-  reserve.add(setze(zylinder(0.08, 0.08, 0.13, 0xe9e9e4, { umriss: false }, 12), 0, 0, 0));
+  reserve.add(teil(new THREE.CylinderGeometry(0.21, 0.21, 0.15, 20), 0, { material: toon(0xffffff, { map: profilTex }), umriss: 0.003 }));
+  reserve.add(setze(zylinder(0.11, 0.11, 0.16, 0xe9e9e4, { umriss: false }, 12), 0, 0, 0));
   reserve.rotation.x = Math.PI / 2;
-  reserve.position.set(0, 0.55, -0.72);
+  reserve.position.set(0, 0.52, -JL / 2 - 0.08);
   jeep.add(reserve);
   setze(jeep, 2.6, 0, 8.6, 0, Math.PI - 0.5, 0);
   scene.add(jeep);
   merke(jeep, 'minijeep', 'Mini-Jeep', null);
-  const jeepHindernis = hindernis(1.85, 3.35, 7.85, 9.35);
+  const jeepHindernis = hindernis(1.75, 3.45, 7.75, 9.45);
 
   // ---------- Feuerschale mit Dreibein, rundem Grillrost und alter schwarzer Bratwurst ----------
   const feuerstelle = new THREE.Group();
@@ -565,7 +669,7 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
     },
     fahrzeuge: {
       jeep: { gruppe: jeep, raeder: jeepRaeder, lenkung: jeepLenkung, hindernis: jeepHindernis },
-      lader: { gruppe: lader, vorne: vorderwagen, hub, gabel, raeder: laderRaeder, hindernis: laderHindernis },
+      lader: { gruppe: lader, vorne: vorderwagen, hub, gabel, raeder: laderRaeder, hindernis: laderHindernis, hydraulik, zinke: new THREE.Vector3(0, -0.4, 0.53) },
       feuerstelle, feuerHindernis, tonnen,
     },
   };
