@@ -10,9 +10,7 @@ const winkelDiff = (a, b) => { let d = b - a; while (d > Math.PI) d -= Math.PI *
 const AUS = { xMin: 1e9, xMax: 1e9, zMin: 1e9, zMax: 1e9 };
 
 // Gabel: Drehwinkel des Hubarms (0 = so wie gebaut, Gabel knapp über dem Boden)
-const PHI_MIN = -0.025, PHI_MAX = 1.0;
-// Gabelzinken liegen in der Gabel-Gruppe bei x ±0,2 (Zinken), y 0,025, z 0,07 … 1,07
-const ZINKE_Y = 0.025;
+const PHI_MIN = -0.02, PHI_MAX = 1.1;
 
 export function baueFahrzeuge(scene, welt) {
   const T = welt.draussen.fahrzeuge;
@@ -68,28 +66,27 @@ export function baueFahrzeuge(scene, welt) {
   const jeep = {
     art: 'jeep', name: 'Mini-Jeep', g: jeepG, hindernis: T.jeep.hindernis,
     x: jeepG.position.x, z: jeepG.position.z, psi: jeepG.rotation.y, v: 0, lenk: 0,
-    radstand: 0.84, maxLenk: 0.55, gedrosselt: true,
-    // Fahrersitz links, Augenhöhe eines Erwachsenen im Kinderauto
-    sitz: new THREE.Vector3(-0.15, 0.62, -0.12), auge: new THREE.Vector3(-0.15, 1.38, -0.1),
+    radstand: 1.2, maxLenk: 0.55, gedrosselt: true,
+    // Fahrersitz links (Sitzfläche 0,5 m), Augenhöhe eines sitzenden Erwachsenen
+    sitz: new THREE.Vector3(-0.24, 0.5, -0.36), auge: new THREE.Vector3(-0.24, 1.32, -0.3),
     // Umriss für Zusammenstöße (lokal): Ecken und Mitten
-    punkte: [[-0.42, 0.72], [0.42, 0.72], [-0.42, -0.78], [0.42, -0.78], [-0.42, 0], [0.42, 0], [0, 0.75], [0, -0.8]],
+    punkte: [[-0.62, 0.98], [0.62, 0.98], [-0.62, -1.02], [0.62, -1.02], [-0.62, 0], [0.62, 0], [0, 1.02], [0, -1.08]],
     park: { x: jeepG.position.x, z: jeepG.position.z, psi: jeepG.rotation.y },
-    raeder: T.jeep.raeder, radR: 0.19, fahrer: null,
+    raeder: T.jeep.raeder, radR: 0.24, fahrer: null,
   };
   const laderG = T.lader.gruppe;
   const lader = {
     art: 'lader', name: 'Hoflader', g: laderG, hindernis: T.lader.hindernis,
     x: laderG.position.x, z: laderG.position.z, psi: laderG.rotation.y, v: 0, knick: 0, phi: 0,
-    Lr: 0.68, Lf: 0.62, maxKnick: 0.7, schluessel: true, last: null,
-    sitz: new THREE.Vector3(0, 1.27, -0.45), auge: new THREE.Vector3(0, 1.88, -0.38),
-    hinten: [[-0.6, -1.3], [0.6, -1.3], [-0.6, -0.05], [0.6, -0.05], [0, -1.32]],
-    vorne: [[-0.62, 0.15], [0.62, 0.15], [-0.62, 0.95], [0.62, 0.95], [0, 1.0]],
+    Lr: 0.75, Lf: 0.75, maxKnick: 0.7, schluessel: true, last: null,
+    // Sitz in der Kabine (Oberkante 1,05 m), genug Kopffreiheit bis zum Dach (2,25 m)
+    sitz: new THREE.Vector3(0, 1.05, -0.6), auge: new THREE.Vector3(0, 1.86, -0.52),
+    hinten: [[-0.68, -1.64], [0.68, -1.64], [-0.68, -0.85], [0.68, -0.85], [-0.68, -0.05], [0.68, -0.05], [0, -1.68]],
+    vorne: [[-0.68, 0.12], [0.68, 0.12], [-0.68, 1.18], [0.68, 1.18], [0, 1.2]],
     park: { x: laderG.position.x, z: laderG.position.z, psi: laderG.rotation.y },
     raeder: T.lader.raeder, radR: 0.38, fahrer: null,
     vorneG: T.lader.vorne, hub: T.lader.hub, gabel: T.lader.gabel,
   };
-  // Zinken etwas enger stellen, damit sie in die Palettenöffnungen passen
-  for (const c of lader.gabel.children) if (Math.abs(Math.abs(c.position.x) - 0.3) < 0.01) c.position.x = Math.sign(c.position.x) * 0.2;
   const alle = [jeep, lader];
   // Fahrer-Anker: hier sitzt eine Figur (Wurzel mit Sitzhöhe 0,5)
   for (const f of alle) {
@@ -140,6 +137,7 @@ export function baueFahrzeuge(scene, welt) {
       f.vorneG.rotation.y = f.knick;
       f.hub.rotation.x = -f.phi;
       f.gabel.rotation.x = f.phi;
+      T.lader.hydraulik();
     }
     // Hindernis = Rechteck um das ganze Fahrzeug (für Fußgänger und die anderen Fahrzeuge)
     const pts = f.art === 'jeep' ? f.punkte.map(([a, b]) => [a, b, f.psi]) : [...f.hinten.map(([a, b]) => [a, b, f.psi]), ...f.vorne.map(([a, b]) => [a, b, f.psi + f.knick])];
@@ -191,7 +189,7 @@ export function baueFahrzeuge(scene, welt) {
 
   // ---------- Gabel heben/senken, Paletten aufnehmen und absetzen ----------
   const _v = new THREE.Vector3();
-  function zinkenMitte() { return lader.gabel.localToWorld(_v.set(0, ZINKE_Y, 0.6)).clone(); }
+  function zinkenMitte() { return lader.gabel.localToWorld(_v.copy(T.lader.zinke)).clone(); }
   function gabel(dt, richtung) {
     if (!richtung) return null;
     let ereignis = null;
