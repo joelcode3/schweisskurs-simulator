@@ -157,6 +157,9 @@
   opts.aussehen: kurze dunkelblonde Haare, Stoppelbart, keine Brille/Cap/Brusthaar, orange Weste, blaue Hose). Kommt alle
   2,5–4 min zu Fuß den Feldweg hoch, steht beim Hoflader (5,6 | 6,2), fährt 1–2 Mal, geht nach 2–3 min wieder. Menü: Quatschen,
   „Lieb fragen: Jeep entdrosseln?“. Texte in TORBEN (texte.js), Sprechblase ui.torbenSagt.
+- Platzhalter-Kumpels (js/kumpels.js): Uwe, Steffen, Jonas, David, Joel – noch OHNE Aufgabe, im Spiel unsichtbar. Vorläufiges
+  Aussehen (baueJonny mit eigenen Farben/Merkmalen), echtes Aussehen kommt vom Betreiber. Ansehen: Seite mit ?kumpels öffnen,
+  dann stehen alle draußen in einer Reihe (z 9). Anklicken: „Platzhalter. Hat noch keinen Job im Spiel.“
 - Bad (begehbar) hinter der WC-Tür vorne rechts (BAD in world.js, x 0,7–3,9, z 4,0–6,8): Schachbrett-Boden, Fliesen bis 1,4 m,
   Milchglasfenster, Klo (hinten links), Dusche (hinten rechts), Waschbecken mit Spiegel, Waschmaschine + Trockner (vorne rechts).
   WC-Tür offen, nur zu während Dennis drin ist. Bild über dem Klo: assets/bad-bild.jpg (Foto vom Betreiber, Dennis oben ohne mit Handy, Holzrahmen).
@@ -277,7 +280,7 @@
 
 ## Dateien
 - `index.html`, `css/style.css`
-- `js/main.js` Einstieg · `js/world.js` Werkstatt + Gasflasche · `js/draussen.js` Hof · `js/carport.js` Wohnwagen/Benz · `js/fahrzeuge.js` + `js/fahrten.js` Fahren · `js/torben.js` Torben · `js/dennis.js` 3D-Dennis
+- `js/main.js` Einstieg · `js/world.js` Werkstatt + Gasflasche · `js/draussen.js` Hof · `js/carport.js` Wohnwagen/Benz · `js/fahrzeuge.js` + `js/fahrten.js` Fahren · `js/torben.js` Torben · `js/kumpels.js` Platzhalter-Kumpels · `js/dennis.js` 3D-Dennis
 - `js/steuerung.js` Kamera/Gehen/Klicks · `js/spiel.js` Ablauf, Fehler, Texte, Note
 - `js/minispiele.js` Schneiden, Schweißen, Schlacke · `js/clips.js` Dennis-Auftritte + Archiv
 - `js/hand.js` Dinge in der Hand (Haltung, Ablegen, Werfen mit Physik) · `js/ui.js` HUD/Dialoge · `js/audio.js` Geräusche (live erzeugt) · `js/gesicht.js` Comic-Gesicht + Icons

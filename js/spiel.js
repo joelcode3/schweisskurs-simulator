@@ -2558,6 +2558,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     const A = (text, symbol, tun) => ({ text, symbol, tun });
     const ausFahrten = fahrten.menue(id);
     if (ausFahrten) return ausFahrten;
+    // Platzhalter-Kumpels (noch ohne Aufgabe)
+    if (id.startsWith('kumpel-')) return [obj?.userData.interaktiv.name || 'Kumpel', 'Platzhalter. Hat noch keinen Job im Spiel.', []];
     switch (id) {
       case 'brille':
       case 'handschuhe':
