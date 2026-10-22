@@ -6,7 +6,7 @@ import { RAUM, BAD } from './world.js';
 
 // Haltung in der Hand: Position vor der Kamera, Drehung, Größe, beidhändig, schwer
 // Wurfgrenzen draußen auf dem Hof
-const AUSSEN = { xMin: -9.5, xMax: 9.5, zMin: RAUM.zMax, zMax: 12.5 };
+const AUSSEN = { xMin: -17, xMax: 9.5, zMin: RAUM.zMax, zMax: 12.5 };
 
 const HALTUNG = {
   brille: { pos: [0.18, -0.15, -0.45], rot: [0.25, 0.4, 0], skala: 0.55, name: 'Schutzbrille', tragen: 'Aufsetzen' },

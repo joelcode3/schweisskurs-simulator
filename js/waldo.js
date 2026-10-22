@@ -13,7 +13,7 @@ const JOGGER = 0x9a9ea3;
 const SNEAKER = 0xd9c7a3;
 // Wo Waldo rumsteht: vorne rechts zwischen Bad-Tür und Stahlträgern, isst
 // Waldo ist anfangs nicht da; er kommt durchs Tor rein (TOR) und geht dort wieder raus
-const TOR = new THREE.Vector3(-0.85, 0, 3.55);
+const TOR = new THREE.Vector3(-0.35, 0, 3.55); // Schlupftür im Tor
 
 export function baueWaldo(scene) {
   const wurzel = new THREE.Group();

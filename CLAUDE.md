@@ -1,7 +1,7 @@
 # Schweißkurs mit Dennis – Notizen für Claude
 
 ## Zusammenarbeit
-- **Immer auf Deutsch antworten**, einfach und Schritt für Schritt (der Betreiber ist kein Entwickler).
+- **Immer auf Deutsch antworten** und den Betreiber **duzen**, einfach und Schritt für Schritt (der Betreiber ist kein Entwickler).
 - **Keine Emojis** – weder im Spiel (Symbole als SVG-Linien-Icons) noch in Antworten.
 - Änderungen als Pull Request; der Betreiber merged selbst. Jedes größere Update bekommt einen EIGENEN neuen Pull Request
   (Betreiber-Wunsch): ist der letzte PR noch offen, einen neuen Zweig (Name vom Arbeitszweig abgeleitet, z. B. `…-draussen`)
@@ -118,15 +118,27 @@
   (`wandMalen`): Putz, grüngrauer Sockel bis 1,25 m, Putz bröckelt stellenweise (Ziegel sichtbar), Risse, Wasserflecken.
   KEINE Graffiti und Zahlen (Betreiber: wieder weg). Eingang vorne: breites Scheunentor komplett grün (2 Flügel, Z-Streben,
   nur die Scharniere/Bänder schwarz) mit Rauchen-verboten-Schild; Lichtschalter zwischen Tor und WC-Tür.
-  Das Tor steht weit offen (Flügel um die Bänder gedreht), man kann nach draußen gehen.
+  Das Tor ist ZU; im linken Flügel (leicht aus der Mitte) eine normale grüne Schlupftür, Band an der Außenkante (zur Torecke),
+  steht offen nach außen, Durchgang nur dort (DURCHGANG x -0,68 bis -0,02). Neben der Tür auf dem anderen Flügel klein ein
+  handgeschriebenes Pappschild „Schweisskurs, nicht stören!“ mit Nagel (Caveat). Jonny/Waldo gehen durch die Schlupftür (-0,35 | 3,55).
 - Draußen (js/draussen.js, `baueDraussen`): rotes Backsteingebäude mit flachem Satteldach aus schwarzem Wellblech (Giebel vorne/
   hinten, Regenrinnen, Fallrohre), Bad als Anbau mit flachem Dach und Milchglasfenster, Fenster links außen. Kaputte Betonfläche
   vor der Werkstatt (Fugen, Risse mit Unkraut, ausgebrochene Stellen mit Schotter, lose Brocken), Wiese, Bäume, Horizont
-  (Hügel + Waldrand), Himmel mit Wolken (Kamera-Sichtweite 220). Mülltonnen (grau, blau, braun) links vom Tor, Schild
-  „NICHT STÖREN! SCHWEISSKURS“ (Holz) an der Fassade, roter Weidemann-Hoflader mit geschlossener Kabine und Palettengabel
-  rechts neben der Werkstatt, rosa Mini-Jeep (Wrangler-Look, ohne Dach, Elektro-Kinderauto), Feuerschale mit Dreibein, Kette,
+  (Hügel + Waldrand), Himmel mit Wolken (Kamera-Sichtweite 220). Mülltonnen (grau, blau, braun, detailliert, OHNE
+  Schilder, Müllsack daneben) links vom Tor, kein großes Fassadenschild mehr, roter Hoflader OHNE Logo/Schrift (detailliert:
+  Kühlergrill, Gegengewicht, Knicklenkung, Kabine mit Sitz/Joystick, Rundumleuchte, Stollenreifen, Hubzylinder) mit Palettengabel
+  rechts neben der Werkstatt, rosa Mini-Jeep (Wrangler-Look, ohne Dach, Elektro-Kinderauto), Feuerschale (flach, graue Asche mit Häufchen, verkohlte Holzreste) mit Dreibein, Kette,
   rundem Grillrost und alter schwarzer Bratwurst. Begehbar: Vorplatz, Streifen rechts neben der Halle, Durchgang durchs Tor
   (Bad-Anbau ausgespart). Würfe draußen prallen an den Hofgrenzen ab (hand.js AUSSEN).
+- Dennis' Wohnwagen (js/carport.js, `baueCarport`): links auf der Wiese neben der Betonfläche unter einer Eiche ein großes Carport
+  (Holz, Wellplatten-Dach) mit Wohnwagen (Deichsel zur Werkstatt hin), kleiner Holzterrasse OHNE Geländer (kleines altes
+  Zweisitzer-Sofa mit Decke und Kissen, Bierkiste als Tisch, Aschenbecher), Lichterkette davor. Auf dem
+  Carport-Dach alte blaue Turnmatten mit Gehwegplatten beschwert (gegen Eicheln-Lärm), Eicheln im Gras. SEITLICH am großen
+  Carport (gegenüber der Terrasse) ein schief angebautes kleines Carport mit blauer Plane als Dach (Loch drin), darunter Dennis'
+  weißer Mercedes W123 (detailliert: Radläufe, Radkappen, Türfugen, Chromleisten, Spiegel, Wischer, geriffelte Rückleuchten,
+  Kennzeichen, Auspuff, Antenne) mit Gehwegplatte IN der Motorhaube (Delle, Risse). Eine Turnmatte liegt heruntergeweht im Gras. Geschichte: heute Nacht um 4 bei
+  Wind passiert, deshalb ist Dennis heute gereizt (Wut startet bei 15, Begrüßung erwähnt es). Anklicken: Benz (Dennis stöhnt,
+  DENNIS.benz), Wohnwagen, Carport, Turnmatte.
 - Bad (begehbar) hinter der WC-Tür vorne rechts (BAD in world.js, x 0,7–3,9, z 4,0–6,8): Schachbrett-Boden, Fliesen bis 1,4 m,
   Milchglasfenster, Klo (hinten links), Dusche (hinten rechts), Waschbecken mit Spiegel, Waschmaschine + Trockner (vorne rechts).
   WC-Tür offen, nur zu während Dennis drin ist. Bild über dem Klo: assets/bad-bild.jpg (Foto vom Betreiber, Dennis oben ohne mit Handy, Holzrahmen).
@@ -167,12 +179,14 @@
   Jonny und Waldo sind selten gleichzeitig da: Waldo kommt meist nur, wenn Jonny draußen ist (85 %), Jonny kommt erst
   zurück, wenn Waldo weg ist (85 %), und geht nicht raus, solange Waldo da ist. Kippen-Feuer nur, wenn Jonny da ist.
 - Kühlschrank (klein, weiß, Bier drin) in der Pausenecke neben dem Kaffeetisch.
-- Kaffeetassen: zu Spielbeginn 7 benutzte Tassen (bunt, Kaffeerest) zufällig auf Werkbank, Regal, Boden, Trägern usw. verteilt
-  (welt.tassenVerteilen, Höhe per Strahl nach unten). In die Hand, Klick auf den Kühlschrank (oder E davor) = oben abstellen
+- Kaffeetassen: zu Spielbeginn 7 benutzte Tassen (bunt, Kaffeerest) zufällig verteilt, NIE auf dem Boden: Spülkasten im Bad,
+  Regal (3 Bretter), Sofa-Armlehnen, Stahlträger, Erste-Hilfe-Kasten, Werkbank, Schweißtisch (TASSEN_PLAETZE mit Strahl-
+  Starthöhe, Linien/Umrisse zählen nicht als Fläche). In die Hand, Klick auf den Kühlschrank (oder E davor) = oben abstellen
   (4 x 3 Plätze, dann zweite Lage), Wut -2, alle weg = Lob und -4. Ab 3 offenen Tassen meckert Dennis alle 80–130 s (+2) oder
   räumt 2 Tassen selbst weg (+4, DENNIS.tassenSelbst). Jonny/Waldo bringen beim Kommen mit 40 % eine Tasse mit (max. 14).
-- Dennis telefoniert alle 75–135 s (Klingeln, linke Hand mit Handy am Ohr, TELEFON-Pose per Suche bestimmt, 3 Zeilen aus
-  DENNIS.telefon: Lydia, Motorhaube, Konzerttickets, Torben, ...). Fehler/Ärger beenden das Telefonat.
+- Dennis RUFT SELBST AN, alle 75–135 s (kein Klingeln: Handy ans Ohr, Wähltöne, Freizeichen; linke Hand mit Handy am Ohr,
+  TELEFON-Pose per Suche bestimmt). Gespräche (DENNIS.telefon, der Reihe nach gemischt): Lydia (Motorhauben-Dilemma),
+  Versicherung (Schaden an der Motorhaube), Metallhändler (Bestellung mit sehr genauen Details). Fehler/Ärger beenden das Telefonat.
 - Bitsatz (Nebenaufgabe, wird NICHT angekündigt, muss man selbst finden): offene schwarze Kassette im Regal (mittleres Brett),
   Bits durcheinander. Menü „Bitsatz sortieren“ = Minispiel (12 Bits: Kreuz PH, Pozi PZ, Torx TX, Schlitz je Größe 1–3 per
   Ziehen ins passende Fach), danach ordentlich, Lob, Wut -8, erscheint als erledigte Nebenaufgabe.
@@ -245,7 +259,7 @@
 
 ## Dateien
 - `index.html`, `css/style.css`
-- `js/main.js` Einstieg · `js/world.js` Werkstatt + Gasflasche · `js/dennis.js` 3D-Dennis
+- `js/main.js` Einstieg · `js/world.js` Werkstatt + Gasflasche · `js/draussen.js` Hof · `js/carport.js` Wohnwagen/Benz · `js/dennis.js` 3D-Dennis
 - `js/steuerung.js` Kamera/Gehen/Klicks · `js/spiel.js` Ablauf, Fehler, Texte, Note
 - `js/minispiele.js` Schneiden, Schweißen, Schlacke · `js/clips.js` Dennis-Auftritte + Archiv
 - `js/hand.js` Dinge in der Hand (Haltung, Ablegen, Werfen mit Physik) · `js/ui.js` HUD/Dialoge · `js/audio.js` Geräusche (live erzeugt) · `js/gesicht.js` Comic-Gesicht + Icons
@@ -278,6 +292,13 @@
 - Alle Dennis-Sätze stehen in `js/texte.js` (IDs = Dateinamen der Aufnahmen), `spiel.js` nutzt nur diese.
 - `stimme/stimme.json` + `stimme/<id>.mp3`: Aufnahmen pro Satz, Mund bewegt sich nach Lautstärke.
   Pflege mit `node tools/stimme.mjs liste|eintragen`, siehe `stimme/LIESMICH.md`.
+- Die Jungs sprechen ALLE Sätze ein. Dateinamen kurz: dennis1 … dennis366, jonny1 … jonny41, waldo1 … waldo37 (Endung
+  .mp3/.m4a/.wav, Groß-/Kleinschreibung egal). Zuordnung Kurzname -> Satz-ID steht in stimme/zuordnung.csv (vom Projektchat).
+  Nummern sind fest und verschieben sich NIE; neue Sätze bekommen die nächste freie Nummer (dennis367 …) und eine neue Zeile.
+  Schlüssel in texte.js NIE umbenennen, neue Sätze nur ergänzen. IDs: Dennis wie alleSaetze(), telefon.G.Z = Gespräch G,
+  Zeile Z, jonny./waldo. = Schlüssel aus JONNY/WALDO. Nicht enthalten (Hinweistexte): kloOhneAufsicht, schlauch.zuKurz.
+  Wenn die Dateien kommen: Abspielen über die Zuordnung auflösen, Jonny/Waldo genauso wie Dennis (alleSaetze() sammelt bisher
+  nur DENNIS und löst verschachtelte Listen wie telefon nicht auf).
 - KI-Stimmklon ist in dieser Umgebung nicht möglich (huggingface.co gesperrt). Stimmproben nie ins Repo (öffentlich).
 
 ## Offene Themen

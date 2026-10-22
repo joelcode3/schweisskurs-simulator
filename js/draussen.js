@@ -5,11 +5,11 @@ import * as THREE from 'three';
 import { toon, teil, quader, zylinder, kugel, setze, leinwandTextur, zufall } from './toon.js';
 
 // Begehbare Flächen draußen (Rechtecke). Das Bad-Häuschen vorne rechts ist ausgespart.
-const VORPLATZ = { xMin: -9.5, xMax: 9.5, zMin: 4.25, zMax: 12.5 };
+const VORPLATZ = { xMin: -17, xMax: 9.5, zMin: 4.25, zMax: 12.5 };
 const SEITE = { xMin: 5.35, xMax: 9.5, zMin: -3.5, zMax: 4.6 };
 const BAD_HAUS = { xMin: 0.55, xMax: 4.05, zMin: 3.9, zMax: 6.95 };
 // Durchgang durchs offene Tor
-const DURCHGANG = { xMin: -2.0, xMax: 0.3, zMin: 3.4, zMax: 4.7 };
+const DURCHGANG = { xMin: -0.68, xMax: -0.02, zMin: 3.4, zMax: 4.7 }; // Schlupftür im Tor
 
 export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   const r = zufall(303);
@@ -237,116 +237,166 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
     scene.add(setze(zylinder(0.045, 0.045, TRAUFE, 0x5a5d62, { umriss: 0.002 }, 10), seite * (RAUM.xMax + 0.2), TRAUFE / 2 - 0.1, RAUM.zMax + 0.2));
   }
 
-  // ---------- Schild „Nicht stören – Schweißkurs!“ ----------
-  const schildTex = leinwandTextur(512, 256, (g, b, h) => {
-    g.fillStyle = '#c99a5b'; g.fillRect(0, 0, b, h);
-    for (let y = 0; y < h; y += 4) { g.fillStyle = `rgba(90,55,25,${0.05 + r() * 0.1})`; g.fillRect(0, y, b, 2); }
-    g.strokeStyle = '#3a2412'; g.lineWidth = 10; g.strokeRect(5, 5, b - 10, h - 10);
-    g.fillStyle = '#b3170d'; g.font = 'bold 60px Impact, Arial Black, sans-serif'; g.textAlign = 'center';
-    g.fillText('NICHT STÖREN!', b / 2, 110);
-    g.fillStyle = '#1d1d1f'; g.font = 'bold 56px Impact, Arial Black, sans-serif';
-    g.fillText('SCHWEISSKURS', b / 2, 196);
-  });
-  const schild = new THREE.Group();
-  schild.add(setze(quader(1.24, 0.64, 0.04, 0xc99a5b, { umriss: 0.003 }), 0, 0, 0));
-  const schildBild = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.6), new THREE.MeshBasicMaterial({ map: schildTex }));
-  schildBild.position.z = 0.022;
-  schild.add(schildBild);
-  for (const x of [-0.5, 0.5]) schild.add(setze(kugel(0.018, 0x777777, { umriss: false }, 6), x, 0.22, 0.03));
-  setze(schild, -3.55, 2.25, RAUM.zMax + 0.11, 0, 0, 0.03);
-  scene.add(schild);
-  merke(schild, 'schildDraussen', 'Schild', null);
-
-  // ---------- Mülltonnen (grau, blau, braun) ----------
+  // ---------- Mülltonnen (grau, blau, braun): 240-Liter-Tonnen mit Deckel, Scharnierleiste, Griff, Rädern, Rippen ----------
   const tonnen = new THREE.Group();
-  for (const [i, farbe, deckel] of [[0, 0x4a4d52, 0x2f3236], [1, 0x2f5fa8, 0x234a85], [2, 0x6b4a2a, 0x4f361e]]) {
+  const schmutzTex = leinwandTextur(64, 128, (g, b, h) => {
+    g.fillStyle = '#ffffff'; g.fillRect(0, 0, b, h);
+    for (let i = 0; i < 14; i++) { g.fillStyle = `rgba(60,50,40,${0.05 + r() * 0.1})`; const x = r() * b; g.fillRect(x, h * (0.4 + r() * 0.6), 2 + r() * 3, h); }
+    for (let i = 0; i < 30; i++) { g.fillStyle = 'rgba(255,255,255,0.12)'; g.fillRect(r() * b, r() * h, 3, 1); }
+  });
+  for (const [i, farbe, deckelFarbe] of [[0, 0x4a4d52, 0x33363a], [1, 0x2f5fa8, 0x244c88], [2, 0x6b4a2a, 0x523820]]) {
     const t = new THREE.Group();
-    const korpus = teil(new THREE.CylinderGeometry(0.31, 0.27, 1.0, 4, 1), farbe, { umriss: 0.004 });
+    const mat = toon(farbe, { map: schmutzTex });
+    // Korpus: unten schmaler, oben breiter (Pyramidenstumpf)
+    const korpus = teil(new THREE.CylinderGeometry(0.4, 0.33, 0.92, 4, 1), 0, { material: mat, umriss: 0.004 });
     korpus.rotation.y = Math.PI / 4;
-    korpus.scale.set(1, 1, 1.15);
-    korpus.position.y = 0.53;
+    korpus.scale.set(1, 1, 1.22);
+    korpus.position.y = 0.52;
     t.add(korpus);
-    t.add(setze(quader(0.6, 0.05, 0.72, deckel, { umriss: 0.003 }), 0, 1.06, 0.02));
-    t.add(setze(zylinder(0.02, 0.02, 0.5, 0x1d1d1f, { umriss: 0.002 }, 8), 0, 1.0, -0.36, 0, 0, Math.PI / 2));
-    for (const sx of [-1, 1]) t.add(setze(zylinder(0.1, 0.1, 0.06, 0x1d1d1f, {}, 14), sx * 0.24, 0.1, -0.28, 0, 0, Math.PI / 2));
-    t.add(setze(quader(0.3, 0.12, 0.01, 0xf4f4ef, { umriss: false }), 0, 0.75, 0.37));
+    // umlaufender Rand oben, Kammaufnahme vorne, senkrechte Verstärkungsrippen
+    t.add(setze(quader(0.6, 0.06, 0.72, farbe, { umriss: 0.003 }), 0, 0.97, 0));
+    t.add(setze(quader(0.46, 0.08, 0.05, deckelFarbe, { umriss: 0.002 }), 0, 0.88, 0.36));
+    for (const x of [-0.16, 0, 0.16]) t.add(setze(quader(0.04, 0.6, 0.02, deckelFarbe, { umriss: false }), x, 0.5, 0.315 + 0.05 * (0.5 - 0.2)));
+    for (const sx of [-1, 1]) t.add(setze(quader(0.02, 0.7, 0.05, deckelFarbe, { umriss: false }), sx * 0.27, 0.55, 0.0));
+    // Deckel mit Griffkante vorne und Scharnieren hinten
+    const deckel = new THREE.Group();
+    deckel.add(setze(quader(0.62, 0.05, 0.74, deckelFarbe, { umriss: 0.003 }), 0, 0.025, 0.37));
+    deckel.add(setze(quader(0.56, 0.02, 0.6, deckelFarbe, { umriss: false }), 0, 0.06, 0.37));
+    deckel.add(setze(quader(0.4, 0.05, 0.04, deckelFarbe, { umriss: 0.002 }), 0, 0.0, 0.75));
+    deckel.position.set(0, 1.0, -0.37);
+    if (i === 1) deckel.rotation.x = -0.18; // blaue Tonne: Deckel geht nicht zu, Kartons quellen raus
+    t.add(deckel);
+    for (const sx of [-0.2, 0.2]) t.add(setze(quader(0.08, 0.06, 0.06, deckelFarbe, { umriss: 0.002 }), sx, 0.99, -0.38));
+    // Schiebegriff hinten und Achse mit Rädern
+    t.add(setze(zylinder(0.022, 0.022, 0.56, 0x1d1d1f, { umriss: 0.002 }, 8), 0, 0.92, -0.43, 0, 0, Math.PI / 2));
+    for (const sx of [-0.25, 0.25]) t.add(setze(quader(0.04, 0.12, 0.08, deckelFarbe, { umriss: false }), sx, 0.88, -0.4));
+    t.add(setze(zylinder(0.015, 0.015, 0.62, 0x8a8f96, { umriss: false }, 6), 0, 0.11, -0.3, 0, 0, Math.PI / 2));
+    for (const sx of [-1, 1]) {
+      t.add(setze(zylinder(0.11, 0.11, 0.06, 0x1d1d1f, { umriss: 0.003 }, 16), sx * 0.3, 0.11, -0.3, 0, 0, Math.PI / 2));
+      t.add(setze(zylinder(0.05, 0.05, 0.065, 0x6e7177, { umriss: false }, 10), sx * 0.3, 0.11, -0.3, 0, 0, Math.PI / 2));
+    }
+    // Fuß vorne
+    t.add(setze(quader(0.4, 0.06, 0.08, deckelFarbe, { umriss: 0.002 }), 0, 0.03, 0.26));
     t.position.set(i * 0.72, 0, 0);
     t.rotation.y = (r() - 0.5) * 0.2;
-    if (i === 1) { t.children[1].rotation.x = -0.12; t.children[1].position.y = 1.09; } // Deckel geht nicht zu, Kartons quellen raus
     tonnen.add(t);
   }
-  tonnen.add(setze(quader(0.22, 0.14, 0.2, 0xb08a5a, { umriss: 0.002 }), 0.72, 1.16, 0.15, 0.3, 0.4, 0));
-  setze(tonnen, -4.75, 0, RAUM.zMax + 0.6, 0, 0, 0);
+  // Kartons quellen aus der blauen Tonne, Müllbeutel neben der grauen
+  tonnen.add(setze(quader(0.24, 0.16, 0.22, 0xb08a5a, { umriss: 0.002 }), 0.72, 1.14, 0.2, 0.35, 0.4, 0.1));
+  tonnen.add(setze(quader(0.2, 0.02, 0.3, 0xc49a68, { umriss: 0.002 }), 0.62, 1.12, 0.3, 0.6, 0.1, 0.4));
+  const sack = kugel(0.22, 0x1d1d1f, { umriss: 0.003 }, 12);
+  sack.scale.set(1, 0.85, 0.9);
+  sack.position.set(-0.45, 0.19, 0.15);
+  tonnen.add(sack);
+  tonnen.add(setze(zylinder(0.02, 0.05, 0.1, 0x1d1d1f, { umriss: 0.002 }, 8), -0.45, 0.42, 0.15));
+  setze(tonnen, -4.6, 0, RAUM.zMax + 0.6, 0, 0, 0);
   scene.add(tonnen);
   merke(tonnen, 'muelltonnen', 'Mülltonnen', null);
-  hindernis(-5.15, -2.95, RAUM.zMax, RAUM.zMax + 1.05);
+  hindernis(-5.3, -2.85, RAUM.zMax, RAUM.zMax + 1.1);
 
-  // ---------- roter Weidemann-Hoflader: geschlossene Kabine, Palettengabel ----------
-  const ROT = 0xc8261d;
+  // ---------- roter Hoflader (Weidemann-Art) mit geschlossener Kabine und Palettengabel, ohne Schriftzug ----------
+  const ROT = 0xc8261d, DUNKEL = 0x2a2c30;
   const lader = new THREE.Group();
-  // Hinterwagen mit Motorhaube, Vorderwagen (Knicklenker), Achsen
-  lader.add(setze(quader(0.95, 0.55, 1.15, ROT, { umriss: 0.005 }), 0, 0.75, -0.55));
-  lader.add(setze(quader(0.9, 0.08, 1.1, 0x1d1d1f, { umriss: 0.003 }), 0, 1.06, -0.6));
-  for (let i = 0; i < 6; i++) lader.add(setze(quader(0.02, 0.2, 0.5, 0x1d1d1f, { umriss: false }), 0.48, 0.8, -0.8 + i * 0.09));
-  lader.add(setze(quader(0.85, 0.45, 0.9, ROT, { umriss: 0.005 }), 0, 0.68, 0.55));
-  lader.add(setze(quader(0.75, 0.1, 0.25, 0x2a2c30, { umriss: 0.003 }), 0, 0.5, 0.05));
-  // geschlossene Kabine: Rahmen, große Scheiben, Dach
+  // Hinterwagen: Motorhaube mit Lüftungsgitter, Gegengewicht, Auspuff, Rückleuchten
+  lader.add(setze(quader(0.95, 0.5, 1.05, ROT, { umriss: 0.005 }), 0, 0.78, -0.6));
+  const haube = teil(new THREE.CylinderGeometry(0.47, 0.47, 1.0, 16, 1, false, -Math.PI / 2, Math.PI), ROT, { umriss: 0.004 });
+  haube.rotation.z = Math.PI / 2; haube.rotation.y = Math.PI / 2;
+  haube.scale.set(1, 1, 0.28);
+  haube.position.set(0, 1.03, -0.62);
+  lader.add(haube);
+  for (let k = 0; k < 7; k++) for (const sx of [-1, 1]) lader.add(setze(quader(0.012, 0.18, 0.04, 0x1d1d1f, { umriss: false }), sx * 0.478, 0.86, -0.95 + k * 0.08));
+  lader.add(setze(quader(1.0, 0.32, 0.18, DUNKEL, { umriss: 0.004 }), 0, 0.58, -1.18));
+  for (let k = 0; k < 4; k++) lader.add(setze(quader(0.8, 0.02, 0.01, 0x1d1d1f, { umriss: false }), 0, 0.48 + k * 0.06, -1.275));
+  for (const sx of [-1, 1]) {
+    lader.add(setze(quader(0.1, 0.06, 0.02, 0xd8352a, { umriss: 0.002 }), sx * 0.38, 0.82, -1.14));
+    lader.add(setze(quader(0.06, 0.04, 0.02, 0xf2a21c, { umriss: false }), sx * 0.38, 0.76, -1.14));
+  }
+  lader.add(setze(zylinder(0.035, 0.035, 0.45, 0x3a3c40, { umriss: 0.002 }, 10), 0.33, 1.3, -0.95));
+  lader.add(setze(zylinder(0.045, 0.035, 0.05, 0x1d1d1f, { umriss: 0.002 }, 10), 0.33, 1.54, -0.95, 0.4, 0, 0));
+  // Rahmen, Knickgelenk, Trittstufen
+  lader.add(setze(quader(0.7, 0.22, 2.2, DUNKEL, { umriss: 0.004 }), 0, 0.45, 0.0));
+  lader.add(setze(zylinder(0.09, 0.09, 0.3, 0x5a5d62, { umriss: 0.003 }, 12), 0, 0.52, 0.12));
+  for (const sx of [-1, 1]) {
+    lader.add(setze(quader(0.22, 0.03, 0.18, 0x1d1d1f, { umriss: 0.002 }), sx * 0.5, 0.42, -0.05));
+    lader.add(setze(quader(0.04, 0.2, 0.03, 0x1d1d1f, { umriss: false }), sx * 0.6, 0.52, -0.05));
+  }
+  // Vorderwagen mit Kotflügeln
+  lader.add(setze(quader(0.82, 0.38, 0.75, ROT, { umriss: 0.005 }), 0, 0.68, 0.62));
+  for (const sx of [-1, 1]) lader.add(setze(quader(0.28, 0.05, 0.72, DUNKEL, { umriss: 0.003 }), sx * 0.55, 0.78, 0.6));
+  // Kabine: Rahmen, große Scheiben, Dach mit Rundumleuchte, Spiegel, Wischer, Türgriff, Sitz, Lenkrad, Joystick
   const kabine = new THREE.Group();
-  const scheibe = new THREE.MeshToonMaterial({ color: 0x9cc7e6, transparent: true, opacity: 0.55 });
+  const scheibe = new THREE.MeshToonMaterial({ color: 0x9cc7e6, transparent: true, opacity: 0.5 });
   kabine.add(setze(new THREE.Mesh(new THREE.BoxGeometry(0.86, 1.0, 0.95), scheibe), 0, 0.5, 0));
   for (const [x, z] of [[-0.43, -0.47], [0.43, -0.47], [-0.43, 0.47], [0.43, 0.47]]) kabine.add(setze(quader(0.05, 1.05, 0.05, 0x1d1d1f, { umriss: 0.002 }), x, 0.5, z));
-  kabine.add(setze(quader(0.95, 0.07, 1.05, ROT, { umriss: 0.004 }), 0, 1.03, 0));
-  kabine.add(setze(quader(0.9, 0.04, 0.04, 0x1d1d1f, { umriss: false }), 0, 0.02, 0.47));
-  // Sitz und Lenkrad
+  for (const y of [0.0, 1.0]) for (const z of [-0.47, 0.47]) kabine.add(setze(quader(0.9, 0.04, 0.04, 0x1d1d1f, { umriss: false }), 0, y, z));
+  kabine.add(setze(quader(0.04, 0.04, 0.95, 0x1d1d1f, { umriss: false }), 0.43, 0.55, 0));
+  kabine.add(setze(quader(0.98, 0.07, 1.08, ROT, { umriss: 0.004 }), 0, 1.04, 0));
+  kabine.add(setze(quader(0.9, 0.03, 1.0, 0xf4f4ef, { umriss: false }), 0, 1.08, 0));
+  kabine.add(setze(zylinder(0.05, 0.06, 0.09, 0xf2a21c, { umriss: 0.002 }, 10), 0.3, 1.15, -0.3));
+  for (const sx of [-1, 1]) {
+    kabine.add(setze(zylinder(0.008, 0.008, 0.2, 0x1d1d1f, { umriss: false }, 6), sx * 0.52, 0.85, 0.42, 0, 0, sx * 1.2));
+    kabine.add(setze(quader(0.03, 0.12, 0.08, 0x1d1d1f, { umriss: 0.002 }), sx * 0.62, 0.8, 0.42));
+    kabine.add(setze(quader(0.05, 0.05, 0.02, 0xfff6c8, { umriss: 0.001 }), sx * 0.36, 1.0, 0.5));
+  }
+  kabine.add(setze(quader(0.012, 0.42, 0.012, 0x1d1d1f, { umriss: false }), 0.08, 0.38, 0.49, 0, 0, 0.6));
+  kabine.add(setze(quader(0.03, 0.1, 0.03, 0x8a8f96, { umriss: false }), 0.46, 0.5, -0.1));
   kabine.add(setze(quader(0.4, 0.08, 0.38, 0x1d1d1f, { umriss: 0.002 }), 0, 0.15, -0.15));
   kabine.add(setze(quader(0.4, 0.42, 0.06, 0x1d1d1f, { umriss: 0.002 }), 0, 0.38, -0.33));
   kabine.add(setze(teil(new THREE.TorusGeometry(0.11, 0.015, 6, 14), 0x1d1d1f, { umriss: 0.001 }), 0, 0.45, 0.2, -0.9, 0, 0));
-  // Rundumleuchte
-  kabine.add(setze(zylinder(0.05, 0.06, 0.08, 0xf2a21c, { umriss: 0.002 }, 10), 0.3, 1.11, -0.3));
-  kabine.position.set(0, 1.08, -0.35);
+  kabine.add(setze(zylinder(0.012, 0.012, 0.14, 0x1d1d1f, { umriss: false }, 6), 0.22, 0.25, 0.05, 0.3, 0, 0));
+  kabine.position.set(0, 1.08, -0.3);
   lader.add(kabine);
-  // Schriftzug an der Seite
-  const schriftTex = leinwandTextur(256, 48, (g, b, h) => { g.fillStyle = '#c8261d'; g.fillRect(0, 0, b, h); g.fillStyle = '#ffffff'; g.font = 'bold 36px Arial Black, sans-serif'; g.textAlign = 'center'; g.fillText('WEIDEMANN', b / 2, 36); });
-  for (const sx of [-1, 1]) {
-    const sch = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.15), new THREE.MeshBasicMaterial({ map: schriftTex }));
-    sch.position.set(sx * 0.48, 0.82, -0.6);
-    sch.rotation.y = sx * Math.PI / 2;
-    lader.add(sch);
-  }
-  // Räder (grobes Profil)
-  const profilTex = leinwandTextur(128, 32, (g, b, h) => { g.fillStyle = '#1b1b1d'; g.fillRect(0, 0, b, h); g.fillStyle = '#323236'; for (let x = 0; x < b; x += 16) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + 10, h / 2); g.lineTo(x, h); g.lineTo(x + 5, h / 2); g.fill(); } }, [3, 1]);
-  for (const z of [-0.65, 0.6]) for (const sx of [-1, 1]) {
+  // Räder: grobe Traktorstollen, rote Felgen mit Radmuttern
+  const stollenTex = leinwandTextur(256, 64, (g, b, h) => {
+    g.fillStyle = '#1b1b1d'; g.fillRect(0, 0, b, h);
+    g.fillStyle = '#34343a';
+    for (let x = 0; x < b; x += 26) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + 14, 0); g.lineTo(x + 26, h / 2); g.lineTo(x + 14, h); g.lineTo(x, h); g.lineTo(x + 12, h / 2); g.closePath(); g.fill(); }
+  }, [2, 1]);
+  const reifenMat = toon(0xffffff, { map: stollenTex });
+  for (const z of [-0.68, 0.62]) for (const sx of [-1, 1]) {
     const rad = new THREE.Group();
-    rad.add(teil(new THREE.CylinderGeometry(0.36, 0.36, 0.3, 20), 0, { material: toon(0xffffff, { map: profilTex }), umriss: 0.004 }));
-    rad.add(setze(zylinder(0.2, 0.2, 0.31, ROT, { umriss: 0.002 }, 14), 0, 0, 0));
-    rad.add(setze(zylinder(0.07, 0.07, 0.33, 0x8a8d92, { umriss: false }, 8), 0, 0, 0));
+    rad.add(teil(new THREE.CylinderGeometry(0.38, 0.38, 0.32, 24), 0, { material: reifenMat, umriss: 0.004 }));
+    rad.add(setze(zylinder(0.36, 0.36, 0.325, 0x1d1d1f, { umriss: false }, 24), 0, 0, 0));
+    rad.add(setze(zylinder(0.22, 0.22, 0.33, ROT, { umriss: 0.002 }, 16), 0, 0, 0));
+    rad.add(setze(zylinder(0.09, 0.09, 0.34, 0x8a8d92, { umriss: false }, 10), 0, 0, 0));
+    for (let k = 0; k < 6; k++) { const w = k / 6 * Math.PI * 2; rad.add(setze(zylinder(0.014, 0.014, 0.35, 0xc9cdd2, { umriss: false }, 6), Math.cos(w) * 0.13, 0, Math.sin(w) * 0.13)); }
     rad.rotation.z = Math.PI / 2;
-    rad.position.set(sx * 0.55, 0.36, z);
+    rad.position.set(sx * 0.58, 0.38, z);
     lader.add(rad);
   }
-  // Ladeschwinge (Hubarm) mit Palettengabel
+  // Hubarm (Schwinge) mit Hubzylinder, Kippzylinder, Schnellwechselplatte, Palettengabel mit L-Zinken
   for (const sx of [-1, 1]) {
-    const arm = quader(0.08, 0.12, 1.3, ROT, { umriss: 0.004 });
-    arm.position.set(sx * 0.36, 1.05, 0.65);
-    arm.rotation.x = 0.55;
+    const arm = quader(0.09, 0.14, 1.35, ROT, { umriss: 0.004 });
+    arm.position.set(sx * 0.37, 1.05, 0.62);
+    arm.rotation.x = 0.5;
     lader.add(arm);
+    lader.add(setze(zylinder(0.045, 0.045, 0.5, ROT, { umriss: 0.003 }, 10), sx * 0.3, 0.8, 0.55, 1.05, 0, 0));
+    lader.add(setze(zylinder(0.02, 0.02, 0.36, 0xd9dde0, { umriss: 0.002 }, 8), sx * 0.3, 0.93, 0.83, 1.05, 0, 0));
+    lader.add(setze(zylinder(0.012, 0.012, 0.9, 0x1d1d1f, { umriss: false }, 6), sx * 0.27, 1.0, 0.45, 0.6, 0, 0));
   }
-  lader.add(setze(zylinder(0.06, 0.06, 0.6, 0x7a7d82, { umriss: 0.003 }, 10), 0, 0.98, 0.5, 0, 0, Math.PI / 2));
-  lader.add(setze(zylinder(0.035, 0.035, 0.7, 0x9aa1a8, { umriss: 0.002 }, 8), 0.2, 1.05, 0.55, 0.9, 0, 0));
+  lader.add(setze(zylinder(0.06, 0.06, 0.66, 0x7a7d82, { umriss: 0.003 }, 10), 0, 0.98, 0.5, 0, 0, Math.PI / 2));
+  lader.add(setze(zylinder(0.04, 0.04, 0.5, ROT, { umriss: 0.003 }, 10), 0, 1.15, 0.8, 0.5, 0, 0));
+  lader.add(setze(zylinder(0.018, 0.018, 0.3, 0xd9dde0, { umriss: 0.002 }, 8), 0, 1.0, 1.05, 0.5, 0, 0));
   const gabel = new THREE.Group();
-  gabel.add(setze(quader(0.9, 0.5, 0.06, 0x1d1d1f, { umriss: 0.003 }), 0, 0.25, 0));
-  for (let i = 0; i < 4; i++) gabel.add(setze(quader(0.9, 0.04, 0.03, 0x1d1d1f, { umriss: false }), 0, 0.08 + i * 0.12, 0.04));
-  for (const sx of [-0.28, 0.28]) {
-    gabel.add(setze(quader(0.08, 0.55, 0.05, 0x9aa1a8, { umriss: 0.003 }), sx, 0.27, 0.07));
-    gabel.add(setze(quader(0.08, 0.05, 1.0, 0x9aa1a8, { umriss: 0.003 }), sx, 0.02, 0.55));
+  gabel.add(setze(quader(0.95, 0.55, 0.06, DUNKEL, { umriss: 0.003 }), 0, 0.28, 0));
+  for (let k = 0; k < 4; k++) gabel.add(setze(quader(0.95, 0.04, 0.03, 0x1d1d1f, { umriss: false }), 0, 0.08 + k * 0.13, 0.04));
+  gabel.add(setze(quader(0.6, 0.08, 0.08, DUNKEL, { umriss: 0.002 }), 0, 0.5, -0.05));
+  for (const sx of [-0.3, 0.3]) {
+    gabel.add(setze(quader(0.1, 0.6, 0.05, 0x9aa1a8, { umriss: 0.003 }), sx, 0.3, 0.07));
+    const zinke = teil(new THREE.BoxGeometry(0.1, 0.05, 1.0), 0x9aa1a8, { umriss: 0.003 });
+    zinke.geometry.translate(0, 0, 0.5);
+    zinke.position.set(sx, 0.025, 0.07);
+    gabel.add(zinke);
+    gabel.add(setze(quader(0.1, 0.02, 0.12, 0x8a8f96, { umriss: false }), sx, 0.06, 0.95, 0.15, 0, 0));
   }
   gabel.position.set(0, 0.06, 1.25);
   lader.add(gabel);
   setze(lader, 7.0, 0, 1.4, 0, 0.15, 0);
   scene.add(lader);
-  merke(lader, 'weidemann', 'Weidemann', null);
+  merke(lader, 'weidemann', 'Hoflader', null);
   hindernis(6.2, 7.85, -0.1, 3.1);
 
+  const profilTex = leinwandTextur(128, 32, (g, b, h) => { g.fillStyle = '#1b1b1d'; g.fillRect(0, 0, b, h); g.fillStyle = '#323236'; for (let x = 0; x < b; x += 16) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + 10, h / 2); g.lineTo(x, h); g.lineTo(x + 5, h / 2); g.fill(); } }, [3, 1]);
   // ---------- rosa Mini-Jeep (Elektro-Kinderauto im Wrangler-Look, ohne Dach) ----------
   const ROSA = 0xf08cc0;
   const jeep = new THREE.Group();
@@ -395,15 +445,18 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   // ---------- Feuerschale mit Dreibein, rundem Grillrost und alter schwarzer Bratwurst ----------
   const feuerstelle = new THREE.Group();
   const schale = teil(new THREE.SphereGeometry(0.45, 24, 10, 0, Math.PI * 2, Math.PI * 0.55, Math.PI * 0.45), 0x2a2622, { mat: { side: THREE.DoubleSide }, umriss: 0.004 });
-  schale.position.y = 0.62;
+  schale.scale.y = 0.5; // flache Schale
+  schale.position.y = 0.6;
   feuerstelle.add(schale);
-  feuerstelle.add(setze(teil(new THREE.TorusGeometry(0.44, 0.02, 6, 32), 0x3a2a1e, { umriss: 0.002 }), 0, 0.6, 0, Math.PI / 2, 0, 0));
+  feuerstelle.add(setze(teil(new THREE.TorusGeometry(0.44, 0.02, 6, 32), 0x3a2a1e, { umriss: 0.002 }), 0, 0.57, 0, Math.PI / 2, 0, 0));
   // Rost und Rostflecken auf der Schale
   // Fuß
   for (let i = 0; i < 3; i++) { const w = i / 3 * Math.PI * 2; const fuss = zylinder(0.015, 0.015, 0.5, 0x2a2622, { umriss: 0.002 }, 6); fuss.position.set(Math.cos(w) * 0.2, 0.2, Math.sin(w) * 0.2); fuss.rotation.set(Math.sin(w) * 0.35, 0, -Math.cos(w) * 0.35); feuerstelle.add(fuss); }
   // Asche und verkohlte Holzscheite
-  const asche = kugel(0.36, 0x6e6a64, { umriss: false }, 12); asche.scale.set(1, 0.12, 1); asche.position.y = 0.24; feuerstelle.add(asche);
-  for (let i = 0; i < 4; i++) feuerstelle.add(setze(zylinder(0.035, 0.035, 0.38, 0x1d1a18, { umriss: 0.002 }, 7), (r() - 0.5) * 0.25, 0.3, (r() - 0.5) * 0.25, Math.PI / 2, r() * 3, 0.2));
+  // graue Asche mit kleinen Häufchen, verkohlte Holzreste
+  const asche = kugel(0.36, 0x77746f, { umriss: false }, 16); asche.scale.set(1, 0.08, 1); asche.position.y = 0.415; feuerstelle.add(asche);
+  for (let i = 0; i < 9; i++) { const h = kugel(0.05 + r() * 0.05, i % 3 ? 0x8a8681 : 0x5f5c58, { umriss: false }, 8); h.scale.set(1, 0.4, 1); h.position.set((r() - 0.5) * 0.45, 0.43, (r() - 0.5) * 0.45); feuerstelle.add(h); }
+  for (let i = 0; i < 3; i++) feuerstelle.add(setze(zylinder(0.03, 0.03, 0.3, 0x1d1a18, { umriss: 0.002 }, 7), (r() - 0.5) * 0.2, 0.45, (r() - 0.5) * 0.2, Math.PI / 2, r() * 3, 0.1));
   // Dreibein mit Kette
   const spitze = 1.75;
   for (let i = 0; i < 3; i++) {
@@ -445,7 +498,7 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
 
   // ---------- Bäume auf der Wiese ----------
   const blatt = [0x3f7a35, 0x4f8a3e, 0x356a2c];
-  for (const [x, z, s] of [[-8.5, 15, 1.2], [-3.5, 18, 1.4], [4.5, 16.5, 1.1], [10.5, 13.5, 1.3], [-13, 10, 1.25], [13.5, 6.5, 1.15], [14, -2, 1.3], [-12.5, 2, 1.1], [8, 22, 1.5], [-6, 24, 1.6]]) {
+  for (const [x, z, s] of [[-8.5, 15, 1.2], [-3.5, 18, 1.4], [4.5, 16.5, 1.1], [10.5, 13.5, 1.3], [-12, 13.8, 1.25], [13.5, 6.5, 1.15], [14, -2, 1.3], [-9.5, -1.5, 1.1], [8, 22, 1.5], [-6, 24, 1.6]]) {
     const baum = new THREE.Group();
     baum.add(setze(zylinder(0.16 * s, 0.24 * s, 2.4 * s, 0x6a4a2e, { umriss: 0.005 }, 10), 0, 1.2 * s, 0));
     for (let k = 0; k < 5; k++) {

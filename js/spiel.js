@@ -208,8 +208,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
     naehte: { scharniere: null, beine: null, rohr: null },
     schlackeWeg: false,
     lackiert: false,
-    wut: 0,
-    wutMax: 0,
+    wut: 15, // Dennis ist heute gereizt (Gehwegplatte auf dem Benz, nachts um 4)
+    wutMax: 15,
     fehler: [],
     fragen: 0,
     start: performance.now(),
@@ -1028,7 +1028,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
     jz.beschaeftigt = true;
     jonny.rauchen(false); z.jonnyRaucht = false;
     ui.jonnySagt(sag(JONNY.raus));
-    await Promise.race([jonny.gehZu(-0.85, 3.55, 1.1), warte(12000)]);
+    await Promise.race([jonny.gehZu(-0.35, 3.55, 1.1), warte(12000)]);
     jonny.sichtbar(false);
     jz.da = false;
     jz.draussen = true;
@@ -1041,7 +1041,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
     if (jz.da || !jz.draussen || jz.beschaeftigt) return;
     jz.beschaeftigt = true;
     jz.draussen = false;
-    jonny.wurzel.position.set(-0.85, 0, 3.55);
+    jonny.wurzel.position.set(-0.35, 0, 3.55);
     jonny.sichtbar(true);
     jz.da = true;
     ui.jonnySagt(sag(jz.ersterBesuch ? JONNY.hallo : JONNY.zurueck));
@@ -1075,7 +1075,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
       jonny.pinkeln(false);
       z.ofenAngepinkelt = true;
     }
-    await Promise.race([jonny.gehZu(-0.85, 3.55, 1.0), warte(12000)]);
+    await Promise.race([jonny.gehZu(-0.35, 3.55, 1.0), warte(12000)]);
     jonny.sichtbar(false);
     jz.da = false;
     jz.draussen = false;
@@ -1423,13 +1423,19 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
     const t = welt.neueTasse(wer.position);
     if (t && dennisSiehts() && Math.random() < 0.5) setTimeout(() => dennisSagt(sag(DENNIS.tasseMitgebracht), true, { prio: 0 }), 1500);
   }
-  // ---------- Dennis telefoniert zwischendurch (Handy am Ohr, steht still, brabbelt) ----------
+  // ---------- Dennis ruft zwischendurch selbst an (Handy am Ohr, steht still, brabbelt) ----------
+  const telefonReihe = [];
   async function dennisTelefoniert() {
     z.telefon = true;
-    for (let i = 0; i < 3; i++) { blip(1320, 0.12, 0.18); await warte(180); blip(1480, 0.12, 0.18); await warte(650); }
-    if (dennis.modus !== 'normal' || z.vorbei) { z.telefon = false; return; }
     dennis.telefon(true);
-    const satz = DENNIS.telefon[Math.floor(Math.random() * DENNIS.telefon.length)];
+    // wählen (kurze Tastentöne), dann zweimal Freizeichen
+    for (let i = 0; i < 7; i++) { blip(700 + Math.random() * 700, 0.07, 0.08); await warte(140 + Math.random() * 90); }
+    await warte(500);
+    for (let i = 0; i < 2; i++) { blip(425, 0.9, 0.06); await warte(1900); }
+    if (!dennis.telefoniert || dennis.modus !== 'normal' || z.vorbei) { dennis.telefon(false); z.telefon = false; z.naechstesTelefon = sekundenSeitStart() + 30; return; }
+    // jedes Gespräch erst wieder, wenn alle anderen dran waren
+    if (!telefonReihe.length) telefonReihe.push(...DENNIS.telefon.map((_, i) => i).sort(() => Math.random() - 0.5));
+    const satz = DENNIS.telefon[telefonReihe.shift()];
     for (const zeile of satz) {
       if (!dennis.telefoniert || dennis.modus !== 'normal' || z.vorbei) break;
       await dennisSagt(zeile, false, { prio: 0, minMs: 3200 });
@@ -2758,6 +2764,23 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
         if (z.kaffeeInHand) a.unshift(A('Kaffee geben', 'tasse', kaffeeGeben));
         return ['Dennis', 'Dein Schweißkurslehrer.', a];
       }
+      case 'benz':
+        if (dennisSiehts() && ruhig() && sekundenSeitStart() - (z.benzZuletzt ?? -99) > 40) { z.benzZuletzt = sekundenSeitStart(); aerger(1); setTimeout(() => dennisSagt(sag(DENNIS.benz), true, { prio: 0 }), 600); }
+        return ['Mercedes 123', 'Dennis\' ein und alles: weißer W123. In der Motorhaube steckt eine Gehwegplatte, die Plane darüber hat ein Loch. Passiert heute Nacht um 4.', []];
+      case 'wohnwagen':
+        return ['Wohnwagen', 'Alter Wohnwagen unterm Carport, mit kleiner Holzterrasse und Lichterkette. Die Tür ist zu.', []];
+      case 'carport':
+        return ['Carport', 'Auf dem Dach liegen alte Turnmatten, beschwert mit Gehwegplatten. Damit die Eicheln nicht so laut prasseln. Eine Matte fehlt.', []];
+      case 'turnmatte':
+        return ['Turnmatte', 'Vom Carport-Dach geweht. Die Gehwegplatte, die drauf lag, ist jetzt im Benz.', []];
+      case 'muelltonnen':
+        return ['Mülltonnen', 'Restmüll, Papier, Bio. Die blaue geht nicht mehr zu.', []];
+      case 'weidemann':
+        return ['Hoflader', 'Roter Hoflader mit geschlossener Kabine und Palettengabel. Schlüssel steckt nicht.', []];
+      case 'minijeep':
+        return ['Mini-Jeep', 'Rosa Elektro-Jeep in Kindergröße. Wem der wohl gehört?', []];
+      case 'feuerschale':
+        return ['Feuerschale', 'Kalte graue Asche, oben auf dem Rost eine schwarze, uralte Bratwurst.', []];
       default:
         return null;
     }

@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { toon, teil, quader, zylinder, kugel, setze, leinwandTextur, zufall, umriss } from './toon.js';
 import { baueDraussen } from './draussen.js';
+import { baueCarport } from './carport.js';
 
 export const RAUM = { xMin: -5, xMax: 5, zMin: -4, zMax: 4, hoehe: 3.9 };
 // Bad hinter der WC-Tür (vorne rechts), begehbar
@@ -288,34 +289,99 @@ export function baueWelt(scene) {
   }, [1.5, 1.5]);
   const brettMat = toon(0xffffff, { map: bretter });
   const TOR_B = 1.3, TOR_H = 3.0;
-  let fluegelRechts = null;
+  let fluegelRechts = null, handSchildFertig = null;
+  // Schlupftür im linken Flügel (von draußen gesehen rechts der Mitte), lokal x -0,9 … -0,1, 2,05 m hoch
+  const TUER_X0 = -0.9, TUER_X1 = -0.1, TUER_H = 2.05;
   for (const seite of [-1, 1]) {
     const fluegel = new THREE.Group();
-    fluegel.add(setze(teil(new THREE.BoxGeometry(TOR_B, TOR_H, 0.07), 0, { material: brettMat, umriss: 0.004 }), 0, TOR_H / 2, 0));
-    // helle Rahmen- und Z-Streben
+    const mitte = seite * TOR_B / 2;
+    const brett = (x0, x1, y0, y1) => fluegel.add(setze(teil(new THREE.BoxGeometry(x1 - x0, y1 - y0, 0.07), 0, { material: brettMat, umriss: 0.004 }), (x0 + x1) / 2 - mitte, (y0 + y1) / 2, 0));
     const strebe = (bb, hh, x, y, rz = 0) => fluegel.add(setze(quader(bb, hh, 0.04, 0x2a6234, { umriss: 0.003 }), x, y, 0.05, 0, 0, rz));
-    strebe(TOR_B, 0.12, 0, 0.12); strebe(TOR_B, 0.12, 0, TOR_H / 2); strebe(TOR_B, 0.12, 0, TOR_H - 0.12);
-    strebe(0.12, TOR_H, -TOR_B / 2 + 0.06, TOR_H / 2); strebe(0.12, TOR_H, TOR_B / 2 - 0.06, TOR_H / 2);
-    const diag = Math.hypot(TOR_B - 0.24, TOR_H / 2 - 0.24);
-    const w = Math.atan2(TOR_H / 2 - 0.24, TOR_B - 0.24) * seite;
-    strebe(diag, 0.11, 0, TOR_H * 0.31, w); strebe(diag, 0.11, 0, TOR_H * 0.69, w);
-    // schwarze Langbänder an der Außenkante
-    for (const y of [0.45, TOR_H - 0.45]) {
-      fluegel.add(setze(quader(0.6, 0.06, 0.02, 0x1d1d1f, { umriss: 0.002 }), seite * (TOR_B / 2 - 0.3), y, 0.08));
-      fluegel.add(setze(zylinder(0.03, 0.03, 0.12, 0x1d1d1f, {}, 8), seite * (TOR_B / 2 + 0.01), y, 0.04));
+    const strebeAussen = (bb, hh, x, y, rz = 0) => fluegel.add(setze(quader(bb, hh, 0.04, 0x2a6234, { umriss: 0.003 }), x, y, -0.05, 0, 0, rz));
+    if (seite === 1) {
+      brett(0, TOR_B, 0, TOR_H);
+      for (const st of [strebe, strebeAussen]) {
+        st(TOR_B, 0.12, 0, 0.12); st(TOR_B, 0.12, 0, TOR_H / 2); st(TOR_B, 0.12, 0, TOR_H - 0.12);
+        st(0.12, TOR_H, -TOR_B / 2 + 0.06, TOR_H / 2); st(0.12, TOR_H, TOR_B / 2 - 0.06, TOR_H / 2);
+        const diag = Math.hypot(TOR_B - 0.24, TOR_H / 2 - 0.24);
+        const w = Math.atan2(TOR_H / 2 - 0.24, TOR_B - 0.24);
+        st(diag, 0.11, 0, TOR_H * 0.31, w); st(diag, 0.11, 0, TOR_H * 0.69, w);
+      }
+    } else {
+      // Flügel mit Ausschnitt für die Tür: links, rechts daneben und oben drüber
+      brett(-TOR_B, TUER_X0, 0, TOR_H);
+      brett(TUER_X1, 0, 0, TOR_H);
+      brett(TUER_X0, TUER_X1, TUER_H, TOR_H);
+      const l0 = -TOR_B - mitte, l1 = TUER_X0 - mitte, r0 = TUER_X1 - mitte, r1 = -mitte;
+      for (const st of [strebe, strebeAussen]) {
+        st(TOR_B, 0.12, 0, TOR_H - 0.12);
+        st(TOR_B, 0.1, 0, TUER_H + 0.05);
+        for (const [a0, a1] of [[l0, l1], [r0, r1]]) { st(a1 - a0, 0.12, (a0 + a1) / 2, 0.12); st(a1 - a0, 0.12, (a0 + a1) / 2, TOR_H / 2); }
+        st(0.12, TOR_H, l0 + 0.06, TOR_H / 2); st(0.12, TOR_H, r1 - 0.06, TOR_H / 2);
+        st(0.08, TUER_H, l1 - 0.04, TUER_H / 2); st(0.08, TUER_H, r0 + 0.04, TUER_H / 2);
+        const dg = Math.hypot(TUER_X1 - TUER_X0 - 0.1, TOR_H - TUER_H - 0.2);
+        st(dg, 0.1, (TUER_X0 + TUER_X1) / 2 - mitte, (TUER_H + TOR_H) / 2, -Math.atan2(TOR_H - TUER_H - 0.2, TUER_X1 - TUER_X0 - 0.1));
+      }
+      // die Schlupftür: eigene Bretter, Z-Strebe, schwarze Bänder, Drückergarnitur; steht offen nach draußen
+      const tuerDreh = new THREE.Group();
+      // Band an der Außenseite der Tür (zur Torecke hin), Drücker zur Tormitte
+      tuerDreh.position.set(TUER_X0 - mitte, 0, 0);
+      const blatt = new THREE.Group();
+      const tb = TUER_X1 - TUER_X0 - 0.02;
+      blatt.add(setze(teil(new THREE.BoxGeometry(tb, TUER_H - 0.02, 0.06), 0, { material: brettMat, umriss: 0.004 }), -tb / 2, TUER_H / 2, 0));
+      for (const z of [0.045, -0.045]) {
+        const bs = (bb, hh, x, y, rz = 0) => blatt.add(setze(quader(bb, hh, 0.03, 0x2a6234, { umriss: 0.003 }), x, y, z, 0, 0, rz));
+        bs(tb, 0.1, -tb / 2, 0.15); bs(tb, 0.1, -tb / 2, TUER_H / 2); bs(tb, 0.1, -tb / 2, TUER_H - 0.15);
+        const dz = Math.hypot(tb - 0.1, TUER_H / 2 - 0.25);
+        bs(dz, 0.09, -tb / 2, TUER_H * 0.28, Math.atan2(TUER_H / 2 - 0.25, tb - 0.1)); bs(dz, 0.09, -tb / 2, TUER_H * 0.72, Math.atan2(TUER_H / 2 - 0.25, tb - 0.1));
+      }
+      for (const y of [0.3, TUER_H - 0.3]) {
+        blatt.add(setze(quader(0.32, 0.05, 0.075, 0x1d1d1f, { umriss: 0.002 }), -0.16, y, 0));
+        blatt.add(setze(zylinder(0.022, 0.022, 0.1, 0x1d1d1f, {}, 8), 0.0, y, 0));
+      }
+      for (const z of [0.06, -0.06]) {
+        blatt.add(setze(quader(0.04, 0.18, 0.012, 0x8a8f96, { umriss: 0.0015 }), -tb + 0.08, 1.0, z));
+        blatt.add(setze(zylinder(0.012, 0.012, 0.11, 0x8a8f96, { umriss: 0.0015 }, 8), -tb + 0.12, 1.04, z * 1.3, 0, 0, Math.PI / 2));
+      }
+      blatt.rotation.y = Math.PI;
+      tuerDreh.add(blatt);
+      tuerDreh.rotation.y = Math.PI * 0.47;
+      fluegel.add(tuerDreh);
+      // kleines handgeschriebenes Schild, mit einem Nagel neben die Tür gehauen (Außenseite)
+      const handTex = leinwandTextur(256, 160, (g, b, h) => {
+        g.fillStyle = '#d8c39a'; g.fillRect(0, 0, b, h);
+        const r = zufall(77);
+        for (let y = 0; y < h; y += 5) { g.fillStyle = `rgba(110,80,45,${0.06 + r() * 0.08})`; g.fillRect(0, y, b, 2); }
+        g.fillStyle = '#1d1d1f'; g.textAlign = 'center';
+        g.font = 'bold 46px Caveat, "Comic Sans MS", cursive';
+        g.save(); g.translate(b / 2, 66); g.rotate(-0.05); g.fillText('Schweisskurs,', 0, 0); g.restore();
+        g.save(); g.translate(b / 2 + 6, 122); g.rotate(-0.03); g.fillText('nicht stören!', 0, 0); g.restore();
+      });
+      const handSchild = new THREE.Group();
+      handSchild.add(setze(quader(0.3, 0.19, 0.012, 0xc9b087, { umriss: 0.002 }), 0, 0, 0));
+      const hsBild = new THREE.Mesh(new THREE.PlaneGeometry(0.29, 0.18), new THREE.MeshBasicMaterial({ map: handTex }));
+      hsBild.position.z = -0.007;
+      hsBild.rotation.y = Math.PI;
+      handSchild.add(hsBild);
+      handSchild.add(setze(zylinder(0.008, 0.006, 0.02, 0x8a8f96, { umriss: 0.001 }, 8), 0, 0.07, -0.012, Math.PI / 2, 0, 0));
+      // hängt rechts neben der Tür auf dem anderen Flügel (links steht die offene Tür davor)
+      handSchild.position.set(0.32 - TOR_B / 2, 1.62, -0.085);
+      handSchild.rotation.z = 0.06;
+      handSchildFertig = handSchild;
     }
-    // Griffstange an der Mittelkante
-    fluegel.add(setze(zylinder(0.018, 0.018, 0.5, torGruen, { umriss: 0.002 }, 8), -seite * (TOR_B / 2 - 0.12), 1.15, 0.11));
-    for (const y of [0.92, 1.38]) fluegel.add(setze(quader(0.03, 0.03, 0.08, torGruen, { umriss: false }), -seite * (TOR_B / 2 - 0.12), y, 0.08));
-    // Drehpunkt am Band (Außenkante), das Tor steht weit offen nach draußen
-    const angel = new THREE.Group();
-    angel.position.x = seite * TOR_B;
-    fluegel.position.x = -seite * TOR_B / 2;
-    angel.add(fluegel);
-    angel.rotation.y = -seite * Math.PI * 0.5;
-    tuer.add(angel);
+    // schwarze Langbänder an der Außenkante (innen und außen)
+    for (const y of [0.45, TOR_H - 0.45]) for (const z of [0.08, -0.08]) {
+      fluegel.add(setze(quader(0.6, 0.06, 0.02, 0x1d1d1f, { umriss: 0.002 }), seite * (TOR_B / 2 - 0.3), y, z));
+    }
+    for (const y of [0.45, TOR_H - 0.45]) fluegel.add(setze(zylinder(0.03, 0.03, 0.12, 0x1d1d1f, {}, 8), seite * (TOR_B / 2 + 0.01), y, 0.04));
+    // Tor bleibt zu: Flügel stehen geschlossen in der Öffnung
+    fluegel.position.x = mitte;
+    tuer.add(fluegel);
     if (seite === 1) fluegelRechts = fluegel;
   }
+  fluegelRechts.add(handSchildFertig);
+  // Riegel über beide Flügel (Tor ist zu)
+  tuer.add(setze(quader(0.5, 0.07, 0.05, torGruen, { umriss: 0.002 }), TOR_B * 0.3, 1.6, 0.13));
   tuer.add(setze(quader(2 * TOR_B + 0.2, 0.12, 0.1, torGruen), 0, TOR_H + 0.06, 0.0));
   // Rauchen-verboten-Schild
   const verbotTex = leinwandTextur(256, 320, (g) => {
@@ -343,6 +409,8 @@ export function baueWelt(scene) {
 
   // ---------- Draußen (js/draussen.js) ----------
   const draussen = baueDraussen(scene, { merke, hindernis, RAUM });
+  // Carport mit Wohnwagen und Dennis' Benz auf der Wiese (js/carport.js)
+  baueCarport(scene, { merke, hindernis });
 
   // Feuerlöscher an der rechten Wand zwischen Schweißplatz und Waschplatz
   const loescher = new THREE.Group();
@@ -2662,17 +2730,29 @@ export function baueWelt(scene) {
   // ---------- Benutzte Kaffeetassen: stehen überall rum, gehören auf den Kühlschrank ----------
   const tassen = [];
   const TASSEN_FARBEN = [[0xf4f0e6, 0x2f5fa8], [0x2f5fa8, 0xf4f0e6], [0xc8352a, 0xf4f0e6], [0x3f7a35, 0xf2c21c], [0xf2c21c, 0x1d1d1f], [0x1d1d1f, 0xf4f0e6], [0xe98bb8, 0xf4f0e6], [0x8a5a2a, 0xf4f0e6]];
-  // mögliche Abstellplätze (x, z): Werkbank, Schweißtisch-Ecke, Regal, Waschplatz, Boden, Träger, Sofalehne, Kaffeetisch, Fensterbank
-  const TASSEN_PLAETZE = [[-0.95, -3.1], [0.85, -3.15], [3.75, -3.2], [-4.75, -1.4], [-4.75, 0.3], [4.55, 0.95], [-2.6, 1.6], [1.6, 0.6], [-1.6, -1.7],
-    [3.3, 3.5], [-4.05, 3.55], [-2.4, 3.55], [-4.55, 2.95], [2.2, -1.2], [-3.4, -3.4], [0.2, 1.9]];
+  // mögliche Abstellplätze (x, z, Strahl-Start): nie auf dem Boden, sondern auf Möbeln und Kram
+  const TASSEN_PLAETZE = [
+    [1.2, 6.69, 1.2],     // Bad: Spülkasten
+    [-4.7, -0.55, 2.3],   // Regal oben
+    [-4.7, -0.62, 1.2],   // Regal Mitte
+    [-4.72, -1.05, 0.7],  // Regal unten
+    [-2.34, 3.55, 1.0],   // Sofa: Armlehne
+    [-4.06, 3.6, 1.0],    // Sofa: andere Armlehne
+    [3.1, 3.48, 1.0],     // Stahlträger
+    [4.0, 3.42, 1.0],     // Stahlträger
+    [4.93, -1.55, 1.75],  // Erste-Hilfe-Kasten
+    [-0.95, -3.1, 2.3],   // Werkbank
+    [0.85, -3.15, 2.3],   // Werkbank
+    [3.75, -3.2, 2.3],    // Schweißtisch-Ecke
+  ];
   const strahl = new THREE.Raycaster();
   strahl.camera = new THREE.PerspectiveCamera(); // nötig, sonst stolpert der Strahl über Sprites (Rauch, Wolken)
-  function oberflaecheBei(x, z) {
-    strahl.set(new THREE.Vector3(x, 2.3, z), new THREE.Vector3(0, -1, 0));
+  function oberflaecheBei(x, z, start = 2.3) {
+    strahl.set(new THREE.Vector3(x, start, z), new THREE.Vector3(0, -1, 0));
     // Tassen, Figuren (Dennis, Jonny, Waldo), Unsichtbares, Umrisse und Sprites zählen nicht als Abstellfläche
     const figur = ['dennis', 'jonny', 'waldo'];
     const ignor = (o) => {
-      if (o.isSprite || o.userData.umriss) return true;
+      if (o.isSprite || o.isLine || o.isPoints || o.userData.umriss) return true;
       for (let p = o; p; p = p.parent) if (!p.visible || tassen.includes(p) || figur.includes(p.userData.interaktiv?.id)) return true;
       return false;
     };
@@ -2695,19 +2775,23 @@ export function baueWelt(scene) {
     tassen.push(t);
     return t;
   }
-  function tasseHinstellen(t, x, z) {
+  function tasseHinstellen(t, x, z, start) {
     scene.add(t);
     t.visible = true;
-    t.position.set(x, oberflaecheBei(x, z) + 0.001, z);
+    t.position.set(x, oberflaecheBei(x, z, start) + 0.001, z);
     t.rotation.set(0, Math.random() * Math.PI * 2, 0);
     t.userData.ruhe = undefined;
   }
   function freierPlatz(naheBei) {
-    const belegt = (x, z) => tassen.some((t) => t.parent === scene && t.visible && !t.userData.aufgeraeumt && Math.hypot(t.position.x - x, t.position.z - z) < 0.25);
-    let liste = TASSEN_PLAETZE.map(([x, z]) => [x + (Math.random() - 0.5) * 0.2, z + (Math.random() - 0.5) * 0.2]).filter(([x, z]) => !belegt(x, z));
+    const belegt = (x, z) => tassen.some((t) => t.parent === scene && t.visible && !t.userData.aufgeraeumt && Math.hypot(t.position.x - x, t.position.z - z) < 0.12);
+    const wackel = () => (Math.random() - 0.5) * 0.04;
+    let liste = TASSEN_PLAETZE.filter(([x, z]) => !belegt(x, z)).map(([x, z, y]) => [x + wackel(), z + wackel(), y]);
     if (naheBei) liste.sort((a, b) => Math.hypot(a[0] - naheBei.x, a[1] - naheBei.z) - Math.hypot(b[0] - naheBei.x, b[1] - naheBei.z));
     else liste.sort(() => Math.random() - 0.5);
-    return liste[0] || [(Math.random() - 0.5) * 4, (Math.random() - 0.5) * 3];
+    if (liste[0]) return liste[0];
+    // alles voll: neben eine Tasse auf Werkbank oder Schweißtisch
+    const [x, z, y] = TASSEN_PLAETZE[[9, 10, 11][Math.floor(Math.random() * 3)]];
+    return [x + (Math.random() - 0.5) * 0.5, z + wackel(), y];
   }
   // auf dem Kühlschrank: 4 x 3 Plätze, danach zweite Lage
   const kuehlOben = 0.845;
@@ -2728,7 +2812,7 @@ export function baueWelt(scene) {
     if (tassenGestellt) return;
     tassenGestellt = true;
     scene.updateMatrixWorld(true);
-    for (let i = 0; i < anzahl; i++) { const [x, z] = freierPlatz(); tasseHinstellen(tasseBauen(i), x, z); }
+    for (let i = 0; i < anzahl; i++) { const [x, z, y] = freierPlatz(); tasseHinstellen(tasseBauen(i), x, z, y); }
   }
 
   return {
@@ -2741,8 +2825,8 @@ export function baueWelt(scene) {
     neueTasse(bei) {
       if (tassen.length >= 14) return null;
       const t = tasseBauen(tassen.length);
-      const [x, z] = freierPlatz(bei);
-      tasseHinstellen(t, x, z);
+      const [x, z, y] = freierPlatz(bei);
+      tasseHinstellen(t, x, z, y);
       return t;
     },
     interaktiv,
