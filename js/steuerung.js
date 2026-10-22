@@ -10,7 +10,11 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
   let gesperrt = false;
   let tempoFaktor = 1;
   let geht = false;
+  // Fahrmodus: ein Fahrzeug übernimmt WASD, die Kamera sitzt im Fahrerhaus und dreht sich mit
+  let fahrer = null;
   const tasten = new Set();
+  // seit dem letzten Bild neu gedrückte Tasten (damit auch ein ganz kurzer Druck ankommt, z. B. E zum Aussteigen)
+  const neu = new Set();
   const zeiger = new Map();
   let zieh = null;
   const raycaster = new THREE.Raycaster();
@@ -164,6 +168,7 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
   window.addEventListener('keydown', (e) => {
     if (e.target instanceof HTMLInputElement) return;
     tasten.add(e.key.toLowerCase());
+    if (!e.repeat) neu.add(e.key.toLowerCase());
   });
   window.addEventListener('keyup', (e) => tasten.delete(e.key.toLowerCase()));
   window.addEventListener('blur', () => tasten.clear());
@@ -206,10 +211,18 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
     },
     blickRichtung() { return richtungAus(gier, nick); },
     set tempo(f) { tempoFaktor = f; },
+    // ctrl.steuern(tasten, dt) -> { dpsi, auge: Vector3 } ; null = wieder zu Fuß
+    fahrModus(ctrl, blickPsi) {
+      fahrer = ctrl;
+      if (ctrl && fahrt) { const r = fahrt.res; fahrt = null; r(); }
+      if (ctrl && blickPsi !== undefined) { gier = blickPsi + Math.PI; nick = -0.12; }
+      if (!ctrl) kamera.position.y = AUGENHOEHE;
+    },
+    get faehrt() { return !!fahrer; },
     get geht() { return geht || !!fahrt; },
     update(dt) {
       randDrehen(dt);
-      if (fahrt) {
+      if (fahrt && !fahrer) {
         fahrt.t += dt;
         const k = Math.min(1, fahrt.t / fahrt.d);
         const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
@@ -224,6 +237,11 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
           kamera.position.y = AUGENHOEHE;
           r();
         }
+      } else if (fahrer) {
+        const r = fahrer.steuern(gesperrt ? new Set() : tasten, dt, gesperrt ? new Set() : neu);
+        gier += r.dpsi;
+        kamera.position.copy(r.auge);
+        geht = false;
       } else if (!gesperrt) {
         let vor = 0;
         let seit = 0;
@@ -243,6 +261,7 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
           if (!kollidiert(p.x, p.z + dz)) p.z += dz;
         }
       }
+      neu.clear();
       anwenden();
     },
   };

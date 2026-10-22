@@ -9,6 +9,8 @@ const VORPLATZ = { xMin: -17, xMax: 9.5, zMin: 4.25, zMax: 12.5 };
 const SEITE = { xMin: 5.35, xMax: 9.5, zMin: -3.5, zMax: 4.6 };
 const BAD_HAUS = { xMin: 0.55, xMax: 4.05, zMin: 3.9, zMax: 6.95 };
 // Durchgang durchs offene Tor
+// Feldweg nach rechts weg vom Hof (nur für Fahrzeuge)
+const AUSFAHRT = { xMin: 9.0, xMax: 32, zMin: 9.5, zMax: 11.8 };
 const DURCHGANG = { xMin: -0.68, xMax: -0.02, zMin: 3.4, zMax: 4.7 }; // Schlupftür im Tor
 
 export function baueDraussen(scene, { merke, hindernis, RAUM }) {
@@ -314,8 +316,9 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   lader.add(setze(zylinder(0.035, 0.035, 0.45, 0x3a3c40, { umriss: 0.002 }, 10), 0.33, 1.3, -0.95));
   lader.add(setze(zylinder(0.045, 0.035, 0.05, 0x1d1d1f, { umriss: 0.002 }, 10), 0.33, 1.54, -0.95, 0.4, 0, 0));
   // Rahmen, Knickgelenk, Trittstufen
-  lader.add(setze(quader(0.7, 0.22, 2.2, DUNKEL, { umriss: 0.004 }), 0, 0.45, 0.0));
-  lader.add(setze(zylinder(0.09, 0.09, 0.3, 0x5a5d62, { umriss: 0.003 }, 12), 0, 0.52, 0.12));
+  lader.add(setze(quader(0.7, 0.22, 1.1, DUNKEL, { umriss: 0.004 }), 0, 0.45, -0.6));
+  lader.add(setze(quader(0.6, 0.2, 1.05, DUNKEL, { umriss: 0.004 }), 0, 0.45, 0.56));
+  lader.add(setze(zylinder(0.09, 0.09, 0.3, 0x5a5d62, { umriss: 0.003 }, 12), 0, 0.52, 0.0));
   for (const sx of [-1, 1]) {
     lader.add(setze(quader(0.22, 0.03, 0.18, 0x1d1d1f, { umriss: 0.002 }), sx * 0.5, 0.42, -0.05));
     lader.add(setze(quader(0.04, 0.2, 0.03, 0x1d1d1f, { umriss: false }), sx * 0.6, 0.52, -0.05));
@@ -338,7 +341,7 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
     kabine.add(setze(quader(0.03, 0.12, 0.08, 0x1d1d1f, { umriss: 0.002 }), sx * 0.62, 0.8, 0.42));
     kabine.add(setze(quader(0.05, 0.05, 0.02, 0xfff6c8, { umriss: 0.001 }), sx * 0.36, 1.0, 0.5));
   }
-  kabine.add(setze(quader(0.012, 0.42, 0.012, 0x1d1d1f, { umriss: false }), 0.08, 0.38, 0.49, 0, 0, 0.6));
+  kabine.add(setze(quader(0.42, 0.012, 0.012, 0x1d1d1f, { umriss: false }), 0.08, 0.04, 0.5, 0, 0, 0.12));
   kabine.add(setze(quader(0.03, 0.1, 0.03, 0x8a8f96, { umriss: false }), 0.46, 0.5, -0.1));
   kabine.add(setze(quader(0.4, 0.08, 0.38, 0x1d1d1f, { umriss: 0.002 }), 0, 0.15, -0.15));
   kabine.add(setze(quader(0.4, 0.42, 0.06, 0x1d1d1f, { umriss: 0.002 }), 0, 0.38, -0.33));
@@ -353,6 +356,7 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
     for (let x = 0; x < b; x += 26) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + 14, 0); g.lineTo(x + 26, h / 2); g.lineTo(x + 14, h); g.lineTo(x, h); g.lineTo(x + 12, h / 2); g.closePath(); g.fill(); }
   }, [2, 1]);
   const reifenMat = toon(0xffffff, { map: stollenTex });
+  const laderRaeder = [];
   for (const z of [-0.68, 0.62]) for (const sx of [-1, 1]) {
     const rad = new THREE.Group();
     rad.add(teil(new THREE.CylinderGeometry(0.38, 0.38, 0.32, 24), 0, { material: reifenMat, umriss: 0.004 }));
@@ -363,6 +367,7 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
     rad.rotation.z = Math.PI / 2;
     rad.position.set(sx * 0.58, 0.38, z);
     lader.add(rad);
+    laderRaeder.push(rad);
   }
   // Hubarm (Schwinge) mit Hubzylinder, Kippzylinder, Schnellwechselplatte, Palettengabel mit L-Zinken
   for (const sx of [-1, 1]) {
@@ -391,10 +396,22 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   }
   gabel.position.set(0, 0.06, 1.25);
   lader.add(gabel);
+  // Knicklenker: alles vor dem Gelenk (z > 0) gehört zum Vorderwagen, der sich um das Gelenk dreht; Hubarm, Kippzylinder und
+  // Gabel hängen am Hubarm-Drehpunkt (HUB_P) und schwenken mit, die Gabel bleibt dabei waagerecht
+  const vorderwagen = new THREE.Group();
+  const HUB_P = new THREE.Vector3(0, 1.37, 0.03);
+  const hub = new THREE.Group();
+  hub.position.copy(HUB_P);
+  vorderwagen.add(hub);
+  for (const c of [...lader.children]) {
+    if (c === kabine || c.position.z <= 0.05) continue;
+    if (c === gabel || c.position.y >= 0.9) { c.position.sub(HUB_P); hub.add(c); } else vorderwagen.add(c);
+  }
+  lader.add(vorderwagen);
   setze(lader, 7.0, 0, 1.4, 0, 0.15, 0);
   scene.add(lader);
   merke(lader, 'weidemann', 'Hoflader', null);
-  hindernis(6.2, 7.85, -0.1, 3.1);
+  const laderHindernis = hindernis(6.2, 7.85, -0.1, 3.1);
 
   const profilTex = leinwandTextur(128, 32, (g, b, h) => { g.fillStyle = '#1b1b1d'; g.fillRect(0, 0, b, h); g.fillStyle = '#323236'; for (let x = 0; x < b; x += 16) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + 10, h / 2); g.lineTo(x, h); g.lineTo(x + 5, h / 2); g.fill(); } }, [3, 1]);
   // ---------- rosa Mini-Jeep (Elektro-Kinderauto im Wrangler-Look, ohne Dach) ----------
@@ -422,14 +439,24 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   }
   jeep.add(setze(zylinder(0.025, 0.025, 0.66, 0x1d1d1f, { umriss: 0.002 }, 8), 0, 0.98, -0.25, 0, 0, Math.PI / 2));
   jeep.add(setze(teil(new THREE.TorusGeometry(0.08, 0.014, 6, 14), 0x1d1d1f, { umriss: 0.001 }), -0.15, 0.78, 0.1, -1.0, 0, 0));
-  // Räder mit grobem Profil, Reserverad hinten
+  // Räder mit grobem Profil, Reserverad hinten; die Vorderräder sitzen in Lenk-Gruppen
+  const jeepRaeder = [], jeepLenkung = [];
   for (const z of [-0.42, 0.42]) for (const sx of [-1, 1]) {
     const rad = new THREE.Group();
     rad.add(teil(new THREE.CylinderGeometry(0.19, 0.19, 0.14, 18), 0, { material: toon(0xffffff, { map: profilTex }), umriss: 0.003 }));
     rad.add(setze(zylinder(0.09, 0.09, 0.15, 0xe9e9e4, { umriss: false }, 12), 0, 0, 0));
     rad.rotation.z = Math.PI / 2;
-    rad.position.set(sx * 0.39, 0.19, z);
-    jeep.add(rad);
+    jeepRaeder.push(rad);
+    if (z > 0) {
+      const lenk = new THREE.Group();
+      lenk.position.set(sx * 0.39, 0.19, z);
+      lenk.add(rad);
+      jeep.add(lenk);
+      jeepLenkung.push(lenk);
+    } else {
+      rad.position.set(sx * 0.39, 0.19, z);
+      jeep.add(rad);
+    }
   }
   const reserve = new THREE.Group();
   reserve.add(teil(new THREE.CylinderGeometry(0.17, 0.17, 0.12, 18), 0, { material: toon(0xffffff, { map: profilTex }), umriss: 0.003 }));
@@ -437,10 +464,10 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   reserve.rotation.x = Math.PI / 2;
   reserve.position.set(0, 0.55, -0.72);
   jeep.add(reserve);
-  setze(jeep, 2.6, 0, 8.6, 0, -0.5, 0);
+  setze(jeep, 2.6, 0, 8.6, 0, Math.PI - 0.5, 0);
   scene.add(jeep);
   merke(jeep, 'minijeep', 'Mini-Jeep', null);
-  hindernis(1.85, 3.35, 7.85, 9.35);
+  const jeepHindernis = hindernis(1.85, 3.35, 7.85, 9.35);
 
   // ---------- Feuerschale mit Dreibein, rundem Grillrost und alter schwarzer Bratwurst ----------
   const feuerstelle = new THREE.Group();
@@ -494,7 +521,18 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   setze(feuerstelle, -4.3, 0, 8.0, 0, 0, 0);
   scene.add(feuerstelle);
   merke(feuerstelle, 'feuerschale', 'Feuerschale', null);
-  hindernis(-5.1, -3.5, 7.2, 8.8);
+  const feuerHindernis = hindernis(-5.1, -3.5, 7.2, 8.8);
+
+  // ---------- Feldweg nach rechts (Ausfahrt vom Hof): zwei Fahrspuren mit Gras in der Mitte ----------
+  const wegTex = leinwandTextur(256, 64, (g, b, h) => {
+    g.fillStyle = '#8f8a78'; g.fillRect(0, 0, b, h);
+    for (let i = 0; i < 300; i++) { g.fillStyle = r() < 0.5 ? 'rgba(60,55,45,0.35)' : 'rgba(200,195,180,0.35)'; g.fillRect(r() * b, r() * h, 2 + r() * 3, 2 + r() * 3); }
+    g.fillStyle = '#5f8a3c'; g.fillRect(0, h * 0.4, b, h * 0.2);
+  }, [12, 1]);
+  const feldweg = new THREE.Mesh(new THREE.PlaneGeometry(80, 2.2), toon(0xffffff, { map: wegTex }));
+  feldweg.rotation.x = -Math.PI / 2;
+  feldweg.position.set(9.0 + 40, 0.012, (AUSFAHRT.zMin + AUSFAHRT.zMax) / 2);
+  scene.add(feldweg);
 
   // ---------- Bäume auf der Wiese ----------
   const blatt = [0x3f7a35, 0x4f8a3e, 0x356a2c];
@@ -519,5 +557,16 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
       return drin(VORPLATZ, rr) || drin(SEITE, rr) || (x > DURCHGANG.xMin && x < DURCHGANG.xMax && z > DURCHGANG.zMin && z < DURCHGANG.zMax);
     },
     istDraussen(x, z) { return z > RAUM.zMax + 0.1 || x > RAUM.xMax + 0.1; },
+    // Darf ein Fahrzeug hier stehen? Draußen auf dem Hof, nicht durch die Schlupftür, nicht in den Bad-Anbau
+    fahrbar(x, z) {
+      const drin = (q) => x > q.xMin && x < q.xMax && z > q.zMin && z < q.zMax;
+      if (x > BAD_HAUS.xMin && x < BAD_HAUS.xMax && z < BAD_HAUS.zMax && z > 3.0) return false;
+      return (drin(VORPLATZ) && z > RAUM.zMax + 0.15) || (drin(SEITE) && x > RAUM.xMax + 0.15) || drin(AUSFAHRT);
+    },
+    fahrzeuge: {
+      jeep: { gruppe: jeep, raeder: jeepRaeder, lenkung: jeepLenkung, hindernis: jeepHindernis },
+      lader: { gruppe: lader, vorne: vorderwagen, hub, gabel, raeder: laderRaeder, hindernis: laderHindernis },
+      feuerstelle, feuerHindernis, tonnen,
+    },
   };
 }

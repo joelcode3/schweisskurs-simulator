@@ -223,6 +223,22 @@ button { font: inherit; color: inherit; }
 }
 #hover-name.sichtbar { opacity: 1; }
 
+#fahrhilfe {
+  position: absolute;
+  left: 50%;
+  top: 64px;
+  transform: translateX(-50%);
+  max-width: min(720px, 94vw);
+  padding: 6px 12px;
+  background: rgba(20, 22, 26, 0.82);
+  color: #fff;
+  border: 2px solid #000;
+  border-radius: 10px;
+  font-size: 14px;
+  text-align: center;
+  pointer-events: none;
+  z-index: 6;
+}
 #hinweis {
   position: absolute;
   left: 50%;

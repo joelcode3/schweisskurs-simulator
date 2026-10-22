@@ -139,6 +139,24 @@
   Kennzeichen, Auspuff, Antenne) mit Gehwegplatte IN der Motorhaube (Delle, Risse). Eine Turnmatte liegt heruntergeweht im Gras. Geschichte: heute Nacht um 4 bei
   Wind passiert, deshalb ist Dennis heute gereizt (Wut startet bei 15, Begrüßung erwähnt es). Anklicken: Benz (Dennis stöhnt,
   DENNIS.benz), Wohnwagen, Carport, Turnmatte.
+- Fahrzeuge (js/fahrzeuge.js Physik/Paletten, js/fahrten.js Spiel-Logik): Mini-Jeep und Hoflader sind fahrbar (Klick = Einsteigen
+  und fahren, Hände müssen frei sein). Steuerung: W/S fahren, A/D lenken bzw. knicken, R/F Gabel hoch/runter, Leertaste hupen,
+  E aussteigen (Fahrhilfe oben eingeblendet). Kamera sitzt im Fahrerhaus und dreht mit. Nur Computer (keine Touch-Knöpfe).
+  Jeep: Elektromotor, gedrosselt Schritttempo (1,4 m/s); Torben lieb fragen (Menü an Torben) = entdrosselt (7,5 m/s).
+  Hoflader: Knicklenker (Vorderwagen dreht im Gelenk z = 0, Formel Knicklenkung), Hubarm mit Gabel (hub/gabel, Gabel bleibt
+  waagerecht), Zinken bei x ±0,2. Abgeschlossen-Logik vorbereitet: LADER_SCHLUESSEL_STECKT in fahrten.js (zum Testen true;
+  später gibt Dennis den Schlüssel raus, wenn man etwas damit erledigen muss, sonst DENNIS.weidemannZu).
+  Europaletten (3er-Stapel und einzelne im Hof) mit der Gabel aufnehmen (Zinken rein, heben), herumfahren, absetzen (auch stapeln).
+  Fahrbar: Hof (draussen.fahrbar) plus Feldweg nach rechts (AUSFAHRT), nicht durch die Schlupftür.
+  Figuren fahren auf festen, weichen Bahnen (fahreRoute, Catmull-Rom), Parkplätze mit Anfahrt (mitAnfahrt). Alle 2–3,5 min dreht
+  Jonny oder Waldo eine Runde (Jonny auch mal weg zum Kiosk und zurück). Fahrstile: Jonny normal, Waldo langsam und schlingernd
+  (Handy), Torben rasant (Jeep 7 m/s) und rumst mit dem Hoflader gegen den Grill (Feuerschale kippt um) oder die Mülltonnen.
+  Grill um: Feuerschale anklicken = wieder aufstellen (Wut -6, Lob), sonst stellt Dennis ihn nach 75 s selbst auf (+8).
+  In Dennis' Augen fahren alle lebensgefährlich (DENNIS.fahrenSpieler/fahrenAndere, +1 bis +2 Wut, anstoss bei Rums).
+- Torben (js/torben.js): VORLÄUFIGE Figur (Aussehen kommt noch vom Betreiber), gleiches Grundgerüst wie Jonny (baueJonny mit
+  opts.aussehen: kurze dunkelblonde Haare, Stoppelbart, keine Brille/Cap/Brusthaar, orange Weste, blaue Hose). Kommt alle
+  2,5–4 min zu Fuß den Feldweg hoch, steht beim Hoflader (5,6 | 6,2), fährt 1–2 Mal, geht nach 2–3 min wieder. Menü: Quatschen,
+  „Lieb fragen: Jeep entdrosseln?“. Texte in TORBEN (texte.js), Sprechblase ui.torbenSagt.
 - Bad (begehbar) hinter der WC-Tür vorne rechts (BAD in world.js, x 0,7–3,9, z 4,0–6,8): Schachbrett-Boden, Fliesen bis 1,4 m,
   Milchglasfenster, Klo (hinten links), Dusche (hinten rechts), Waschbecken mit Spiegel, Waschmaschine + Trockner (vorne rechts).
   WC-Tür offen, nur zu während Dennis drin ist. Bild über dem Klo: assets/bad-bild.jpg (Foto vom Betreiber, Dennis oben ohne mit Handy, Holzrahmen).
@@ -259,7 +277,7 @@
 
 ## Dateien
 - `index.html`, `css/style.css`
-- `js/main.js` Einstieg · `js/world.js` Werkstatt + Gasflasche · `js/draussen.js` Hof · `js/carport.js` Wohnwagen/Benz · `js/dennis.js` 3D-Dennis
+- `js/main.js` Einstieg · `js/world.js` Werkstatt + Gasflasche · `js/draussen.js` Hof · `js/carport.js` Wohnwagen/Benz · `js/fahrzeuge.js` + `js/fahrten.js` Fahren · `js/torben.js` Torben · `js/dennis.js` 3D-Dennis
 - `js/steuerung.js` Kamera/Gehen/Klicks · `js/spiel.js` Ablauf, Fehler, Texte, Note
 - `js/minispiele.js` Schneiden, Schweißen, Schlacke · `js/clips.js` Dennis-Auftritte + Archiv
 - `js/hand.js` Dinge in der Hand (Haltung, Ablegen, Werfen mit Physik) · `js/ui.js` HUD/Dialoge · `js/audio.js` Geräusche (live erzeugt) · `js/gesicht.js` Comic-Gesicht + Icons
@@ -296,7 +314,7 @@
   .mp3/.m4a/.wav, Groß-/Kleinschreibung egal). Zuordnung Kurzname -> Satz-ID steht in stimme/zuordnung.csv (vom Projektchat).
   Nummern sind fest und verschieben sich NIE; neue Sätze bekommen die nächste freie Nummer (dennis367 …) und eine neue Zeile.
   Schlüssel in texte.js NIE umbenennen, neue Sätze nur ergänzen. IDs: Dennis wie alleSaetze(), telefon.G.Z = Gespräch G,
-  Zeile Z, jonny./waldo. = Schlüssel aus JONNY/WALDO. Nicht enthalten (Hinweistexte): kloOhneAufsicht, schlauch.zuKurz.
+  Zeile Z, jonny./waldo./torben. = Schlüssel aus JONNY/WALDO/TORBEN (Torben-Dateien: torben1 …). Nicht enthalten (Hinweistexte): kloOhneAufsicht, schlauch.zuKurz.
   Wenn die Dateien kommen: Abspielen über die Zuordnung auflösen, Jonny/Waldo genauso wie Dennis (alleSaetze() sammelt bisher
   nur DENNIS und löst verschachtelte Listen wie telefon nicht auf).
 - KI-Stimmklon ist in dieser Umgebung nicht möglich (huggingface.co gesperrt). Stimmproben nie ins Repo (öffentlich).

@@ -272,6 +272,15 @@ export const DENNIS = {
   husten: ['*HUST* *HUST* ... Jonny! Ich krieg hier keine Luft!', '*HUST HUST HUST* Muss das HIER drinnen sein?!', '*KCHH* *HUST* Jonny, ich ersticke gleich!'],
   hustenNochmal: ['*HUST* Ernsthaft jetzt! Raus mit der Kippe!', '*HUST* *KEUCH* Ich schmeiß dich gleich mitsamt Kippe raus!'],
   jonnyRaucht: ['Jonny! Da hängt ein Rauchen-verboten-Schild! Direkt neben dir!', 'Jonny, mach die Kippe aus! Hier steht Gas rum!', 'Und die Kippe NICHT in den Mülleimer, Jonny!'],
+  // Fahrzeuge: in Dennis' Augen fahren grundsätzlich alle lebensgefährlich
+  fahrenSpieler: ['Bist du lebensmüde?! Runter von der Karre!', 'Du fährst wie ein Henker! Pass auf meinen Hof auf!', 'Wer hat dir den Führerschein geschenkt?! Lebensgefährlich!', 'Langsam! Hier laufen Menschen rum! Also ich.'],
+  fahrenAndere: ['Lebensgefährlich, wie der fährt. Ich guck da nicht hin.', 'Der fährt mir noch die Werkstatt um!', 'Jedes Mal das Gleiche. Irgendwann gibt es Tote.', 'Ich hör das doch! Langsam, verdammt!'],
+  torbenDa: ['Torben! Wenn du schon da bist: Die Stahlträger!', 'Oh nein. Torben ist da. Versteckt die Fahrzeugschlüssel.', 'Torben! Fahr bloß nicht wieder irgendwo gegen!'],
+  grillUm: ['WAS war das?! Hat Torben schon wieder den Grill umgefahren?!', 'Mein Grill! Torben! Stell den sofort wieder hin!'],
+  grillSelbst: ['Muss ich den Grill jetzt auch noch selbst aufstellen?! Unglaublich.', 'So. Grill steht wieder. Ohne Hilfe. Wie immer.'],
+  grillDanke: ['Danke, dass du den Grill aufgestellt hast. Einer muss ja.', 'Grill steht wieder? Gut. Torben kriegt Grillverbot.'],
+  anstoss: ['RUMMS! Was machst du da draußen?!', 'Hab ich da gerade was scheppern gehört?!'],
+  weidemannZu: ['Finger weg vom Hoflader! Den Schlüssel kriegst du, wenn du ihn brauchst.', 'Der Hoflader ist abgeschlossen. Und das bleibt erst mal so.'],
   traeger: ['Halt! Nicht anfassen! Schwere Stahlträger sind Torbens Job!', 'Finger weg von den Trägern! Das macht Torben.', 'Die Träger lässt du liegen. Das ist Torbens Job, nicht deiner!'],
   verstopft: {
     hilfe: ['Oh oh. Das Klo ist verstopft. Hilf mir mal! Der Pömpel steht oben auf dem Regal.', 'Mist, Klo ist dicht! Hol mal den Pömpel, oben im Regal. Ich geh da nicht nochmal rein.'],
@@ -325,6 +334,7 @@ export const JONNY = {
   bierNochNicht: ['Nee, ich bin doch gerade erst gekommen. Später vielleicht.', 'Jetzt noch nicht. Erst mal ankommen.'],
   raus: ['Ich guck mal kurz nach meinem Camper.', 'Bin mal kurz draußen, telefonieren.', 'Ich hol mir mal Kippen vom Kiosk.'],
   zurueck: ['Bin wieder da. Hab ich was verpasst?', 'So. Wo war ich?', 'Kiosk hatte zu. Egal.'],
+  fahren: ['Ich dreh mal ne Runde mit dem Jeep.', 'Kurz Kippen holen. Mit dem Jeep, ist ja nicht weit.', 'Ich fahr mal den Hoflader um, der steht doof.'],
 };
 
 // Waldo (Kumpel, isst eigentlich immer)
@@ -345,4 +355,15 @@ export const WALDO = {
   sofaGeschlichtet: ['Na gut, für dich. Ich geh ja schon.', 'Okay, okay. Schlaf schön, Dennis.'],
   sofaRaus: ['Ist ja gut! Nicht am Bart!', 'Pff. Ich komm nie wieder. Bis morgen.'],
   pumpeZurueck: ['Hier, die Pumpe. Danke fürs Leihen! Ist noch ein bisschen ... naja.', 'Pumpe zurück! Tank ist leer. Die Pumpe ... nicht so ganz.'],
+};
+
+// Torben (Kumpel, erledigt die schweren Sachen, fährt alles, was Räder hat)
+export const TORBEN = {
+  hallo: ['Moin! Ich bin nur kurz da. Wo steht der Hoflader?', 'Na, ihr Schweißer? Ich dreh nur mal ne Runde.'],
+  tschuess: ['So, ich bin wieder weg. Bis die Tage!', 'Tschö! Die Träger mach ich nächste Woche.'],
+  quatschen: ['Stahlträger? Ja, die mach ich. Bald.', 'Der Jeep geht ab, wenn man ihn lässt. Glaub mir.', 'Ich fahr nie irgendwo gegen. Fast nie.'],
+  entdrosseln: ['Weil du so lieb fragst: zwei Kabel umstecken, fertig. Jetzt geht der richtig ab!', 'Na gut. Aber du hast das nicht von mir. So, jetzt fährt der richtig!'],
+  schonEntdrosselt: ['Der ist schon offen. Schneller geht nicht, sonst brennt der Motor durch.', 'Mehr geht nicht. Der ist schon entdrosselt.'],
+  rums: ['Ups.', 'Das war vorher schon so.', 'Hat keiner gesehen, oder?'],
+  fahren: ['Ich dreh mal ne Runde!', 'Mal gucken, was der Jeep heute schafft.', 'Ich stell mal den Hoflader um.'],
 };

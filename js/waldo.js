@@ -491,6 +491,8 @@ export function baueWaldo(scene) {
       tempo = t;
       return new Promise((r) => { zielFertig = r; });
     },
+    // Laufen abbrechen (z. B. beim Einsteigen ins Fahrzeug)
+    halt() { ziel = null; const r = zielFertig; zielFertig = null; if (r) r(false); },
     dreheZu(p) { wurzel.rotation.y = Math.atan2(p.x - wurzel.position.x, p.z - wurzel.position.z); },
     haltung(h, hoehe = 0.46) {
       haltung = h;

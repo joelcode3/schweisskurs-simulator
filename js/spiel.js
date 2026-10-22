@@ -7,6 +7,7 @@ import { blip, kratzen, jingle, klonk, brummeln, dauer as dauerTon, technoAn, te
 import * as ui from './ui.js';
 import { DENNIS, JONNY, WALDO, satzId } from './texte.js';
 import { SYMBOL } from './gesicht.js';
+import { baueFahrten } from './fahrten.js';
 
 const zufallAus = (liste) => liste[Math.floor(Math.random() * liste.length)];
 // Text aus einer Liste zufällig wählen (oder den einzelnen Text nehmen): mehr Abwechslung bei Dennis
@@ -192,7 +193,7 @@ const NAEHTE = {
   rohr: { name: 'Ofenrohr', form: 'kreis', text: 'Einmal komplett rundherum. Nicht hetzen, nicht trödeln.' },
 };
 
-export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand }) {
+export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, kamera, hand }) {
   const z = {
     ppe: { brille: false, handschuhe: false, helm: false, maske: false },
     ventilAuf: false,
@@ -2544,6 +2545,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
   window.addEventListener('keydown', (e) => {
     if (e.target instanceof HTMLInputElement || e.repeat) return;
     if (!document.getElementById('dialog').classList.contains('versteckt')) return;
+    if (fahrten.faehrt) return;
     const k = e.key.toLowerCase();
     if (k === 'e') handAktion(hand.item && ANZIEHBAR.includes(hand.item.id) ? 'anziehen' : 'benutzen');
     else if (k === 'q') handAktion('werfen');
@@ -2554,6 +2556,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
 
   function menueFuer(id, obj = null) {
     const A = (text, symbol, tun) => ({ text, symbol, tun });
+    const ausFahrten = fahrten.menue(id);
+    if (ausFahrten) return ausFahrten;
     switch (id) {
       case 'brille':
       case 'handschuhe':
@@ -2788,6 +2792,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
 
   async function klick(treffer) {
     if (z.vorbei) return;
+    if (fahrten.faehrt) { ui.hinweis('Erst aussteigen (E).'); return; }
     // Schalter (Box, Licht) reagieren sofort, ohne erst hinzulaufen
     const schalter = treffer?.info && (treffer.info.id === 'box' || treffer.info.id === 'licht');
     if (schalter && !steuerung.gesperrt && !ui.menueOffen()) {
@@ -2935,10 +2940,18 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
   let dennisZuletztGelaufen = 0;
   const sekundenSeitStart = () => (performance.now() - z.start) / 1000;
 
+  // ---------- Fahrzeuge: selbst fahren, Jonny/Waldo/Torben fahren rum (js/fahrten.js) ----------
+  const fahrten = baueFahrten({
+    fz, welt, scene: dennis.wurzel.parent, dennis, jonny, waldo, torben, steuerung, kamera, hand, z, jz, wz, sag, dennisSagt, aerger, lob,
+    sekunden: sekundenSeitStart, warte,
+    dennisFrei: () => dennis.modus === 'normal' && dennis.wurzel.visible && !z.aufKlo && !z.hula && !z.beschaeftigt && !buehneBelegt()
+      && z.mittag !== 'gerade' && !z.dennisFegt && !z.dennisLoescht && !z.dennisRaeumt,
+  });
+
   return {
     zustand: z,
     klick,
-    test: { bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
+    test: { fahrten, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
     stationWaehlen,
     intro,
     aktualisieren,
@@ -2946,6 +2959,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
       beobachten();
       spritzUpdate(dt);
       if (z.vorbei) return;
+      fahrten.update();
       waescheUpdate(dt);
       jonnyUpdate();
       waldoUpdate();

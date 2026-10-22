@@ -4,6 +4,8 @@ import { baueWelt, STATIONEN } from './world.js';
 import { baueDennis } from './dennis.js';
 import { baueJonny } from './jonny.js';
 import { baueWaldo } from './waldo.js';
+import { baueTorben } from './torben.js';
+import { baueFahrzeuge } from './fahrzeuge.js';
 import { baueSteuerung } from './steuerung.js';
 import { baueSpiel } from './spiel.js';
 import { baueHand } from './hand.js';
@@ -31,6 +33,8 @@ const jonny = baueJonny(scene);
 jonny.wurzel.userData.interaktiv = { id: 'jonny', name: 'Jonny', station: null };
 const waldo = baueWaldo(scene);
 waldo.wurzel.userData.interaktiv = { id: 'waldo', name: 'Waldo', station: null };
+const torben = baueTorben(scene);
+const fz = baueFahrzeuge(scene, welt);
 welt.hindernisse.push({ xMin: jonny.position.x - 0.25, xMax: jonny.position.x + 0.25, zMin: jonny.position.z - 0.25, zMax: jonny.position.z + 0.25 });
 
 const zielListe = scene.children;
@@ -72,6 +76,9 @@ function schleife(jetzt) {
   jonny.update(dt);
   waldo.schauZu(kamera.position);
   waldo.update(dt);
+  torben.schauZu(kamera.position);
+  torben.update(dt);
+  fz.update(dt);
   welt.update(dt);
   if (spiel) {
     spiel.update(dt);
@@ -103,7 +110,7 @@ async function spielStarten() {
   await Promise.all([clipsGeladen, new Promise((r) => setTimeout(r, mitSchloss ? 1200 : 0))]);
   document.getElementById('start').classList.add('versteckt');
   document.getElementById('start-einfach').classList.add('versteckt');
-  spiel = baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand });
+  spiel = baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, kamera, hand });
   ui.zeigeHud(true);
   stationAlt = undefined;
   spiel.intro();
@@ -133,4 +140,4 @@ raeder.forEach((rad) => rad.addEventListener('pointerdown', (e) => {
 }));
 
 // Für Tests im Browser
-window.__werkstatt = { kamera, steuerung, dennis, jonny, waldo, welt, hand, get spiel() { return spiel; } };
+window.__werkstatt = { kamera, steuerung, dennis, jonny, waldo, torben, fz, welt, hand, get spiel() { return spiel; } };
