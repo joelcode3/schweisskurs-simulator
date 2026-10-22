@@ -108,6 +108,22 @@ export const DENNIS = {
     schlacke: [
       'Und die Schlacke? Soll ich die wegklopfen? Hammer nehmen!',
     ],
+    ventilDrinnen: [
+      'BIST DU BEKLOPPT?! Gas in der Halle ablassen?! Raus mit der Flasche, VOR die Tür!',
+      'HALT! Nicht hier drin aufdrehen! Hier wird geschweißt, Mensch! Die Flasche kommt RAUS!',
+    ],
+    ventilSchnell: [
+      'Langsam mit dem Ventil! Wenn da noch Druck drauf ist, fliegt dir das um die Ohren!',
+      'Nicht so reißen am Ventil! Gefühl, Mensch!',
+    ],
+    anzeichnen: [
+      'Was ist das denn für ein Gekrakel? Danach schneidest du gleich?!',
+      'Die Tür sieht ja aus wie von meinem Neffen gemalt. Und der ist drei.',
+    ],
+    lacknasen: [
+      'Lacknasen! Nicht so lange auf eine Stelle halten, gleichmäßig!',
+      'Der Ofen tropft ja. Das ist Lack, kein Honig!',
+    ],
     schlackeBrille: [
       'Schlacke klopfen ohne Brille? Die Splitter fliegen dir direkt ins Auge! Brille auf!',
     ],
@@ -163,10 +179,14 @@ export const DENNIS = {
     'Na also. Da kann man nicht meckern.',
     'Hätte ich nicht besser gemacht. Fast.',
   ],
+  lobAnzeichnen: ['Sauber angezeichnet. So wird das was.', 'Schöne Linie. Ruhige Hand hast du.'],
+  lobLack: ['Gleichmäßig lackiert, keine Nasen. Sieht aus wie gekauft.', 'Mattschwarz und sauber. Schick!'],
   lobSchnitt: ['Sauberer Schnitt. Respekt.', 'Schnurgerade. Da kann man nicht meckern.', 'Der Schnitt sitzt. Gut gemacht.'],
 
   tipp: {
-    ventil: 'Erst mal das Restgas ablassen. Ventil an der Flasche aufdrehen, die steht am Waschplatz.',
+    ventil: 'Erst mal raus mit der Flasche! Restgas wird DRAUSSEN abgelassen, nicht hier drin. Flasche steht am Waschplatz.',
+    ventilDraussen: 'Gut, draußen. Jetzt Ventil aufdrehen und das Restgas ablassen. Langsam!',
+    zurueckWasch: 'Restgas ist raus. Jetzt die Flasche zurück zum Waschplatz und mit Wasser spülen.',
     spuelen: 'Jetzt die Flasche mit Wasser spülen. Schlauch hängt an der Wand. Ohne Spülen fasst die keiner an!',
     werkbank: 'Flasche rüber auf die Werkbank.',
     anzeichnen: 'Mit dem blauen Edding die Tür anzeichnen. Liegt auf der Werkbank.',

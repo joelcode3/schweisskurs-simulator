@@ -811,7 +811,9 @@ export function baueDennis(scene) {
 
       // Becher bleibt aufrecht, egal wie der Arm steht; beim Schluck kippt er etwas zum Mund
       if (becher.visible) {
-        const kipp = schluck > 0 ? Math.sin((schluck / 2.2) * Math.PI) * 0.9 : 0;
+        // nur ein leichtes Ankippen zum Mund; Weltmatrix erst aktualisieren, sonst hinkt der Becher einen Frame hinterher
+        const kipp = schluck > 0 ? Math.sin((schluck / 2.2) * Math.PI) * 0.35 : 0;
+        rechts.ellbogen.updateWorldMatrix(true, false);
         rechts.ellbogen.getWorldQuaternion(becherQ).invert();
         becher.quaternion.copy(becherQ).multiply(wurzel.quaternion);
         becher.rotateX(-kipp);

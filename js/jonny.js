@@ -243,37 +243,40 @@ export function baueJonny(scene) {
     const flaeche = teil(new THREE.BoxGeometry(0.1, 0.09, 0.042, 2, 2, 1), HAUT, { umriss: 0.0035 });
     flaeche.position.y = -0.025;
     hand.add(flaeche);
+    // offene Finger (beim Bierhalten ausgeblendet, dann hält eine Faust die Flasche)
+    const finger = new THREE.Group();
+    hand.add(finger);
     for (let f = 0; f < 4; f++) {
       const x = (-0.036 + f * 0.024) * seite;
       const lang = [0.042, 0.05, 0.047, 0.036][f];
-      hand.add(setze(kugel(0.0145, 0xe2ab8c, { umriss: 0.0015 }, 8), x, -0.07, 0.014));
+      finger.add(setze(kugel(0.0145, 0xe2ab8c, { umriss: 0.0015 }, 8), x, -0.07, 0.014));
       const glied1 = teil(new THREE.CapsuleGeometry(0.0135, lang, 4, 8), HAUT, { umriss: 0.0025 });
       glied1.position.set(x, -0.08 - lang / 2, 0.006);
-      hand.add(glied1);
+      finger.add(glied1);
       const glied2 = teil(new THREE.CapsuleGeometry(0.0125, lang * 0.75, 4, 8), HAUT, { umriss: 0.0025 });
       glied2.position.set(x, -0.088 - lang - lang * 0.33, -0.014);
       glied2.rotation.x = 0.6;
-      hand.add(glied2);
+      finger.add(glied2);
       // Fingernagel und Gelenkfalte
-      hand.add(setze(quader(0.015, 0.016, 0.004, 0xf4d8c8, { umriss: 0.001 }), x, -0.092 - lang * 1.7, -0.03, 0.6, 0, 0));
-      hand.add(setze(quader(0.016, 0.002, 0.002, 0xb97a5c, { umriss: false }), x, -0.08 - lang, 0.02));
+      finger.add(setze(quader(0.015, 0.016, 0.004, 0xf4d8c8, { umriss: 0.001 }), x, -0.092 - lang * 1.7, -0.03, 0.6, 0, 0));
+      finger.add(setze(quader(0.016, 0.002, 0.002, 0xb97a5c, { umriss: false }), x, -0.08 - lang, 0.02));
     }
     const daumen1 = teil(new THREE.CapsuleGeometry(0.015, 0.04, 4, 8), HAUT, { umriss: 0.0025 });
     daumen1.position.set(0.058 * seite, -0.035, 0.018);
     daumen1.rotation.set(0.3, 0, -0.7 * seite);
-    hand.add(daumen1);
+    finger.add(daumen1);
     const daumen2 = teil(new THREE.CapsuleGeometry(0.014, 0.03, 4, 8), HAUT, { umriss: 0.0025 });
     daumen2.position.set(0.083 * seite, -0.07, 0.026);
     daumen2.rotation.set(0.5, 0, -0.25 * seite);
-    hand.add(daumen2);
-    hand.add(setze(quader(0.016, 0.016, 0.004, 0xf4d8c8, { umriss: 0.001 }), 0.09 * seite, -0.088, 0.04, 0.5, 0, -0.25 * seite));
+    finger.add(daumen2);
+    finger.add(setze(quader(0.016, 0.016, 0.004, 0xf4d8c8, { umriss: 0.001 }), 0.09 * seite, -0.088, 0.04, 0.5, 0, -0.25 * seite));
     // goldener Ring rechts
     if (seite > 0) hand.add(setze(teil(new THREE.TorusGeometry(0.016, 0.0045, 6, 14), GOLD, { umriss: false }), 0.012, -0.112, 0.006, Math.PI / 2, 0, 0));
     hand.position.y = -0.25;
     ellbogen.add(hand);
     schulter.add(ellbogen);
     rumpf.add(schulter);
-    return { schulter, ellbogen, hand };
+    return { schulter, ellbogen, hand, finger };
   }
   const links = arm(-1);
   const rechts = arm(1);
@@ -299,16 +302,43 @@ export function baueJonny(scene) {
   const rauchTex = leinwandTextur(32, 32, (g) => { const gr = g.createRadialGradient(16, 16, 1, 16, 16, 15); gr.addColorStop(0, 'rgba(230,230,230,0.8)'); gr.addColorStop(1, 'rgba(230,230,230,0)'); g.fillStyle = gr; g.fillRect(0, 0, 32, 32); });
   const rauch = [0, 1, 2].map((i) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: rauchTex, transparent: true, depthWrite: false })); sp.visible = false; sp.userData.t = i / 3; scene.add(sp); return sp; });
 
-  // Bierflasche (braun, Etikett, Kronkorken) für die linke Hand
+  // Bierflasche (braun, Etikett, Kronkorken) in der linken Faust: die Finger liegen um den Flaschenbauch
   const bier = new THREE.Group();
-  bier.add(zylinder(0.03, 0.03, 0.15, 0x6b3a14, { umriss: 0.002 }, 12));
-  bier.add(setze(zylinder(0.012, 0.03, 0.05, 0x6b3a14, { umriss: 0.002 }, 12), 0, 0.1, 0));
-  bier.add(setze(zylinder(0.013, 0.013, 0.03, 0x6b3a14, { umriss: 0.002 }, 10), 0, 0.14, 0));
-  bier.add(setze(zylinder(0.0305, 0.0305, 0.06, 0xf2e6c4, { umriss: false }, 12), 0, -0.01, 0));
-  bier.add(setze(zylinder(0.0306, 0.0306, 0.012, 0xc8352a, { umriss: false }, 12), 0, -0.01, 0));
-  bier.position.set(0, -0.08, 0.03);
+  const glas = toon(0x5a2e0e, { transparent: true, opacity: 0.92 });
+  bier.add(teil(new THREE.CylinderGeometry(0.03, 0.03, 0.15, 16), 0, { material: glas, umriss: 0.002 }));
+  bier.add(setze(teil(new THREE.CylinderGeometry(0.012, 0.03, 0.05, 16), 0, { material: glas, umriss: 0.002 }), 0, 0.1, 0));
+  bier.add(setze(teil(new THREE.CylinderGeometry(0.0125, 0.0125, 0.035, 12), 0, { material: glas, umriss: 0.002 }), 0, 0.14, 0));
+  bier.add(setze(zylinder(0.014, 0.014, 0.008, 0xd9b44a, { umriss: 0.001 }, 12), 0, 0.161, 0));
+  bier.add(setze(zylinder(0.0305, 0.0305, 0.06, 0xf2e6c4, { umriss: false }, 16), 0, -0.02, 0));
+  bier.add(setze(zylinder(0.0306, 0.0306, 0.012, 0xc8352a, { umriss: false }, 16), 0, -0.02, 0));
+  bier.add(setze(zylinder(0.0128, 0.0128, 0.012, 0xf2e6c4, { umriss: false }, 12), 0, 0.128, 0));
+  // Faust: vier gekrümmte Finger vorne um die Flasche, Daumen von der anderen Seite drüber
+  const faust = new THREE.Group();
+  for (let f = 0; f < 4; f++) {
+    const y = 0.035 - f * 0.024;
+    const ring = teil(new THREE.TorusGeometry(0.041, 0.0135, 8, 14, Math.PI * 1.15), HAUT, { umriss: 0.002 });
+    ring.rotation.set(Math.PI / 2, 0, -Math.PI * 0.05);
+    ring.position.y = y;
+    faust.add(ring);
+    // Fingerkuppe mit Nagel am Ende
+    const w = -Math.PI * 0.05 + Math.PI * 1.15;
+    faust.add(setze(quader(0.012, 0.014, 0.004, 0xf4d8c8, { umriss: 0.001 }), Math.cos(w) * 0.05, y, -Math.sin(w) * 0.05, 0, w + Math.PI / 2, 0));
+  }
+  const daumenF = teil(new THREE.CapsuleGeometry(0.015, 0.05, 4, 8), HAUT, { umriss: 0.0025 });
+  daumenF.position.set(-0.035, 0.05, 0.03);
+  daumenF.rotation.set(0.3, 0, 1.1);
+  faust.add(daumenF);
+  // Handrücken außen an der Flasche
+  faust.add(setze(teil(new THREE.BoxGeometry(0.03, 0.1, 0.075), HAUT, { umriss: 0.003 }), -0.05, 0.0, -0.01));
+  bier.add(faust);
   bier.visible = false;
-  links.hand.add(bier);
+  wurzel.add(bier);
+  // Bierhalten: Arm unten (Flasche vor dem Bauch) und am Mund (Flasche schräg nach oben); Werte werden gemischt
+  const BIER_UNTEN = { s: [-0.35, 0.1, -0.12], e: [-1.3, 0, 0.35], kipp: 0.15 };
+  const BIER_MUND = { s: [-1.98, 0.77, 0.19], e: [-1.04, 0, 0.03], kipp: 1.2 }; // per Suche bestimmt: Flaschenhals am Mund
+  let trinkPhase = 0; // 0 = unten, 1 = am Mund
+  let fixPhase = null; // nur für Tests
+  const _q = new THREE.Quaternion(), _v = new THREE.Vector3(), _e = new THREE.Euler();
   // Pinkelstrahl (nur ganz selten sichtbar)
   const strahlMat = new THREE.MeshBasicMaterial({ color: 0xe8d23a, transparent: true, opacity: 0.85 });
   const strahl = new THREE.Mesh(new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(new THREE.Vector3(0, 0.86, 0.2), new THREE.Vector3(0, 0.9, 0.7), new THREE.Vector3(0, 0.0, 1.0)), 20, 0.008, 5, false), strahlMat);
@@ -440,7 +470,8 @@ export function baueJonny(scene) {
     get geht() { return !!ziel; },
     dreheZu(p) { wurzel.rotation.y = Math.atan2(p.x - wurzel.position.x, p.z - wurzel.position.z); },
     sichtbar(an) { wurzel.visible = an; for (const r of rauch) r.visible = an && raucht; },
-    bier(an) { bier.visible = an; if (!an && !kitzelt) armeVerschraenkt(); },
+    bier(an) { bier.visible = an; links.finger.visible = !an; if (!an) { kopf.rotation.x = 0; trinkPhase = 0; if (!kitzelt) armeVerschraenkt(); } },
+    _test: { bierFlasche: () => bier, mund: () => mund, kopf: () => kopf, BIER_MUND, BIER_UNTEN, fix(k) { fixPhase = k; } },
     trinken(an) { trinkt = an; },
     kitzeln(an) {
       kitzelt = an;
@@ -480,12 +511,24 @@ export function baueJonny(scene) {
           a.ellbogen.rotation.set(-0.4, 0, 0);
         }
       }
-      // Bier trinken: linker Arm zur Flasche an den Mund (alle 4 s ein Schluck)
-      if (bier.visible && !kitzelt) {
-        const schluck = trinkt && (zeit % 4) < 1.2;
-        links.schulter.rotation.set(schluck ? -0.9 : -0.45, 0, -0.12);
-        links.ellbogen.rotation.set(schluck ? -2.3 : -1.4, 0, 0.5);
-        bier.rotation.x = schluck ? -1.0 : 0;
+      // Bier trinken: alle 5 s ein Schluck – Arm hebt die Flasche weich zum Mund, kippt sie, Kopf geht leicht in den Nacken
+      if (bier.visible) {
+        const takt = zeit % 5;
+        const soll = trinkt && !kitzelt ? (takt < 0.7 ? takt / 0.7 : takt < 2.2 ? 1 : takt < 2.9 ? 1 - (takt - 2.2) / 0.7 : 0) : 0;
+        trinkPhase += (soll - trinkPhase) * Math.min(1, dt * 8);
+        if (fixPhase !== null) trinkPhase = fixPhase;
+        const k = trinkPhase * trinkPhase * (3 - 2 * trinkPhase);
+        if (!kitzelt) {
+          const m = (a, b) => a + (b - a) * k;
+          links.schulter.rotation.set(m(BIER_UNTEN.s[0], BIER_MUND.s[0]), m(BIER_UNTEN.s[1], BIER_MUND.s[1]), m(BIER_UNTEN.s[2], BIER_MUND.s[2]));
+          links.ellbogen.rotation.set(m(BIER_UNTEN.e[0], BIER_MUND.e[0]), m(BIER_UNTEN.e[1], BIER_MUND.e[1]), m(BIER_UNTEN.e[2], BIER_MUND.e[2]));
+        }
+        kopf.rotation.x = -0.28 * k;
+        // Flasche sitzt in der Faust, Ausrichtung im Raum: aufrecht, beim Trinken mit dem Hals zum Mund gekippt
+        wurzel.updateMatrixWorld(true);
+        links.hand.localToWorld(_v.set(0, -0.075, 0.035));
+        bier.position.copy(wurzel.worldToLocal(_v));
+        bier.quaternion.setFromEuler(_e.set(-(BIER_UNTEN.kipp + (BIER_MUND.kipp - BIER_UNTEN.kipp) * k), 0, 0));
       }
       // atmen, leicht wippen
       rumpf.scale.y = 1 + Math.sin(zeit * 1.6) * 0.008;
@@ -493,7 +536,8 @@ export function baueJonny(scene) {
       // Kopf zum Spieler drehen (begrenzt)
       if (blickZiel) {
         const lokal = wurzel.worldToLocal(blickZiel.clone());
-        const ziel = THREE.MathUtils.clamp(Math.atan2(lokal.x, lokal.z), -0.9, 0.9);
+        // beim Trinken guckt er geradeaus (Flasche am Mund)
+        const ziel = trinkPhase > 0.02 ? 0 : THREE.MathUtils.clamp(Math.atan2(lokal.x, lokal.z), -0.9, 0.9);
         kopf.rotation.y += (ziel - kopf.rotation.y) * Math.min(1, dt * 3);
       }
       blinzeln -= dt;

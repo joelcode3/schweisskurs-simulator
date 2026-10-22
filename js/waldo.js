@@ -185,20 +185,36 @@ export function baueWaldo(scene) {
     ellbogen.add(kugel(0.068, PULLI, { umriss: 0.004 }, 10));
     ellbogen.add(setze(teil(new THREE.CapsuleGeometry(0.066, 0.15, 4, 10), PULLI), 0, -0.11, 0));
     ellbogen.add(setze(zylinder(0.07, 0.066, 0.04, 0x6a1a20, { umriss: 0.003 }, 12), 0, -0.21, 0));
+    // große, kräftige Hände: breiter Handrücken, Knöchel, dicke Finger mit zwei Gliedern und Nägeln, Daumen
     const hand = new THREE.Group();
-    const flaeche = teil(new THREE.CapsuleGeometry(0.045, 0.03, 4, 10), HAUT);
-    flaeche.scale.set(1.15, 1, 0.7);
+    const flaeche = teil(new THREE.BoxGeometry(0.105, 0.095, 0.048, 2, 2, 1), HAUT, { umriss: 0.0035 });
+    flaeche.position.y = -0.02;
     hand.add(flaeche);
     for (let f = 0; f < 4; f++) {
-      const finger = teil(new THREE.CapsuleGeometry(0.0135, 0.035, 4, 6), HAUT, { umriss: 0.002 });
-      finger.position.set((-0.03 + f * 0.02) * seite, -0.052, 0.006);
-      hand.add(finger);
+      const x = (-0.039 + f * 0.026) * seite;
+      const lang = [0.04, 0.048, 0.045, 0.034][f];
+      hand.add(setze(kugel(0.0155, 0xe0a989, { umriss: 0.0015 }, 8), x, -0.068, 0.014));
+      const g1 = teil(new THREE.CapsuleGeometry(0.0155, lang, 4, 8), HAUT, { umriss: 0.0025 });
+      g1.position.set(x, -0.078 - lang / 2, 0.008);
+      hand.add(g1);
+      const g2 = teil(new THREE.CapsuleGeometry(0.0145, lang * 0.7, 4, 8), HAUT, { umriss: 0.0025 });
+      g2.position.set(x, -0.086 - lang - lang * 0.3, -0.012);
+      g2.rotation.x = 0.55;
+      hand.add(g2);
+      hand.add(setze(quader(0.016, 0.016, 0.004, 0xf2d6c6, { umriss: 0.001 }), x, -0.09 - lang * 1.65, -0.03, 0.55, 0, 0));
     }
+    const daumen = new THREE.Group();
+    daumen.position.set(0.055 * seite, -0.03, 0.02);
+    daumen.rotation.set(0.3, 0, -0.75 * seite);
+    daumen.add(setze(teil(new THREE.CapsuleGeometry(0.017, 0.04, 4, 8), HAUT, { umriss: 0.0025 }), 0, -0.025, 0));
+    daumen.add(setze(teil(new THREE.CapsuleGeometry(0.016, 0.028, 4, 8), HAUT, { umriss: 0.0025 }), 0, -0.065, 0.006, 0.3, 0, 0));
+    daumen.add(setze(quader(0.017, 0.016, 0.004, 0xf2d6c6, { umriss: 0.001 }), 0, -0.078, 0.022, 0.3, 0, 0));
+    hand.add(daumen);
     hand.position.y = -0.27;
     ellbogen.add(hand);
     schulter.add(ellbogen);
     rumpf.add(schulter);
-    return { schulter, ellbogen, hand };
+    return { schulter, ellbogen, hand, daumen };
   }
   const links = arm(-1);
   const rechts = arm(1);
@@ -248,44 +264,71 @@ export function baueWaldo(scene) {
     n.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2));
     return n;
   }
-  const schaedel = teil(new THREE.SphereGeometry(0.17, 26, 20), HAUT);
-  schaedel.scale.set(1.07, 1.04, 1.0);
-  schaedel.position.y = 0.12;
+  // Gesicht nach den Fotos: eher länglich mit hoher Stirn (Cap sitzt weit hinten), gerade dicke Brauen dicht über den Augen,
+  // mittelgroße, leicht tiefliegende Augen, lange gerade Nase mit etwas runder Spitze, Bart beginnt hoch auf den Wangen
+  const schaedel = teil(new THREE.SphereGeometry(0.17, 30, 24), HAUT);
+  schaedel.scale.set(1.0, 1.12, 1.06);
+  schaedel.position.set(0, 0.13, -0.008);
   kopf.add(schaedel);
-  // volle Wangen
-  for (const sx of [-1, 1]) kopf.add(setze(teil(new THREE.SphereGeometry(0.06, 12, 10), HAUT, { umriss: false }), sx * 0.09, 0.115, 0.115));
-  for (const x of [-0.18, 0.18]) {
-    const ohr = teil(new THREE.SphereGeometry(0.036, 10, 8), HAUT, { umriss: 0.002 });
-    ohr.scale.set(0.55, 1.15, 0.85);
-    ohr.position.set(x, 0.12, -0.01);
+  // Wangenknochen und Brauenbogen (leichte Wölbungen, ohne Umriss)
+  for (const sx of [-1, 1]) kopf.add(setze(teil(new THREE.SphereGeometry(0.045, 12, 10), HAUT, { umriss: false }), sx * 0.085, 0.13, 0.118));
+  // kräftiger Brauenbogen und Stirn, die nach oben zurückweicht (Profil!)
+  const brauenBogen = teil(new THREE.CapsuleGeometry(0.026, 0.12, 4, 10), HAUT, { umriss: false });
+  brauenBogen.rotation.z = Math.PI / 2;
+  brauenBogen.scale.set(1, 1, 0.75);
+  brauenBogen.position.set(0, 0.19, 0.155);
+  kopf.add(brauenBogen);
+  for (const x of [-0.17, 0.17]) {
+    const ohr = teil(new THREE.SphereGeometry(0.04, 12, 10), HAUT, { umriss: 0.002 });
+    ohr.scale.set(0.5, 1.2, 0.85);
+    ohr.position.set(x, 0.135, -0.01);
     kopf.add(ohr);
+    kopf.add(setze(kugel(0.016, 0xd99d7c, { umriss: false }, 8), x * 1.04, 0.135, 0.0));
   }
-  const nase = teil(new THREE.SphereGeometry(0.034, 14, 10), 0xe4a886, { umriss: 0.002 });
-  nase.position.set(0, 0.11, 0.172);
-  nase.scale.set(1.2, 1.05, 1.0);
+  // Nase: langer gerader Rücken, etwas runde Spitze, Nasenflügel, Nasenlöcher
+  const NASE = 0xe2a887;
+  // Nase steht im Profil deutlich vor: Rücken schräg nach vorn-unten, Spitze weit vorn
+  const nasenRuecken = teil(new THREE.CapsuleGeometry(0.016, 0.07, 4, 8), NASE, { umriss: 0.0015 });
+  nasenRuecken.rotation.x = -0.5;
+  nasenRuecken.position.set(0, 0.132, 0.186);
+  kopf.add(nasenRuecken);
+  const nase = teil(new THREE.SphereGeometry(0.025, 14, 10), NASE, { umriss: 0.002 });
+  nase.scale.set(1.1, 0.95, 1.05);
+  nase.position.set(0, 0.098, 0.212);
   kopf.add(nase);
-  kopf.add(setze(teil(new THREE.CylinderGeometry(0.014, 0.02, 0.06, 8), 0xe4a886, { umriss: false }), 0, 0.14, 0.165, -0.25, 0, 0));
-  for (const sx of [-1, 1]) kopf.add(setze(kugel(0.006, 0x8a4a3a, { umriss: false }, 6), sx * 0.014, 0.095, 0.188));
+  for (const sx of [-1, 1]) {
+    kopf.add(setze(teil(new THREE.SphereGeometry(0.0145, 10, 8), NASE, { umriss: 0.0012 }), sx * 0.021, 0.093, 0.195));
+    kopf.add(setze(kugel(0.005, 0x7a3f30, { umriss: false }, 6), sx * 0.01, 0.084, 0.21));
+  }
   const augen = [];
-  for (const x of [-0.062, 0.062]) {
+  for (const x of [-0.055, 0.055]) {
     const a = new THREE.Group();
-    const weiss = kugel(0.019, 0xffffff, { umriss: 0.0025 }, 12);
-    weiss.scale.set(1.15, 0.85, 0.7);
+    // Augenhöhle (leichter Schatten), Augapfel, Iris graubraun, Pupille, Glanzpunkt, Ober- und Unterlid
+    const hoehle = kugel(0.022, 0xd8a283, { umriss: false }, 10);
+    hoehle.scale.set(1.3, 0.85, 0.4);
+    hoehle.position.z = -0.006;
+    a.add(hoehle);
+    const weiss = kugel(0.0155, 0xf6f3ee, { umriss: 0.002 }, 12);
+    weiss.scale.set(1.3, 0.78, 0.6);
     a.add(weiss);
-    const iris = kugel(0.0105, 0x5a3a22, { umriss: false }, 10);
-    iris.position.z = 0.011;
+    const iris = kugel(0.0088, 0x6a5440, { umriss: false }, 10);
+    iris.position.z = 0.0075;
     a.add(iris);
-    const pupille = kugel(0.005, 0x111111, { umriss: false }, 6);
-    pupille.position.z = 0.017;
+    const pupille = kugel(0.0042, 0x111111, { umriss: false }, 6);
+    pupille.position.z = 0.0125;
     a.add(pupille);
-    // Oberlid (leicht müder Blick)
-    a.add(setze(quader(0.046, 0.008, 0.012, 0xd99d7c, { umriss: false }), 0, 0.014, 0.008, 0.2, 0, 0));
-    a.position.set(x, 0.158, 0.163);
+    const glanz = kugel(0.0018, 0xffffff, { umriss: false }, 4);
+    glanz.position.set(0.003, 0.003, 0.014);
+    a.add(glanz);
+    a.add(setze(quader(0.042, 0.007, 0.012, 0xc98c6c, { umriss: false }), 0, 0.011, 0.004, 0.35, 0, 0));
+    a.add(setze(quader(0.04, 0.0035, 0.006, 0x3a2416, { umriss: false }), 0, 0.0085, 0.009, 0.3, 0, 0));
+    a.add(setze(quader(0.036, 0.004, 0.008, 0xd29576, { umriss: false }), 0, -0.012, 0.004, -0.3, 0, 0));
+    a.position.set(x, 0.162, 0.155);
     kopf.add(a);
     augen.push(a);
   }
-  // dicke, gerade dunkle Brauen
-  for (const x of [-0.066, 0.066]) kopf.add(setze(teil(new THREE.CapsuleGeometry(0.011, 0.045, 3, 6), HAAR, { umriss: 0.0015 }), x, 0.195, 0.165, 0, 0, Math.PI / 2 + (x > 0 ? -0.06 : 0.06)));
+  // dicke, gerade dunkle Brauen dicht über den Augen
+  for (const x of [-0.058, 0.058]) kopf.add(setze(teil(new THREE.CapsuleGeometry(0.0095, 0.05, 3, 8), HAAR, { umriss: 0.0015 }), x, 0.193, 0.166, 0.15, 0, Math.PI / 2 + (x > 0 ? -0.08 : 0.08)));
   // Bart und Haare teilen sich dieselben Farben, damit der Übergang (Koteletten, hinter den Ohren, Nacken) nahtlos ist
   function haarTextur(saat, laenge, dichte, hell) {
     return leinwandTextur(128, 128, (g) => {
@@ -305,10 +348,10 @@ export function baueWaldo(scene) {
   const bartMat = toon(0xffffff, { map: haarTextur(12, 14, 650, 0.7) });
   // kurze Haare: ganzer Hinterkopf bis in den Nacken, an den Seiten über und hinter den Ohren,
   // vorne von der Cap verdeckt; vor den Ohren gehen sie in die Koteletten über
-  const haarGeo = zuschnitt(new THREE.SphereGeometry(0.176, 36, 26, 0, Math.PI * 2, Math.PI * 0.12, Math.PI * 0.7), (x, y, z) => z < 0.02 || (Math.abs(x) > 0.15 && y > -0.02 && z < 0.09));
+  const haarGeo = zuschnitt(new THREE.SphereGeometry(0.176, 36, 26, 0, Math.PI * 2, Math.PI * 0.12, Math.PI * 0.7), (x, y, z) => z < 0.02 || (Math.abs(x) > 0.15 && y > -0.02 && z < 0.09) || y > 0.125);
   const haar = teil(haarGeo, 0, { material: haarMat, umriss: 0.003 });
-  haar.scale.set(1.08, 1.05, 1.03);
-  haar.position.y = 0.12;
+  haar.scale.set(1.04, 1.13, 1.0);
+  haar.position.y = 0.13;
   kopf.add(haar);
   // Vollbart (wie auf den Fotos: lang, voll, mittelbraun bis dunkel): Schale über Kiefer und Wangen mit klarer,
   // schräger Wangenlinie; vor den Ohren hoch bis zu den Haaren, unter den Ohren nach hinten bis in die Nackenhaare
@@ -320,45 +363,28 @@ export function baueWaldo(scene) {
   });
   const bart = teil(bartGeo, 0, { material: bartMat, umriss: 0.004 });
   bart.scale.set(1.12, 1.08, 1.12);
-  bart.position.set(0, 0.12, 0.012);
+  bart.position.set(0, 0.125, 0.012);
   kopf.add(bart);
   // volles Kinn (Bart hängt gut 10 cm unters Kinn)
   const kinnBart = teil(new THREE.SphereGeometry(0.12, 18, 14), 0, { material: bartMat, umriss: 0.004 });
   kinnBart.scale.set(1.12, 1.05, 0.9);
-  kinnBart.position.set(0, -0.03, 0.07);
+  kinnBart.position.set(0, -0.03, 0.085);
   kopf.add(kinnBart);
   const kinnSpitze = teil(new THREE.SphereGeometry(0.08, 14, 10), 0, { material: bartMat, umriss: 0.004 });
-  kinnSpitze.scale.set(1.05, 1.4, 0.8);
-  kinnSpitze.position.set(0, -0.13, 0.1);
+  kinnSpitze.scale.set(1.25, 1.5, 0.95);
+  kinnSpitze.position.set(0, -0.15, 0.11);
   kopf.add(kinnSpitze);
   // Schnurrbart (dicht, über der Lippe, geht seitlich in den Bart)
-  const schnurr = new THREE.CatmullRomCurve3([new THREE.Vector3(-0.07, 0.045, 0.15), new THREE.Vector3(-0.035, 0.075, 0.178), new THREE.Vector3(0, 0.072, 0.185), new THREE.Vector3(0.035, 0.075, 0.178), new THREE.Vector3(0.07, 0.045, 0.15)]);
+  const schnurr = new THREE.CatmullRomCurve3([new THREE.Vector3(-0.07, 0.045, 0.155), new THREE.Vector3(-0.035, 0.074, 0.19), new THREE.Vector3(0, 0.07, 0.2), new THREE.Vector3(0.035, 0.074, 0.19), new THREE.Vector3(0.07, 0.045, 0.155)]);
   kopf.add(teil(new THREE.TubeGeometry(schnurr, 20, 0.019, 8, false), 0, { material: bartMat, umriss: 0.003 }));
   // Unterlippe schaut etwas raus
   const mund = teil(new THREE.CapsuleGeometry(0.008, 0.03, 3, 6), 0xb5605a, { umriss: false });
   mund.rotation.z = Math.PI / 2;
-  mund.position.set(0, 0.045, 0.18);
+  mund.position.set(0, 0.045, 0.196);
   kopf.add(mund);
-  // ein paar abstehende Barthaare an der Kontur (wirkt dicht, aber sauber)
-  {
-    const geoH = new THREE.IcosahedronGeometry(0.02, 0);
-    const lagen = [];
-    for (let i = 0; i < 45; i++) {
-      const w = (zufall() - 0.5) * Math.PI * 0.7;
-      const y = -0.17 + zufall() * 0.13;
-      lagen.push([Math.sin(w) * (0.12 + (y + 0.17) * 0.25), y, Math.cos(w) * 0.12 + 0.06]);
-    }
-    const flusen = new THREE.InstancedMesh(geoH, toon(0x4a2e1a), lagen.length);
-    const m = new THREE.Matrix4();
-    lagen.forEach(([x, y, zz], i) => {
-      m.compose(new THREE.Vector3(x, y, zz), new THREE.Quaternion().setFromEuler(new THREE.Euler(zufall(), zufall(), zufall())), new THREE.Vector3(0.6, 1.3, 0.6).multiplyScalar(0.6 + zufall() * 0.5));
-      flusen.setMatrixAt(i, m);
-    });
-    kopf.add(flusen);
-  }
   // Essensreste im Bart (Gruppe etwas vor die Bartoberfläche)
   const essen = new THREE.Group();
-  essen.position.set(0, -0.01, 0.03);
+  essen.position.set(0, -0.01, 0.05);
   kopf.add(essen);
   // Essensreste im Bart: Brotkrümel, ein Stück Salat, ein Klecks Mayo
   for (let i = 0; i < 9; i++) {
@@ -397,20 +423,41 @@ export function baueWaldo(scene) {
   cap.add(schirm);
   cap.add(setze(kugel(0.014, CAP, { umriss: 0.002 }, 8), 0, 0.13, 0));
   cap.add(setze(quader(0.05, 0.03, 0.006, 0x2f5fa8, { umriss: false }), 0, 0.07, 0.172, -0.35, 0, 0));
-  cap.position.set(0, 0.21, 0.0);
-  cap.rotation.x = 0.06;
+  // sitzt weit hinten auf dem Kopf, man sieht die Stirn
+  cap.position.set(0, 0.255, -0.015);
+  cap.rotation.x = -0.16;
   kopf.add(cap);
 
-  // Handy (Bildschirm leuchtet), Waldo guckt ständig drauf
+  // Handy: liegt in beiden Händen vor der Brust, Bildschirm zu den Augen, rechter Daumen wischt, der Feed scrollt
   const handy = new THREE.Group();
-  handy.add(quader(0.075, 0.14, 0.012, 0x1d1d1f, { umriss: 0.002 }));
-  const bildschirm = new THREE.Mesh(new THREE.PlaneGeometry(0.064, 0.125), new THREE.MeshBasicMaterial({ color: 0x8fd0ff }));
-  bildschirm.position.z = 0.0065;
+  handy.add(quader(0.078, 0.155, 0.011, 0x1d1d1f, { umriss: 0.002 }));
+  const feedTex = leinwandTextur(64, 256, (g, b, h) => {
+    g.fillStyle = '#f4f4f4'; g.fillRect(0, 0, b, h);
+    const farben = ['#d9534f', '#5b9bd5', '#f0ad4e', '#6cbf5a', '#8e6bbf', '#e07a5f'];
+    for (let i = 0; i < 6; i++) {
+      const y = i * 43;
+      g.fillStyle = '#c8c8c8'; g.beginPath(); g.arc(8, y + 7, 4, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#9a9a9a'; g.fillRect(15, y + 5, 26, 3);
+      g.fillStyle = farben[i]; g.fillRect(3, y + 14, 58, 20);
+      g.fillStyle = '#b0b0b0'; g.fillRect(3, y + 37, 40, 2);
+    }
+  });
+  feedTex.wrapT = THREE.RepeatWrapping;
+  feedTex.repeat.set(1, 0.5);
+  const bildschirm = new THREE.Mesh(new THREE.PlaneGeometry(0.068, 0.138), new THREE.MeshBasicMaterial({ map: feedTex }));
+  bildschirm.position.z = 0.0058;
   handy.add(bildschirm);
-  handy.position.set(0, -0.07, 0.04);
-  handy.rotation.set(-1.2, 0, 0);
+  // Daumen auf dem Bildschirm (wischt hoch)
+  const wischDaumen = teil(new THREE.CapsuleGeometry(0.015, 0.035, 4, 8), HAUT, { umriss: 0.002 });
+  wischDaumen.rotation.set(0, 0, 0.6);
+  wischDaumen.position.set(0.022, -0.02, 0.016);
+  handy.add(wischDaumen);
   handy.visible = false;
-  rechts.hand.add(handy);
+  wurzel.add(handy);
+  // Arme fürs Handy: rechte Hand hält von unten rechts, linke stützt von links (per Suche bestimmt)
+  const HANDY_R = { s: [-0.65, 0.08, -0.18], e: [-1.49, 0, -0.8] };
+  const HANDY_L = { s: [-0.65, -0.08, 0.18], e: [-1.49, 0, 0.8] };
+  const _v = new THREE.Vector3(), _a = new THREE.Vector3(), _b = new THREE.Vector3();
   // die Kackepumpe (Tauchpumpe mit Schlauch), wenn er sie gefunden hat
   const pumpeInHand = new THREE.Group();
   pumpeInHand.add(setze(zylinder(0.07, 0.08, 0.2, 0x2f5fa8, { umriss: 0.003 }, 14), 0, -0.12, 0));
@@ -448,9 +495,11 @@ export function baueWaldo(scene) {
       haltung = h;
       sitzHoehe = hoehe;
       handy.visible = h === 'handy' || h === 'sitzen';
+      rechts.daumen.visible = !handy.visible;
       toast.visible = h === 'stehen';
     },
     pumpe(an) { pumpeInHand.visible = an; },
+    _test: { HANDY_R, HANDY_L, rechts, links, handy, kopf, wurzel },
     update(dt) {
       if (!wurzel.visible) return;
       zeit += dt;
@@ -496,13 +545,25 @@ export function baueWaldo(scene) {
         kopf.rotation.x = haltung === 'suchen' ? 0.25 + Math.sin(zeit * 3) * 0.15 : 0;
         kopf.rotation.y = haltung === 'suchen' ? Math.sin(zeit * 2.2) * 0.7 : 0;
       } else if (handy.visible) {
-        // Handy vor der Brust, Kopf runter, Daumen wischt
-        rechts.schulter.rotation.set(-0.5, 0, 0.1);
-        rechts.ellbogen.rotation.set(-1.7, 0, -0.35);
-        links.schulter.rotation.set(sitzt ? -0.5 : 0.15, 0, sitzt ? -0.1 : -0.55);
-        links.ellbogen.rotation.set(sitzt ? -1.2 : 0, 0, sitzt ? 0.3 : 1.6);
-        kopf.rotation.x += (0.38 - kopf.rotation.x) * Math.min(1, dt * 4);
-        bildschirm.material.color.setHSL(0.56, 0.7, 0.72 + Math.sin(zeit * 3) * 0.05);
+        // Handy mit beiden Händen vor der Brust, Kopf gesenkt, Blick aufs Display, Daumen wischt
+        rechts.schulter.rotation.set(...HANDY_R.s);
+        rechts.ellbogen.rotation.set(...HANDY_R.e);
+        links.schulter.rotation.set(...HANDY_L.s);
+        links.ellbogen.rotation.set(...HANDY_L.e);
+        kopf.rotation.x += (0.42 - kopf.rotation.x) * Math.min(1, dt * 4);
+        kopf.rotation.y *= 0.9;
+        // Handy zwischen den Handflächen, Bildschirm zu den Augen gedreht
+        wurzel.updateMatrixWorld(true);
+        rechts.hand.localToWorld(_a.set(0, -0.06, 0.03));
+        links.hand.localToWorld(_b.set(0, -0.06, 0.03));
+        handy.position.copy(wurzel.worldToLocal(_v.copy(_a).add(_b).multiplyScalar(0.5)));
+        kopf.localToWorld(_v.set(0, 0.16, 0.16));
+        handy.lookAt(_v);
+        // Wischen: alle 2 s schiebt der Daumen hoch, der Feed rutscht weiter
+        const w = (zeit % 2) / 2;
+        const zug = w < 0.3 ? w / 0.3 : 0;
+        wischDaumen.position.y = -0.045 + zug * 0.06;
+        feedTex.offset.y = (Math.floor(zeit / 2) * 0.17 + zug * 0.17) % 1;
       } else {
         // steht, isst Toast, guckt umher
         links.schulter.rotation.set(0.15, 0, -0.55);

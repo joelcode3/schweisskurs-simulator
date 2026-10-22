@@ -3,7 +3,9 @@
 ## Zusammenarbeit
 - **Immer auf Deutsch antworten**, einfach und Schritt für Schritt (der Betreiber ist kein Entwickler).
 - **Keine Emojis** – weder im Spiel (Symbole als SVG-Linien-Icons) noch in Antworten.
-- Änderungen als Pull Request auf dem vorgegebenen Arbeitszweig; der Betreiber merged selbst.
+- Änderungen als Pull Request; der Betreiber merged selbst. Jedes größere Update bekommt einen EIGENEN neuen Pull Request
+  (Betreiber-Wunsch): ist der letzte PR noch offen, einen neuen Zweig (Name vom Arbeitszweig abgeleitet, z. B. `…-draussen`)
+  von `origin/main` anlegen. Nur kleine Nachbesserungen zum offenen PR kommen in diesen PR.
 - Vor jedem PR im Browser testen (Computer- und iPhone-Ansicht), Playwright mit vorinstalliertem Chromium.
 
 ## Das Spiel
@@ -113,12 +115,21 @@
   (`wandMalen`): Putz, grüngrauer Sockel bis 1,25 m, Putz bröckelt stellenweise (Ziegel sichtbar), Risse, Wasserflecken.
   KEINE Graffiti und Zahlen (Betreiber: wieder weg). Eingang vorne: breites Scheunentor komplett grün (2 Flügel, Z-Streben,
   nur die Scharniere/Bänder schwarz) mit Rauchen-verboten-Schild; Lichtschalter zwischen Tor und WC-Tür.
+  Das Tor steht weit offen (Flügel um die Bänder gedreht), man kann nach draußen gehen.
+- Draußen (js/draussen.js, `baueDraussen`): rotes Backsteingebäude mit flachem Satteldach aus schwarzem Wellblech (Giebel vorne/
+  hinten, Regenrinnen, Fallrohre), Bad als Anbau mit flachem Dach und Milchglasfenster, Fenster links außen. Kaputte Betonfläche
+  vor der Werkstatt (Fugen, Risse mit Unkraut, ausgebrochene Stellen mit Schotter, lose Brocken), Wiese, Bäume, Horizont
+  (Hügel + Waldrand), Himmel mit Wolken (Kamera-Sichtweite 220). Mülltonnen (grau, blau, braun) links vom Tor, Schild
+  „NICHT STÖREN! SCHWEISSKURS“ (Holz) an der Fassade, roter Weidemann-Hoflader mit geschlossener Kabine und Palettengabel
+  rechts neben der Werkstatt, rosa Mini-Jeep (Wrangler-Look, ohne Dach, Elektro-Kinderauto), Feuerschale mit Dreibein, Kette,
+  rundem Grillrost und alter schwarzer Bratwurst. Begehbar: Vorplatz, Streifen rechts neben der Halle, Durchgang durchs Tor
+  (Bad-Anbau ausgespart). Würfe draußen prallen an den Hofgrenzen ab (hand.js AUSSEN).
 - Bad (begehbar) hinter der WC-Tür vorne rechts (BAD in world.js, x 0,7–3,9, z 4,0–6,8): Schachbrett-Boden, Fliesen bis 1,4 m,
   Milchglasfenster, Klo (hinten links), Dusche (hinten rechts), Waschbecken mit Spiegel, Waschmaschine + Trockner (vorne rechts).
   WC-Tür offen, nur zu während Dennis drin ist. Bild über dem Klo: assets/bad-bild.jpg (Foto vom Betreiber, Dennis oben ohne mit Handy, Holzrahmen).
   Verstopfung: nach Dennis' Klo einmal pro Spiel mit 30 % Wahrscheinlichkeit; Pömpel steht oben im Regal, in die Hand, aufs Klo
   klicken (Wut -10). Nach 70 s macht Dennis es selbst (+8 Wut).
-- Zwei kleine gelbe Stromverteiler-Würfel (18 cm, genau eine Steckdose pro Seite, ein Stecker mit Kabel) hängen an Kabeln tief von der Decke (Unterkante 1,75 m, bei
+- Zwei kleine gelbe Stromverteiler-Würfel (18 cm, genau eine Steckdose pro Seite, KEIN eingesteckter Stecker) hängen an Kabeln tief von der Decke (Unterkante 1,75 m, bei
   (-0,9 | 2,35) und (0 | -1,05)). Läuft Dennis dagegen: pendelt, Klonk, Spruch (DENNIS.stromwuerfel, max. alle 35 s).
 - Johnnys Leiter (Alu-Kofferraumleiter vom Camper, 6 Sprossen, oben gebogen) hängt quer, hoch und leicht schräg an der rechten
   Wand auf zwei Konsolen. Dennis regt sich alle 2,5–4 min darüber auf (DENNIS.leiter) und beim Anklicken.
@@ -137,6 +148,8 @@
   saubere Hüllen (`huelle`, `aufHuelle` in jonny.js, R(y)/T(y) = Rumpfform), große Hände (dicke Finger mit zwei Gliedern, Nägel, Daumen), Arme richtig verschränkt (links unten, rechts darüber),
   kein Gürtel, dünner, flacher Bauch, sehr kurze schwarze Arbeitshose mit
   Zollstock und Stift, weiße Socken, grüne Sneaker, goldener Ring. Kann laufen (gehZu). Heim: Tor-Ecke (0,45 | 3,2).
+  Bier: Flasche in der linken Faust (Finger um den Flaschenbauch, offene Finger ausgeblendet), Trinkzug alle 5 s weich zum Mund
+  (BIER_UNTEN/BIER_MUND in jonny.js, per Suche bestimmt, Kopf geht leicht in den Nacken, guckt dabei geradeaus).
   Verhalten (spiel.js, Objekt jz): raucht zwischendurch; holt sich alle 70–130 s ein Bier aus dem Kühlschrank (oder lässt sich
   über das Menü sofort überreden), trinkt, lässt leere Flasche liegen (anklicken = wegräumen, Wut -2); Dennis nervt das (+3).
   Ab 4 Bier: Sodbrennen, geht nach Hause (durchs Tor, weg für den Rest des Spiels); vorher mit 15 % pinkelt er in den Ofen
@@ -148,7 +161,12 @@
   Jonny und Waldo sind selten gleichzeitig da: Waldo kommt meist nur, wenn Jonny draußen ist (85 %), Jonny kommt erst
   zurück, wenn Waldo weg ist (85 %), und geht nicht raus, solange Waldo da ist. Kippen-Feuer nur, wenn Jonny da ist.
 - Kühlschrank (klein, weiß, Bier drin) in der Pausenecke neben dem Kaffeetisch.
-- Waldo (js/waldo.js, nach Fotos): kleiner (Skala 0,85), breit, kurze dunkle Haare (ganzer Hinterkopf bis Nacken, gehen hinter
+- Waldo (js/waldo.js, nach Fotos): kleiner (Skala 0,85), breit, Gesicht länglich mit hoher Stirn (Cap weit hinten), im Profil mit Tiefe
+  (Schädel tiefer, kräftiger Brauenbogen, Nase steht deutlich vor, Bart/Kinn/Schnurrbart weiter vorn), gerade
+  dicke Brauen dicht über den Augen, leicht tiefliegende graubraune Augen mit Lidern, lange gerade Nase mit runder Spitze,
+  Bart beginnt hoch auf den Wangen (keine Bartbüschel-Kugeln mehr), große Hände (Fingerglieder, Nägel, Daumen). Handy mit
+  beiden Händen vor der Brust, Bildschirm zu den Augen gedreht (lookAt), Kopf gesenkt, Daumen wischt, Feed scrollt
+  (HANDY_R/HANDY_L per Suche bestimmt). Kurze dunkle Haare (ganzer Hinterkopf bis Nacken, gehen hinter
   den Ohren und über die Koteletten nahtlos in den Bart über, gleiche Farbe/Textur), langer voller braun-dunkler Vollbart mit
   vielen Essensresten (Krümel, Salat, Tomate, Käse, Sesam, Mayo), beige Cap, dunkelroter Pulli OHNE Logo mit geradem Saum
   (Betreiber), weite, detaillierte kurze graue Jogginghose (meliert, Löcher mit Fäden, Risse, Fransen, sauberer gerippter
@@ -171,10 +189,20 @@
   (max. alle 45 s): Dennis „Schwere Stahlträger sind Torbens Job!“.
 - Bedienung: Hat ein Ding nur eine Aktion, wird sie beim Klick direkt ausgeführt (kein Menü). Box und Licht schalten
   sofort beim Klick (ohne Hinlaufen). Abbrechen-Knöpfe hell mit dunkler Schrift.
-- Dennis hält seinen Becher immer aufrecht, Schuhsohlen rund (keine eckigen Platten).
+- Dennis hält seinen Becher immer aufrecht (Weltmatrix vor dem Ausrichten aktualisieren, beim Schluck nur leicht angekippt), Schuhsohlen rund (keine eckigen Platten).
 - Ofen abgeben: fertigen Ofen anklicken = hochheben (HALTUNG ofen), zu Dennis tragen, auf Dennis klicken; er wird neben Dennis
   abgestellt, dann Bewertung. Ohne Ofen in der Hand sagt Dennis „bring ihn her“.
-- Note: Arbeit (Verarbeitung) max. 75 Punkte + Dennis' Laune max. 25 (100 minus Mittel aus höchster Wut und Wut am Ende)
+- Restgas NUR DRAUSSEN: Flasche hochheben, rausgehen, auf den Boden klicken (Ort 'draussen', Station draussen vor dem Tor).
+  Ventil drinnen aufdrehen = Fehler ventilDrinnen (voll, +30, Dennis rastet aus). Danach zurück zum Waschplatz zum Spülen.
+  Aufgabenliste: nach draußen tragen, draußen Ventil auf, zurück zum Waschplatz, spülen, ...
+- Gasflasche als Minispiele (minispiele.js, gemeinsamer `spielRahmen`): Restgas = Handrad linksrum drehen (ventilSpiel,
+  Manometer läuft runter, zu schnell = Fehler ventilSchnell), Spülen = bis zur gelben Markierung füllen (halten), schütteln
+  (A/D bzw. links/rechts tippen), Flasche nach rechts umkippen (ziehen), Anzeichnen = gestrichelte Tür mit dem Edding
+  nachfahren (Genauigkeit z.anzeichnenQ, unter 50 % Fehler, ab 90 % Lob, Wegwischen-Knopf), Lackieren = mit der Sprühdose
+  über den Ofen (gezeichnet wie gebaut: stehende rote Gasflasche mit Kuppeln, Halsring, langem Ofenrohr, Fußring mit drei
+  schrägen Beinen, Tragegriffen, Tür unten mit Scharnieren und Holzgriff) fahren bis 95 % schwarz (zu lange auf einer Stelle = Lacknase, z.lackQ, ab 3 Nasen Fehler, ohne Nasen Lob).
+  Schweißgerät einstellen und Tragen bleiben wie bisher (Betreiber-Wahl A, B, C, E).
+- Note: Arbeit (Verarbeitung = Mittel aus Anzeichnen, Schnitt, Nähten, Lack) max. 75 Punkte + Dennis' Laune max. 25 (100 minus Mittel aus höchster Wut und Wut am Ende)
   - 1,5 je Fehler (max. 15) - Werkstatt (dreckig 4, Dennis gefegt 2). Note 1 ab 85, 2 ab 72, 3 ab 58, 4 ab 45, 5 ab 30.
   Die Aufschlüsselung steht im Ende-Fenster.
 - clips.json enthält nur noch ausraster-1..4 und rausgeflogen-1 (alle anderen Listen leer, Betreiber-Wunsch).
