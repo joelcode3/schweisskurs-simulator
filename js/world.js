@@ -629,6 +629,51 @@ export function baueWelt(scene) {
   scene.add(regal);
   hindernis(-5, -4.4, -1.4, 0.2);
 
+  // Bitsatz (schwarze Kassette, offen) im Regal: Bits liegen wild durcheinander, nach dem Sortieren ordentlich in Reihen
+  const bitsatz = new THREE.Group();
+  bitsatz.add(setze(quader(0.24, 0.025, 0.16, 0x26282c, { umriss: 0.002 }), 0, 0.0125, 0));
+  const deckel = setze(quader(0.24, 0.16, 0.012, 0x26282c, { umriss: 0.002 }), 0, 0.09, -0.085, -0.25, 0, 0);
+  bitsatz.add(deckel);
+  bitsatz.add(setze(quader(0.1, 0.03, 0.002, 0xc8352a, { umriss: false }), 0, 0.1, -0.075, -0.25, 0, 0));
+  const BITFARBEN = [0xc9a24a, 0x9aa1a8, 0x6f8fb8, 0xb87a4a];
+  const bitsWild = new THREE.Group(), bitsOrdentlich = new THREE.Group();
+  const bitGeo = new THREE.CylinderGeometry(0.0035, 0.0035, 0.025, 6);
+  for (let i = 0; i < 12; i++) {
+    const farbe = BITFARBEN[i % 4];
+    const w = teil(bitGeo, farbe, { umriss: false });
+    w.position.set((Math.random() - 0.5) * 0.34, 0.03 + (i < 6 ? 0 : -0.02), (Math.random() - 0.5) * 0.2);
+    w.rotation.set(Math.PI / 2, Math.random() * 3, Math.random() * 3);
+    bitsWild.add(w);
+    const o = teil(bitGeo, farbe, { umriss: false });
+    o.position.set(-0.08 + (i % 4) * 0.05, 0.028, -0.04 + Math.floor(i / 4) * 0.04);
+    o.rotation.set(0, 0, Math.PI / 2);
+    bitsOrdentlich.add(o);
+  }
+  bitsOrdentlich.visible = false;
+  bitsatz.add(bitsWild, bitsOrdentlich);
+  setze(bitsatz, -4.68, 0.765, -0.62, 0, Math.PI / 2 - 0.25, 0);
+  scene.add(bitsatz);
+  merke(bitsatz, 'bitsatz', 'Bitsatz', 'regal');
+  objekte.bitsatz = bitsatz;
+
+  // Waldos Akkuschrauber (grün, lag im Regen: nass und schlammig); erst unsichtbar, Waldo bringt ihn
+  const akku = new THREE.Group();
+  const AKKU_GRUEN = 0x2f8f6a;
+  akku.add(setze(zylinder(0.035, 0.035, 0.16, AKKU_GRUEN, { umriss: 0.003 }, 12), 0, 0.17, 0, 0, 0, Math.PI / 2));
+  akku.add(setze(quader(0.045, 0.13, 0.05, AKKU_GRUEN, { umriss: 0.003 }), -0.03, 0.09, 0, 0, 0, -0.15));
+  akku.add(setze(quader(0.09, 0.05, 0.07, 0x26282c, { umriss: 0.003 }), -0.035, 0.025, 0));
+  akku.add(setze(zylinder(0.022, 0.026, 0.05, 0x9aa1a8, { umriss: 0.002 }, 10), 0.1, 0.17, 0, 0, 0, Math.PI / 2));
+  akku.add(setze(zylinder(0.004, 0.004, 0.04, 0xc9cdd2, { umriss: false }, 6), 0.14, 0.17, 0, 0, 0, Math.PI / 2));
+  akku.add(setze(quader(0.012, 0.02, 0.02, 0xc8352a, { umriss: 0.001 }), -0.008, 0.13, 0));
+  const akkuDreck = new THREE.Group();
+  for (let i = 0; i < 9; i++) akkuDreck.add(setze(kugel(0.008 + Math.random() * 0.006, i % 3 ? 0x9cc7e6 : 0x6b4a2a, { umriss: false }, 6), (Math.random() - 0.5) * 0.14, 0.05 + Math.random() * 0.14, 0.03 * (Math.random() < 0.5 ? -1 : 1)));
+  akku.add(akkuDreck);
+  akku.visible = false;
+  scene.add(akku);
+  merke(akku, 'akkuschrauber', 'Akkuschrauber', 'werkbank');
+  objekte.akkuschrauber = akku;
+  akku.userData.dreck = akkuDreck;
+
   // Schwere Stahlträger (Doppel-T, rostig) liegen in der Ecke vorne rechts auf Kanthölzern, ohne Funktion
   const traeger = new THREE.Group();
   const rostTex = leinwandTextur(256, 64, (g, b, h) => {
@@ -2687,6 +2732,9 @@ export function baueWelt(scene) {
   }
 
   return {
+    bitsatzOrdnen() { bitsWild.visible = false; bitsOrdentlich.visible = true; },
+    akkuAufWerkbank() { scene.add(akku); akku.position.set(1.08, 0.905, -2.72); akku.rotation.set(0, -0.6, 0); akku.scale.setScalar(1); akku.visible = true; },
+    akkuRepariert() { akkuDreck.visible = false; },
     tassen,
     tassenVerteilen,
     tasseAufKuehlschrank,

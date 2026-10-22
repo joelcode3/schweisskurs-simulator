@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { STATIONEN, AUGENHOEHE } from './world.js';
 import { auftritt, hatClip, buehneBelegt } from './clips.js';
-import { pfadSpiel, schlackeSpiel, hulaSpiel, DENNIS_HULA_REKORD, ventilSpiel, spuelSpiel, anzeichnenSpiel, lackierSpiel } from './minispiele.js';
+import { pfadSpiel, schlackeSpiel, hulaSpiel, DENNIS_HULA_REKORD, ventilSpiel, spuelSpiel, anzeichnenSpiel, lackierSpiel, bitsatzSpiel, akkuschrauberSpiel } from './minispiele.js';
 import { blip, kratzen, jingle, klonk, brummeln, dauer as dauerTon, technoAn, technoAus, technoBeat, klospuelung, mampfen, klick as schalterKlick, stimmeAbspielen, stimmenVorladen, husten } from './audio.js';
 import * as ui from './ui.js';
 import { DENNIS, JONNY, WALDO, satzId } from './texte.js';
@@ -267,6 +267,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
       { text: 'Schlacke abklopfen', fertig: alleNaehte() && z.schlackeWeg },
       { text: 'Ofen schwarz lackieren', fertig: z.lackiert },
       { text: 'Ofen bei Dennis abgeben', fertig: z.vorbei },
+      ...(z.bitsatz === 'sortiert' ? [{ text: 'Bitsatz im Regal sortiert', fertig: true, neben: true }] : []),
+      ...(z.akku ? [{ text: 'Waldos Akkuschrauber reparieren', fertig: z.akku === 'repariert', neben: true }] : []),
       ...(z.waesche === 'nie' ? [] : [
         { text: 'Für Dennis: Wäsche bei 40 Grad waschen', fertig: !['tasche', 'laeuft'].includes(z.waesche), neben: true },
         { text: 'Flusensieb ausblasen (Kompressor) und wieder einsetzen', fertig: z.sieb === 'eingesetzt', neben: true },
@@ -1161,7 +1163,9 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
   const wz = { beschaeftigt: false, ort: null, naechsterBesuch: 60 + Math.random() * 60, bleibtBis: 0, naechsterMecker: 0,
     pumpeAb: Math.random() < 0.7 ? 220 + Math.random() * 200 : Infinity,
     // Kackepumpe: daheim (hinterm Kompressor) | weg (Waldo hat sie) | imWeg (dreckig zurück) | sauber | zurueck
-    pumpe: 'daheim', pumpeZurueckAb: Infinity, pumpeSeit: 0, pumpeGemeckert: false, streit: false };
+    pumpe: 'daheim', pumpeZurueckAb: Infinity, pumpeSeit: 0, pumpeGemeckert: false, streit: false,
+    // einmal pro Spiel: Waldo bringt seinen Akkuschrauber, der im Regen lag
+    akkuAb: 150 + Math.random() * 120 };
   // hier stellt Waldo die dreckige Pumpe hin: mitten im Weg
   const PUMPE_IM_WEG = { x: -0.7, z: 0.9 };
   const WALDO_ORTE = [
@@ -1446,7 +1450,84 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
   }
   // Ärger, Fehler oder Wegrennen beendet das Telefonat sofort
   function telefonAuflegen() { if (dennis.telefoniert) dennis.telefon(false); }
+  // ---------- Nebenaufgabe Bitsatz (muss man selbst entdecken) ----------
+  async function bitsatzSortieren() {
+    if (z.bitsatz === 'sortiert') return;
+    steuerung.sperre(true);
+    z.beschaeftigt = true;
+    const e = await bitsatzSpiel();
+    steuerung.sperre(false);
+    z.beschaeftigt = false;
+    if (!e || e.abgebrochen) return;
+    z.bitsatz = 'sortiert';
+    welt.bitsatzOrdnen();
+    z.wut = Math.max(0, z.wut - 8);
+    aktualisieren();
+    jingle(true);
+    await lob(sag(DENNIS.bitsatzLob));
+  }
+  // ---------- Waldos nasser Akkuschrauber ----------
+  async function waldoAkkuschrauber() {
+    if (waldo.da || wz.beschaeftigt) return;
+    wz.beschaeftigt = true;
+    wz.akkuAb = Infinity;
+    const akku = welt.objekte.akkuschrauber;
+    waldo.wurzel.position.copy(waldo.TOR);
+    waldo.haltung('stehen');
+    waldo.trage(akku);
+    waldo.sichtbar(true);
+    const d = dennis.position;
+    await Promise.race([waldo.gehZu(d.x + 0.7, d.z + 0.5, 1.3), warte(14000)]);
+    waldo.dreheZu(dennis.position);
+    dennis.schaue(waldo.position);
+    ui.waldoSagt(sag(WALDO.akkuFrage), 4500);
+    await warte(2600);
+    dennis.stimmung('skeptisch');
+    await dennisSagt(sag(DENNIS.nichtMeineBranche), false, { prio: 2, minMs: 2200 });
+    ui.waldoSagt(sag(WALDO.akkuTrotzdem), 3500);
+    await Promise.race([waldo.gehZu(0.85, -2.2, 1.3), warte(14000)]);
+    waldo.dreheZu(new THREE.Vector3(0.85, 0, -3));
+    await warte(500);
+    waldo.trage(null);
+    welt.akkuAufWerkbank();
+    klonk(0.3);
+    z.akku = 'liegt';
+    z.akkuSeit = sekundenSeitStart();
+    z.akkuMecker = 0;
+    aktualisieren();
+    if (!z.vorbei) { aerger(5); dennis.stimmung('sauer'); dennisSagt(sag(DENNIS.akkuAufWerkbank), true, { prio: 2 }); }
+    ui.hinweis('Waldos nasser Akkuschrauber liegt jetzt auf Dennis\' Werkbank. Vielleicht kriegst du ihn wieder hin?', 5000);
+    await Promise.race([waldo.gehZu(waldo.TOR.x, waldo.TOR.z, 1.3), warte(14000)]);
+    waldo.sichtbar(false);
+    wz.naechsterBesuch = Math.max(wz.naechsterBesuch, sekundenSeitStart() + 90);
+    wz.beschaeftigt = false;
+  }
+  async function akkuReparieren() {
+    if (z.akku !== 'liegt') return;
+    steuerung.sperre(true);
+    z.beschaeftigt = true;
+    const e = await akkuschrauberSpiel();
+    steuerung.sperre(false);
+    z.beschaeftigt = false;
+    if (!e || e.abgebrochen) return;
+    z.akku = 'repariert';
+    welt.akkuRepariert();
+    z.wut = Math.max(0, z.wut - 8);
+    aktualisieren();
+    jingle(true);
+    await lob(sag(DENNIS.akkuLob));
+  }
+  function akkuUpdate() {
+    if (z.akku !== 'liegt' || z.vorbei || z.akkuMecker >= 2) return;
+    const t = sekundenSeitStart();
+    if (t - z.akkuSeit < 60 + z.akkuMecker * 70) return;
+    if (dennis.modus !== 'normal' || z.aufKlo || z.beschaeftigt || !ruhig() || !dennisSiehts()) return;
+    z.akkuMecker++;
+    aerger(2);
+    dennisSagt(sag(DENNIS.akkuMecker), true, { prio: 0 });
+  }
   function waldoUpdate() {
+    akkuUpdate();
     tassenUpdate();
     telefonUpdate();
     if (dennis.telefoniert && (dennis.modus !== 'normal' || z.beschaeftigt)) telefonAuflegen();
@@ -1457,6 +1538,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
     if (!waldo.da) {
       if (t > wz.pumpeAb && dennisFrei) { kackePumpe(); return; }
       if (wz.pumpe === 'weg' && t > wz.pumpeZurueckAb && dennisFrei) { waldoPumpeZurueck(); return; }
+      if (t > wz.akkuAb && dennisFrei && !jz.da) { waldoAkkuschrauber(); return; }
       if (t > wz.naechsterBesuch) {
         // ist Jonny da, kommt Waldo meist später (die beiden sind selten gleichzeitig hier)
         if (jz.da && Math.random() > 0.15) wz.naechsterBesuch = t + 20;
@@ -2599,6 +2681,12 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
       }
       case 'kuehlschrank':
         return ['Kühlschrank', 'Bier, Bier, Senf, Bier. Gehört Dennis. Jonny bedient sich trotzdem.', [A('Reinschauen', 'auge', () => { welt.kuehlschrank(true); setTimeout(() => welt.kuehlschrank(false), 1800); if (dennisSiehts()) dennisSagt(sag(DENNIS.kuehlschrank), false, { prio: 2 }); })]];
+      case 'bitsatz':
+        if (z.bitsatz === 'sortiert') return ['Bitsatz', 'Ordentlich sortiert. Jedes Bit in seinem Fach.', []];
+        return ['Bitsatz', 'Total durcheinander, die Hälfte liegt neben der Kassette.', [A('Bitsatz sortieren', 'werkzeug', bitsatzSortieren)]];
+      case 'akkuschrauber':
+        if (z.akku === 'repariert') return ['Akkuschrauber', 'Surrt wieder. Waldo kann ihn abholen.', []];
+        return ['Akkuschrauber', 'Waldos Akkuschrauber. Nass, schlammig, macht keinen Mucks mehr.', [A('Reparieren', 'werkzeug', akkuReparieren)]];
       case 'tasse':
         if (obj?.userData.aufgeraeumt) return ['Kaffeetasse', 'Steht ordentlich auf dem Kühlschrank.', []];
         return ['Kaffeetasse', 'Benutzt, mit eingetrocknetem Kaffeerest. Gehört auf den Kühlschrank.', [A('In die Hand nehmen', 'hand', () => aufnehmen('tasse', obj))]];
@@ -2827,7 +2915,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, steuerung, kamera, hand 
   return {
     zustand: z,
     klick,
-    test: { tasseWegraeumen, dennisRaeumtTassen, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
+    test: { bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
     stationWaehlen,
     intro,
     aktualisieren,

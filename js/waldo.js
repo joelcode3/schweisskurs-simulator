@@ -476,6 +476,7 @@ export function baueWaldo(scene) {
   let tempo = 1.1;
   let schritt = 0;
   let haltung = 'stehen'; // stehen | sitzen | handy | rennen | suchen
+  let getragen = null;
   let sitzHoehe = 0;
   const api = {
     wurzel,
@@ -499,6 +500,12 @@ export function baueWaldo(scene) {
       toast.visible = h === 'stehen';
     },
     pumpe(an) { pumpeInHand.visible = an; },
+    // irgendein Ding in der linken Hand tragen (z. B. den nassen Akkuschrauber), null = weglegen
+    trage(obj) {
+      if (getragen) getragen.removeFromParent();
+      getragen = obj;
+      if (obj) { links.hand.add(obj); obj.position.set(0, -0.08, 0.04); obj.rotation.set(0, Math.PI / 2, -0.3); obj.scale.setScalar(1 / 0.85); obj.visible = true; }
+    },
     _test: { HANDY_R, HANDY_L, rechts, links, handy, kopf, wurzel },
     update(dt) {
       if (!wurzel.visible) return;

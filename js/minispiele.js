@@ -1531,3 +1531,198 @@ export function lackierSpiel() {
   });
   return versprechen;
 }
+
+// ---------------------------------------------------------------------------
+// Nebenaufgabe: Bitsatz sortieren (Bits per Ziehen ins passende Fach)
+// ---------------------------------------------------------------------------
+export function bitsatzSpiel() {
+  const ARTEN = [
+    { id: 'PH', name: 'Kreuz PH', farbe: '#c9a24a' },
+    { id: 'PZ', name: 'Pozi PZ', farbe: '#9aa1a8' },
+    { id: 'TX', name: 'Torx TX', farbe: '#6f8fb8' },
+    { id: 'SL', name: 'Schlitz', farbe: '#b87a4a' },
+  ];
+  const GROESSEN = [1, 2, 3];
+  let f;
+  let faecher = [];
+  let bits = [];
+  let zieht = null;
+  let meldung = '', meldungZeit = 0;
+  const meld = (t) => { meldung = t; meldungZeit = 1.6; };
+  function anordnen() {
+    faecher = [];
+    const fb = f.b * 0.18, fh = f.h * 0.15;
+    ARTEN.forEach((a, i) => GROESSEN.forEach((g, k) => {
+      faecher.push({ art: a.id, groesse: g, x: f.x + f.b * 0.08 + i * (fb + f.b * 0.04), y: f.y + f.h * 0.05 + k * (fh + f.h * 0.03), b: fb, h: fh });
+    }));
+  }
+  function verteilen() {
+    bits = [];
+    ARTEN.forEach((a) => GROESSEN.forEach((g) => {
+      bits.push({ art: a.id, groesse: g, farbe: a.farbe, x: f.x + f.b * (0.06 + Math.random() * 0.88), y: f.y + f.h * (0.66 + Math.random() * 0.28), w: (Math.random() - 0.5) * 1.6, fertig: false });
+    }));
+  }
+  function zeichneBit(ctx, b, x, y, w) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(w);
+    const l = 38, d = 7;
+    // Sechskantschaft
+    ctx.fillStyle = b.farbe; ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(-l / 2, -d / 2, l * 0.7, d, 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(-l / 2 + 2, -d / 2 + 1, l * 0.6, 2);
+    // Spitze je nach Art
+    const sx = -l / 2 + l * 0.7;
+    ctx.fillStyle = b.farbe;
+    ctx.beginPath(); ctx.moveTo(sx, -d / 2); ctx.lineTo(sx + l * 0.3, -1.5); ctx.lineTo(sx + l * 0.3, 1.5); ctx.lineTo(sx, d / 2); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = '#111'; ctx.lineWidth = 1.5;
+    if (b.art === 'PH' || b.art === 'PZ') { ctx.beginPath(); ctx.moveTo(sx + 4, 0); ctx.lineTo(sx + l * 0.3, 0); ctx.stroke(); if (b.art === 'PZ') { ctx.beginPath(); ctx.moveTo(sx + 6, -2); ctx.lineTo(sx + 6, 2); ctx.stroke(); } }
+    if (b.art === 'TX') { ctx.beginPath(); ctx.arc(sx + l * 0.2, 0, 2.5, 0, Math.PI * 2); ctx.stroke(); }
+    // Größe als Zahl auf dem Schaft
+    ctx.fillStyle = '#111'; ctx.font = 'bold 9px system-ui'; ctx.textAlign = 'center'; ctx.fillText(String(b.groesse), -l / 2 + 10, 3);
+    ctx.restore();
+  }
+  window.__bitsatz = { get bits() { return bits; }, get faecher() { return faecher; } }; // nur für Tests
+  const { api, versprechen } = spielRahmen('Bitsatz sortieren', 'Die Bits liegen wild durcheinander. Zieh jedes Bit in das passende Fach (Art und Größe stehen dran).', {
+    beiGroesse(m) { const alt = f; f = flaeche(m); anordnen(); if (!alt) verteilen(); else for (const b of bits) { b.x = f.x + (b.x - alt.x) * (f.b / alt.b); b.y = f.y + (b.y - alt.y) * (f.h / alt.h); } },
+    events: {
+      pointerdown(e) {
+        const p = zeigerPos(api.canvas, e);
+        let best = null, bd = 30;
+        for (const b of bits) { if (b.fertig) continue; const d = Math.hypot(b.x - p.x, b.y - p.y); if (d < bd) { bd = d; best = b; } }
+        if (best) { zieht = { b: best, dx: best.x - p.x, dy: best.y - p.y, startX: best.x, startY: best.y }; api.canvas.setPointerCapture?.(e.pointerId); klonk(0.08); }
+      },
+      pointermove(e) { if (!zieht) return; const p = zeigerPos(api.canvas, e); zieht.b.x = p.x + zieht.dx; zieht.b.y = p.y + zieht.dy; },
+      pointerup() {
+        if (!zieht) return;
+        const b = zieht.b;
+        const fach = faecher.find((q) => b.x > q.x && b.x < q.x + q.b && b.y > q.y && b.y < q.y + q.h);
+        if (fach && fach.art === b.art && fach.groesse === b.groesse) {
+          b.fertig = true; b.x = fach.x + fach.b / 2; b.y = fach.y + fach.h * 0.55; b.w = 0;
+          klonk(0.2);
+          if (bits.every((x) => x.fertig) && !api.istFertig) api.fertig({ fertig: true });
+        } else if (fach) { meld(`Passt nicht: ${ARTEN.find((a) => a.id === fach.art).name} ${fach.groesse}`); b.x = zieht.startX; b.y = zieht.startY; blip(220, 0.08, 0.15); }
+        zieht = null;
+      },
+      pointercancel() { zieht = null; },
+    },
+    schritt(dt) { meldungZeit = Math.max(0, meldungZeit - dt); },
+    zeichnen() {
+      const { ctx, m } = api;
+      ctx.fillStyle = '#3a3530'; ctx.fillRect(0, 0, m.b, m.h);
+      // Kassette (schwarz, offen)
+      ctx.fillStyle = '#26282c'; ctx.strokeStyle = '#111'; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.roundRect(f.x, f.y, f.b, f.h * 0.6, 10); ctx.fill(); ctx.stroke();
+      for (const q of faecher) {
+        const a = ARTEN.find((x) => x.id === q.art);
+        ctx.fillStyle = '#17181b'; ctx.fillRect(q.x, q.y, q.b, q.h);
+        ctx.strokeStyle = '#4a4d52'; ctx.lineWidth = 2; ctx.strokeRect(q.x, q.y, q.b, q.h);
+        ctx.fillStyle = a.farbe; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+        ctx.fillText(`${a.name} ${q.groesse}`, q.x + 6, q.y + 14);
+      }
+      // Ablage unten (Regalbrett)
+      ctx.fillStyle = '#8e8e86'; ctx.fillRect(f.x - 10, f.y + f.h * 0.62, f.b + 20, f.h * 0.38);
+      for (const b of bits) if (b !== zieht?.b) zeichneBit(ctx, b, b.x, b.y, b.w);
+      if (zieht) zeichneBit(ctx, zieht.b, zieht.b.x, zieht.b.y, 0);
+      const n = bits.filter((b) => b.fertig).length;
+      balken(ctx, f.x, f.y + f.h + 16, f.b, 10, n / bits.length, '#ffc81e');
+      if (meldungZeit > 0) textMitte(ctx, meldung, m.b / 2, f.y + f.h * 0.7, 20, '#ffb0a0');
+      if (api.istFertig) textMitte(ctx, 'Alles sortiert!', m.b / 2, f.y + f.h * 0.8, 26);
+    },
+  });
+  return versprechen;
+}
+
+// ---------------------------------------------------------------------------
+// Waldos Akkuschrauber reparieren: Schrauben raus, trocken wischen, Kontakte blank kratzen, zuschrauben
+// ---------------------------------------------------------------------------
+export function akkuschrauberSpiel() {
+  let f;
+  let phase = 'schrauben'; // schrauben | trocknen | kontakte | zu | fertig
+  let schrauben = [];
+  let tropfen = [];
+  let rost = [];
+  let zeiger = null, wischt = false;
+  let zuSchrauben = [];
+  const tipp = { schrauben: 'Gehäuse aufmachen: auf jede der 4 Schrauben klicken.', trocknen: 'Wasser drin! Mit dem Lappen über die Tropfen wischen (gedrückt halten).', kontakte: 'Die Akku-Kontakte sind grün angelaufen: auf die Stellen klicken und blank kratzen.', zu: 'Wieder zuschrauben: alle 4 Schrauben anklicken.', fertig: 'Läuft wieder!' };
+  function bauen() {
+    const cx = f.x + f.b * 0.5, cy = f.y + f.h * 0.45;
+    schrauben = [[-0.2, -0.2], [0.18, -0.22], [-0.05, 0.12], [0.02, 0.38]].map(([dx, dy]) => ({ x: cx + dx * f.b, y: cy + dy * f.h, raus: false }));
+    tropfen = Array.from({ length: 26 }, () => ({ x: cx + (Math.random() - 0.6) * f.b * 0.4, y: cy + (Math.random() - 0.5) * f.h * 0.35, r: 4 + Math.random() * 7, weg: false }));
+    rost = Array.from({ length: 5 }, (_, i) => ({ x: cx - f.b * 0.08 + i * f.b * 0.04, y: cy + f.h * 0.42, hp: 2 }));
+  }
+  function klickAuf(p) {
+    if (phase === 'schrauben' || phase === 'zu') {
+      const s = schrauben.find((q) => Math.hypot(q.x - p.x, q.y - p.y) < 20 && (phase === 'schrauben' ? !q.raus : !zuSchrauben.includes(q)));
+      if (!s) return;
+      if (phase === 'schrauben') s.raus = true; else zuSchrauben.push(s);
+      blip(900, 0.05, 0.1);
+      if (phase === 'schrauben' && schrauben.every((q) => q.raus)) phase = 'trocknen';
+      if (phase === 'zu' && zuSchrauben.length === 4) {
+        phase = 'fertig';
+        const d = dauer('flex', 0.35);
+        setTimeout(() => d.stopp(), 900);
+        api.fertig({ repariert: true });
+      }
+    } else if (phase === 'kontakte') {
+      const r = rost.find((q) => q.hp > 0 && Math.hypot(q.x - p.x, q.y - p.y) < 18);
+      if (!r) return;
+      r.hp--;
+      kratzerTon(); klonk(0.1);
+      if (rost.every((q) => q.hp <= 0)) phase = 'zu';
+    }
+  }
+  window.__akku = { get phase() { return phase; }, get schrauben() { return schrauben; }, get tropfen() { return tropfen; }, get rost() { return rost; } }; // nur für Tests
+  const { api, versprechen } = spielRahmen('Akkuschrauber reparieren', 'Waldos Akkuschrauber lag im Regen. Aufschrauben, trocknen, Kontakte säubern, zuschrauben.', {
+    beiGroesse(m) { f = flaeche(m); bauen(); },
+    events: {
+      pointerdown(e) { const p = zeigerPos(api.canvas, e); zeiger = p; wischt = true; klickAuf(p); },
+      pointermove(e) { zeiger = zeigerPos(api.canvas, e); },
+      pointerup() { wischt = false; },
+      pointercancel() { wischt = false; },
+    },
+    schritt() {
+      if (phase === 'trocknen' && wischt && zeiger) {
+        for (const t of tropfen) if (!t.weg && Math.hypot(t.x - zeiger.x, t.y - zeiger.y) < 34) t.weg = true;
+        if (tropfen.every((t) => t.weg)) phase = 'kontakte';
+      }
+    },
+    zeichnen() {
+      const { ctx, m } = api;
+      ctx.fillStyle = '#3a3530'; ctx.fillRect(0, 0, m.b, m.h);
+      ctx.fillStyle = '#c99a5b'; ctx.fillRect(f.x - 20, f.y - 10, f.b + 40, f.h + 20);
+      const cx = f.x + f.b * 0.5, cy = f.y + f.h * 0.45;
+      const offen = phase !== 'schrauben' && phase !== 'fertig' && !(phase === 'zu' && zuSchrauben.length === 4);
+      // Akkuschrauber von der Seite: Motorgehäuse, Griff, Akku, Bohrfutter
+      ctx.strokeStyle = '#111'; ctx.lineWidth = 4;
+      ctx.fillStyle = '#2f8f6a';
+      ctx.beginPath(); ctx.roundRect(cx - f.b * 0.28, cy - f.h * 0.32, f.b * 0.42, f.h * 0.24, 20); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.roundRect(cx - f.b * 0.12, cy - f.h * 0.1, f.b * 0.13, f.h * 0.42, 12); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#26282c';
+      ctx.beginPath(); ctx.roundRect(cx - f.b * 0.17, cy + f.h * 0.3, f.b * 0.24, f.h * 0.14, 8); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#9aa1a8';
+      ctx.beginPath(); ctx.roundRect(cx + f.b * 0.14, cy - f.h * 0.27, f.b * 0.1, f.h * 0.14, 6); ctx.fill(); ctx.stroke();
+      ctx.fillRect(cx + f.b * 0.24, cy - f.h * 0.215, f.b * 0.08, f.h * 0.03);
+      // Schlamm und Wasser außen
+      if (phase === 'schrauben') for (let i = 0; i < 8; i++) { ctx.fillStyle = 'rgba(90,65,40,0.55)'; ctx.beginPath(); ctx.arc(cx - f.b * 0.2 + i * f.b * 0.05, cy - f.h * 0.1 + (i % 3) * 12, 9, 0, Math.PI * 2); ctx.fill(); }
+      if (offen) {
+        // offenes Gehäuse: Motor, Platine, Kabel
+        ctx.fillStyle = '#1d1d1f'; ctx.beginPath(); ctx.roundRect(cx - f.b * 0.25, cy - f.h * 0.29, f.b * 0.36, f.h * 0.18, 14); ctx.fill();
+        ctx.fillStyle = '#b87333'; ctx.beginPath(); ctx.arc(cx - f.b * 0.1, cy - f.h * 0.2, f.h * 0.07, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#2f7a3a'; ctx.fillRect(cx - f.b * 0.1, cy - f.h * 0.05, f.b * 0.09, f.h * 0.28); ctx.strokeRect(cx - f.b * 0.1, cy - f.h * 0.05, f.b * 0.09, f.h * 0.28);
+        ctx.strokeStyle = '#c8352a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx - f.b * 0.06, cy - f.h * 0.05); ctx.quadraticCurveTo(cx - f.b * 0.02, cy - f.h * 0.15, cx - f.b * 0.08, cy - f.h * 0.2); ctx.stroke();
+        for (const t of tropfen) if (!t.weg) { ctx.fillStyle = 'rgba(120,190,240,0.9)'; ctx.beginPath(); ctx.arc(t.x, t.y, t.r, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.beginPath(); ctx.arc(t.x - t.r * 0.3, t.y - t.r * 0.3, t.r * 0.25, 0, Math.PI * 2); ctx.fill(); }
+        // Akku-Kontakte
+        for (const r of rost) { ctx.fillStyle = r.hp > 0 ? (r.hp === 2 ? '#4f9a7a' : '#8fb39a') : '#d9b44a'; ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.fillRect(r.x - 7, r.y - 10, 14, 20); ctx.strokeRect(r.x - 7, r.y - 10, 14, 20); }
+      }
+      // Schrauben
+      for (const s of schrauben) {
+        const sichtbar = phase === 'schrauben' ? !s.raus : phase === 'zu' || phase === 'fertig' ? zuSchrauben.includes(s) || phase === 'fertig' : false;
+        if (sichtbar) { ctx.fillStyle = '#c9cdd2'; ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(s.x, s.y, 9, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.moveTo(s.x - 5, s.y); ctx.lineTo(s.x + 5, s.y); ctx.moveTo(s.x, s.y - 5); ctx.lineTo(s.x, s.y + 5); ctx.stroke(); }
+        else if (phase === 'zu') { ctx.strokeStyle = 'rgba(255,200,30,0.9)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(s.x, s.y, 11, 0, Math.PI * 2); ctx.stroke(); }
+      }
+      // Lappen am Zeiger beim Trocknen
+      if (phase === 'trocknen' && zeiger) { ctx.fillStyle = '#d0305a'; ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(zeiger.x - 24, zeiger.y - 16, 48, 32, 8); ctx.fill(); ctx.stroke(); }
+      textMitte(ctx, tipp[phase], m.b / 2, f.y + f.h + 30, 18, '#ffe9a8');
+    },
+  });
+  return versprechen;
+}
