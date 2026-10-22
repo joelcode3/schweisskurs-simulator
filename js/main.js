@@ -6,6 +6,7 @@ import { baueJonny } from './jonny.js';
 import { baueWaldo } from './waldo.js';
 import { baueTorben } from './torben.js';
 import { baueKumpels } from './kumpels.js';
+import { baueSegway } from './segway.js';
 import { baueFahrzeuge } from './fahrzeuge.js';
 import { baueSteuerung } from './steuerung.js';
 import { baueSpiel } from './spiel.js';
@@ -36,6 +37,7 @@ const waldo = baueWaldo(scene);
 waldo.wurzel.userData.interaktiv = { id: 'waldo', name: 'Waldo', station: null };
 const torben = baueTorben(scene);
 const kumpels = baueKumpels(scene);
+const segway = baueSegway(scene);
 const fz = baueFahrzeuge(scene, welt);
 welt.hindernisse.push({ xMin: jonny.position.x - 0.25, xMax: jonny.position.x + 0.25, zMin: jonny.position.z - 0.25, zMax: jonny.position.z + 0.25 });
 
@@ -44,6 +46,7 @@ const hand = baueHand(scene, kamera);
 const steuerung = baueSteuerung(kamera, canvas, {
   hindernisse: welt.hindernisse,
   begehbar: welt.begehbar,
+  tuerMitte: welt.kloTuerMitte,
   alleZiele: () => zielListe,
   dennisPosition: () => dennis.position,
 }, (t) => spiel && spiel.klick(t), (t, x, y) => ui.hoverName(t ? t.info.name : '', x, y));
@@ -72,7 +75,10 @@ function schleife(jetzt) {
   const dt = Math.min(0.05, (jetzt - letzte) / 1000);
   letzte = jetzt;
   steuerung.update(dt);
-  dennis.schaue(kamera.position);
+  {
+    const ab = Math.hypot(kamera.position.x - dennis.position.x, kamera.position.z - dennis.position.z);
+    dennis.schaue(ab < 3.2 && dennis.modus !== 'tanzen' ? kamera.position : null);
+  }
   dennis.update(dt);
   jonny.schauZu(kamera.position);
   jonny.update(dt);
@@ -82,6 +88,7 @@ function schleife(jetzt) {
   torben.update(dt);
   kumpels.update(dt, kamera.position);
   fz.update(dt);
+  segway.update(dt);
   welt.update(dt);
   if (spiel) {
     spiel.update(dt);
@@ -113,7 +120,7 @@ async function spielStarten() {
   await Promise.all([clipsGeladen, new Promise((r) => setTimeout(r, mitSchloss ? 1200 : 0))]);
   document.getElementById('start').classList.add('versteckt');
   document.getElementById('start-einfach').classList.add('versteckt');
-  spiel = baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, kamera, hand });
+  spiel = baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, segway, steuerung, kamera, hand });
   ui.zeigeHud(true);
   stationAlt = undefined;
   spiel.intro();
@@ -143,4 +150,4 @@ raeder.forEach((rad) => rad.addEventListener('pointerdown', (e) => {
 }));
 
 // Für Tests im Browser
-window.__werkstatt = { kamera, steuerung, dennis, jonny, waldo, torben, kumpels, fz, welt, hand, get spiel() { return spiel; } };
+window.__werkstatt = { kamera, steuerung, dennis, jonny, waldo, torben, kumpels, fz, segway, welt, hand, get spiel() { return spiel; } };

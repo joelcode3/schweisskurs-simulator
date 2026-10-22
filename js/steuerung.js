@@ -194,6 +194,7 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
 
   return {
     get gesperrt() { return gesperrt; },
+    treffer, // auch für Tests
     sperre(an) { gesperrt = an; if (an) { tasten.clear(); zieh = null; canvas.classList.remove('zieht', 'zeigt'); } },
     fahreZu,
     dreheZu,
@@ -257,8 +258,18 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
           const dx = (fx * vor - fz * seit) * v;
           const dz = (fz * vor + fx * seit) * v;
           const p = kamera.position;
-          if (!kollidiert(p.x + dx, p.z)) p.x += dx;
-          if (!kollidiert(p.x, p.z + dz)) p.z += dz;
+          const xOk = !kollidiert(p.x + dx, p.z);
+          if (xOk) p.x += dx;
+          const zOk = !kollidiert(p.x, p.z + dz);
+          if (zOk) p.z += dz;
+          // an einer Türkante hängen geblieben: sanft zur Türmitte rutschen
+          if (!zOk && Math.abs(dz) > 1e-4 && welt.tuerMitte) {
+            const m = welt.tuerMitte(p.x, p.z);
+            if (m !== null && Math.abs(m - p.x) > 0.01) {
+              const sx = Math.sign(m - p.x) * Math.min(Math.abs(m - p.x), Math.abs(dz) + Math.abs(dx));
+              if (!kollidiert(p.x + sx, p.z)) p.x += sx;
+            }
+          }
         }
       }
       neu.clear();

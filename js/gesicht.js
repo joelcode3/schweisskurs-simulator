@@ -113,7 +113,7 @@ export function dennisMini(stimmung = 'ruhig') {
 export const SYMBOL = {
   brille: '<svg viewBox="0 0 32 32" class="ico"><path d="M3 13h26M5 13v5a4 4 0 0 0 4 4h3a4 4 0 0 0 4-4 4 4 0 0 0 4 4h3a4 4 0 0 0 4-4v-5"/></svg>',
   handschuhe: '<svg viewBox="0 0 32 32" class="ico"><path d="M10 29V17l-3-5a2 2 0 0 1 3-2l2 3V6a2 2 0 0 1 4 0v6-8a2 2 0 0 1 4 0v8-6a2 2 0 0 1 4 0v12c0 4-2 7-4 8v3"/></svg>',
-  maske: '<svg viewBox="0 0 32 32" class="ico"><path d="M9 12c2-3 12-3 14 0l1 7c-1 5-5 8-8 8s-7-3-8-8z"/><circle cx="7" cy="20" r="3"/><circle cx="25" cy="20" r="3"/><path d="M9 12L5 8M23 12l4-4M13 22h6"/></svg>',
+  maske: '<svg viewBox="0 0 32 32" class="ico"><path d="M8 13c1-5 15-5 16 0c1 7-3 13-8 13s-9-6-8-13z"/><path d="M12 9.5c2-1 6-1 8 0"/><circle cx="16" cy="19" r="2.6"/><path d="M8 13C4 13 3 17 3 19M24 13c4 0 5 4 5 6M8.5 19C5 20 4 23 4 25M23.5 19c3.5 1 4.5 4 4.5 6"/></svg>',
   helm: '<svg viewBox="0 0 32 32" class="ico"><path d="M5 18c0-8 5-13 11-13s11 5 11 13v6H5z"/><rect x="11" y="13" width="10" height="5" rx="1"/><path d="M5 24h22"/></svg>',
   hand: '<svg viewBox="0 0 24 24" class="ico"><path d="M7 11V5a1.5 1.5 0 0 1 3 0v5V3.5a1.5 1.5 0 0 1 3 0V10V4.5a1.5 1.5 0 0 1 3 0V11v-3a1.5 1.5 0 0 1 3 0v6c0 4-3 7-7 7s-6-2-8-5l-2-3a1.5 1.5 0 0 1 2.5-1.5L7 14"/></svg>',
   werkzeug: '<svg viewBox="0 0 24 24" class="ico"><path d="M14.7 6.3a4 4 0 0 0 5 5L21 13l-8 8-3-3 6.7-6.7a4 4 0 0 1-5-5L13 5z"/><path d="M3 21l6-6"/></svg>',

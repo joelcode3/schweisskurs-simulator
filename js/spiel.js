@@ -2,10 +2,10 @@
 import * as THREE from 'three';
 import { STATIONEN, AUGENHOEHE } from './world.js';
 import { auftritt, hatClip, buehneBelegt } from './clips.js';
-import { pfadSpiel, schlackeSpiel, hulaSpiel, DENNIS_HULA_REKORD, ventilSpiel, spuelSpiel, anzeichnenSpiel, lackierSpiel, bitsatzSpiel, akkuschrauberSpiel } from './minispiele.js';
-import { blip, kratzen, jingle, klonk, brummeln, dauer as dauerTon, technoAn, technoAus, technoBeat, klospuelung, mampfen, klick as schalterKlick, stimmeAbspielen, stimmenVorladen, husten } from './audio.js';
+import { pfadSpiel, schlackeSpiel, hulaSpiel, DENNIS_HULA_REKORD, ventilSpiel, spuelSpiel, anzeichnenSpiel, lackierSpiel, bitsatzSpiel, akkuschrauberSpiel, siebSpiel, kaffeeSpiel, rohrSpiel } from './minispiele.js';
+import { bierAuf, blip, kratzen, jingle, klonk, brummeln, dauer as dauerTon, technoAn, technoAus, technoBeat, klospuelung, mampfen, klick as schalterKlick, stimmeAbspielen, stimmenVorladen, husten } from './audio.js';
 import * as ui from './ui.js';
-import { DENNIS, JONNY, WALDO, satzId } from './texte.js';
+import { DENNIS, JONNY, WALDO, KUMPEL, satzId } from './texte.js';
 import { SYMBOL } from './gesicht.js';
 import { baueFahrten } from './fahrten.js';
 
@@ -193,7 +193,7 @@ const NAEHTE = {
   rohr: { name: 'Ofenrohr', form: 'kreis', text: 'Einmal komplett rundherum. Nicht hetzen, nicht trödeln.' },
 };
 
-export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, kamera, hand }) {
+export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, segway, steuerung, kamera, hand }) {
   const z = {
     ppe: { brille: false, handschuhe: false, helm: false, maske: false },
     ventilAuf: false,
@@ -271,7 +271,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
       ...(z.bitsatz === 'sortiert' ? [{ text: 'Bitsatz im Regal sortiert', fertig: true, neben: true }] : []),
       ...(z.akku ? [{ text: 'Waldos Akkuschrauber reparieren', fertig: z.akku === 'repariert', neben: true }] : []),
       ...(z.waesche === 'nie' ? [] : [
-        { text: 'Für Dennis: Wäsche bei 40 Grad waschen', fertig: !['tasche', 'laeuft'].includes(z.waesche), neben: true },
+        { text: 'Für Dennis: Wäsche bei 40 Grad waschen', fertig: !['holt', 'tasche', 'laeuft'].includes(z.waesche), neben: true },
         { text: 'Flusensieb ausblasen (Kompressor) und wieder einsetzen', fertig: z.sieb === 'eingesetzt', neben: true },
         { text: 'Wäsche trocknen und Dennis bringen', fertig: z.waesche === 'erledigt', neben: true },
       ]),
@@ -389,6 +389,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     aktualisieren();
     steuerung.sperre(false);
     z.beschaeftigt = false;
+    if (f.stufe === 'voll') z.letzterAusraster = sekundenSeitStart();
+    else vielleichtAusraster();
   }
 
   // Nebensachen: Sprechblase rechts, gleichzeitig Originalton (falls vorhanden) oder Gebrabbel.
@@ -750,21 +752,39 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     kb.rotation.copy(kb.userData.start.rot);
   }
   async function waescheUebernehmen() {
-    if (z.waesche !== 'nie') { ui.hinweis('Die Wäsche machst du schon.'); return; }
-    if (!dennisSiehts() || dennis.modus !== 'normal' || z.dennisLoescht || z.dennisFegt || z.hula) { ui.hinweis('Dennis ist gerade beschäftigt. Gleich nochmal.'); return; }
-    z.beschaeftigt = true;
-    steuerung.sperre(true);
+    if (z.waesche !== 'nie') { ui.hinweis(z.waesche === 'holt' ? 'Dennis holt die Wäsche schon.' : 'Die Wäsche machst du schon.'); return; }
+    if (!dennisSiehts() || dennis.modus !== 'normal' || z.dennisLoescht || z.dennisFegt || z.hula || z.dennisRaeumt) { ui.hinweis('Dennis ist gerade beschäftigt. Gleich nochmal.'); return; }
+    // man bleibt frei beweglich: Dennis holt die Tasche oben vom Trockner und bringt sie
+    z.waesche = 'holt';
+    z.dennisRaeumt = true;
     klemmbrettZurueck();
     handleisteZeigen();
-    await dennisKommt(1.6);
+    aktualisieren();
     dennis.stimmung('froh');
+    dennisSagt(sag(DENNIS.waesche.holen), false, { prio: 1 });
+    const tasche = welt.objekte.waeschetasche;
+    const T = welt.objekte.trockner.g.position;
+    for (const p of [{ x: 1.4, z: 3.4 }, welt.KLO_DRIN, { x: T.x - 0.75, z: T.z }]) await Promise.race([dennis.gehZu(p.x, p.z, 1.5), warte(8000)]);
+    dennis.trage(tasche);
+    klonk(0.25);
+    for (const p of [welt.KLO_DRIN, { x: 1.4, z: 3.4 }]) await Promise.race([dennis.gehZu(p.x, p.z, 1.5), warte(8000)]);
+    await dennisKommt(1.6);
+    // Hände frei? Sonst kurz warten, notfalls stellt er die Tasche vor einem ab
+    for (let i = 0; i < 20 && hand.item; i++) { if (i === 0) ui.hinweis('Mach die Hände frei, Dennis gibt dir die Wäschetasche.'); await warte(500); }
+    dennis.trage(null);
     z.waesche = 'tasche';
-    hand.nimm('waeschetasche', welt.objekte.waeschetasche);
-    welt.objekte.waeschetasche.userData.waesche.visible = true;
+    if (!hand.item) {
+      hand.nimm('waeschetasche', tasche);
+      tasche.userData.waesche.visible = true;
+    } else {
+      dennis.wurzel.parent.add(tasche);
+      tasche.position.set(dennis.position.x + 0.5, 0, dennis.position.z + 0.3);
+      tasche.rotation.set(0, 0, 0);
+      tasche.visible = true;
+    }
     klonk(0.3);
     aktualisieren();
-    steuerung.sperre(false);
-    z.beschaeftigt = false;
+    z.dennisRaeumt = false;
     for (const satz of DENNIS.waesche.anleitung) await dennisSagt(satz, false, { prio: 1, minMs: 5200 });
     dennis.stimmung('ruhig');
     dennis.heim();
@@ -808,21 +828,25 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     aktualisieren();
     ui.hinweis('Voller Fusseln! Am Kompressor (Ecke rechts neben dem Regal) mit Druckluft ausblasen.', 3200);
   }
-  function siebRein() {
+  function siebRein(dreckig = false) {
     const sieb = hand.weg();
     tr().g.add(sieb);
     sieb.position.set(-0.29, 0.13, 0);
     sieb.rotation.set(0, 0, 0);
     sieb.scale.set(1, 1, 1);
-    z.sieb = 'eingesetzt';
+    z.sieb = dreckig ? 'drin' : 'eingesetzt';
     klonk(0.25);
     aktualisieren();
-    ui.hinweis('Sieb sitzt. Jetzt kann der Trockner laufen.');
+    ui.hinweis(dreckig ? 'Dreckiges Sieb wieder reingesteckt. Für den Trockner muss es aber erst sauber sein.' : 'Sieb sitzt. Jetzt kann der Trockner laufen.');
   }
   async function siebAusblasen() {
     if (hand.item?.id !== 'sieb' || z.sieb !== 'hand') return;
-    const ok = await ui.haltenDialog({ titel: 'Flusensieb ausblasen', text: 'Druckluftpistole ansetzen und die Fusseln rauspusten. Nicht in Richtung Gesicht!', knopf: 'Pusten (halten)', sekunden: 2.5, geraeusch: 'gas' });
-    if (!ok) return;
+    z.beschaeftigt = true;
+    steuerung.sperre(true);
+    const e = await siebSpiel();
+    steuerung.sperre(false);
+    z.beschaeftigt = false;
+    if (!e || e.abgebrochen) return;
     const k = welt.objekte.kompressor.position;
     welt.pulver(new THREE.Vector3(k.x + 0.6, 1.0, k.z + 0.2), new THREE.Vector3(k.x + 1.8, 1.4, k.z + 0.6));
     hand.item.obj.userData.sauber(true);
@@ -904,6 +928,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     const zuletzt = z.cremeZuletzt ?? -999;
     z.cremeZuletzt = sekundenSeitStart();
     const genug = sekundenSeitStart() - zuletzt < 90;
+    // er schmiert sie sich sichtbar in die Locken
+    dennis.geste('creme', 4.5);
     await dennisSagt(sag(genug ? DENNIS.creme.schonDrin : DENNIS.creme.danke), false, { prio: 2, minMs: 3500 });
     if (!genug) {
       z.wut = Math.max(0, z.wut - 12);
@@ -978,6 +1004,50 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
   }
 
 
+  // ---------- Kommen und Gehen draußen: sichtbar über den Hof, hinter die Werkstatt, den Feldweg runter oder auf Dennis' Terrasse ----------
+  const DRAUSSEN = {
+    tuerInnen: { x: -0.35, z: 3.2 }, tuerAussen: { x: -0.35, z: 5.0 },
+    wege: {
+      hinten: [{ x: 0.2, z: 7.4 }, { x: 4.6, z: 7.7 }, { x: 7.6, z: 4.6 }, { x: 8.6, z: -1.0 }, { x: 8.9, z: -3.7 }],
+      feldweg: [{ x: 2.0, z: 10.0 }, { x: 9.5, z: 10.6 }, { x: 26, z: 10.6 }],
+      terrasse: [{ x: -6.2, z: 6.3 }, { x: -10.6, z: 11.0 }, { x: -14.4, z: 10.7 }, { x: -14.42, z: 9.25 }],
+    },
+    // Dennis' Sofa auf der Wohnwagen-Terrasse (Blick nach +z)
+    sofa: { x: -14.42, z: 8.95, hoehe: 0.63 },
+  };
+  async function lauf(figur, punkte, tempo = 1.1) {
+    for (const p of punkte) if (!(await Promise.race([figur.gehZu(p.x, p.z, tempo), warte(15000).then(() => false)]))) return false;
+    return true;
+  }
+  function sitzt(figur, an) {
+    if (figur === waldo) waldo.haltung(an ? 'sitzen' : 'handy', DRAUSSEN.sofa.hoehe);
+    else figur.sitzen(an ? DRAUSSEN.sofa.hoehe : null);
+  }
+  // von irgendwo draußen rein in die Werkstatt
+  async function reinkommen(figur, von, tempo = 1.1) {
+    if (von === 'terrasse') {
+      sitzt(figur, false);
+      await lauf(figur, [...DRAUSSEN.wege.terrasse].reverse().slice(1), tempo);
+    } else {
+      const weg = [...DRAUSSEN.wege[von]].reverse();
+      figur.wurzel.position.set(weg[0].x, 0, weg[0].z);
+      figur.sichtbar(true);
+      await lauf(figur, weg.slice(1), tempo);
+    }
+    await lauf(figur, [DRAUSSEN.tuerAussen, DRAUSSEN.tuerInnen], tempo);
+  }
+  // raus und irgendwohin; auf der Terrasse setzt man sich und chillt, sonst ist man irgendwann weg
+  async function rausgehen(figur, wohin, tempo = 1.1) {
+    await lauf(figur, [DRAUSSEN.tuerInnen, DRAUSSEN.tuerAussen, ...DRAUSSEN.wege[wohin]], tempo);
+    if (wohin === 'terrasse') {
+      const S = DRAUSSEN.sofa;
+      await Promise.race([figur.gehZu(S.x, S.z, 0.8), warte(5000)]);
+      figur.wurzel.rotation.y = 0;
+      sitzt(figur, true);
+    } else figur.sichtbar(false);
+  }
+  const zufallsZiel = () => ['hinten', 'feldweg', 'terrasse'][Math.floor(Math.random() * 3)];
+
   // ---------- Jonny: Bier, Kitzeln, Leiter abholen, Störenfried, Sodbrennen ----------
   // Jonny ist am Anfang noch nicht da, er kommt erst nach ein, zwei Minuten (beim ersten Besuch ohne Bier)
   const jz = { da: false, ersterBesuch: true, beschaeftigt: false, biere: 0, naechstesBier: 70 + Math.random() * 50, naechstesKitzeln: 110 + Math.random() * 80,
@@ -986,12 +1056,33 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     draussen: true, naechstesRaus: 100 + Math.random() * 80, zurueckAb: 50 + Math.random() * 50 };
   jonny.sichtbar(false);
   welt.tassenVerteilen(7);
+  // Spüldienst: wechselt je Spiel (Zettel über dem Kühlschrank). Wer dran ist, nimmt auf Bitte alle Tassen vom Kühlschrank
+  // mit in die Küche, dann ist wieder Platz. Jonas, David und Joel kommen dafür ab und zu kurz vorbei.
+  const SPUELDIENST = { jonas: 'Jonas', david: 'David', waldo: 'Waldo', joel: 'Joel', jonny: 'Jonny' };
+  const sd = { id: Object.keys(SPUELDIENST)[Math.floor(Math.random() * 5)], unterwegs: false, kumpelDa: false, kumpelAb: 90 + Math.random() * 60, tasseNeuAb: 50 + Math.random() * 40 };
+  welt.setzeSpueldienst(SPUELDIENST[sd.id]);
   // Dennis ärgert sich über Jonny: Wut steigt etwas, ist aber kein Fehler des Spielers (höchstens bis 99)
   function aerger(n) {
     z.wut = Math.min(99, z.wut + n);
     z.wutMax = Math.max(z.wutMax, z.wut);
     ui.wutZeigen(z.wut, stimmungAusWut());
     ui.wutWackeln();
+    vielleichtAusraster();
+  }
+  // Wird es ihm zu viel (Wut ab 50, gerade Ärger dazugekommen), rastet er aus (Video). Nicht, wenn er sich gerade beruhigt
+  // (Wut in den letzten ~30 s gesunken), und höchstens alle 75 s.
+  function vielleichtAusraster() {
+    const t = sekundenSeitStart();
+    if (z.vorbei || z.wut < 50 || z.wut >= 100 || t - (z.letzterAusraster ?? -999) < 75) return;
+    const frueher = (z.wutVerlauf || []).find((v) => t - v.t >= 25 && t - v.t <= 40);
+    if (frueher && z.wut < frueher.wut) return;
+    if (z.beschaeftigt || buehneBelegt() || !hatClip('ausraster') || dennis.modus === 'schlafen' || z.aufKlo) return;
+    z.letzterAusraster = t;
+    nebenbeiStoppen();
+    dennis.stimmung('wut');
+    auftritt({ schluessel: ['ausraster'], text: sag(DENNIS.zuViel), stufe: 'voll', stimmung: 'wut', seite: true }).then(() => {
+      if (!z.vorbei) dennis.stimmung(stimmungAusWut() === 'wut' ? 'sauer' : 'ruhig');
+    });
   }
   const KUEHLSCHRANK_VOR = { x: -4.05, z: 2.42 };
   async function jonnyBier(ueberredet) {
@@ -1006,7 +1097,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     klonk(0.2);
     await warte(900);
     jonny.bier(true);
-    blip(900, 0.05, 0.15);
+    bierAuf();
     await warte(500);
     welt.kuehlschrank(false);
     jz.biere++;
@@ -1014,7 +1105,11 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
       aerger(3);
       dennisSagt(sag(DENNIS.jonnyBier), true, { prio: 1 });
     }
-    await Promise.race([jonny.heim(), warte(9000)]);
+    // zum Trinken mal hier, mal da hinstellen
+    const BIER_PLAETZE = [null, { x: 2.5, z: 2.55 }, { x: -1.0, z: 0.9 }, { x: -2.6, z: 1.4 }, { x: 3.4, z: -0.6 }, { x: -0.8, z: -1.6 }];
+    const bp = BIER_PLAETZE[Math.floor(Math.random() * BIER_PLAETZE.length)];
+    if (bp) { await Promise.race([jonny.gehZu(bp.x, bp.z, 1.1), warte(9000)]); jonny.dreheZu(kamera.position); }
+    else await Promise.race([jonny.heim(), warte(9000)]);
     jonny.trinken(true);
     await warte(22000);
     jonny.trinken(false);
@@ -1022,6 +1117,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     // leere Flasche bleibt irgendwo bei ihm liegen (Unordnung)
     const p = jonny.position;
     welt.leereFlasche(p.x + (Math.random() - 0.5) * 0.9, p.z - 0.3 - Math.random() * 0.4);
+    if (bp) await Promise.race([jonny.heim(), warte(9000)]);
     jz.beschaeftigt = false;
     if (jz.biere >= 4) jonnySodbrennen();
   }
@@ -1030,10 +1126,12 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     jz.beschaeftigt = true;
     jonny.rauchen(false); z.jonnyRaucht = false;
     ui.jonnySagt(sag(JONNY.raus));
-    await Promise.race([jonny.gehZu(-0.35, 3.55, 1.1), warte(12000)]);
-    jonny.sichtbar(false);
     jz.da = false;
     jz.draussen = true;
+    jz.draussenOrt = zufallsZiel();
+    await rausgehen(jonny, jz.draussenOrt);
+    // auf der Terrasse raucht er eine
+    if (jz.draussenOrt === 'terrasse') jonny.rauchen(true);
     jz.ersterBesuch = false;
     if (jz.naechstesBier === Infinity) jz.naechstesBier = sekundenSeitStart() + 40 + Math.random() * 40;
     jz.zurueckAb = sekundenSeitStart() + 70 + Math.random() * 60;
@@ -1043,8 +1141,10 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     if (jz.da || !jz.draussen || jz.beschaeftigt) return;
     jz.beschaeftigt = true;
     jz.draussen = false;
-    jonny.wurzel.position.set(-0.35, 0, 3.55);
-    jonny.sichtbar(true);
+    jonny.rauchen(false);
+    // beim ersten Mal kommt er den Feldweg hoch, später von dort, wo er gerade war
+    await reinkommen(jonny, jz.draussenOrt || 'feldweg');
+    jz.draussenOrt = null;
     jz.da = true;
     ui.jonnySagt(sag(jz.ersterBesuch ? JONNY.hallo : JONNY.zurueck));
     if (jz.ersterBesuch) jz.naechstesBier = Infinity;
@@ -1077,8 +1177,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
       jonny.pinkeln(false);
       z.ofenAngepinkelt = true;
     }
-    await Promise.race([jonny.gehZu(-0.35, 3.55, 1.0), warte(12000)]);
-    jonny.sichtbar(false);
+    await rausgehen(jonny, 'feldweg', 1.0);
     jz.da = false;
     jz.draussen = false;
     jz.beschaeftigt = false;
@@ -1177,13 +1276,12 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     { ort: 'mitte', x: -1.2, z: -0.4, haltung: 'handy' },
   ];
   async function waldoBesuch() {
-    if (waldo.da || wz.beschaeftigt) return;
+    if (waldoDa() || wz.beschaeftigt) return;
     wz.beschaeftigt = true;
     const moeglich = WALDO_ORTE.filter((o) => o.ort !== 'sofa' || (z.mittag !== 'gerade' && dennis.modus !== 'sitzen' && dennis.modus !== 'schlafen'));
     const o = moeglich[Math.floor(Math.random() * moeglich.length)];
-    waldo.wurzel.position.copy(waldo.TOR);
     waldo.haltung('handy');
-    waldo.sichtbar(true);
+    await waldoKommt();
     await Promise.race([waldo.gehZu(o.x, o.z, 1.0), warte(20000)]);
     waldo.wurzel.rotation.y = o.rot ?? Math.PI * 1.1;
     waldo.haltung(o.haltung, o.hoehe);
@@ -1197,25 +1295,72 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     }
     wz.beschaeftigt = false;
   }
+  // Waldo ist in der Werkstatt (sichtbar und nicht draußen auf der Terrasse)
+  const waldoDa = () => waldo.da && !wz.draussenOrt;
+  // Waldo kommt: sitzt er noch auf Dennis' Terrasse, von dort; sonst zu Fuß von hinter der Werkstatt oder mit dem grünen Segway
+  async function waldoKommt(tempo = 1.1, zuFuss = false) {
+    if (wz.draussenOrt === 'terrasse') { await reinkommen(waldo, 'terrasse', tempo); wz.draussenOrt = null; return; }
+    wz.draussenOrt = null;
+    if (!zuFuss && Math.random() < 0.45) {
+      // mit dem Segway den Feldweg hoch, vor der Werkstatt parken
+      wz.segway = true;
+      segway.setze(26, 10.6, -Math.PI / 2);
+      segway.sichtbar(true);
+      segway.anker.add(waldo.wurzel);
+      waldo.wurzel.position.set(0, 0, 0);
+      waldo.wurzel.rotation.set(0, 0, 0);
+      waldo.sichtbar(true);
+      for (const p of [{ x: 9.5, z: 10.6 }, { x: 2.0, z: 9.6 }, { x: 0.9, z: 6.6 }]) await Promise.race([segway.fahreZu(p.x, p.z, 3.2), warte(15000)]);
+      dennis.wurzel.parent.attach(waldo.wurzel);
+      waldo.wurzel.position.y = 0;
+      waldo.wurzel.rotation.set(0, waldo.wurzel.rotation.y, 0);
+      await lauf(waldo, [{ x: 0.2, z: 6.0 }, DRAUSSEN.tuerAussen, DRAUSSEN.tuerInnen], tempo);
+      return;
+    }
+    await reinkommen(waldo, 'hinten', tempo);
+  }
+  // Waldo geht: mit dem Segway weg (wenn er damit kam), sonst irgendwohin, auch mal auf Dennis' Terrasse
+  async function waldoWeg(tempo = 1.1) {
+    if (wz.segway) {
+      wz.segway = false;
+      await lauf(waldo, [DRAUSSEN.tuerInnen, DRAUSSEN.tuerAussen, { x: 0.6, z: 6.3 }], tempo);
+      const S = segway.gruppe.position;
+      await Promise.race([waldo.gehZu(S.x, S.z, tempo), warte(6000)]);
+      segway.anker.add(waldo.wurzel);
+      waldo.wurzel.position.set(0, 0, 0);
+      waldo.wurzel.rotation.set(0, 0, 0);
+      for (const p of [{ x: 2.0, z: 9.6 }, { x: 9.5, z: 10.6 }, { x: 26, z: 10.6 }]) await Promise.race([segway.fahreZu(p.x, p.z, 3.2), warte(15000)]);
+      segway.sichtbar(false);
+      dennis.wurzel.parent.attach(waldo.wurzel);
+      waldo.sichtbar(false);
+      return;
+    }
+    wz.draussenOrt = zufallsZiel();
+    await rausgehen(waldo, wz.draussenOrt, tempo);
+  }
+  // vom Sofa oder von den Trägern erst nach vorne aufstehen (nicht durch die Lehne laufen)
+  async function waldoAufstehen() {
+    const sass = wz.ort === 'sofa' || wz.ort === 'traeger';
+    waldo.haltung('handy');
+    if (sass) await Promise.race([waldo.gehZu(waldo.position.x, 2.75, 0.9), warte(4000)]);
+  }
   async function waldoGeht(text) {
-    if (!waldo.da || wz.beschaeftigt) return;
+    if (!waldoDa() || wz.beschaeftigt) return;
     wz.beschaeftigt = true;
     if (text) ui.waldoSagt(text);
-    waldo.haltung('handy');
+    await waldoAufstehen();
     wz.ort = null;
-    await Promise.race([waldo.gehZu(waldo.TOR.x, waldo.TOR.z, 1.1), warte(20000)]);
-    waldo.sichtbar(false);
+    await waldoWeg();
     wz.naechsterBesuch = sekundenSeitStart() + 90 + Math.random() * 90;
     wz.beschaeftigt = false;
   }
   async function kackePumpe() {
-    if (waldo.da || wz.beschaeftigt) return;
+    if (waldoDa() || wz.beschaeftigt) return;
     wz.beschaeftigt = true;
     wz.pumpeAb = Infinity;
-    z.beschaeftigt = true;
-    waldo.wurzel.position.copy(waldo.TOR);
     waldo.haltung('rennen');
-    waldo.sichtbar(true);
+    await waldoKommt(3.2, true);
+    z.beschaeftigt = true;
     const d = dennis.position;
     await Promise.race([waldo.gehZu(d.x + 0.7, d.z + 0.5, 3.2), warte(8000)]);
     waldo.dreheZu(dennis.position);
@@ -1241,8 +1386,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     ui.waldoSagt(sag(WALDO.pumpeDanke), 3000);
     await warte(1200);
     waldo.haltung('rennen');
-    await Promise.race([waldo.gehZu(waldo.TOR.x, waldo.TOR.z, 3.4), warte(9000)]);
-    waldo.sichtbar(false);
+    await waldoWeg(3.4);
     waldo.pumpe(false);
     z.beschaeftigt = false;
     dennis.stimmung('ruhig');
@@ -1253,13 +1397,12 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
   }
   // Waldo bringt die Pumpe dreckig zurück und stellt sie mitten in den Weg
   async function waldoPumpeZurueck() {
-    if (waldo.da || wz.beschaeftigt) return;
+    if (waldoDa() || wz.beschaeftigt) return;
     wz.beschaeftigt = true;
     wz.pumpeZurueckAb = Infinity;
-    waldo.wurzel.position.copy(waldo.TOR);
     waldo.haltung('stehen');
     waldo.pumpe(true);
-    waldo.sichtbar(true);
+    await waldoKommt(1.2);
     await Promise.race([waldo.gehZu(PUMPE_IM_WEG.x + 0.35, PUMPE_IM_WEG.z + 0.35, 1.2), warte(12000)]);
     const p = welt.objekte.kackPumpe;
     welt.zurueckAnDieWand(p);
@@ -1274,8 +1417,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     ui.hinweis('Waldo hat die Kackepumpe dreckig mitten in den Weg gestellt. Im Bad abwaschen (Dusche oder Waschbecken), dann zurück hinter den Kompressor.', 6000);
     await warte(1800);
     if (dennisSiehts() && !z.vorbei) { aerger(3); dennisSagt(sag(DENNIS.pumpeIstDa), true, { prio: 1 }); }
-    await Promise.race([waldo.gehZu(waldo.TOR.x, waldo.TOR.z, 1.3), warte(12000)]);
-    waldo.sichtbar(false);
+    await waldoWeg(1.3);
     waldo.haltung('handy');
     wz.naechsterBesuch = Math.max(wz.naechsterBesuch, sekundenSeitStart() + 90);
     wz.beschaeftigt = false;
@@ -1369,18 +1511,20 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
   function offeneTassen() { return welt.tassen.filter((t) => !t.userData.aufgeraeumt && t.parent && t.visible && hand.item?.obj !== t); }
   function tasseWegraeumen() {
     if (hand.item?.id !== 'tasse') return;
+    if (welt.kuehlschrankVoll()) {
+      ui.hinweis(`Der Kühlschrank ist voll. Spüldienst hat diese Woche ${SPUELDIENST[sd.id]} (Zettel über dem Kühlschrank).`, 4200);
+      if (dennisSiehts() && ruhig()) dennisSagt(sag(DENNIS.tassenVoll), false, { prio: 0 });
+      return;
+    }
     const t = hand.weg();
     welt.tasseAufKuehlschrank(t);
     klonk(0.15);
     handleisteZeigen();
     z.wut = Math.max(0, z.wut - 2);
     aktualisieren();
-    const rest = offeneTassen().length;
-    if (!rest) {
-      z.wut = Math.max(0, z.wut - 4);
-      aktualisieren();
-      lob(sag(DENNIS.tassenAlle));
-    } else ui.hinweis(`Tasse weggeräumt. Noch ${rest} ${rest === 1 ? 'Tasse steht' : 'Tassen stehen'} rum.`, 2600);
+    // pro Tasse ist Dennis kurz dankbar (für alle zusammen gibt es nichts extra, es kommen eh immer neue)
+    if (dennisSiehts()) dennisSagt(sag(DENNIS.tasseDanke), false, { prio: 0 });
+    else ui.hinweis('Tasse weggeräumt.', 1800);
   }
   // Dennis räumt selbst ein paar Tassen weg und ist genervt
   async function dennisRaeumtTassen() {
@@ -1390,7 +1534,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     const k = welt.objekte.kuehlschrank.position;
     for (let n = 0; n < 2; n++) {
       const liste = offeneTassen().filter((t) => !welt.istDraussen(t.position.x, t.position.z));
-      if (!liste.length || dennis.modus !== 'normal' || z.vorbei) break;
+      if (!liste.length || dennis.modus !== 'normal' || z.vorbei || welt.kuehlschrankVoll()) break;
       const d = dennis.position;
       liste.sort((a, b) => Math.hypot(a.position.x - d.x, a.position.z - d.z) - Math.hypot(b.position.x - d.x, b.position.z - d.z));
       const t = liste[0];
@@ -1408,16 +1552,102 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     dennis.heim();
   }
   function tassenUpdate() {
-    if (z.vorbei || z.dennisRaeumt) return;
+    if (z.vorbei) return;
     const t = sekundenSeitStart();
+    // irgendwo taucht immer wieder eine benutzte Tasse auf: aufgeräumt ist hier nie alles
+    if (t > sd.tasseNeuAb) {
+      const offen = offeneTassen().length;
+      sd.tasseNeuAb = t + (offen === 0 ? 12 + Math.random() * 10 : 45 + Math.random() * 45);
+      if (offen < 9) welt.neueTasse();
+    }
+    spueldienstUpdate();
+    if (z.dennisRaeumt) return;
     if (z.tassenMeckerAb === undefined) z.tassenMeckerAb = 75 + Math.random() * 40;
     if (t < z.tassenMeckerAb) return;
     const offen = offeneTassen().length;
     const dennisFrei = dennis.modus === 'normal' && dennis.wurzel.visible && !z.aufKlo && !z.hula && !z.beschaeftigt && !buehneBelegt() && z.mittag !== 'gerade' && !z.dennisFegt && !z.dennisLoescht;
     if (offen < 3 || !dennisFrei || !ruhig()) return;
     z.tassenMeckerAb = t + 80 + Math.random() * 50;
-    if (Math.random() < 0.5) dennisRaeumtTassen();
+    if (welt.kuehlschrankVoll()) { aerger(2); dennisSagt(sag(DENNIS.tassenVoll), true, { prio: 0 }); }
+    else if (Math.random() < 0.5) dennisRaeumtTassen();
     else { aerger(2); dennisSagt(sag(DENNIS.tassenMecker), true, { prio: 0 }); }
+  }
+  // Spüldienst: geht zum Kühlschrank, nimmt alle Tassen mit (Küche im Wohnhaus hinten), Dennis freut sich
+  async function spueldienstErledigen(figur, sagt) {
+    if (sd.unterwegs) return false;
+    sd.unterwegs = true;
+    sagt();
+    const k = welt.objekte.kuehlschrank.position;
+    const hin = { x: k.x + 0.7, z: k.z + 0.2 };
+    await Promise.race([figur.gehZu(hin.x, hin.z, 1.1), warte(12000)]);
+    // nicht angekommen (unterbrochen oder sehr langsames Gerät): noch einmal, sonst direkt hinstellen
+    if (Math.hypot(figur.wurzel.position.x - hin.x, figur.wurzel.position.z - hin.z) > 0.4) {
+      await Promise.race([figur.gehZu(hin.x, hin.z, 1.1), warte(10000)]);
+      if (Math.hypot(figur.wurzel.position.x - hin.x, figur.wurzel.position.z - hin.z) > 0.4) figur.wurzel.position.set(hin.x, 0, hin.z);
+    }
+    figur.dreheZu(k);
+    await warte(900);
+    const n = welt.tassenAbholen();
+    klonk(0.12); setTimeout(() => klonk(0.1), 180); setTimeout(() => klonk(0.12), 380);
+    ui.hinweis(`${SPUELDIENST[sd.id]} nimmt ${n} ${n === 1 ? 'Tasse' : 'Tassen'} mit in die Küche. Auf dem Kühlschrank ist wieder Platz.`, 3800);
+    if (dennisSiehts()) {
+      z.wut = Math.max(0, z.wut - 3);
+      aktualisieren();
+      setTimeout(() => dennisSagt(sag(DENNIS.spueldienstDanke), false, { prio: 1 }), 1400);
+    }
+    sd.unterwegs = false;
+    return true;
+  }
+  async function jonnySpuelt() {
+    if (jz.beschaeftigt || sd.unterwegs) return;
+    jz.beschaeftigt = true;
+    jz.stoertSeit = -1;
+    await spueldienstErledigen(jonny, () => ui.jonnySagt(sag(JONNY.spueldienst)));
+    await rausgehen(jonny, 'hinten');
+    await warte(35000);
+    if (!z.vorbei) { await reinkommen(jonny, 'hinten'); await Promise.race([jonny.heim(), warte(10000)]); }
+    jz.beschaeftigt = false;
+  }
+  async function waldoSpuelt() {
+    if (wz.beschaeftigt || sd.unterwegs) return;
+    wz.beschaeftigt = true;
+    await waldoAufstehen();
+    wz.ort = null;
+    await spueldienstErledigen(waldo, () => ui.waldoSagt(sag(WALDO.spueldienst)));
+    await waldoWeg();
+    wz.naechsterBesuch = sekundenSeitStart() + 90 + Math.random() * 90;
+    wz.beschaeftigt = false;
+  }
+  const kumpelSagt = (text) => ui.hinweis(`${SPUELDIENST[sd.id]}: „${text}“`, 3800);
+  async function kumpelSpuelt() {
+    const f = kumpels.alle[sd.id];
+    if (!(await spueldienstErledigen(f, () => kumpelSagt(sag(KUMPEL.spueldienst))))) return;
+    await rausgehen(f, 'hinten');
+    sd.kumpelDa = false;
+    sd.kumpelAb = sekundenSeitStart() + 120 + Math.random() * 60;
+  }
+  // Jonas, David oder Joel (wer Spüldienst hat) kommt ab und zu kurz auf einen Kaffee vorbei
+  function spueldienstUpdate() {
+    if (!kumpels || !kumpels.alle[sd.id] || sd.kumpelDa || sd.unterwegs) return;
+    const t = sekundenSeitStart();
+    if (t < sd.kumpelAb) return;
+    sd.kumpelAb = t + 150 + Math.random() * 90;
+    kumpelBesuch();
+  }
+  async function kumpelBesuch() {
+    const f = kumpels.alle[sd.id];
+    sd.kumpelDa = true;
+    await reinkommen(f, Math.random() < 0.5 ? 'hinten' : 'feldweg');
+    await Promise.race([f.gehZu(-3.2, 1.7, 1.1), warte(10000)]);
+    f.dreheZu(kamera.position);
+    kumpelSagt(sag(KUMPEL.hallo));
+    const ende = sekundenSeitStart() + 60 + Math.random() * 40;
+    while (sekundenSeitStart() < ende && !z.vorbei) {
+      await warte(1000);
+      if (sd.unterwegs || !sd.kumpelDa) return; // Spüldienst läuft: der geht danach selbst
+    }
+    await rausgehen(f, Math.random() < 0.5 ? 'hinten' : 'feldweg');
+    sd.kumpelDa = false;
   }
   // Jonny oder Waldo bringen ab und zu eine Tasse mit und stellen sie irgendwo ab
   function besuchBringtTasse(wer) {
@@ -1425,16 +1655,43 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     const t = welt.neueTasse(wer.position);
     if (t && dennisSiehts() && Math.random() < 0.5) setTimeout(() => dennisSagt(sag(DENNIS.tasseMitgebracht), true, { prio: 0 }), 1500);
   }
+  // Dennis läuft hin; dauert es viel zu lange (langsames Gerät), steht er danach direkt dort.
+  // false nur, wenn ihn etwas anderes unterbrochen hat (neues Ziel, hinsetzen ...)
+  async function dennisLaufZu(x, zz, tempo) {
+    const weit = Math.hypot(dennis.position.x - x, dennis.position.z - zz);
+    const ok = await Promise.race([dennis.gehZu(x, zz, tempo), warte(3000 + (weit / tempo) * 2000).then(() => 'spaet')]);
+    if (ok === 'spaet') { dennis.springZu(x, zz); return true; }
+    return ok;
+  }
   // ---------- Dennis ruft zwischendurch selbst an (Handy am Ohr, steht still, brabbelt) ----------
   const telefonReihe = [];
+  // nach dem Telefonieren wieder rein (nur wenn er noch draußen ist und nichts anderes ihn geholt hat)
+  async function telefonRein() {
+    if (dennis.modus === 'normal' && welt.istDraussen(dennis.position.x, dennis.position.z)) {
+      for (const p of [{ x: -0.35, z: 5.0 }, { x: -0.35, z: 3.0 }]) {
+        if (!(await dennisLaufZu(p.x, p.z, 1.4))) break;
+      }
+    }
+    z.dennisDraussen = false;
+    if (dennis.modus === 'normal') dennis.heim();
+  }
   async function dennisTelefoniert() {
     z.telefon = true;
+    // zum Telefonieren geht er raus vor die Werkstatt
+    z.dennisDraussen = true;
+    for (const p of [{ x: -0.35, z: 3.0 }, { x: -0.35, z: 5.0 }, { x: -1.6 + Math.random() * 2.4, z: 6.4 + Math.random() * 1.2 }]) {
+      if (!(await dennisLaufZu(p.x, p.z, 1.3)) || dennis.modus !== 'normal') break;
+    }
     dennis.telefon(true);
-    // wählen (kurze Tastentöne), dann zweimal Freizeichen
-    for (let i = 0; i < 7; i++) { blip(700 + Math.random() * 700, 0.07, 0.08); await warte(140 + Math.random() * 90); }
-    await warte(500);
-    for (let i = 0; i < 2; i++) { blip(425, 0.9, 0.06); await warte(1900); }
-    if (!dennis.telefoniert || dennis.modus !== 'normal' || z.vorbei) { dennis.telefon(false); z.telefon = false; z.naechstesTelefon = sekundenSeitStart() + 30; return; }
+    // wählen und warten, bis jemand rangeht (ohne Piepen: die Handy-Töne klangen wie Waldos Handy)
+    await warte(3500);
+    if (!dennis.telefoniert || dennis.modus !== 'normal' || z.vorbei) {
+      dennis.telefon(false);
+      await telefonRein();
+      z.telefon = false;
+      z.naechstesTelefon = sekundenSeitStart() + 60;
+      return;
+    }
     // jedes Gespräch erst wieder, wenn alle anderen dran waren
     if (!telefonReihe.length) telefonReihe.push(...DENNIS.telefon.map((_, i) => i).sort(() => Math.random() - 0.5));
     const satz = DENNIS.telefon[telefonReihe.shift()];
@@ -1444,12 +1701,13 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
       await warte(900 + Math.random() * 800);
     }
     dennis.telefon(false);
+    await telefonRein();
     z.telefon = false;
-    z.naechstesTelefon = sekundenSeitStart() + 75 + Math.random() * 60;
+    z.naechstesTelefon = sekundenSeitStart() + 180 + Math.random() * 60;
   }
   function telefonUpdate() {
     const t = sekundenSeitStart();
-    if (z.naechstesTelefon === undefined) z.naechstesTelefon = 50 + Math.random() * 40;
+    if (z.naechstesTelefon === undefined) z.naechstesTelefon = 120 + Math.random() * 60;
     if (z.telefon || z.vorbei || t < z.naechstesTelefon) return;
     const frei = dennis.modus === 'normal' && dennis.wurzel.visible && !dennis.geht && !z.aufKlo && !z.hula && !z.beschaeftigt && !z.dennisRaeumt
       && !buehneBelegt() && z.mittag !== 'gerade' && !z.dennisFegt && !z.dennisLoescht && z.feuer !== 'brennt' && z.leck !== 'spritzt';
@@ -1476,14 +1734,13 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
   }
   // ---------- Waldos nasser Akkuschrauber ----------
   async function waldoAkkuschrauber() {
-    if (waldo.da || wz.beschaeftigt) return;
+    if (waldoDa() || wz.beschaeftigt) return;
     wz.beschaeftigt = true;
     wz.akkuAb = Infinity;
     const akku = welt.objekte.akkuschrauber;
-    waldo.wurzel.position.copy(waldo.TOR);
     waldo.haltung('stehen');
     waldo.trage(akku);
-    waldo.sichtbar(true);
+    await waldoKommt(1.2);
     const d = dennis.position;
     await Promise.race([waldo.gehZu(d.x + 0.7, d.z + 0.5, 1.3), warte(14000)]);
     waldo.dreheZu(dennis.position);
@@ -1505,8 +1762,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     aktualisieren();
     if (!z.vorbei) { aerger(5); dennis.stimmung('sauer'); dennisSagt(sag(DENNIS.akkuAufWerkbank), true, { prio: 2 }); }
     ui.hinweis('Waldos nasser Akkuschrauber liegt jetzt auf Dennis\' Werkbank. Vielleicht kriegst du ihn wieder hin?', 5000);
-    await Promise.race([waldo.gehZu(waldo.TOR.x, waldo.TOR.z, 1.3), warte(14000)]);
-    waldo.sichtbar(false);
+    await waldoWeg(1.3);
     wz.naechsterBesuch = Math.max(wz.naechsterBesuch, sekundenSeitStart() + 90);
     wz.beschaeftigt = false;
   }
@@ -1543,7 +1799,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     if (wz.beschaeftigt || z.vorbei) return;
     const t = sekundenSeitStart();
     const dennisFrei = dennis.modus === 'normal' && dennis.wurzel.visible && !z.aufKlo && !z.hula && !z.dennisFegt && !z.dennisLoescht && !z.beschaeftigt && !buehneBelegt() && z.feuer !== 'brennt' && z.leck !== 'spritzt';
-    if (!waldo.da) {
+    if (!waldoDa()) {
       if (t > wz.pumpeAb && dennisFrei) { kackePumpe(); return; }
       if (wz.pumpe === 'weg' && t > wz.pumpeZurueckAb && dennisFrei) { waldoPumpeZurueck(); return; }
       if (t > wz.akkuAb && dennisFrei && !jz.da) { waldoAkkuschrauber(); return; }
@@ -1568,13 +1824,13 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     if (!jz.da) {
       // zurück, sobald Waldo weg ist (nur selten sind beide gleichzeitig da)
       if (jz.draussen && t > jz.zurueckAb) {
-        if (waldo.da && Math.random() > 0.15) jz.zurueckAb = t + 15;
+        if (waldoDa() && Math.random() > 0.15) jz.zurueckAb = t + 15;
         else jonnyRein();
       }
       return;
     }
     if (z.beschaeftigt) return;
-    if (t > jz.naechstesRaus && !waldo.da) { jonnyRaus(); return; }
+    if (t > jz.naechstesRaus && !waldoDa()) { jonnyRaus(); return; }
     const dennisFrei = dennis.modus === 'normal' && dennis.wurzel.visible && !z.aufKlo && !z.hula && !z.dennisFegt && !z.dennisLoescht && !buehneBelegt();
     if (jz.leiter === 'nie' && t > jz.leiterAb) { jonnyLeiterHolen(); return; }
     if (t > jz.naechstesBier) { jz.naechstesBier = t + 70 + Math.random() * 60; jonnyBier(false); return; }
@@ -1603,8 +1859,13 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
   // ---------- Kaffeeecke, Box, Licht, Besen, Hüfte ----------
   async function kaffeeKochen() {
     if (hand.item) { ui.hinweis('Leg erst ab, was du in der Hand hast.'); return; }
-    const ok = await ui.haltenDialog({ titel: 'Kaffee kochen', text: 'Schwarz, stark, in Dennis’ Becher. So wie er ihn mag.', knopf: 'Brühen (halten)', sekunden: 2, geraeusch: 'wasser' });
-    if (!ok) return;
+    z.beschaeftigt = true;
+    steuerung.sperre(true);
+    const e = await kaffeeSpiel();
+    steuerung.sperre(false);
+    z.beschaeftigt = false;
+    if (!e || e.abgebrochen) return;
+    z.kaffeeStaerke = e.loeffel;
     z.kaffeeInHand = true;
     z.kaffeeMilch = false;
     hand.nimm('kaffee', hand.becher);
@@ -1625,6 +1886,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     ui.wutZeigen(z.wut, stimmungAusWut());
     ui.wutWackeln();
     if (z.wut >= 100) { z.beschaeftigt = true; await rausgeflogen(); return true; }
+    vielleichtAusraster();
     return false;
   }
 
@@ -1827,7 +2089,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     }
     // durch die WC-Tür ins Bad, Tür zu (außer man steht selbst im Bad)
     await Promise.race([dennis.gehZu(welt.KLO_DRIN.x, welt.KLO_DRIN.z, 2.4), warte(2500)]);
-    if (!welt.imBad(kamera.position.x, kamera.position.z)) welt.kloTuer(false);
+    if (!welt.imBad(kamera.position.x, kamera.position.z) && !welt.inKloTuer(kamera.position.x, kamera.position.z)) welt.kloTuer(false);
     dennis.sichtbar(false);
     // Geräusch vom Klo (laut, abwechselnd die beiden Aufnahmen vom Betreiber)
     await warte(2500);
@@ -1879,7 +2141,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
       dennis.heim();
     };
     if (z.mittag !== 'gerade') return;
-    if (waldo.da && wz.ort === 'sofa') {
+    if (waldoDa() && wz.ort === 'sofa') {
       dennis.schaue(waldo.position);
       await sofaStreit();
       if (z.mittag !== 'gerade') return;
@@ -2189,7 +2451,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
 
   async function benutzen() {
     const id = hand.item.id;
-    if (id === 'feuerloescher') return spruehen();
+    if (id === 'feuerloescher') return loeschStart();
     if (id === 'besen') return fegen();
     if (id === 'handy') { ui.hinweis('3 neue Nachrichten. Alle unwichtig.'); return handyReaktion(); }
     if (id === 'hulahup') { ui.hinweis('Klick auf Dennis, dann gibst du ihm den Reifen.'); return; }
@@ -2235,6 +2497,45 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
       if (blickAufDennis(3.5)) return fehler('flexAufDennis');
       if (dennisSiehts()) dennisSagt(sag(DENNIS.hand.flexLaeuft));
     }
+  }
+
+  // ---------- Feuerlöscher: Pulver, solange E gedrückt ist ----------
+  let loeschLauf = null;
+  function loeschStart() {
+    if (loeschLauf || hand.item?.id !== 'feuerloescher') return;
+    loeschLauf = { ton: dauerTon('gas'), dauer: 0, feuer: 0, takt: 0, gemeckert: false };
+  }
+  function loeschStopp() {
+    if (!loeschLauf) return;
+    loeschLauf.ton.stopp();
+    loeschLauf = null;
+  }
+  function loeschUpdate(dt) {
+    if (!loeschLauf) return;
+    if (hand.item?.id !== 'feuerloescher' || z.beschaeftigt || z.vorbei) { loeschStopp(); return; }
+    const l = loeschLauf;
+    l.dauer += dt;
+    const vorne = steuerung.blickRichtung();
+    const von = kamera.position.clone().add(vorne.clone().multiplyScalar(0.5));
+    von.y -= 0.35;
+    l.takt += dt;
+    if (l.takt > 0.12) { l.takt = 0; welt.pulver(von, von.clone().add(vorne.clone().multiplyScalar(2.5))); }
+    const F = welt.FEUER;
+    const zumFeuer = new THREE.Vector3(F.x, 0.6, F.z).sub(kamera.position);
+    if (z.feuer === 'brennt' && Math.hypot(zumFeuer.x, zumFeuer.z) < 3.4 && zumFeuer.normalize().dot(vorne) > 0.72) {
+      l.feuer += dt;
+      if (l.feuer > 0.9) {
+        feuerAus();
+        z.wut = Math.max(0, z.wut - 5);
+        aktualisieren();
+        dennis.stimmung('froh');
+        jingle(true);
+        ui.lobZeigen(sag(DENNIS.hand.loeschen));
+      }
+      return;
+    }
+    if (blickAufDennis(3.5)) { loeschStopp(); fehler('gespruehrt'); return; }
+    if (l.dauer > 1.0 && !l.gemeckert && z.feuer !== 'brennt' && dennisSiehts()) { l.gemeckert = true; fehler('loescherSpielen'); }
   }
 
   // ziel: 'feuer', 'dennis' oder leer (dann zählt, wohin man guckt)
@@ -2303,7 +2604,9 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     leckTon = dauerTon('wasser', 0.35);
     ui.hinweis('Wasserrohrbruch am Waschplatz! Rohrzange von der Werkzeugwand holen!', 4000);
     dennisSagt(sag(DENNIS.leck.ruf), true, { prio: 1 });
-    setTimeout(() => { if (z.leck === 'spritzt') dennisRepariert(); }, 22000);
+    // nach 22 s macht Dennis es selbst (nicht, während man gerade selbst am Rohr dreht)
+    const dennisMachts = () => { if (z.leck !== 'spritzt') return; if (z.rohrSpiel) setTimeout(dennisMachts, 5000); else dennisRepariert(); };
+    setTimeout(dennisMachts, 22000);
   }
   function leckAus() {
     z.leck = 'dicht';
@@ -2313,8 +2616,14 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
   }
   async function reparieren() {
     if (ohneAufsicht()) return;
-    const ok = await ui.haltenDialog({ titel: 'Rohr abdichten', text: 'Rohrzange ansetzen und die Verschraubung festziehen.', knopf: 'Festziehen (halten)', sekunden: 2 });
-    if (!ok || z.leck !== 'spritzt') return;
+    z.beschaeftigt = true;
+    steuerung.sperre(true);
+    z.rohrSpiel = true;
+    const e = await rohrSpiel();
+    z.rohrSpiel = false;
+    steuerung.sperre(false);
+    z.beschaeftigt = false;
+    if (!e || e.abgebrochen || z.leck !== 'spritzt') return;
     klonk(0.6);
     leckAus();
     z.wut = Math.max(0, z.wut - 5);
@@ -2478,6 +2787,14 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
       await flascheAbstellen(treffer.punkt);
       return true;
     }
+    if (it.obj?.userData.wand && treffer.punkt && treffer.punkt.distanceTo(it.obj.userData.wand.pos) < 0.6 && (!info || info.id === it.id)) {
+      const o = hand.weg();
+      welt.zurueckAnDieWand(o);
+      klonk(0.3);
+      handleisteZeigen();
+      ui.hinweis(`${it.cfg.name} hängt wieder an der Wand.`);
+      return true;
+    }
     if (info) {
       const ziel = info.id;
       if (it.id === 'feuerloescher' && (ziel === 'muelleimer' || ziel === 'dennis')) {
@@ -2502,7 +2819,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
       if (it.id === 'sieb' && ziel === 'trockner') {
         await hinZu(info, treffer.obj);
         if (z.sieb === 'sauber') siebRein();
-        else ui.hinweis('Das Sieb ist noch voller Fusseln. Erst am Kompressor ausblasen.', 3000);
+        else siebRein(true);
         return true;
       }
       if (it.id === 'waeschetasche' && (ziel === 'waschmaschine' || ziel === 'trockner')) return false;
@@ -2558,15 +2875,21 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
     else if (k === 'q') handAktion('werfen');
     else if (k === 'g') handAktion('fallen');
   });
-  window.addEventListener('keyup', (e) => { if (e.key.toLowerCase() === 'e') spritzStopp(); });
-  window.addEventListener('blur', spritzStopp);
+  window.addEventListener('keyup', (e) => { if (e.key.toLowerCase() === 'e') { spritzStopp(); loeschStopp(); } });
+  window.addEventListener('blur', () => { spritzStopp(); loeschStopp(); });
 
   function menueFuer(id, obj = null) {
     const A = (text, symbol, tun) => ({ text, symbol, tun });
     const ausFahrten = fahrten.menue(id);
     if (ausFahrten) return ausFahrten;
     // Platzhalter-Kumpels (noch ohne Aufgabe)
-    if (id.startsWith('kumpel-')) return [obj?.userData.interaktiv.name || 'Kumpel', 'Platzhalter. Hat noch keinen Job im Spiel.', []];
+    if (id.startsWith('kumpel-')) {
+      const name = obj?.userData.interaktiv.name || 'Kumpel';
+      if (id.slice(7) !== sd.id || !sd.kumpelDa) return [name, 'Platzhalter. Hat noch keinen Job im Spiel.', []];
+      const a = [A('Quatschen', 'frage', () => kumpelSagt(sag(KUMPEL.quatschen)))];
+      if (welt.tassenOben() && !sd.unterwegs) a.push(A('Bitten, die Tassen zu spülen (Spüldienst)', 'tasse', kumpelSpuelt));
+      return [name, 'Hat diese Woche Spüldienst (steht auf dem Zettel über dem Kühlschrank).', a];
+    }
     switch (id) {
       case 'brille':
       case 'handschuhe':
@@ -2651,8 +2974,14 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
         if (z.waesche === 'tasche' && hand.item?.id !== 'waeschetasche') return ['Waschmaschine', 'Hol erst die Wäschetasche.', []];
         return ['Waschmaschine', info, a];
       }
+      case 'waeschetasche':
+        if (z.waesche === 'nie') return ['Wäschetasche', 'Liegt oben auf dem Trockner.', [A('Runterholen', 'hand', () => dennisSagt(sag(DENNIS.waesche.selbstHolen), true, { prio: 2 }))]];
+        if (z.waesche === 'tasche' && !hand.item) return ['Wäschetasche', '', [A('In die Hand nehmen', 'hand', () => { hand.nimm('waeschetasche', welt.objekte.waeschetasche); welt.objekte.waeschetasche.userData.waesche.visible = true; handleisteZeigen(); })]];
+        return null;
       case 'trockner': {
         const a = [];
+        // Sieb ausbauen geht immer sofort (ohne Menü), wenn die Hände frei sind und keine trockene Wäsche wartet
+        if (z.sieb === 'drin' && !hand.item && z.waesche !== 'trocken') return ['Trockner', '', [A('Flusensieb ausbauen', 'hand', siebRaus)]];
         if (z.sieb === 'drin' && !hand.item) a.push(A('Flusensieb ausbauen', 'hand', siebRaus));
         if (z.waesche === 'nass' && hand.item?.id === 'waeschetasche') a.push(A('Wäsche rein, Trockner starten', 'funke', trocknerStarten));
         if (z.waesche === 'trocken') a.push(A('Trockene Wäsche rausnehmen', 'hand', trockenRaus));
@@ -2670,7 +2999,10 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
         ]];
       case 'kloTuer':
         if (z.aufKlo) return ['WC-Tür', 'Besetzt! Dennis ist drin.', []];
-        return ['WC-Tür', '', [A(welt.kloOffen ? 'Tür zumachen' : 'Tür aufmachen', 'hand', () => { welt.kloTuer(!welt.kloOffen); klonk(0.3); })]];
+        return ['WC-Tür', '', [A(welt.kloOffen ? 'Tür zumachen' : 'Tür aufmachen', 'hand', () => {
+          if (welt.kloOffen && welt.inKloTuer(kamera.position.x, kamera.position.z)) { ui.hinweis('Du stehst in der Tür. Erst ein Stück weg.'); return; }
+          welt.kloTuer(!welt.kloOffen); klonk(0.3);
+        })]];
       case 'toilette':
         if (z.verstopft === 'ja') return ['Toilette', 'Verstopft! Das Wasser steht bis oben. Pömpel holen (oben im Regal).', []];
         return ['Toilette', 'Riecht nach Dennis.', [A('Spülen', 'wasser', kloSpuelen)]];
@@ -2683,6 +3015,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
         return ['Waldo', wz.ort ? 'Guckt aufs Handy. Im Bart hängt noch das Frühstück.' : 'Hat es eilig.', [
           A('Quatschen', 'frage', () => ui.waldoSagt(sag(WALDO.quatschen))),
           A('Auf die Krümel im Bart hinweisen', 'frage', () => ui.waldoSagt(sag(WALDO.kruemel))),
+          ...(sd.id === 'waldo' && welt.tassenOben() && !wz.beschaeftigt && !sd.unterwegs ? [A('Bitten, die Tassen zu spülen (Spüldienst)', 'tasse', waldoSpuelt)] : []),
           ...(wz.beschaeftigt ? [] : [A('Sagen, dass Dennis keinen Besuch will', 'hand', () => {
             waldoGeht(sag(WALDO.rausgeschickt));
             if (dennisSiehts()) { z.wut = Math.max(0, z.wut - 4); aktualisieren(); setTimeout(() => dennisSagt(sag(DENNIS.waldoDanke), false, { prio: 1 }), 2500); }
@@ -2692,12 +3025,15 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
         if (jz.stoertSeit > 0) return ['Jonny', 'Steht neben dir und will quatschen.', [A('Antworten', 'frage', jonnyAntworten), A('Ignorieren', 'hand', () => { jz.stoertSeit = -1; ui.jonnySagt(sag(JONNY.beleidigt)); })]];
         const a = [A('Quatschen', 'frage', () => ui.jonnySagt(sag(JONNY.quatschen)))];
         if (!jz.beschaeftigt) a.push(A('Zu einem Bier überreden', 'tasse', () => jonnyBier(true)));
+        if (sd.id === 'jonny' && welt.tassenOben() && !jz.beschaeftigt && !sd.unterwegs) a.push(A('Bitten, die Tassen zu spülen (Spüldienst)', 'tasse', jonnySpuelt));
         if (jz.leiter === 'nie' || jz.leiter === 'nix') a.push(A('Nach der Leiter fragen', 'frage', () => {
           ui.jonnySagt(sag(JONNY.leiter));
           if (dennisSiehts()) setTimeout(() => dennisSagt(sag(DENNIS.leiter), true, { prio: 1 }), 2500);
         }));
         return ['Jonny', 'Zimmermann. Steht gern rum. Raucht gern. Trinkt gern.', a];
       }
+      case 'spuelzettel':
+        return ['Zettel: Spüldienst', `Spüldienst diese Woche: ${SPUELDIENST[sd.id]}. Ist der Kühlschrank voll mit Tassen, ${SPUELDIENST[sd.id]} ansprechen, wenn er da ist.`, []];
       case 'kuehlschrank':
         return ['Kühlschrank', 'Bier, Bier, Senf, Bier. Gehört Dennis. Jonny bedient sich trotzdem.', [A('Reinschauen', 'auge', () => { welt.kuehlschrank(true); setTimeout(() => welt.kuehlschrank(false), 1800); if (dennisSiehts()) dennisSagt(sag(DENNIS.kuehlschrank), false, { prio: 2 }); })]];
       case 'bitsatz':
@@ -2956,7 +3292,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
   // Läuft gerade kein anderes Ereignis?
   function ruhigeLage() {
     return z.feuer !== 'brennt' && z.leck !== 'spritzt' && z.huefte !== 'liegt' && z.huefte !== 'geht' && z.huefte !== 'vorzeichen'
-      && z.mittag !== 'gerade' && z.mittag !== 'vorzeichen' && !z.aufKlo && z.verstopft !== 'ja' && !waldo.da;
+      && z.mittag !== 'gerade' && z.mittag !== 'vorzeichen' && !z.aufKlo && z.verstopft !== 'ja' && !waldoDa();
   }
   function wutUndVorzeichen(dt) {
     const t = sekundenSeitStart();
@@ -2971,6 +3307,11 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
       }
     } else z.abbauSeit = undefined;
     z.wutVorher = z.wut;
+    if (t - (z.wutVerlaufZuletzt ?? -99) >= 5) {
+      z.wutVerlaufZuletzt = t;
+      (z.wutVerlauf = z.wutVerlauf || []).push({ t, wut: z.wut });
+      while (z.wutVerlauf.length && t - z.wutVerlauf[0].t > 60) z.wutVerlauf.shift();
+    }
     // Überlappende Ereignisse: in den ersten 4 Minuten nie, danach immer öfter (alle 20 s neu gewürfelt, höchstens 55 %)
     if (t > (z.ueberlappWurf ?? 0)) {
       z.ueberlappWurf = t + 20;
@@ -3039,13 +3380,14 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
   return {
     zustand: z,
     klick,
-    test: { fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
+    test: { get z() { return z; }, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
     stationWaehlen,
     intro,
     aktualisieren,
     update(dt) {
       beobachten();
       spritzUpdate(dt);
+      loeschUpdate(dt);
       if (z.vorbei) return;
       fahrten.update();
       wutUndVorzeichen(dt);
@@ -3054,7 +3396,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
       waldoUpdate();
       // in die Nähe der Stahlträger: Dennis ruft (höchstens alle 45 s)
       const tr = welt.objekte.traeger.position;
-      if (Math.hypot(kamera.position.x - tr.x, kamera.position.z - tr.z) < 1.9 && sekundenSeitStart() - (z.traegerZuletzt ?? -99) > 45 && dennisSiehts() && !z.beschaeftigt && ruhig()) {
+      if (!welt.imBad(kamera.position.x, kamera.position.z) && Math.hypot(kamera.position.x - tr.x, kamera.position.z - tr.z) < 1.9 && sekundenSeitStart() - (z.traegerZuletzt ?? -99) > 45 && dennisSiehts() && !z.beschaeftigt && ruhig()) {
         z.traegerZuletzt = sekundenSeitStart();
         dennisSagt(sag(DENNIS.traeger), true, { prio: 1 });
       }
@@ -3157,12 +3499,12 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, fz, steuerung, k
       }
       // Dennis läuft gegen einen tief hängenden Stromwürfel
       if (dennis.wurzel.visible && dennis.modus !== 'liegen' && dennis.modus !== 'sitzen' && dennis.modus !== 'schlafen') {
-        const w = welt.stromWuerfelBei(dennis.position.x, dennis.position.z, 0.32);
+        const w = sekundenSeitStart() > 120 ? welt.stromWuerfelBei(dennis.position.x, dennis.position.z, 0.26) : null;
         if (w && sekundenSeitStart() - (w.zuletzt ?? -99) > 6) {
           w.zuletzt = sekundenSeitStart();
           welt.anstossen(w);
           klonk(0.35);
-          if (sekundenSeitStart() - (z.wuerfelSpruch ?? -99) > 35) {
+          if (sekundenSeitStart() - (z.wuerfelSpruch ?? -99) > 60 && ruhig()) {
             z.wuerfelSpruch = sekundenSeitStart();
             dennisSagt(sag(DENNIS.stromwuerfel), true, { prio: 1 });
           }

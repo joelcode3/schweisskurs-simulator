@@ -218,6 +218,8 @@ export const DENNIS = {
     ],
     heiss: ['Wie heiß?! Meine Hoodies sind jetzt Kindergröße!', 'Hab ich nicht 40 Grad gesagt?! Das läuft doch alles ein!'],
     kalt: ['30 Grad? Das wird doch nicht sauber. Na ja, besser als zu heiß.'],
+    holen: ['Moment, die Wäsche liegt oben auf dem Trockner. Ich hol sie dir runter.', 'Warte, ich hol dir die Tasche vom Trockner. Da kommst du eh nicht ran.'],
+    selbstHolen: ['Finger weg, die hol ich selber runter! Frag mich einfach.'],
     sieb: ['Halt! Erst das Flusensieb sauber machen! Sonst fängt der Trockner Feuer!', 'Flusensieb! Raus damit und ausblasen, sonst brennt die Bude!'],
     danke: ['Ah, frische Wäsche! Riecht ja wie neu. Danke dir, echt.', 'Trocken und warm! Du bist ein Schatz. Das vergess ich dir nicht.'],
     dankeHalb: ['Danke. Auch wenn mein Hoodie jetzt kneift.'],
@@ -267,6 +269,9 @@ export const DENNIS = {
   akkuLob: ['Du hast den Akkuschrauber wieder hingekriegt? Na guck mal an. Dann ist er wenigstens weg von meiner Werkbank.', 'Der surrt ja wieder! Nicht schlecht. Waldo schuldet dir ein Bier.'],
   tassenMecker: ['Wem gehören die ganzen Tassen hier?! Das ist doch kein Café!', 'Überall Tassen! Ab auf den Kühlschrank damit!', 'Ich hab gleich keine Tasse mehr, weil alle hier rumstehen!'],
   tassenSelbst: ['Muss ich die Tassen jetzt auch noch wegräumen?! Unglaublich.', 'Na toll. Tassen-Dienst. Ich mach das ja gern. NICHT.'],
+  tasseDanke: ['Danke dir.', 'Ah, sehr gut. Danke!', 'Na also. Danke.', 'Danke, Tassen-Held.'],
+  tassenVoll: ['Der Kühlschrank ist voll! Wer hat denn diese Woche Spüldienst?', 'Da passt nix mehr drauf. Guck mal auf den Zettel, wer spülen muss!'],
+  spueldienstDanke: ['Endlich spült mal einer! Danke.', 'Na bitte, geht doch. Saubere Tassen!'],
   tassenAlle: ['Alle Tassen weg? Endlich mal Ordnung hier. Danke!', 'Sauber! Alle Tassen auf dem Kühlschrank. So mag ich das.'],
   tasseMitgebracht: ['Und noch eine Tasse. Bringt ihr die von zu Hause mit, oder was?!', 'Schon wieder eine Tasse mehr. Ich werd verrückt.'],
   husten: ['*HUST* *HUST* ... Jonny! Ich krieg hier keine Luft!', '*HUST HUST HUST* Muss das HIER drinnen sein?!', '*KCHH* *HUST* Jonny, ich ersticke gleich!'],
@@ -296,6 +301,8 @@ export const DENNIS = {
   },
   nettGestresst: ["Geh mir nicht auf'n Sack, ich hab zu tun!", 'Bin gestresst! Später!', 'Kann jetzt nicht!', 'Nicht jetzt! Mach lieber deine Arbeit!', 'Siehst du nicht, dass ich gerade voll unter Strom stehe?!'],
   nettNerven: ["Jetzt reicht's aber mit dem Gequatsche. Arbeite!", 'Hab ich dir doch gerade erst erzählt. Hörst du nicht zu?', 'Du laberst mir ein Ohr ab. Ran an die Flasche!'],
+  // Ausraster, wenn es ihm zu viel wird (ab Wut 50, ausgelöst durch irgendeinen Ärger)
+  zuViel: ["JETZT REICHT'S MIR ABER! Alle! Komplett!", 'Ich halt das hier nicht mehr aus! Was ist das hier für ein Zirkus?!', 'NOCH EIN DING und ich schmeiß alle raus!', 'Ich krieg gleich nen Hals! Echt jetzt!'],
   traeger: ['Halt! Nicht anfassen! Schwere Stahlträger sind Torbens Job!', 'Finger weg von den Trägern! Das macht Torben.', 'Die Träger lässt du liegen. Das ist Torbens Job, nicht deiner!'],
   verstopft: {
     hilfe: ['Oh oh. Das Klo ist verstopft. Hilf mir mal! Der Pömpel steht oben auf dem Regal.', 'Mist, Klo ist dicht! Hol mal den Pömpel, oben im Regal. Ich geh da nicht nochmal rein.'],
@@ -333,6 +340,7 @@ export function satzId(text) {
 
 // Jonny (Zimmermann, Kumpel von Dennis)
 export const JONNY = {
+  spueldienst: ['Spüldienst? Ich? Na gut. Aber nur, weil du so lieb fragst.', 'Steht da echt mein Name? Na schön, gib her.'],
   quatschen: ['Na, Schweißer? Läuft bei dir?', 'Ich bin nur kurz hier. Seit drei Stunden.', 'Holz ist ehrlicher als Stahl. Sag ich nur.', 'Hast du mal Feuer? Nee, war Spaß. Hab selbst.', 'Dennis ist heute wieder voll in seinem Element, oder?'],
   leiter: ['Die Leiter? Die hol ich nächste Woche. Ganz sicher.', 'Welche Leiter? Ach DIE. Ja, irgendwann.', 'Der Camper ist weg, aber die Leiter ist noch gut. Die bleibt hier.'],
   bierJa: ['Na gut, eins geht immer!', 'Überredet. Ich hol mir eins.', 'Bier? Du musst nicht zweimal fragen.'],
@@ -354,6 +362,7 @@ export const JONNY = {
 
 // Waldo (Kumpel, isst eigentlich immer)
 export const WALDO = {
+  spueldienst: ['Hm? Spülen? Okay, okay. Ich nehm die mit.', 'Ich? Schon wieder? ... Na gut.'],
   quatschen: ['Mmh. Willst du auch was? Nee, ist meins.', 'Ich hab Hunger. Ich hab immer Hunger.', 'Feine Sahne live, das war so gut. Warst du dabei?', 'Schweißen macht hungrig. Auch vom Zugucken.'],
   pumpe: ['Dennis! DENNIS! Die Kackepumpe! Der Tank im Garten ist schon wieder voll! Ich muss umpumpen!', 'Dennis, schnell! Wo ist die Kackepumpe?! Der Tank läuft gleich über!'],
   pumpeNicht: ['Hier ist sie nicht!', 'Nix! Wo ist das Ding?!'],
@@ -381,4 +390,11 @@ export const TORBEN = {
   schonEntdrosselt: ['Der ist schon offen. Schneller geht nicht, sonst brennt der Motor durch.', 'Mehr geht nicht. Der ist schon entdrosselt.'],
   rums: ['Ups.', 'Das war vorher schon so.', 'Hat keiner gesehen, oder?'],
   fahren: ['Ich dreh mal ne Runde!', 'Mal gucken, was der Jeep heute schafft.', 'Ich stell mal den Hoflader um.'],
+};
+
+// Kumpels mit Spüldienst (Jonas, David, Joel): vorläufige Sätze, bis die Figuren eine eigene Rolle bekommen
+export const KUMPEL = {
+  hallo: ['Moin! Ich hol mir nur kurz nen Kaffee.', 'Na? Alles klar hier?'],
+  quatschen: ['Läuft bei dir? Sieht gut aus.', 'Ich bin nur kurz hier, Kaffee holen.', 'Dennis guckt schon wieder so. Ich sag nix.'],
+  spueldienst: ['Ja, ja, ich mach ja schon. Gib her.', 'Oh Mann. Okay, ich nehm die mit in die Küche.'],
 };

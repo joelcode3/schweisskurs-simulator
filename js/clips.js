@@ -46,6 +46,7 @@ export function setzeVideoLautstaerke(v) {
 } // schliessen() des gerade gezeigten Auftritts
 let stimme = { aktiv: false, saetze: {} };
 let video = null;
+const vorgeladen = new Map(); // Datei -> fertig gepuffertes <video>
 const ARCHIV_KEY = 'dennis-archiv-v1';
 
 export async function ladeClips() {
@@ -78,10 +79,15 @@ function vorladen() {
       const v = document.createElement('video');
       v.preload = 'auto';
       v.muted = true;
+      v.playsInline = true;
+      v.setAttribute('playsinline', '');
+      v.setAttribute('webkit-playsinline', '');
+      vorgeladen.set(datei, v);
       v.onloadedmetadata = () => {
         for (const liste of Object.values(clips)) if (Array.isArray(liste)) for (const c of liste) if (c.datei === datei) c.hochkant = v.videoHeight > v.videoWidth;
       };
       v.src = `clips/${datei}`;
+      v.load();
       new Image().src = `clips/${datei.replace(/\.mp4$/, '.jpg')}`;
     }, 300 * i++);
   }
@@ -98,6 +104,12 @@ export function videoFreischalten() {
   const anhalten = () => { video.pause(); video.muted = false; };
   if (p && p.then) p.then(anhalten, anhalten);
   else anhalten();
+  for (const v of vorgeladen.values()) {
+    v.muted = true;
+    const q = v.play();
+    const stopp = () => { v.pause(); v.currentTime = 0; };
+    if (q && q.then) q.then(stopp, stopp); else stopp();
+  }
 }
 
 // Knopf über dem Video, falls der Browser das Abspielen blockiert (z. B. iPhone im Stromsparmodus)
@@ -191,6 +203,13 @@ export function auftritt({ schluessel, text, stufe = 'mittel', stimmung = 'sauer
 
     const anzeigeText = clip?.text || text || '';
     if (clip) {
+      // fertig gepuffertes Element nehmen (startet sofort, kein Standbild)
+      const fertigGeladen = vorgeladen.get(clip.datei);
+      if (fertigGeladen && fertigGeladen.readyState >= 3) {
+        if (video && video !== fertigGeladen) video.pause();
+        video = fertigGeladen;
+        video.volume = Math.min(1, videoLautstaerke);
+      }
       // Altes Bild nicht kurz aufblitzen lassen: Video erst zeigen, wenn es wirklich läuft
       if (clip.hochkant !== undefined) el.classList.toggle('hochkant', clip.hochkant);
       // Erstes Bild als Vorschau (vorgeladen): kein gelber Rahmen, kein altes Bild, bis das Video läuft
@@ -203,7 +222,7 @@ export function auftritt({ schluessel, text, stufe = 'mittel', stimmung = 'sauer
         medien.innerHTML = dennisPortrait(stimmung);
         if (automatisch) timer = setTimeout(schliessen, Math.max(2600, anzeigeText.length * 55 + 1200));
       };
-      video.src = `clips/${clip.datei}`;
+      if (!video.src.endsWith(`clips/${clip.datei}`)) video.src = `clips/${clip.datei}`;
       video.currentTime = clip.start || 0;
       video.muted = false;
       medien.appendChild(video);
