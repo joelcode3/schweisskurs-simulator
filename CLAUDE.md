@@ -292,11 +292,13 @@
 - Alle Dennis-Sätze stehen in `js/texte.js` (IDs = Dateinamen der Aufnahmen), `spiel.js` nutzt nur diese.
 - `stimme/stimme.json` + `stimme/<id>.mp3`: Aufnahmen pro Satz, Mund bewegt sich nach Lautstärke.
   Pflege mit `node tools/stimme.mjs liste|eintragen`, siehe `stimme/LIESMICH.md`.
-- Die Jungs sprechen ALLE Sätze ein (Liste vom Projektchat, Stand PR 24, 444 Sätze). Deshalb: Schlüssel in texte.js NIE
-  umbenennen, neue Sätze nur ergänzen. Dateinamen: Dennis = ID aus alleSaetze() (z. B. feuer.ruf.1.mp3), Telefonate
-  telefon.<Gespräch>.<Zeile> (telefon.1.1 … telefon.3.5), Jonny = jonny.<id>, Waldo = waldo.<id>; Formate auch .m4a/.wav.
-  Wenn die Dateien kommen: Jonny/Waldo genauso abspielen wie Dennis (alleSaetze() sammelt bisher nur DENNIS und löst
-  verschachtelte Listen wie telefon nicht auf).
+- Die Jungs sprechen ALLE Sätze ein. Dateinamen kurz: dennis1 … dennis366, jonny1 … jonny41, waldo1 … waldo37 (Endung
+  .mp3/.m4a/.wav, Groß-/Kleinschreibung egal). Zuordnung Kurzname -> Satz-ID steht in stimme/zuordnung.csv (vom Projektchat).
+  Nummern sind fest und verschieben sich NIE; neue Sätze bekommen die nächste freie Nummer (dennis367 …) und eine neue Zeile.
+  Schlüssel in texte.js NIE umbenennen, neue Sätze nur ergänzen. IDs: Dennis wie alleSaetze(), telefon.G.Z = Gespräch G,
+  Zeile Z, jonny./waldo. = Schlüssel aus JONNY/WALDO. Nicht enthalten (Hinweistexte): kloOhneAufsicht, schlauch.zuKurz.
+  Wenn die Dateien kommen: Abspielen über die Zuordnung auflösen, Jonny/Waldo genauso wie Dennis (alleSaetze() sammelt bisher
+  nur DENNIS und löst verschachtelte Listen wie telefon nicht auf).
 - KI-Stimmklon ist in dieser Umgebung nicht möglich (huggingface.co gesperrt). Stimmproben nie ins Repo (öffentlich).
 
 ## Offene Themen
