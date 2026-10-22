@@ -15,9 +15,13 @@ const HOSE = 0x1f2024;
 const SCHUH = 0x2f7d4f;
 const GOLD = 0xd7b25c;
 // Wo Jonny rumsteht: an der Tor-Ecke (raucht dort, obwohl das Schild hängt)
-const PLATZ = new THREE.Vector3(0.45, 0, 3.2);
+const PLATZ_JONNY = new THREE.Vector3(0.45, 0, 3.2);
 
-export function baueJonny(scene) {
+// opts.aussehen überschreibt Farben und Merkmale (Torben nutzt dieselbe Figur mit anderem Aussehen)
+export function baueJonny(scene, opts = {}) {
+  const A = { brille: true, langeHaare: true, bart: 'voll', cap: true, ...(opts.aussehen || {}) };
+  const F = { HAUT, HAAR, BART, CAP, SHIRT, WESTE, HOSE, SCHUH, GOLD, ...(A.farben || {}) };
+  const PLATZ = opts.platz ? opts.platz.clone() : PLATZ_JONNY.clone();
   const wurzel = new THREE.Group();
   wurzel.position.copy(PLATZ);
   // schaut in die Werkstatt (Rücken zum Tor)
@@ -30,7 +34,7 @@ export function baueJonny(scene) {
   wurzel.add(koerper);
 
   // ---------- Beine: sehr kurze schwarze Arbeitshose, nackte Beine, weiße Socken, grüne Sneaker ----------
-  const becken = teil(new THREE.CapsuleGeometry(0.135, 0.12, 6, 12), HOSE);
+  const becken = teil(new THREE.CapsuleGeometry(0.135, 0.12, 6, 12), F.HOSE);
   becken.rotation.z = Math.PI / 2;
   becken.scale.set(1, 1, 0.78);
   becken.position.y = 0.9;
@@ -40,21 +44,21 @@ export function baueJonny(scene) {
     const huefte = new THREE.Group();
     huefte.position.set(x, 0.88, 0);
     // kurzes Hosenbein (endet weit über dem Knie)
-    huefte.add(setze(teil(new THREE.CylinderGeometry(0.108, 0.118, 0.17, 14), HOSE), 0, -0.07, 0));
+    huefte.add(setze(teil(new THREE.CylinderGeometry(0.108, 0.118, 0.17, 14), F.HOSE), 0, -0.07, 0));
     huefte.add(setze(zylinder(0.12, 0.12, 0.012, 0x141518, { umriss: false }, 14), 0, -0.155, 0));
     // nackter Oberschenkel, Knie, Wade (leicht behaart)
-    huefte.add(setze(teil(new THREE.CapsuleGeometry(0.085, 0.2, 4, 12), HAUT), 0, -0.27, 0));
+    huefte.add(setze(teil(new THREE.CapsuleGeometry(0.085, 0.2, 4, 12), F.HAUT), 0, -0.27, 0));
     const k = new THREE.Group();
     k.position.y = -0.42;
-    k.add(teil(new THREE.SphereGeometry(0.08, 12, 10), HAUT));
-    k.add(setze(teil(new THREE.CapsuleGeometry(0.072, 0.22, 4, 12), HAUT), 0, -0.17, 0));
+    k.add(teil(new THREE.SphereGeometry(0.08, 12, 10), F.HAUT));
+    k.add(setze(teil(new THREE.CapsuleGeometry(0.072, 0.22, 4, 12), F.HAUT), 0, -0.17, 0));
     // weiße Tennissocke mit Bündchen
     k.add(setze(zylinder(0.06, 0.058, 0.12, 0xf7f7f4, { umriss: 0.003 }, 14), 0, -0.34, 0));
     k.add(setze(zylinder(0.062, 0.062, 0.02, 0xe4e4df, { umriss: false }, 14), 0, -0.29, 0));
     // grüner Sneaker: Sohle weiß, drei weiße Streifen, Schnürung
     const schuh = new THREE.Group();
     schuh.position.y = -0.43;
-    const oben = teil(new THREE.CapsuleGeometry(0.058, 0.16, 4, 12), SCHUH, { umriss: 0.004 });
+    const oben = teil(new THREE.CapsuleGeometry(0.058, 0.16, 4, 12), F.SCHUH, { umriss: 0.004 });
     oben.rotation.x = Math.PI / 2;
     oben.scale.set(1.05, 1, 0.75);
     oben.position.set(0, 0.0, 0.05);
@@ -129,19 +133,19 @@ export function baueJonny(scene) {
     return { p: new THREE.Vector3(rx * Math.sin(th) + (nx / nl) * d, y, rz * Math.cos(th) + (nz / nl) * d), rot: Math.atan2(nx, nz) };
   }
   // Körper (Haut) unter dem offenen Hemd; der Hals sitzt direkt darauf, Brust und Hals gehen durchgehend ineinander über
-  rumpf.add(teil(huelle(0, 0, -0.04, 0.76, null), HAUT, { umriss: 0.003 }));
-  rumpf.add(setze(teil(new THREE.CylinderGeometry(0.066, 0.078, 0.26, 18), HAUT, { umriss: 0.003 }), 0, 0.79, -0.005));
+  rumpf.add(teil(huelle(0, 0, -0.04, 0.76, null), F.HAUT, { umriss: 0.003 }));
+  rumpf.add(setze(teil(new THREE.CylinderGeometry(0.066, 0.078, 0.26, 18), F.HAUT, { umriss: 0.003 }), 0, 0.79, -0.005));
   // Hemd: weit offen bis ganz oben (oben ganz auseinander, unten noch zwei Knöpfe zu)
   const hemdOffen = (y) => (y < 0.16 ? 0 : 0.012 + (y - 0.16) * 0.3);
   const H_PLUS = 0.008, H_T = 0.004;
-  const hemdMat = toon(SHIRT, { side: THREE.DoubleSide });
+  const hemdMat = toon(F.SHIRT, { side: THREE.DoubleSide });
   rumpf.add(teil(huelle(H_PLUS, H_T, -0.03, 0.735, hemdOffen), 0, { material: hemdMat, umriss: 0.002 }));
   // viel Brusthaar: nur auf der Brust im offenen Hemd, zum Bauch hin ein schmaler Streifen; Hals bleibt frei
   {
     const haarGeo = new THREE.CapsuleGeometry(0.0026, 0.013, 2, 4);
     const lage = [];
     const zr = (() => { let q = 77; return () => { q = (q * 1664525 + 1013904223) >>> 0; return q / 4294967296; }; })();
-    for (let i = 0; i < 3000 && lage.length < 750; i++) {
+    for (let i = 0; i < (A.brusthaar === false ? 0 : 3000) && lage.length < 750; i++) {
       const y = 0.18 + zr() * 0.48;
       const breite = Math.min(hemdOffen(y) - 0.006, y > 0.42 ? 0.15 : 0.02 + (y - 0.18) * 0.4);
       if (breite <= 0) continue;
@@ -168,7 +172,7 @@ export function baueJonny(scene) {
     rumpf.add(teil(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 30, 0.006, 6, false), 0xe9e6de, { umriss: 0.001 }));
     // Kragenecke klappt nach außen auf die Schulter
     const k = aufHuelle(H_PLUS, H_T, s * 0.13, 0.67, 0.006);
-    rumpf.add(setze(quader(0.07, 0.09, 0.008, SHIRT, { umriss: 0.002 }), k.p.x, k.p.y, k.p.z, -0.45, k.rot, s * -0.5));
+    rumpf.add(setze(quader(0.07, 0.09, 0.008, F.SHIRT, { umriss: 0.002 }), k.p.x, k.p.y, k.p.z, -0.45, k.rot, s * -0.5));
   }
   for (let i = 0; i < 2; i++) { const b = aufHuelle(H_PLUS, H_T, 0, 0.04 + i * 0.07, 0.003); rumpf.add(setze(zylinder(0.006, 0.006, 0.004, 0xd9d4c4, { umriss: false }, 8), b.p.x, b.p.y, b.p.z, Math.PI / 2, 0, 0)); }
   // Kragensteg hinten um den Hals
@@ -177,7 +181,7 @@ export function baueJonny(scene) {
   // Weste (helles Cord): liegt eng an Brust und Bauch, geht über die Schultern bis an den Hals, vorne offen;
   // die Arme kommen seitlich heraus, die Ärmel liegen darüber
   const cordTex = leinwandTextur(64, 64, (g) => {
-    g.fillStyle = '#b98d5c'; g.fillRect(0, 0, 64, 64);
+    g.fillStyle = '#' + F.WESTE.toString(16).padStart(6, '0'); g.fillRect(0, 0, 64, 64);
     for (let x = 0; x < 64; x += 4) { g.fillStyle = 'rgba(90,60,30,0.38)'; g.fillRect(x, 0, 1.6, 64); g.fillStyle = 'rgba(255,230,190,0.12)'; g.fillRect(x + 2, 0, 1, 64); }
   }, [14, 3]);
   const westeMat = toon(0xffffff, { map: cordTex, side: THREE.DoubleSide });
@@ -229,9 +233,9 @@ export function baueJonny(scene) {
   function arm(seite) {
     const schulter = new THREE.Group();
     schulter.position.set(0.27 * seite, 0.62, 0);
-    schulter.add(kugel(0.066, SHIRT, { umriss: 0.004 }, 10));
+    schulter.add(kugel(0.066, F.SHIRT, { umriss: 0.004 }, 10));
     // kurzer Ärmel mit Umschlag
-    schulter.add(setze(teil(new THREE.CylinderGeometry(0.07, 0.078, 0.13, 12), SHIRT), 0, -0.07, 0));
+    schulter.add(setze(teil(new THREE.CylinderGeometry(0.07, 0.078, 0.13, 12), F.SHIRT), 0, -0.07, 0));
     schulter.add(setze(zylinder(0.08, 0.08, 0.02, 0xe6e3dc, { umriss: 0.002 }, 12), 0, -0.13, 0));
     schulter.add(setze(teil(new THREE.CapsuleGeometry(0.056, 0.12, 4, 10), 0, { material: armHaut }), 0, -0.19, 0));
     const ellbogen = new THREE.Group();
@@ -240,7 +244,7 @@ export function baueJonny(scene) {
     ellbogen.add(setze(teil(new THREE.CapsuleGeometry(0.05, 0.16, 4, 10), 0, { material: armHaut }), 0, -0.11, 0));
     const hand = new THREE.Group();
     // Hand: kräftiger Handrücken, dicke Knöchel, große Finger mit zwei Gliedern und Nägeln, Daumen (gut erkennbar)
-    const flaeche = teil(new THREE.BoxGeometry(0.1, 0.09, 0.042, 2, 2, 1), HAUT, { umriss: 0.0035 });
+    const flaeche = teil(new THREE.BoxGeometry(0.1, 0.09, 0.042, 2, 2, 1), F.HAUT, { umriss: 0.0035 });
     flaeche.position.y = -0.025;
     hand.add(flaeche);
     // offene Finger (beim Bierhalten ausgeblendet, dann hält eine Faust die Flasche)
@@ -250,10 +254,10 @@ export function baueJonny(scene) {
       const x = (-0.036 + f * 0.024) * seite;
       const lang = [0.042, 0.05, 0.047, 0.036][f];
       finger.add(setze(kugel(0.0145, 0xe2ab8c, { umriss: 0.0015 }, 8), x, -0.07, 0.014));
-      const glied1 = teil(new THREE.CapsuleGeometry(0.0135, lang, 4, 8), HAUT, { umriss: 0.0025 });
+      const glied1 = teil(new THREE.CapsuleGeometry(0.0135, lang, 4, 8), F.HAUT, { umriss: 0.0025 });
       glied1.position.set(x, -0.08 - lang / 2, 0.006);
       finger.add(glied1);
-      const glied2 = teil(new THREE.CapsuleGeometry(0.0125, lang * 0.75, 4, 8), HAUT, { umriss: 0.0025 });
+      const glied2 = teil(new THREE.CapsuleGeometry(0.0125, lang * 0.75, 4, 8), F.HAUT, { umriss: 0.0025 });
       glied2.position.set(x, -0.088 - lang - lang * 0.33, -0.014);
       glied2.rotation.x = 0.6;
       finger.add(glied2);
@@ -261,17 +265,17 @@ export function baueJonny(scene) {
       finger.add(setze(quader(0.015, 0.016, 0.004, 0xf4d8c8, { umriss: 0.001 }), x, -0.092 - lang * 1.7, -0.03, 0.6, 0, 0));
       finger.add(setze(quader(0.016, 0.002, 0.002, 0xb97a5c, { umriss: false }), x, -0.08 - lang, 0.02));
     }
-    const daumen1 = teil(new THREE.CapsuleGeometry(0.015, 0.04, 4, 8), HAUT, { umriss: 0.0025 });
+    const daumen1 = teil(new THREE.CapsuleGeometry(0.015, 0.04, 4, 8), F.HAUT, { umriss: 0.0025 });
     daumen1.position.set(0.058 * seite, -0.035, 0.018);
     daumen1.rotation.set(0.3, 0, -0.7 * seite);
     finger.add(daumen1);
-    const daumen2 = teil(new THREE.CapsuleGeometry(0.014, 0.03, 4, 8), HAUT, { umriss: 0.0025 });
+    const daumen2 = teil(new THREE.CapsuleGeometry(0.014, 0.03, 4, 8), F.HAUT, { umriss: 0.0025 });
     daumen2.position.set(0.083 * seite, -0.07, 0.026);
     daumen2.rotation.set(0.5, 0, -0.25 * seite);
     finger.add(daumen2);
     finger.add(setze(quader(0.016, 0.016, 0.004, 0xf4d8c8, { umriss: 0.001 }), 0.09 * seite, -0.088, 0.04, 0.5, 0, -0.25 * seite));
     // goldener Ring rechts
-    if (seite > 0) hand.add(setze(teil(new THREE.TorusGeometry(0.016, 0.0045, 6, 14), GOLD, { umriss: false }), 0.012, -0.112, 0.006, Math.PI / 2, 0, 0));
+    if (seite > 0) hand.add(setze(teil(new THREE.TorusGeometry(0.016, 0.0045, 6, 14), F.GOLD, { umriss: false }), 0.012, -0.112, 0.006, Math.PI / 2, 0, 0));
     hand.position.y = -0.25;
     ellbogen.add(hand);
     schulter.add(ellbogen);
@@ -316,7 +320,7 @@ export function baueJonny(scene) {
   const faust = new THREE.Group();
   for (let f = 0; f < 4; f++) {
     const y = 0.035 - f * 0.024;
-    const ring = teil(new THREE.TorusGeometry(0.041, 0.0135, 8, 14, Math.PI * 1.15), HAUT, { umriss: 0.002 });
+    const ring = teil(new THREE.TorusGeometry(0.041, 0.0135, 8, 14, Math.PI * 1.15), F.HAUT, { umriss: 0.002 });
     ring.rotation.set(Math.PI / 2, 0, -Math.PI * 0.05);
     ring.position.y = y;
     faust.add(ring);
@@ -324,12 +328,12 @@ export function baueJonny(scene) {
     const w = -Math.PI * 0.05 + Math.PI * 1.15;
     faust.add(setze(quader(0.012, 0.014, 0.004, 0xf4d8c8, { umriss: 0.001 }), Math.cos(w) * 0.05, y, -Math.sin(w) * 0.05, 0, w + Math.PI / 2, 0));
   }
-  const daumenF = teil(new THREE.CapsuleGeometry(0.015, 0.05, 4, 8), HAUT, { umriss: 0.0025 });
+  const daumenF = teil(new THREE.CapsuleGeometry(0.015, 0.05, 4, 8), F.HAUT, { umriss: 0.0025 });
   daumenF.position.set(-0.035, 0.05, 0.03);
   daumenF.rotation.set(0.3, 0, 1.1);
   faust.add(daumenF);
   // Handrücken außen an der Flasche
-  faust.add(setze(teil(new THREE.BoxGeometry(0.03, 0.1, 0.075), HAUT, { umriss: 0.003 }), -0.05, 0.0, -0.01));
+  faust.add(setze(teil(new THREE.BoxGeometry(0.03, 0.1, 0.075), F.HAUT, { umriss: 0.003 }), -0.05, 0.0, -0.01));
   bier.add(faust);
   bier.visible = false;
   wurzel.add(bier);
@@ -349,12 +353,12 @@ export function baueJonny(scene) {
   const kopf = new THREE.Group();
   kopf.position.y = 0.9;
   rumpf.add(kopf);
-  const schaedel = teil(new THREE.SphereGeometry(0.165, 22, 18), HAUT);
+  const schaedel = teil(new THREE.SphereGeometry(0.165, 22, 18), F.HAUT);
   schaedel.scale.set(0.98, 1.12, 0.98);
   schaedel.position.y = 0.12;
   kopf.add(schaedel);
-  for (const x of [-0.16, 0.16]) kopf.add(setze(teil(new THREE.SphereGeometry(0.036, 10, 8), HAUT), x, 0.1, -0.01));
-  const nase = teil(new THREE.SphereGeometry(0.032, 12, 10), HAUT);
+  for (const x of [-0.16, 0.16]) kopf.add(setze(teil(new THREE.SphereGeometry(0.036, 10, 8), F.HAUT), x, 0.1, -0.01));
+  const nase = teil(new THREE.SphereGeometry(0.032, 12, 10), F.HAUT);
   nase.position.set(0, 0.1, 0.162);
   nase.scale.set(0.9, 1.1, 1.0);
   kopf.add(nase);
@@ -370,18 +374,23 @@ export function baueJonny(scene) {
     kopf.add(a);
     augen.push(a);
   }
-  for (const x of [-0.062, 0.062]) kopf.add(setze(quader(0.066, 0.02, 0.024, BART, { umriss: false }), x, 0.2, 0.148));
+  for (const x of [-0.062, 0.062]) kopf.add(setze(quader(0.066, 0.02, 0.024, F.BART, { umriss: false }), x, 0.2, 0.148));
   // Vollbart: Wangen und Kinn, Schnurrbart
   const bartGeo = new THREE.SphereGeometry(0.15, 18, 14, -Math.PI * 0.2, Math.PI * 1.4, Math.PI * 0.5, Math.PI * 0.38);
-  const bart = teil(bartGeo, BART, { umriss: 0.004 });
+  const bart = teil(bartGeo, F.BART, { umriss: 0.004 });
   bart.scale.set(1.05, 1.1, 1.08);
   bart.position.set(0, 0.06, 0.012);
   kopf.add(bart);
-  const kinnBart = teil(new THREE.SphereGeometry(0.085, 14, 10), BART, { umriss: 0.004 });
+  const kinnBart = teil(new THREE.SphereGeometry(0.085, 14, 10), F.BART, { umriss: 0.004 });
   kinnBart.scale.set(1.2, 1.0, 0.95);
   kinnBart.position.set(0, -0.03, 0.08);
   kopf.add(kinnBart);
-  const schnurrbart = teil(new THREE.CapsuleGeometry(0.018, 0.06, 4, 8), BART, { umriss: 0.003 });
+  if (A.bart === 'stoppel') {
+    // nur Dreitagebart: Bart flach an die Haut, kein Kinnbart
+    bart.scale.set(1.0, 1.0, 1.0); bart.position.set(0, 0.06, 0.0);
+    kinnBart.scale.set(1.0, 0.7, 0.7); kinnBart.position.set(0, -0.0, 0.07);
+  }
+  const schnurrbart = teil(new THREE.CapsuleGeometry(0.018, 0.06, 4, 8), F.BART, { umriss: 0.003 });
   schnurrbart.rotation.z = Math.PI / 2;
   schnurrbart.position.set(0, 0.055, 0.162);
   kopf.add(schnurrbart);
@@ -392,7 +401,7 @@ export function baueJonny(scene) {
   kopf.add(setze(quader(0.045, 0.008, 0.004, 0xf4f0e0, { umriss: false }), 0, 0.03, 0.17));
   // runde goldene Brille
   const brille = new THREE.Group();
-  const goldMat = toon(GOLD);
+  const goldMat = toon(F.GOLD);
   for (const x of [-0.06, 0.06]) {
     const ring = new THREE.Mesh(new THREE.TorusGeometry(0.037, 0.0035, 5, 24), goldMat);
     ring.position.x = x;
@@ -404,14 +413,21 @@ export function baueJonny(scene) {
   }
   brille.add(setze(new THREE.Mesh(new THREE.TorusGeometry(0.02, 0.003, 4, 10, Math.PI), goldMat), 0, 0.008, 0));
   brille.position.set(0, 0.15, 0.162);
-  kopf.add(brille);
+  if (A.brille) kopf.add(brille);
   // lange braune Haare: hinten und an den Seiten bis zur Schulter (Strähnen)
-  const haarMat = toon(HAAR);
+  const haarMat = toon(F.HAAR);
   const hinten = teil(new THREE.CapsuleGeometry(0.15, 0.16, 6, 14), 0, { material: haarMat, umriss: 0.004 });
   hinten.scale.set(1.12, 1, 0.6);
   hinten.position.set(0, 0.02, -0.085);
   kopf.add(hinten);
-  for (let i = 0; i < 14; i++) {
+  if (!A.langeHaare) {
+    // kurze Haare: flache Kappe oben, hinten kurz
+    hinten.scale.set(1.08, 0.55, 0.55); hinten.position.set(0, 0.1, -0.06);
+    const oben = teil(new THREE.SphereGeometry(0.172, 20, 12, 0, Math.PI * 2, 0, Math.PI * 0.42), 0, { material: haarMat, umriss: 0.004 });
+    oben.scale.set(1.0, 0.9, 1.02); oben.position.set(0, 0.14, -0.01); oben.rotation.x = -0.15;
+    kopf.add(oben);
+  }
+  for (let i = 0; i < (A.langeHaare ? 14 : 0); i++) {
     const w = -1.6 + (i / 13) * 3.2;
     const straehne = teil(new THREE.CapsuleGeometry(0.022, 0.2 + zufall() * 0.06, 4, 6), 0, { material: haarMat, umriss: 0.002 });
     straehne.position.set(Math.sin(w) * 0.16, -0.02, -Math.cos(w) * 0.12 - 0.02);
@@ -420,19 +436,19 @@ export function baueJonny(scene) {
   }
   // grüne Cap, Schirm nach vorn, hinten Verschluss
   const cap = new THREE.Group();
-  const kuppel = teil(new THREE.SphereGeometry(0.172, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2), CAP, { umriss: 0.004 });
+  const kuppel = teil(new THREE.SphereGeometry(0.172, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2), F.CAP, { umriss: 0.004 });
   kuppel.scale.set(1.02, 0.78, 1.02);
   cap.add(kuppel);
-  const schirm = teil(new THREE.CylinderGeometry(0.15, 0.15, 0.014, 20, 1, false, -Math.PI * 0.27, Math.PI * 0.54), CAP, { umriss: 0.003 });
+  const schirm = teil(new THREE.CylinderGeometry(0.15, 0.15, 0.014, 20, 1, false, -Math.PI * 0.27, Math.PI * 0.54), F.CAP, { umriss: 0.003 });
   schirm.scale.set(1, 1, 1.15);
   schirm.position.set(0, 0.005, 0.075);
   schirm.rotation.x = -0.12;
   cap.add(schirm);
-  cap.add(setze(kugel(0.014, CAP, { umriss: 0.002 }, 8), 0, 0.135, 0));
+  cap.add(setze(kugel(0.014, F.CAP, { umriss: 0.002 }, 8), 0, 0.135, 0));
   cap.add(setze(quader(0.05, 0.012, 0.008, 0x5d6340, { umriss: false }), 0, 0.03, -0.172));
   cap.position.set(0, 0.2, -0.005);
   cap.rotation.x = 0.05;
-  kopf.add(cap);
+  if (A.cap) kopf.add(cap);
 
   // ---------- Verhalten ----------
   let zeit = Math.random() * 10;
@@ -445,6 +461,7 @@ export function baueJonny(scene) {
   let schritt = 0;
   let kitzelt = false;
   let trinkt = false;
+  let sitzHoehe = null; // null = steht, sonst Sitzhöhe über dem Boden (z. B. im Fahrzeug)
   const api = {
     wurzel,
     get position() { return wurzel.position; },
@@ -466,6 +483,8 @@ export function baueJonny(scene) {
       tempo = t;
       return new Promise((r) => { zielFertig = r; });
     },
+    // Laufen abbrechen (z. B. beim Einsteigen ins Fahrzeug)
+    halt() { ziel = null; const r = zielFertig; zielFertig = null; if (r) r(false); },
     heim() { return api.gehZu(PLATZ.x, PLATZ.z).then(() => { wurzel.rotation.y = Math.PI * 1.08; }); },
     get geht() { return !!ziel; },
     dreheZu(p) { wurzel.rotation.y = Math.atan2(p.x - wurzel.position.x, p.z - wurzel.position.z); },
@@ -478,6 +497,8 @@ export function baueJonny(scene) {
       if (!an) armeVerschraenkt();
     },
     pinkeln(an) { strahl.visible = an; },
+    // hinsetzen (Höhe der Sitzfläche über dem Boden) oder mit null wieder aufstehen
+    sitzen(hoehe) { sitzHoehe = hoehe; if (hoehe === null) koerper.position.y = 0; },
     update(dt) {
       zeit += dt;
       // Laufen: zum Ziel drehen und hingehen, Beine schwingen
@@ -500,10 +521,16 @@ export function baueJonny(scene) {
         }
       }
       const schwung = ziel ? Math.sin(schritt) * 0.5 : 0;
-      beine[0].huefte.rotation.x += (schwung - beine[0].huefte.rotation.x) * Math.min(1, dt * 10);
-      beine[1].huefte.rotation.x += (-schwung - beine[1].huefte.rotation.x) * Math.min(1, dt * 10);
-      beine[0].k.rotation.x = Math.max(0, -schwung) * 0.6;
-      beine[1].k.rotation.x = Math.max(0, schwung) * 0.6;
+      if (sitzHoehe !== null) {
+        // sitzen: Oberschenkel nach vorn, Unterschenkel nach unten, Becken auf der Sitzfläche
+        for (const b of beine) { b.huefte.rotation.x = -Math.PI / 2 + 0.1; b.k.rotation.x = Math.PI / 2 - 0.1; }
+        koerper.position.y = (sitzHoehe + 0.06) / 0.95 - 0.9;
+      } else {
+        beine[0].huefte.rotation.x += (schwung - beine[0].huefte.rotation.x) * Math.min(1, dt * 10);
+        beine[1].huefte.rotation.x += (-schwung - beine[1].huefte.rotation.x) * Math.min(1, dt * 10);
+        beine[0].k.rotation.x = Math.max(0, -schwung) * 0.6;
+        beine[1].k.rotation.x = Math.max(0, schwung) * 0.6;
+      }
       // Kitzeln: beide Arme nach vorn, Finger zappeln
       if (kitzelt) {
         for (const [a, s] of [[links, -1], [rechts, 1]]) {

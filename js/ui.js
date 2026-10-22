@@ -206,6 +206,20 @@ export function waldoSagt(text, ms = 4500) {
   $('lobblase').querySelector('b').textContent = 'WALDO';
   $('lob-gesicht').innerHTML = WALDO_MINI;
 }
+// Torben (vorläufiges Gesicht: kurze Haare, Stoppelbart, orange Weste)
+const TORBEN_MINI = '<circle cx="20" cy="22" r="14" fill="#eebda0" stroke="#111" stroke-width="2"/><path d="M7 17 Q20 3 33 17 Q28 10 20 10 Q12 10 7 17z" fill="#9a7444" stroke="#111" stroke-width="1.5"/><path d="M10 28 Q20 38 30 28" fill="none" stroke="#b08a68" stroke-width="3"/><circle cx="15" cy="21" r="1.8" fill="#111"/><circle cx="25" cy="21" r="1.8" fill="#111"/><path d="M6 40 L14 34 L26 34 L34 40z" fill="#e8741e" stroke="#111" stroke-width="1.5"/>';
+export function torbenSagt(text, ms = 4500) {
+  blaseRechts(text, ms, 'normal');
+  $('lobblase').querySelector('b').textContent = 'TORBEN';
+  $('lob-gesicht').innerHTML = TORBEN_MINI;
+}
+// Fahrhilfe unten: Tasten beim Fahren
+export function fahrHilfe(text) {
+  const el = $('fahrhilfe');
+  if (!el) return;
+  el.textContent = text || '';
+  el.classList.toggle('versteckt', !text);
+}
 export function jonnySagt(text, ms = 4500) {
   blaseRechts(text, ms, 'normal');
   $('lobblase').querySelector('b').textContent = 'JONNY';

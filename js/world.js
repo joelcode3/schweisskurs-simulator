@@ -50,7 +50,9 @@ export function baueWelt(scene) {
     return obj;
   }
   function hindernis(xMin, xMax, zMin, zMax) {
-    hindernisse.push({ xMin, xMax, zMin, zMax });
+    const h = { xMin, xMax, zMin, zMax };
+    hindernisse.push(h);
+    return h;
   }
 
   // ---------- Licht ----------
@@ -2855,6 +2857,7 @@ export function baueWelt(scene) {
       return kloOffen && x > KLO_TUER.xMin + 0.15 && x < KLO_TUER.xMax - 0.15 && z > RAUM.zMax - 0.7 && z < BAD.zMin + 0.7;
     },
     istDraussen: (x, z) => draussen.istDraussen(x, z),
+    draussen,
     imBad(x, z) { return x > BAD.xMin && x < BAD.xMax && z > BAD.zMin && z < BAD.zMax; },
     kloTuer(offen) { kloOffen = offen; },
     kuehlschrank(auf) { kuehlAuf = auf; },
