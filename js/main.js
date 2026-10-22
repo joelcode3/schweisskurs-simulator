@@ -5,6 +5,7 @@ import { baueDennis } from './dennis.js';
 import { baueJonny } from './jonny.js';
 import { baueWaldo } from './waldo.js';
 import { baueTorben } from './torben.js';
+import { baueKumpels } from './kumpels.js';
 import { baueFahrzeuge } from './fahrzeuge.js';
 import { baueSteuerung } from './steuerung.js';
 import { baueSpiel } from './spiel.js';
@@ -34,6 +35,7 @@ jonny.wurzel.userData.interaktiv = { id: 'jonny', name: 'Jonny', station: null }
 const waldo = baueWaldo(scene);
 waldo.wurzel.userData.interaktiv = { id: 'waldo', name: 'Waldo', station: null };
 const torben = baueTorben(scene);
+const kumpels = baueKumpels(scene);
 const fz = baueFahrzeuge(scene, welt);
 welt.hindernisse.push({ xMin: jonny.position.x - 0.25, xMax: jonny.position.x + 0.25, zMin: jonny.position.z - 0.25, zMax: jonny.position.z + 0.25 });
 
@@ -78,6 +80,7 @@ function schleife(jetzt) {
   waldo.update(dt);
   torben.schauZu(kamera.position);
   torben.update(dt);
+  kumpels.update(dt, kamera.position);
   fz.update(dt);
   welt.update(dt);
   if (spiel) {
@@ -140,4 +143,4 @@ raeder.forEach((rad) => rad.addEventListener('pointerdown', (e) => {
 }));
 
 // Für Tests im Browser
-window.__werkstatt = { kamera, steuerung, dennis, jonny, waldo, torben, fz, welt, hand, get spiel() { return spiel; } };
+window.__werkstatt = { kamera, steuerung, dennis, jonny, waldo, torben, kumpels, fz, welt, hand, get spiel() { return spiel; } };
