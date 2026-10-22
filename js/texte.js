@@ -2,7 +2,8 @@
 // Die Schlüssel sind die IDs für die Sprachaufnahmen in stimme/stimme.json – beim Umformulieren beibehalten.
 
 export const DENNIS = {
-  begruessung: 'Moin! Heute baust du einen Ofen aus der alten Gasflasche da drüben. Was zu tun ist, steht auf deinem Zettel. Und halt dich an meine Regeln an der Wand. Wenn du Mist baust, merk ich das. Ich merk alles.',
+  begruessung: 'Moin. Sag nix. Heute Nacht um vier ist mir ne Gehwegplatte auf den Benz gekracht. Also: Heute baust du einen Ofen aus der alten Gasflasche da drüben. Was zu tun ist, steht auf deinem Zettel. Halt dich an meine Regeln an der Wand. Ich bin heute eh schon gereizt.',
+  benz: ['Guck da nicht hin. Mein Benz. Mein armer Benz.', 'Die Platte lag auf der Turnmatte. Wegen der Eicheln! Und dann kommt der Wind ...', 'Vier Uhr nachts. KRACH. Ich dachte, das Dach kommt runter.', 'Neue Motorhaube für den W123. Weißt du, was die kostet?!'],
   klo: 'Warte kurz! Ich muss mal ganz dringend. Solange ich weg bin, wird NICHT gearbeitet. Keine Aufsicht, keine Arbeit!',
   kloZurueck: ['Ahh. Jetzt geht’s mir besser. Weitermachen!', 'So. Erleichtert. Wo waren wir?', 'Puh. Das war knapp. Weiter geht’s!'],
   kloOhneAufsicht: 'Ohne Aufsicht wird nicht gearbeitet. Warte, bis Dennis vom Klo zurück ist.',
