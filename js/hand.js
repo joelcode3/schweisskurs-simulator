@@ -3,10 +3,11 @@
 import * as THREE from 'three';
 import { toon, teil, quader, zylinder, kugel, setze, leinwandTextur } from './toon.js';
 import { RAUM, BAD } from './world.js';
+import { GELAENDE } from './draussen.js';
 
 // Haltung in der Hand: Position vor der Kamera, Drehung, Größe, beidhändig, schwer
 // Wurfgrenzen draußen auf dem Hof
-const AUSSEN = { xMin: -17, xMax: 9.5, zMin: RAUM.zMax, zMax: 12.5 };
+const AUSSEN = GELAENDE;
 
 const HALTUNG = {
   brille: { pos: [0.18, -0.15, -0.45], rot: [0.25, 0.4, 0], skala: 0.55, name: 'Schutzbrille', tragen: 'Aufsetzen' },
@@ -32,6 +33,7 @@ const HALTUNG = {
   kackpumpe: { pos: [0.3, -0.5, -0.85], rot: [0.15, 0.6, 0], skala: 0.85, name: 'Kackepumpe', benutzen: 'Abwaschen (Bad) / zurückstellen (Kompressor)' },
   rohrzange: { pos: [0.24, -0.22, -0.52], rot: [0.4, 0.3, -0.9], name: 'Rohrzange', benutzen: 'Reparieren' },
   schlauch: { pos: [0.2, -0.2, -0.55], rot: [0.1, 0.12, 0], skala: 1.2, name: 'Wasserschlauch', benutzen: 'Spritzen (halten)', nichtWerfen: true, nichtAblegen: true },
+  peitsche: { pos: [0.24, -0.3, -0.55], rot: [0.5, 0.4, -0.3], skala: 1.2, name: 'Peitsche', benutzen: 'Knallen lassen' },
   kaffee: { pos: [0.2, -0.17, -0.45], rot: [0.1, 2.2, 0], skala: 1.3, name: 'Kaffee für Dennis', nichtAblegen: true, ablegenHinweis: 'Den Kaffee bringst du Dennis. Oder weg damit (Q oder G).' },
 };
 
@@ -227,7 +229,14 @@ export function baueHand(scene, kamera) {
         // Wände
         const r = 0.15;
         // im Bad an den Badwänden abprallen, sonst an den Werkstattwänden
-        const draussen = p.z > RAUM.zMax + 0.1 && !(p.x > BAD.xMin - 0.1 && p.x < BAD.xMax + 0.1 && p.z < BAD.zMax + 0.1);
+        const imHaus = p.x > RAUM.xMin - 0.1 && p.x < RAUM.xMax + 0.1 && p.z > RAUM.zMin - 0.1 && p.z < RAUM.zMax + 0.1;
+        const imBad = p.x > BAD.xMin - 0.1 && p.x < BAD.xMax + 0.1 && p.z > BAD.zMin - 0.1 && p.z < BAD.zMax + 0.1;
+        const draussen = f.draussen ?? (f.draussen = !imHaus && !imBad);
+        // draußen geworfen: an der Hauswand abprallen statt durchzufliegen
+        if (draussen && imHaus && p.y < RAUM.hoehe) {
+          const dx = Math.min(p.x - (RAUM.xMin - 0.1), RAUM.xMax + 0.1 - p.x), dz = Math.min(p.z - (RAUM.zMin - 0.1), RAUM.zMax + 0.1 - p.z);
+          if (dx < dz) { f.v.x *= -0.4; p.x = p.x < 0 ? RAUM.xMin - 0.12 : RAUM.xMax + 0.12; } else { f.v.z *= -0.4; p.z = p.z < 0 ? RAUM.zMin - 0.12 : RAUM.zMax + 0.12; }
+        }
         const q = draussen ? AUSSEN : p.x > BAD.xMin && p.x < BAD.xMax && p.z > BAD.zMin ? BAD : RAUM;
         if (p.x < q.xMin + r || p.x > q.xMax - r) { f.v.x *= -0.4; p.x = THREE.MathUtils.clamp(p.x, q.xMin + r, q.xMax - r); }
         if (p.z < q.zMin + r || p.z > q.zMax - r) { f.v.z *= -0.4; p.z = THREE.MathUtils.clamp(p.z, q.zMin + r, q.zMax - r); }

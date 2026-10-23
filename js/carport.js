@@ -3,7 +3,7 @@
 // alles: ein weißer Mercedes 123. Auf dem großen Carport liegen alte Turnmatten, beschwert mit Gehwegplatten (gegen die lauten
 // Eicheln). Heute Nacht um 4 hat der Wind eine Matte runtergeweht, und die Gehwegplatte ist durch die Plane in die Motorhaube.
 import * as THREE from 'three';
-import { toon, teil, quader, zylinder, kugel, setze, leinwandTextur, zufall } from './toon.js';
+import { toon, teil, quader, rundQuader, zylinder, kugel, setze, leinwandTextur, zufall } from './toon.js';
 
 export function baueCarport(scene, { merke, hindernis }) {
   const r = zufall(808);
@@ -139,12 +139,69 @@ export function baueCarport(scene, { merke, hindernis }) {
     ww.add(setze(quader(0.04, 0.12, 0.8, 0xe4dfd2, { umriss: 0.002 }), sx * (WB / 2 + 0.02), WY + 0.08, -0.1));
     for (const z of [-WL / 2 + 0.3, WL / 2 - 0.3]) ww.add(setze(zylinder(0.03, 0.04, WY, 0x5a5d62, { umriss: 0.002 }, 8), sx * 0.75, WY / 2, z));
   }
-  for (const sx of [-1, 1]) { const d = quader(0.08, 0.1, 1.4, 0x2a2c30, { umriss: 0.003 }); d.position.set(sx * 0.35, WY - 0.05, WL / 2 + 0.6); d.rotation.y = -sx * 0.25; ww.add(d); }
-  ww.add(setze(zylinder(0.05, 0.05, 0.15, 0x1d1d1f, { umriss: 0.002 }, 10), 0, WY - 0.05, WL / 2 + 1.3, Math.PI / 2, 0, 0));
-  ww.add(setze(zylinder(0.03, 0.03, 0.45, 0x8a8f96, { umriss: 0.002 }, 8), 0.1, 0.25, WL / 2 + 1.1));
-  ww.add(setze(zylinder(0.07, 0.07, 0.04, 0x1d1d1f, { umriss: 0.002 }, 12), 0.1, 0.07, WL / 2 + 1.1, 0, 0, Math.PI / 2));
-  ww.add(setze(quader(1.1, 0.5, 0.45, 0xe4dfd2, { umriss: 0.003 }), 0, WY + 0.25, WL / 2 + 0.3));
-  ww.add(setze(quader(1.05, 0.04, 0.42, 0xd2cbbb, { umriss: false }), 0, WY + 0.52, WL / 2 + 0.3));
+  // Deichsel: V-Rahmen aus verzinktem Profil, Deichselhaube, Auflaufbremse mit Faltenbalg, Kugelkopfkupplung mit Griff,
+  // Handbremshebel mit Abreißseil, Stecker-Kabel, Stützrad mit Kurbel und Klemme, Gasflaschenkasten mit Deckel und Schloss
+  const VERZINKT = 0xa9aeb3, DUNKELGRAU = 0x3a3c40;
+  const DZ = WL / 2; // Vorderkante Wohnwagen
+  for (const sx of [-1, 1]) {
+    const d = quader(0.07, 0.12, 1.55, VERZINKT, { umriss: 0.003 });
+    d.position.set(sx * 0.36, WY - 0.06, DZ + 0.62); d.rotation.y = -sx * 0.27; ww.add(d);
+    for (let k = 0; k < 4; k++) ww.add(setze(zylinder(0.012, 0.012, 0.02, 0x6e7177, { umriss: false }, 6), sx * (0.55 - k * 0.11), WY - 0.06, DZ + 0.12 + k * 0.4, Math.PI / 2, 0, 0));
+  }
+  // Deichselhaube (cremefarbenes Kunststoff-Dreieck über dem V)
+  const haubeForm = new THREE.Shape();
+  haubeForm.moveTo(-0.5, 0); haubeForm.lineTo(0.5, 0); haubeForm.quadraticCurveTo(0.42, 0.55, 0.12, 0.98); haubeForm.lineTo(-0.12, 0.98); haubeForm.quadraticCurveTo(-0.42, 0.55, -0.5, 0);
+  const haubeGeo = new THREE.ExtrudeGeometry(haubeForm, { depth: 0.1, bevelEnabled: true, bevelThickness: 0.04, bevelSize: 0.03, bevelSegments: 3 });
+  haubeGeo.rotateX(Math.PI / 2);
+  const haube = teil(haubeGeo, 0xe4dfd2, { umriss: 0.003 });
+  haube.position.set(0, WY + 0.12, DZ + 0.06);
+  ww.add(haube);
+  // Auflaufbremse: Rohr mit schwarzem Faltenbalg, davor die Kugelkopfkupplung mit Griff und Verschleißanzeige
+  ww.add(setze(zylinder(0.045, 0.045, 0.4, DUNKELGRAU, { umriss: 0.002 }, 12), 0, WY - 0.03, DZ + 1.12, Math.PI / 2, 0, 0));
+  for (let k = 0; k < 6; k++) ww.add(setze(teil(new THREE.TorusGeometry(0.05, 0.012, 6, 14), 0x1d1d1f, { umriss: false }), 0, WY - 0.03, DZ + 1.0 + k * 0.03));
+  ww.add(setze(zylinder(0.035, 0.035, 0.2, VERZINKT, { umriss: 0.002 }, 10), 0, WY - 0.03, DZ + 1.38, Math.PI / 2, 0, 0));
+  const kupplung = new THREE.Group();
+  kupplung.add(setze(quader(0.11, 0.09, 0.2, 0xc8352a, { umriss: 0.003 }), 0, 0.02, 0));
+  kupplung.add(setze(teil(new THREE.SphereGeometry(0.06, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), DUNKELGRAU, { umriss: 0.002 }), 0, -0.03, 0.06, Math.PI, 0, 0));
+  const griff = new THREE.Group();
+  griff.add(setze(quader(0.04, 0.03, 0.26, 0xc8352a, { umriss: 0.002 }), 0, 0, -0.1));
+  griff.add(setze(quader(0.07, 0.035, 0.05, 0x1d1d1f, { umriss: 0.002 }), 0, 0.005, -0.22));
+  griff.position.set(0, 0.08, 0.06); griff.rotation.x = 0.12;
+  kupplung.add(griff);
+  kupplung.add(setze(quader(0.03, 0.015, 0.02, 0x3fa34a, { umriss: false }), 0.058, 0.03, 0.02));
+  kupplung.position.set(0, WY - 0.03, DZ + 1.55);
+  ww.add(kupplung);
+  // Handbremshebel (gebogen, mit Griff) und rotes Abreißseil in einer Schlaufe
+  const hebel = new THREE.Group();
+  hebel.add(setze(quader(0.035, 0.42, 0.03, 0x1d1d1f, { umriss: 0.002 }), 0, 0.2, 0));
+  hebel.add(setze(zylinder(0.022, 0.022, 0.1, 0x2a2c30, { umriss: 0.002 }, 8), 0, 0.42, 0, 0, 0, Math.PI / 2));
+  hebel.position.set(0.12, WY - 0.02, DZ + 0.92); hebel.rotation.x = 0.75;
+  ww.add(hebel);
+  const seil = new THREE.CatmullRomCurve3([[0.12, WY + 0.08, DZ + 1.02], [0.2, WY - 0.12, DZ + 1.15], [0.16, WY - 0.2, DZ + 1.32], [0.06, WY - 0.08, DZ + 1.45]].map((q) => new THREE.Vector3(...q)));
+  ww.add(teil(new THREE.TubeGeometry(seil, 20, 0.006, 4, false), 0xc8352a, { umriss: false }));
+  // 13-poliger Stecker am Spiralkabel, hängt am Halter
+  const kabel = [];
+  for (let k = 0; k <= 40; k++) { const t = k / 40; kabel.push(new THREE.Vector3(-0.14 + Math.cos(t * 30) * 0.025, WY + 0.04 - t * 0.28 - Math.sin(t * Math.PI) * 0.05, DZ + 0.95 + t * 0.32 + Math.sin(t * 30) * 0.025)); }
+  ww.add(teil(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(kabel), 120, 0.005, 4, false), 0x1d1d1f, { umriss: false }));
+  ww.add(setze(zylinder(0.032, 0.03, 0.08, 0x1d1d1f, { umriss: 0.002 }, 12), -0.14, WY - 0.28, DZ + 1.29, Math.PI / 2 - 0.4, 0, 0));
+  // Stützrad: Rohr mit Klemme, Kurbel oben, kleines Rad unten in der Gabel
+  const SX = 0.24, SZ = DZ + 1.05;
+  ww.add(setze(zylinder(0.035, 0.035, 0.6, VERZINKT, { umriss: 0.002 }, 10), SX, 0.42, SZ));
+  ww.add(setze(zylinder(0.028, 0.028, 0.32, 0xd8dbde, { umriss: false }, 10), SX, 0.16, SZ));
+  ww.add(setze(quader(0.1, 0.08, 0.1, VERZINKT, { umriss: 0.002 }), SX, WY - 0.06, SZ));
+  ww.add(setze(zylinder(0.012, 0.012, 0.16, 0x1d1d1f, { umriss: false }, 6), SX + 0.09, WY - 0.06, SZ, 0, 0, Math.PI / 2));
+  ww.add(setze(quader(0.14, 0.02, 0.02, 0x1d1d1f, { umriss: 0.001 }), SX + 0.06, 0.75, SZ));
+  ww.add(setze(zylinder(0.015, 0.015, 0.08, 0x1d1d1f, { umriss: false }, 6), SX + 0.13, 0.79, SZ));
+  ww.add(setze(quader(0.08, 0.1, 0.03, VERZINKT, { umriss: 0.002 }), SX, 0.06, SZ - 0.04));
+  ww.add(setze(quader(0.08, 0.1, 0.03, VERZINKT, { umriss: 0.002 }), SX, 0.06, SZ + 0.04));
+  ww.add(setze(zylinder(0.065, 0.065, 0.045, 0x1d1d1f, { umriss: 0.002 }, 14), SX, 0.065, SZ, 0, 0, Math.PI / 2));
+  ww.add(setze(zylinder(0.03, 0.03, 0.05, 0xc9cdd2, { umriss: false }, 10), SX, 0.065, SZ, 0, 0, Math.PI / 2));
+  // Gasflaschenkasten mit Deckelfuge, Schloss und Lüftungsschlitzen
+  ww.add(setze(quader(1.1, 0.5, 0.45, 0xe4dfd2, { umriss: 0.003 }), 0, WY + 0.25, DZ + 0.3));
+  ww.add(setze(quader(1.12, 0.06, 0.47, 0xd2cbbb, { umriss: 0.002 }), 0, WY + 0.5, DZ + 0.3));
+  ww.add(setze(quader(1.1, 0.01, 0.005, 0x9a958a, { umriss: false }), 0, WY + 0.44, DZ + 0.53));
+  ww.add(setze(zylinder(0.018, 0.018, 0.012, 0xc9cdd2, { umriss: false }, 10), 0, WY + 0.35, DZ + 0.53, Math.PI / 2, 0, 0));
+  for (let k = 0; k < 4; k++) ww.add(setze(quader(0.16, 0.012, 0.005, 0x6e6a60, { umriss: false }), -0.35, WY + 0.12 + k * 0.035, DZ + 0.53));
   // Deichsel zeigt zur anderen Seite (-z): Wohnwagen längs gespiegelt
   ww.scale.z = -1;
   platz.add(ww);
@@ -169,9 +226,47 @@ export function baueCarport(scene, { merke, hindernis }) {
   sofa.position.set(-0.45, 0.18, -0.68);
   sofa.rotation.y = Math.PI / 2;
   terr.add(sofa);
-  terr.add(setze(quader(0.3, 0.3, 0.4, 0x2f6b3a, { umriss: 0.003 }), 0.35, 0.33, -0.7));
-  for (let i = 0; i < 6; i++) terr.add(setze(zylinder(0.03, 0.03, 0.08, 0x6b3a14, { umriss: false }, 8), 0.29 + Math.floor(i / 3) * 0.12, 0.52, -0.82 + (i % 3) * 0.12));
-  terr.add(setze(zylinder(0.03, 0.025, 0.05, 0xd8d2c4, { umriss: 0.001 }, 10), 0.42, 0.505, -0.55)); // Aschenbecher
+  // Bierkasten als Tisch: grüner Kunststoffkasten mit Griffmulden, Rippen und Aufkleber, 20 Flaschen (ein paar fehlen),
+  // obendrauf ein Brettchen mit Aschenbecher und einer offenen Flasche
+  const kasten = new THREE.Group();
+  const KG = 0x2f6b3a, KG_D = 0x24552d;
+  const KH = 0.31, KL = 0.41, KBr = 0.31;
+  kasten.add(setze(quader(KL, 0.02, KBr, KG_D, { umriss: 0.002 }), 0, 0.01, 0));
+  for (const sz of [-1, 1]) kasten.add(setze(quader(KL, KH, 0.016, KG, { umriss: 0.003 }), 0, KH / 2, sz * (KBr / 2 - 0.008)));
+  for (const sx of [-1, 1]) kasten.add(setze(quader(0.016, KH, KBr, KG, { umriss: 0.003 }), sx * (KL / 2 - 0.008), KH / 2, 0));
+  // Griffmulden (Stirnseiten), senkrechte Rippen und umlaufender Rand
+  for (const sx of [-1, 1]) {
+    kasten.add(setze(quader(0.004, 0.045, 0.13, 0x10200f, { umriss: false }), sx * (KL / 2 + 0.001), KH - 0.06, 0));
+    for (const sz of [-0.11, 0.11]) kasten.add(setze(quader(0.012, KH - 0.08, 0.02, KG_D, { umriss: false }), sx * (KL / 2 + 0.005), KH / 2 - 0.02, sz));
+  }
+  for (const sz of [-1, 1]) for (const x of [-0.14, -0.05, 0.05, 0.14]) kasten.add(setze(quader(0.02, KH - 0.08, 0.012, KG_D, { umriss: false }), x, KH / 2 - 0.02, sz * (KBr / 2 + 0.005)));
+  kasten.add(setze(quader(KL + 0.02, 0.02, KBr + 0.02, KG_D, { umriss: 0.002 }), 0, KH - 0.01, 0));
+  const etikett = leinwandTextur(128, 64, (g, b, h) => { g.fillStyle = '#f2e6c4'; g.fillRect(0, 0, b, h); g.fillStyle = '#b2241c'; g.font = 'bold 30px Georgia'; g.textAlign = 'center'; g.fillText('PILS', b / 2, 40); g.fillStyle = '#2f6b3a'; g.fillRect(0, 50, b, 6); });
+  const schild = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 0.075), new THREE.MeshBasicMaterial({ map: etikett }));
+  schild.position.set(0, KH / 2 - 0.03, KBr / 2 + 0.012);
+  kasten.add(schild);
+  // Gefache und Flaschen (4 x 5), drei Plätze leer
+  for (let k = 1; k < 4; k++) kasten.add(setze(quader(0.006, 0.12, KBr - 0.03, KG_D, { umriss: false }), -KL / 2 + k * KL / 4 - 0.0, KH - 0.07, 0));
+  const flasche = (x, y, z, offen) => {
+    const f = new THREE.Group();
+    f.add(setze(zylinder(0.03, 0.03, 0.16, 0x5a2f10, { umriss: 0.0015 }, 10), 0, 0.08, 0));
+    f.add(setze(zylinder(0.013, 0.029, 0.05, 0x5a2f10, { umriss: 0.0015 }, 10), 0, 0.185, 0));
+    f.add(setze(zylinder(0.013, 0.013, 0.04, 0x5a2f10, { umriss: 0.0015 }, 10), 0, 0.23, 0));
+    if (!offen) f.add(setze(zylinder(0.015, 0.015, 0.01, 0xc9a52a, { umriss: false }, 10), 0, 0.255, 0));
+    f.add(setze(zylinder(0.0305, 0.0305, 0.06, 0xe8dcae, { umriss: false }, 10), 0, 0.08, 0));
+    f.position.set(x, y, z);
+    return f;
+  };
+  const leer = new Set([3, 8, 17]);
+  for (let i = 0; i < 20; i++) if (!leer.has(i)) kasten.add(flasche(-KL / 2 + 0.05 + (i % 5) * 0.077, 0.02, -KBr / 2 + 0.045 + Math.floor(i / 5) * 0.074));
+  // Brettchen obendrauf mit Aschenbecher (Kippen drin) und einer offenen Flasche
+  kasten.add(setze(teil(new THREE.BoxGeometry(0.48, 0.02, 0.36), 0, { material: holzMat, umriss: 0.002 }), 0, 0.3, 0, 0, 0.04, 0));
+  kasten.add(setze(zylinder(0.045, 0.035, 0.035, 0xd8d2c4, { umriss: 0.001 }, 14), 0.1, 0.328, 0.06));
+  for (let k = 0; k < 3; k++) kasten.add(setze(zylinder(0.004, 0.004, 0.03, k ? 0xf2f2ee : 0xd89a4a, { umriss: false }, 5), 0.1 + (k - 1) * 0.012, 0.345, 0.06 + (k % 2) * 0.01, 1.2, k, 0));
+  kasten.add(flasche(-0.1, 0.31, -0.05, true));
+  kasten.position.set(0.35, 0.18, -0.7);
+  kasten.rotation.y = Math.PI / 2;
+  terr.add(kasten);
   terr.position.set(WB / 2 + 0.9, 0, -0.1);
   platz.add(terr);
   // Lichterkette in Bögen zwischen den Carport-Pfosten vor der Terrasse
@@ -199,7 +294,9 @@ export function baueCarport(scene, { merke, hindernis }) {
   // Spanngurt und Kabelbinder (Dennis-Bauweise)
   anbau.add(setze(quader(0.04, 0.4, 0.01, 0xf2a21c, { umriss: false }), AX + 0.05, AH - 0.15, AZ0));
   // Plane: hängt durch, Loch über der Motorhaube, Fetzen hängen runter
-  const LOCH = { x: 0.1, z: AZ0 - 0.65, r: 0.42 };
+  // Benz steht andersrum (Front zur Werkstatt): die Motorhaube liegt jetzt am anderen Ende, das Loch in der Plane darüber
+  const BENZ_Z = AZ0 - 4.7 / 2 - 0.1;
+  const LOCH = { x: -0.1, z: BENZ_Z - (4.7 / 2 - 0.7), r: 0.42 };
   const planeGeo = new THREE.PlaneGeometry(2 * AX + 0.5, AZ0 - AZ1 + 0.5, 24, 40).toNonIndexed();
   planeGeo.rotateX(-Math.PI / 2);
   const pp = planeGeo.attributes.position;
@@ -238,12 +335,85 @@ export function baueCarport(scene, { merke, hindernis }) {
   const WEISS = 0xf2f0ea, CHROM = 0xc9cdd2;
   const L = 4.7, B = 1.78;
   // Karosserie unten, Motorhaube, Kofferraum, Kabine mit Scheiben und Säulen
-  benz.add(setze(quader(B, 0.5, L, WEISS, { umriss: 0.005 }), 0, 0.58, 0));
-  benz.add(setze(quader(B - 0.04, 0.08, 1.45, WEISS, { umriss: 0.003 }), 0, 0.87, L / 2 - 0.8));
-  benz.add(setze(quader(B - 0.04, 0.1, 1.0, WEISS, { umriss: 0.003 }), 0, 0.88, -L / 2 + 0.55));
+  // Karosserie: vorne und Mitte massiv, hinten ein echter, tiefer Kofferraum (Boden 0,43 m, Oberkante 0,83 m)
+  const KO_Z0 = -L / 2, KO_Z1 = -L / 2 + 1.05;
+  // (Kanten abgerundet, damit er nicht wie ein Schuhkarton aussieht)
+  benz.add(setze(rundQuader(B, 0.5, L - 1.05 + 0.1, WEISS, { umriss: 0.005 }, 0.14), 0, 0.58, (KO_Z1 + L / 2) / 2 - 0.05));
+  benz.add(setze(rundQuader(B, 0.12, 1.05, WEISS, { umriss: 0.004 }, 0.06), 0, 0.39, (KO_Z0 + KO_Z1) / 2));
+  for (const sx of [-1, 1]) benz.add(setze(rundQuader(0.08, 0.45, 1.08, WEISS, { umriss: 0.004 }, 0.04), sx * (B / 2 - 0.04), 0.605, (KO_Z0 + KO_Z1) / 2));
+  benz.add(setze(rundQuader(B, 0.45, 0.1, WEISS, { umriss: 0.004 }, 0.05), 0, 0.605, KO_Z0 + 0.05));
+  benz.add(setze(rundQuader(B - 0.06, 0.09, 1.45, WEISS, { umriss: 0.003 }, 0.045), 0, 0.865, L / 2 - 0.8));
+  // Kofferraum: Deckel mit Scharnier an der Heckscheibe (geht auf), innen dunkler Teppich, darin Kettenhemd und Peitsche
+  const kofferDeckel = new THREE.Group();
+  kofferDeckel.add(setze(rundQuader(B - 0.06, 0.1, 1.0, WEISS, { umriss: 0.003 }, 0.045), 0, -0.05, -0.5));
+  kofferDeckel.add(setze(quader(0.16, 0.03, 0.012, CHROM, { umriss: false }), 0, -0.04, -1.006));
+  kofferDeckel.add(setze(zylinder(0.018, 0.018, 0.012, CHROM, { umriss: false }, 10), 0, -0.07, -1.006, Math.PI / 2, 0, 0));
+  kofferDeckel.position.set(0, 0.975, -L / 2 + 1.05);
+  benz.add(kofferDeckel);
+  // Innenleben: Teppich, graue Seitenverkleidung, Radkästen, Gummidichtung um die Öffnung, Schlossbügel, Lämpchen
+  const TEPPICH = 0x2a2622, VERKL = 0x4a4a4c;
+  const KM = (KO_Z0 + KO_Z1) / 2;
+  benz.add(setze(quader(B - 0.16, 0.012, 0.93, TEPPICH, { umriss: false }), 0, 0.456, KM));
+  for (const sx of [-1, 1]) {
+    benz.add(setze(quader(0.012, 0.36, 0.93, VERKL, { umriss: false }), sx * (B / 2 - 0.088), 0.64, KM));
+    // Radkasten über dem Hinterrad (mit Teppich bezogen)
+    benz.add(setze(quader(0.2, 0.26, 0.56, TEPPICH, { umriss: 0.002 }), sx * (B / 2 - 0.17), 0.55, Math.max(-L / 2 + 0.9, KO_Z0 + 0.36)));
+  }
+  benz.add(setze(quader(B - 0.18, 0.36, 0.012, VERKL, { umriss: false }), 0, 0.64, KO_Z1 - 0.112));
+  // Gummidichtung oben rund um die Öffnung
+  for (const sx of [-1, 1]) benz.add(setze(quader(0.025, 0.02, 1.0, 0x1d1d1f, { umriss: false }), sx * (B / 2 - 0.08), 0.835, KM));
+  for (const z of [KO_Z0 + 0.065, KO_Z1 - 0.055]) benz.add(setze(quader(B - 0.14, 0.02, 0.025, 0x1d1d1f, { umriss: false }), 0, 0.835, z));
+  benz.add(setze(teil(new THREE.TorusGeometry(0.025, 0.006, 4, 10, Math.PI), 0xc9cdd2, { umriss: false }), 0, 0.84, KO_Z0 + 0.07, 0, 0, 0));
+  benz.add(setze(quader(0.08, 0.025, 0.02, 0xfff3c4, { umriss: false }), -0.5, 0.79, KO_Z1 - 0.06));
+  // Ersatzrad hochkant an der rechten Seite, Warndreieck-Box, Verbandskasten, Wagenheber
+  const ersatz = new THREE.Group();
+  ersatz.add(teil(new THREE.CylinderGeometry(0.3, 0.3, 0.18, 20), 0x1d1d1f, { umriss: 0.002 }));
+  ersatz.add(setze(zylinder(0.18, 0.18, 0.19, 0xb8bcc2, { umriss: false }, 14), 0, 0, 0));
+  ersatz.position.set(-(B / 2 - 0.2), 0.62, KO_Z1 - 0.28);
+  ersatz.rotation.set(0, 0, Math.PI / 2 - 0.12);
+  benz.add(ersatz);
+  benz.add(setze(quader(0.46, 0.06, 0.09, 0xc8352a, { umriss: 0.002 }), 0.1, 0.49, KO_Z1 - 0.1));
+  benz.add(setze(quader(0.22, 0.09, 0.14, 0xf2f2ee, { umriss: 0.002 }), 0.52, 0.505, KO_Z0 + 0.2));
+  benz.add(setze(quader(0.04, 0.02, 0.04, 0xc8352a, { umriss: false }), 0.52, 0.555, KO_Z0 + 0.2));
+  benz.add(setze(quader(0.05, 0.02, 0.012, 0xc8352a, { umriss: false }), 0.52, 0.555, KO_Z0 + 0.2, 0, Math.PI / 2, 0));
+  benz.add(setze(quader(0.32, 0.06, 0.07, 0x3a3c40, { umriss: 0.002 }), -0.15, 0.492, KO_Z0 + 0.15, 0, 0.3, 0));
+  // Deckel innen: graues Innenblech mit Versteifungen, Schwanenhals-Scharniere
+  kofferDeckel.add(setze(quader(B - 0.16, 0.012, 0.92, 0x8a8d90, { umriss: false }), 0, -0.104, -0.5));
+  for (const x of [-0.45, 0, 0.45]) kofferDeckel.add(setze(quader(0.05, 0.02, 0.85, 0x6e7177, { umriss: false }), x, -0.115, -0.5));
+  for (const sx of [-1, 1]) {
+    const hals = new THREE.CatmullRomCurve3([[sx * 0.62, -0.08, -0.12], [sx * 0.62, -0.25, -0.02], [sx * 0.62, -0.32, 0.12]].map((q) => new THREE.Vector3(...q)));
+    kofferDeckel.add(teil(new THREE.TubeGeometry(hals, 12, 0.014, 5, false), 0x3a3c40, { umriss: 0.001 }));
+  }
+  // Kettenhemd: graues Ringgeflecht, ausgebreitet, Ärmel etwas hochgeschlagen
+  const ringTex = leinwandTextur(128, 128, (g, b, h) => {
+    g.fillStyle = '#4a4d52'; g.fillRect(0, 0, b, h);
+    for (let y = 0; y < h; y += 8) for (let x = (y / 8) % 2 ? 4 : 0; x < b; x += 8) {
+      g.strokeStyle = '#b8bcc2'; g.lineWidth = 1.6; g.beginPath(); g.arc(x, y, 3.4, 0, Math.PI * 2); g.stroke();
+      g.strokeStyle = 'rgba(255,255,255,0.4)'; g.lineWidth = 0.8; g.beginPath(); g.arc(x - 0.6, y - 0.6, 2.6, Math.PI, Math.PI * 1.6); g.stroke();
+    }
+  }, [2, 2]);
+  const ringMat = toon(0xffffff, { map: ringTex });
+  const kettenhemd = new THREE.Group();
+  kettenhemd.add(setze(teil(new THREE.BoxGeometry(0.42, 0.016, 0.5), 0, { material: ringMat, umriss: 0.002 }), 0, 0, 0));
+  for (const sx of [-1, 1]) kettenhemd.add(setze(teil(new THREE.BoxGeometry(0.28, 0.014, 0.13), 0, { material: ringMat, umriss: 0.002 }), sx * 0.3, 0.004, 0.17, 0, sx * 0.5, 0));
+  kettenhemd.add(setze(teil(new THREE.TorusGeometry(0.07, 0.015, 6, 14), 0, { material: ringMat, umriss: 0.001 }), 0, 0.012, 0.25, Math.PI / 2, 0, 0));
+  kettenhemd.position.set(0.25, 0.468, -L / 2 + 0.58);
+  kettenhemd.rotation.y = 0.2;
+  benz.add(kettenhemd);
+  // Peitsche: Griff mit Lederwicklung und Knauf, lange geflochtene Schnur in Schlaufen
+  const peitsche = new THREE.Group();
+  peitsche.add(setze(zylinder(0.016, 0.02, 0.28, 0x2a1a10, { umriss: 0.0015 }, 8), 0, 0, 0, 0, 0, Math.PI / 2));
+  for (let k = 0; k < 6; k++) peitsche.add(setze(teil(new THREE.TorusGeometry(0.019, 0.004, 4, 10), 0x4a2a18, { umriss: false }), -0.1 + k * 0.035, 0, 0, 0, Math.PI / 2, 0));
+  peitsche.add(setze(kugel(0.024, 0x1d1d1f, { umriss: 0.0015 }, 8), -0.15, 0, 0));
+  const schnur = [];
+  for (let k = 0; k <= 60; k++) { const t = k / 60; const w = t * Math.PI * 3.2; const rr = 0.16 - t * 0.05; schnur.push(new THREE.Vector3(0.14 + rr + Math.cos(w + Math.PI) * rr, 0.004 + t * 0.012, Math.sin(w + Math.PI) * rr)); }
+  peitsche.add(teil(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(schnur), 100, 0.007, 5, false), 0x1d1d1f, { umriss: 0.001 }));
+  peitsche.position.set(-0.22, 0.48, -L / 2 + 0.5);
+  peitsche.rotation.y = -0.4;
+  benz.add(peitsche);
   const glas = toon(0x3a4a58);
   const kab = new THREE.Group();
-  kab.add(setze(quader(B - 0.18, 0.06, 1.9, WEISS, { umriss: 0.003 }), 0, 0.55, 0));
+  kab.add(setze(rundQuader(B - 0.16, 0.07, 1.92, WEISS, { umriss: 0.003 }, 0.035), 0, 0.55, 0));
   kab.add(setze(new THREE.Mesh(new THREE.BoxGeometry(B - 0.22, 0.48, 1.86), glas), 0, 0.27, 0));
   for (const z of [-0.95, -0.05, 0.9]) for (const sx of [-1, 1]) kab.add(setze(quader(0.06, 0.52, z === -0.05 ? 0.08 : 0.1, WEISS, { umriss: 0.002 }), sx * (B / 2 - 0.12), 0.27, z, 0, 0, sx * 0.06));
   // Front- und Heckscheibe schräg
@@ -253,7 +423,7 @@ export function baueCarport(scene, { merke, hindernis }) {
   benz.add(kab);
   // Chromstoßstangen mit Gummi, Kühlergrill mit Stern, breite Scheinwerfer, Blinker, Rückleuchten
   for (const z of [L / 2 + 0.04, -L / 2 - 0.04]) {
-    benz.add(setze(quader(B + 0.04, 0.12, 0.08, CHROM, { umriss: 0.003 }), 0, 0.42, z));
+    benz.add(setze(rundQuader(B + 0.04, 0.12, 0.1, CHROM, { umriss: 0.003 }, 0.045), 0, 0.42, z));
     benz.add(setze(quader(B + 0.05, 0.04, 0.09, 0x1d1d1f, { umriss: false }), 0, 0.42, z));
   }
   benz.add(setze(quader(0.42, 0.3, 0.05, CHROM, { umriss: 0.003 }), 0, 0.68, L / 2 + 0.01));
@@ -323,13 +493,23 @@ export function baueCarport(scene, { merke, hindernis }) {
   benz.add(setze(quader(0.02, 0.3, 0.05, CHROM, { umriss: false }), 0, 0.68, L / 2 + 0.04));
   benz.add(setze(zylinder(0.012, 0.012, 0.05, CHROM, { umriss: false }, 6), 0, 0.86, L / 2 - 0.02));
   // Kennzeichen vorne und hinten
-  const schildTex = leinwandTextur(256, 56, (g, b, h) => {
+  // Kennzeichen „SE-XY 238H“ (H-Kennzeichen für den Oldtimer), Plaketten zwischen Ortskürzel und Buchstaben
+  const schildTex = leinwandTextur(512, 112, (g, b, h) => {
     g.fillStyle = '#f4f4ef'; g.fillRect(0, 0, b, h);
-    g.fillStyle = '#1f4fa8'; g.fillRect(0, 0, 28, h);
-    g.fillStyle = '#f2c21c'; for (let k = 0; k < 8; k++) { const w = k / 8 * Math.PI * 2; g.fillRect(14 + Math.cos(w) * 8 - 1, 20 + Math.sin(w) * 8 - 1, 2, 2); }
-    g.fillStyle = '#f4f4ef'; g.font = 'bold 14px Arial'; g.fillText('D', 9, 48);
-    g.fillStyle = '#1d1d1f'; g.font = 'bold 40px Arial'; g.fillText('STD DW 123', 36, 44);
-    g.strokeStyle = '#1d1d1f'; g.lineWidth = 3; g.strokeRect(1, 1, b - 2, h - 2);
+    g.fillStyle = '#1f4fa8'; g.fillRect(0, 0, 52, h);
+    g.fillStyle = '#f2c21c'; for (let k = 0; k < 12; k++) { const w = k / 12 * Math.PI * 2; g.beginPath(); g.arc(26 + Math.cos(w) * 15, 38 + Math.sin(w) * 15, 2.5, 0, Math.PI * 2); g.fill(); }
+    g.fillStyle = '#f4f4ef'; g.font = 'bold 28px Arial'; g.textAlign = 'center'; g.fillText('D', 26, 96);
+    g.fillStyle = '#1d1d1f'; g.font = 'bold 76px "DIN Alternate", "Arial Narrow", Arial'; g.textAlign = 'left';
+    g.fillText('SE', 66, 86);
+    // Plaketten (HU und Stadt) statt Bindestrich
+    g.fillStyle = '#3a8fd6'; g.beginPath(); g.arc(178, 40, 16, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#d8d2c4'; g.beginPath(); g.arc(178, 76, 14, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#1d1d1f';
+    const rest = 'XY 238H';
+    let fs = 76; g.font = `bold ${fs}px "DIN Alternate", "Arial Narrow", Arial`;
+    while (g.measureText(rest).width > b - 214 && fs > 40) { fs -= 2; g.font = `bold ${fs}px "DIN Alternate", "Arial Narrow", Arial`; }
+    g.fillText(rest, 204, 86);
+    g.strokeStyle = '#1d1d1f'; g.lineWidth = 6; g.strokeRect(3, 3, b - 6, h - 6);
   });
   for (const [z, ry] of [[L / 2 + 0.09, 0], [-L / 2 - 0.09, Math.PI]]) {
     const k = new THREE.Mesh(new THREE.PlaneGeometry(0.52, 0.11), new THREE.MeshBasicMaterial({ map: schildTex }));
@@ -337,7 +517,20 @@ export function baueCarport(scene, { merke, hindernis }) {
     benz.add(k);
   }
   // Auspuff, Antenne, Tankdeckel
-  benz.add(setze(zylinder(0.035, 0.035, 0.3, 0x5a5d62, { umriss: 0.001 }, 10), -0.55, 0.22, -L / 2 - 0.05, Math.PI / 2, 0, 0));
+  // Auspuff: Rohr vom Motor unter dem Wagen nach hinten, Mitteltopf, Endtopf quer unter dem Heck, Endrohr, Gummihalter
+  const AUS = 0x5a5d62, AUS_D = 0x3f4246;
+  const auspuffWeg = new THREE.CatmullRomCurve3([[-0.2, 0.3, L / 2 - 1.0], [-0.28, 0.22, L / 2 - 1.6], [-0.3, 0.2, 0.0], [-0.3, 0.2, -L / 2 + 1.2], [-0.4, 0.21, -L / 2 + 0.55], [-0.55, 0.22, -L / 2 + 0.35], [-0.55, 0.22, -L / 2 - 0.06]].map((q) => new THREE.Vector3(...q)));
+  benz.add(teil(new THREE.TubeGeometry(auspuffWeg, 60, 0.03, 8, false), AUS, { umriss: 0.001 }));
+  benz.add(setze(zylinder(0.075, 0.075, 0.5, AUS_D, { umriss: 0.002 }, 12), -0.3, 0.2, -0.3, Math.PI / 2, 0, 0));
+  const endtopf = zylinder(0.09, 0.09, 0.62, AUS_D, { umriss: 0.002 }, 12);
+  endtopf.scale.set(1, 1, 0.7);
+  endtopf.position.set(-0.15, 0.22, -L / 2 + 0.55);
+  endtopf.rotation.z = Math.PI / 2;
+  benz.add(endtopf);
+  benz.add(setze(zylinder(0.038, 0.035, 0.08, 0x8a8f96, { umriss: 0.001 }, 10), -0.55, 0.22, -L / 2 - 0.08, Math.PI / 2, 0, 0));
+  for (const z of [0.6, -0.9, -L / 2 + 0.35]) {
+    benz.add(setze(quader(0.03, 0.09, 0.03, 0x1d1d1f, { umriss: false }), z < -1.5 ? -0.55 : -0.3, 0.28, z));
+  }
   benz.add(setze(zylinder(0.004, 0.004, 0.7, 0x1d1d1f, { umriss: false }, 4), 0.8, 1.2, -L / 2 + 0.6, -0.2, 0, 0));
   benz.add(setze(zylinder(0.07, 0.07, 0.01, WEISS, { umriss: 0.002 }, 14), B / 2 + 0.006, 0.76, -L / 2 + 0.75, 0, 0, Math.PI / 2));
   // die Gehwegplatte: steckt schräg in der eingedrückten Motorhaube, Risse und abgeplatzter Lack drumherum
@@ -358,7 +551,8 @@ export function baueCarport(scene, { merke, hindernis }) {
   for (let k = 0; k < 7; k++) benz.add(setze(quader(0.05 + r() * 0.06, 0.004, 0.04, 0x8a8a84, { umriss: false }), 0.08 + (r() - 0.5) * 0.8, 0.915, HZ + (r() - 0.5) * 0.7, 0, r() * 3, 0));
   // Splitter der Platte auf der Haube und am Boden
   for (let k = 0; k < 6; k++) benz.add(setze(quader(0.04 + r() * 0.05, 0.03, 0.04, 0x8f8d86, { umriss: 0.001 }), (r() - 0.5) * 1.4, k < 3 ? 0.93 : 0.015, HZ + (r() - 0.5) * 1.0 + (k < 3 ? 0 : 0.6), r(), r() * 3, r()));
-  benz.position.set(0, 0, AZ0 - L / 2 - 0.15 + 0.05);
+  benz.position.set(0, 0, BENZ_Z);
+  benz.rotation.y = Math.PI;
   anbau.add(benz);
   anbau.position.set(-GX - AX - 0.04, 0, 0.05);
   platz.add(anbau);
@@ -369,6 +563,18 @@ export function baueCarport(scene, { merke, hindernis }) {
   scene.add(platz);
   // Klickbare Teile
   merke(benz, 'benz', 'Mercedes 123', null);
+  merke(kofferDeckel, 'kofferraum', 'Kofferraum', null);
+  merke(kettenhemd, 'kettenhemd', 'Kettenhemd', null);
+  merke(peitsche, 'peitsche', 'Peitsche', null);
+  // Kofferraum auf/zu (weich), Peitsche/Kettenhemd erst klickbar, wenn offen
+  let kofferAuf = false, kofferWinkel = 0;
+  const kofferAnimation = () => {
+    const soll = kofferAuf ? 1.15 : 0;
+    kofferWinkel += (soll - kofferWinkel) * 0.15;
+    kofferDeckel.rotation.x = kofferWinkel;
+    if (Math.abs(soll - kofferWinkel) > 0.002) requestAnimationFrame(kofferAnimation);
+  };
+  peitsche.userData.start = { pos: peitsche.position.clone(), rot: peitsche.rotation.clone(), eltern: benz };
   merke(ww, 'wohnwagen', 'Wohnwagen', null);
   merke(dach, 'carport', 'Carport', null);
   merke(weg, 'turnmatte', 'Turnmatte', null);
@@ -392,8 +598,18 @@ export function baueCarport(scene, { merke, hindernis }) {
   scene.add(eiche);
 
   // Hindernisse (Weltkoordinaten): großes Carport mit Wohnwagen und Terrasse, Anbau mit Benz, Eiche, Matte
-  hindernis(-18.2, -11.4, 5.6, 10.7); // Carport + Wohnwagen (Deichsel zur Werkstatt) + Terrasse
-  hindernis(-17.9, -12.4, 3.0, 5.7); // Anbau mit dem Benz
+  // (lokal -> Welt: x = -15,2 - z, z = 7,4 + x) – einzeln, damit man um alles herumlaufen und -fahren kann
+  hindernis(-17.45, -12.95, 6.3, 8.5); // Wohnwagen
+  hindernis(-13.0, -11.6, 6.95, 7.85); // Deichsel
+  for (const wx of [-12.3, -15.2, -18.1]) for (const wz of [5.7, 9.1]) hindernis(wx - 0.15, wx + 0.15, wz - 0.15, wz + 0.15); // Carport-Pfosten
+  hindernis(-15.1, -13.75, 8.5, 9.3); // Sofa auf der Terrasse
+  hindernis(-14.65, -14.15, 9.45, 9.95); // Bierkasten
+  hindernis(-17.65, -12.85, 3.5, 5.3); // Benz
+  for (const wx of [-17.7, -15.2, -12.7]) hindernis(wx - 0.12, wx + 0.12, 3.05, 3.3); // Pfosten vom Anbau
   hindernis(-19.8, -18.8, 8.1, 9.1); // Eiche
-  return { benz, wohnwagen: ww };
+  return {
+    benz, wohnwagen: ww, kettenhemd, peitsche,
+    get kofferAuf() { return kofferAuf; },
+    kofferraum(auf) { kofferAuf = auf; requestAnimationFrame(kofferAnimation); },
+  };
 }

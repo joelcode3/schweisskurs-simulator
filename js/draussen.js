@@ -2,16 +2,41 @@
 // Wiese mit Bäumen, Horizont, Mülltonnen, roter Weidemann-Hoflader mit Palettengabel, rosa Mini-Jeep, Feuerschale mit
 // Dreibein, Grillrost und alter Bratwurst, Schild „Nicht stören – Schweißkurs!“.
 import * as THREE from 'three';
-import { toon, teil, quader, zylinder, kugel, setze, leinwandTextur, zufall } from './toon.js';
+import { toon, teil, quader, rundQuader, zylinder, kugel, setze, leinwandTextur, zufall } from './toon.js';
 
-// Begehbare Flächen draußen (Rechtecke). Das Bad-Häuschen vorne rechts ist ausgespart.
-const VORPLATZ = { xMin: -17, xMax: 9.5, zMin: 4.25, zMax: 12.5 };
-const SEITE = { xMin: 5.35, xMax: 9.5, zMin: -3.5, zMax: 4.6 };
+// Begehbare Flächen draußen (Rechtecke): rund um die Werkstatt, Carport, Wohnwagen und Benz. Das Bad-Häuschen vorne
+// rechts ist ausgespart, die Werkstatt selbst sowieso.
+export const GELAENDE = { xMin: -25, xMax: 13, zMin: -9, zMax: 17 };
+const VORPLATZ = { xMin: GELAENDE.xMin, xMax: GELAENDE.xMax, zMin: 4.25, zMax: GELAENDE.zMax };
+const SEITE = { xMin: 5.35, xMax: GELAENDE.xMax, zMin: GELAENDE.zMin, zMax: 4.6 };
+const LINKS = { xMin: GELAENDE.xMin, xMax: -5.35, zMin: GELAENDE.zMin, zMax: 4.6 };
+const HINTEN = { xMin: GELAENDE.xMin, xMax: GELAENDE.xMax, zMin: GELAENDE.zMin, zMax: -4.4 };
 const BAD_HAUS = { xMin: 0.55, xMax: 4.05, zMin: 3.9, zMax: 6.95 };
-// Durchgang durchs offene Tor
-// Feldweg nach rechts weg vom Hof (nur für Fahrzeuge)
-const AUSFAHRT = { xMin: 9.0, xMax: 32, zMin: 9.5, zMax: 11.8 };
 const DURCHGANG = { xMin: -0.68, xMax: -0.02, zMin: 3.4, zMax: 4.7 }; // Schlupftür im Tor
+// Feldweg: schließt rechts an die Betonfläche an und läuft in Kurven über die Wiese davon (Mittellinie, für Fahrzeuge
+// und Figuren; FELDWEG[0] liegt am Hof)
+export const FELDWEG = [[7.3, 9.4], [9.8, 10.3], [12.6, 11.5], [16.5, 12.4], [20.5, 11.2], [24.2, 9.4], [28.5, 9.9], [33, 11.8], [39, 12.6], [46, 11.4], [58, 10.5]]
+  .map(([x, z]) => ({ x, z }));
+const WEG_BREITE = 2.4;
+const wegKurve = new THREE.CatmullRomCurve3(FELDWEG.map((p) => new THREE.Vector3(p.x, 0, p.z)), false, 'centripetal');
+const wegPunkte = wegKurve.getSpacedPoints(240);
+function aufFeldweg(x, z, rand = 0) {
+  if (x < FELDWEG[0].x - 1) return false;
+  let best = Infinity;
+  for (const q of wegPunkte) { const d = (q.x - x) ** 2 + (q.z - z) ** 2; if (d < best) best = d; }
+  return Math.sqrt(best) < WEG_BREITE / 2 + rand;
+}
+
+// Liegt (x, z) in einem Hindernis (mit Rand)? Normale Hindernisse sind achsparallele Kästen; Fahrzeuge haben zusätzlich
+// gedrehte Kästen (boxen: { x, z, psi, hx, hz }), damit man dicht an ihnen vorbei- und durch Lücken fahren kann.
+export function inHindernis(h, x, z, rand = 0) {
+  if (!(x > h.xMin - rand && x < h.xMax + rand && z > h.zMin - rand && z < h.zMax + rand)) return false;
+  if (!h.boxen) return true;
+  return h.boxen.some((b) => {
+    const dx = x - b.x, dz = z - b.z, c = Math.cos(b.psi), s = Math.sin(b.psi);
+    return Math.abs(dx * c - dz * s) < b.hx + rand && Math.abs(dx * s + dz * c) < b.hz + rand;
+  });
+}
 
 export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   const r = zufall(303);
@@ -158,12 +183,31 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   hinten.rotation.y = Math.PI;
   hinten.position.z = RAUM.zMin - 0.08;
   scene.add(hinten);
+  // Seitenwände; links mit Fensterloch (passt zum Fenster innen), mit Laibung, damit man durchgucken kann
+  const FENSTER_LOCH = { z0: 0.82, z1: 2.38, y0: 1.47, y1: 2.43 };
   for (const seite of [-1, 1]) {
-    const w = new THREE.Mesh(new THREE.PlaneGeometry(RAUM.zMax - RAUM.zMin + 0.16, TRAUFE), steinMat);
-    w.geometry.attributes.uv.array.forEach((v, i, a) => { a[i] = v * (i % 2 ? TRAUFE : RAUM.zMax - RAUM.zMin + 0.16); });
-    w.position.set(seite * (RAUM.xMax + 0.08), TRAUFE / 2, 0);
-    w.rotation.y = seite * Math.PI / 2;
+    const z0 = RAUM.zMin - 0.08, z1 = RAUM.zMax + 0.08;
+    const form = new THREE.Shape();
+    form.moveTo(z0, 0); form.lineTo(z1, 0); form.lineTo(z1, TRAUFE); form.lineTo(z0, TRAUFE); form.closePath();
+    if (seite < 0) {
+      const l = new THREE.Path();
+      l.moveTo(FENSTER_LOCH.z0, FENSTER_LOCH.y0); l.lineTo(FENSTER_LOCH.z0, FENSTER_LOCH.y1); l.lineTo(FENSTER_LOCH.z1, FENSTER_LOCH.y1); l.lineTo(FENSTER_LOCH.z1, FENSTER_LOCH.y0); l.closePath();
+      form.holes.push(l);
+    }
+    const w = new THREE.Mesh(new THREE.ShapeGeometry(form), steinMat);
+    w.position.set(seite * (RAUM.xMax + 0.08), 0, 0);
+    // Form-x = Welt-z: links um -90°, rechts gespiegelt
+    w.rotation.y = -Math.PI / 2;
+    if (seite > 0) { w.rotation.y = Math.PI / 2; w.scale.x = -1; }
+    w.receiveShadow = true;
     scene.add(w);
+  }
+  // Laibung (Mauerdicke) rund ums Fensterloch
+  {
+    const L = FENSTER_LOCH, x = RAUM.xMin - 0.04;
+    const putz = toon(0xd8d2c4, { side: THREE.DoubleSide });
+    for (const y of [L.y0, L.y1]) { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.09, L.z1 - L.z0), putz); m.rotation.set(-Math.PI / 2, 0, 0); m.position.set(x, y, (L.z0 + L.z1) / 2); scene.add(m); }
+    for (const z of [L.z0, L.z1]) { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.09, L.y1 - L.y0), putz); m.position.set(x, (L.y0 + L.y1) / 2, z); scene.add(m); }
   }
   // Laibung im Tor (Mauerdicke) und Sturz
   const laibung = (b, h, x, y, z, ry) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(b, h), steinMatSeite); m.position.set(x, y, z); m.rotation.y = ry; scene.add(m); };
@@ -174,8 +218,9 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   scene.add(sturz);
   // Fenster außen an der linken Wand (wie innen)
   const fensterAussen = new THREE.Group();
-  fensterAussen.add(setze(quader(1.7, 1.1, 0.05, 0xf0f0ea, { umriss: 0.003 }), 0, 0, 0));
-  const glas = new THREE.Mesh(new THREE.PlaneGeometry(1.56, 0.96), new THREE.MeshBasicMaterial({ color: 0x9cc7e6 }));
+  for (const [b, h, x, y] of [[1.7, 0.08, 0, 0.51], [1.7, 0.08, 0, -0.51], [0.08, 1.1, -0.81, 0], [0.08, 1.1, 0.81, 0]]) fensterAussen.add(setze(quader(b, h, 0.05, 0xf0f0ea, { umriss: 0.003 }), x, y, 0));
+  const glas = new THREE.Mesh(new THREE.PlaneGeometry(1.56, 0.96), new THREE.MeshBasicMaterial({ color: 0x9cc7e6, transparent: true, opacity: 0.2, depthWrite: false, side: THREE.DoubleSide }));
+  glas.raycast = () => {};
   glas.position.z = 0.03;
   fensterAussen.add(glas);
   fensterAussen.add(setze(quader(0.05, 1.0, 0.04, 0xf0f0ea, { umriss: false }), 0, 0, 0.04));
@@ -286,15 +331,36 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   // Kartons quellen aus der blauen Tonne, Müllbeutel neben der grauen
   tonnen.add(setze(quader(0.24, 0.16, 0.22, 0xb08a5a, { umriss: 0.002 }), 0.72, 1.14, 0.2, 0.35, 0.4, 0.1));
   tonnen.add(setze(quader(0.2, 0.02, 0.3, 0xc49a68, { umriss: 0.002 }), 0.62, 1.12, 0.3, 0.6, 0.1, 0.4));
-  const sack = kugel(0.22, 0x1d1d1f, { umriss: 0.003 }, 12);
-  sack.scale.set(1, 0.85, 0.9);
-  sack.position.set(-0.45, 0.19, 0.15);
+  // Müllsack: praller, unten breit aufliegender Sack mit Beulen und Falten, oben zusammengerafft und verknotet (zwei Zipfel)
+  const sackGeo = new THREE.LatheGeometry([[0.0, 0], [0.17, 0.005], [0.24, 0.05], [0.27, 0.14], [0.26, 0.25], [0.21, 0.36], [0.12, 0.44], [0.05, 0.49], [0.035, 0.52]]
+    .map(([x, y]) => new THREE.Vector2(x, y)), 28);
+  const sp = sackGeo.attributes.position;
+  for (let i = 0; i < sp.count; i++) {
+    const x = sp.getX(i), y = sp.getY(i), z = sp.getZ(i);
+    const w = Math.atan2(z, x);
+    // Beulen vom Inhalt, senkrechte Falten zur Raffung hin
+    const beule = 1 + Math.sin(w * 3 + 0.7) * 0.07 * Math.sin(y * 6) + Math.sin(w * 5 + y * 9) * 0.04;
+    const falte = 1 + Math.sin(w * 14) * 0.05 * Math.max(0, (y - 0.3) / 0.22);
+    sp.setX(i, x * beule * falte); sp.setZ(i, z * beule * falte);
+  }
+  sackGeo.computeVertexNormals();
+  const sack = new THREE.Group();
+  sack.add(teil(sackGeo, 0x1d1d1f, { umriss: 0.003, mat: { side: THREE.DoubleSide } }));
+  // Glanzlichter (Plastik) und Knoten mit zwei Zipfeln
+  for (const [x, y, z] of [[0.12, 0.3, 0.18], [-0.16, 0.2, 0.16]]) sack.add(setze(quader(0.05, 0.12, 0.004, 0x5a5d62, { umriss: false }), x, y, z, 0, Math.atan2(x, z), 0.2));
+  sack.add(setze(kugel(0.04, 0x1d1d1f, { umriss: 0.002 }, 8), 0, 0.54, 0));
+  for (const sx of [-1, 1]) {
+    const zipfel = teil(new THREE.ConeGeometry(0.035, 0.12, 6), 0x1d1d1f, { umriss: 0.002 });
+    zipfel.position.set(sx * 0.05, 0.6, 0.01); zipfel.rotation.z = -sx * 0.9;
+    sack.add(zipfel);
+  }
+  sack.position.set(-0.5, 0, 0.18);
+  sack.rotation.y = 0.6;
   tonnen.add(sack);
-  tonnen.add(setze(zylinder(0.02, 0.05, 0.1, 0x1d1d1f, { umriss: 0.002 }, 8), -0.45, 0.42, 0.15));
   setze(tonnen, -4.6, 0, RAUM.zMax + 0.6, 0, 0, 0);
   scene.add(tonnen);
   merke(tonnen, 'muelltonnen', 'Mülltonnen', null);
-  hindernis(-5.3, -2.85, RAUM.zMax, RAUM.zMax + 1.1);
+  const tonnenHindernis = hindernis(-5.3, -2.85, RAUM.zMax, RAUM.zMax + 1.1);
 
   // ---------- roter Hoflader (nach Fotos vom Weidemann 1280, ohne Schriftzug): Knicklenker, Kabine auf dem Hinterwagen,
   // mittiger Hubarm vor der Kabine mit grauen Hub- und Kippzylindern, Schnellwechsler mit Palettengabel ----------
@@ -348,22 +414,36 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   // --- Hinterwagen: Rahmen, Achse, Motorhaube hinten (rund, schwarze Lüftungsfenster), Heck mit Leuchten ---
   lader.add(setze(quader(0.72, 0.34, 1.35, ROT, { umriss: 0.005 }), 0, 0.56, -0.78));
   rad(lader, -0.75);
-  lader.add(setze(quader(1.0, 0.62, 0.58, ROT, { umriss: 0.005 }), 0, 0.98, -1.26));
-  const hutze = teil(new THREE.CylinderGeometry(0.29, 0.29, 1.0, 16, 1, false, 0, Math.PI), ROT, { umriss: 0.004 });
-  hutze.rotation.z = Math.PI / 2; hutze.rotation.y = Math.PI / 2;
-  hutze.scale.set(1, 1, 0.45);
-  hutze.position.set(0, 1.29, -1.26);
-  lader.add(hutze);
+  // runde Motorhaube hinten (Seitenprofil mit großen Radien, Kanten abgerundet), statt eckiger Kästen
+  const haubeProfil = new THREE.Shape();
+  haubeProfil.moveTo(-0.95, 0.67);
+  haubeProfil.lineTo(-0.95, 1.2);
+  haubeProfil.quadraticCurveTo(-0.95, 1.34, -1.12, 1.35);
+  haubeProfil.lineTo(-1.3, 1.34);
+  haubeProfil.quadraticCurveTo(-1.6, 1.32, -1.63, 1.02);
+  haubeProfil.lineTo(-1.64, 0.8);
+  haubeProfil.quadraticCurveTo(-1.64, 0.67, -1.5, 0.67);
+  haubeProfil.closePath();
+  const haubeGeo = new THREE.ExtrudeGeometry(haubeProfil, { depth: 0.86, bevelEnabled: true, bevelThickness: 0.07, bevelSize: 0.06, bevelSegments: 5, curveSegments: 16 });
+  haubeGeo.translate(0, 0, -0.43);
+  haubeGeo.rotateY(-Math.PI / 2);
+  const motorHaube = teil(haubeGeo, ROT, { umriss: 0.005 });
+  lader.add(motorHaube);
   for (const sx of [-1, 1]) {
     lader.add(setze(quader(0.02, 0.36, 0.28, SCHW, { umriss: 0.002 }), sx * 0.505, 1.03, -1.22));
     for (let k = 0; k < 5; k++) lader.add(setze(quader(0.024, 0.012, 0.26, 0x34363a, { umriss: false }), sx * 0.505, 0.9 + k * 0.065, -1.22));
   }
-  lader.add(setze(quader(1.02, 0.3, 0.14, ROT, { umriss: 0.004 }), 0, 0.55, -1.6));
+  // Heck: abgerundetes Gegengewicht unter der Haube
+  const heckGewicht = teil(new THREE.CapsuleGeometry(0.15, 0.72, 6, 14), ROT, { umriss: 0.004 });
+  heckGewicht.rotation.z = Math.PI / 2;
+  heckGewicht.scale.set(1, 1, 0.7);
+  heckGewicht.position.set(0, 0.55, -1.6);
+  lader.add(heckGewicht);
   for (const sx of [-1, 1]) {
-    lader.add(setze(quader(0.12, 0.08, 0.02, 0xc8352a, { umriss: 0.001 }), sx * 0.36, 0.6, -1.675));
-    lader.add(setze(quader(0.06, 0.08, 0.02, 0xf2a21c, { umriss: false }), sx * 0.26, 0.6, -1.675));
+    lader.add(setze(quader(0.12, 0.08, 0.02, 0xc8352a, { umriss: 0.001 }), sx * 0.34, 0.84, -1.72));
+    lader.add(setze(quader(0.06, 0.08, 0.02, 0xf2a21c, { umriss: false }), sx * 0.24, 0.84, -1.72));
   }
-  lader.add(setze(quader(0.3, 0.1, 0.02, SCHW, { umriss: false }), 0, 0.58, -1.675));
+  lader.add(setze(quader(0.3, 0.1, 0.02, SCHW, { umriss: false }), 0, 0.84, -1.72));
   lader.add(setze(zylinder(0.03, 0.03, 0.06, SCHW, { umriss: false }, 8), 0.3, 0.44, -1.67, Math.PI / 2, 0, 0));
   // Knickgelenk
   lader.add(setze(zylinder(0.1, 0.1, 0.36, 0x5a5d62, { umriss: 0.003 }, 12), 0, 0.56, 0.0));
@@ -475,26 +555,25 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   const JL = 1.9, JB = 1.06, JR = 0.24; // Länge, Breite, Radradius
   const jeep = new THREE.Group();
   // Unterboden, Bodenblech im Fußraum
-  jeep.add(setze(quader(JB - 0.16, 0.08, JL - 0.3, 0x2a2c30, { umriss: 0.003 }), 0, 0.16, 0));
-  jeep.add(setze(quader(JB - 0.14, 0.03, 1.15, 0x3a3c40, { umriss: false }), 0, 0.215, -0.3));
+  // tief liegender Boden: die Füße der Fahrer stehen im Fußraum und gucken unten nicht raus
+  jeep.add(setze(quader(JB - 0.16, 0.07, JL - 0.3, 0x2a2c30, { umriss: 0.003 }), 0, 0.045, 0));
+  jeep.add(setze(quader(JB - 0.14, 0.02, 1.15, 0x3a3c40, { umriss: false }), 0, 0.09, -0.3));
   // Wanne: Seitenwände (vorne bis zur Haube, hinten bis zum Heck), Heckwand, Ladefläche hinter den Sitzen
   for (const sx of [-1, 1]) {
-    jeep.add(setze(quader(0.06, 0.36, 1.25, ROSA, { umriss: 0.004 }), sx * (JB / 2 - 0.03), 0.4, -0.3));
+    jeep.add(setze(rundQuader(0.07, 0.54, 1.25, ROSA, { umriss: 0.004 }, 0.035), sx * (JB / 2 - 0.035), 0.31, -0.3));
     // Türausschnitt (dunkle Kante) und Haltegriff
     jeep.add(setze(quader(0.065, 0.025, 0.55, ROSA_D, { umriss: false }), sx * (JB / 2 - 0.03), 0.57, -0.2));
     jeep.add(setze(teil(new THREE.TorusGeometry(0.05, 0.01, 5, 10, Math.PI), SCHWARZ, { umriss: false }), sx * (JB / 2 - 0.08), 0.6, 0.1, 0, Math.PI / 2, 0));
-    // Trittbrett
-    jeep.add(setze(quader(0.1, 0.03, 0.75, SCHWARZ, { umriss: 0.002 }), sx * (JB / 2 + 0.03), 0.2, -0.2));
   }
-  jeep.add(setze(quader(JB - 0.06, 0.36, 0.06, ROSA, { umriss: 0.004 }), 0, 0.4, -JL / 2 + 0.06));
+  jeep.add(setze(rundQuader(JB - 0.02, 0.54, 0.08, ROSA, { umriss: 0.004 }, 0.04), 0, 0.31, -JL / 2 + 0.07));
   jeep.add(setze(quader(JB - 0.14, 0.03, 0.4, 0x3a3c40, { umriss: false }), 0, 0.38, -0.72));
   // Motorhaube (vorne höher als die Wanne), Lüftungsschlitze, Haubenverschlüsse
-  jeep.add(setze(quader(JB - 0.04, 0.3, 0.62, ROSA, { umriss: 0.004 }), 0, 0.5, 0.62));
-  jeep.add(setze(quader(JB - 0.1, 0.03, 0.6, ROSA_D, { umriss: 0.002 }), 0, 0.665, 0.62));
+  jeep.add(setze(rundQuader(JB - 0.02, 0.32, 0.64, ROSA, { umriss: 0.004 }, 0.12), 0, 0.5, 0.62));
+  jeep.add(setze(rundQuader(JB - 0.2, 0.03, 0.5, ROSA_D, { umriss: 0.002 }, 0.04), 0, 0.665, 0.62));
   for (let k = 0; k < 6; k++) jeep.add(setze(quader(0.012, 0.005, 0.22, 0x8a4a6a, { umriss: false }), -0.2 + k * 0.08, 0.683, 0.72));
   for (const sx of [-1, 1]) jeep.add(setze(quader(0.04, 0.06, 0.03, SCHWARZ, { umriss: false }), sx * (JB / 2 - 0.02), 0.6, 0.82));
   // Kühlergrill mit 7 Schlitzen, runde Scheinwerfer, Blinker, Stoßstange mit Abschlepphaken, Kennzeichen
-  jeep.add(setze(quader(JB - 0.14, 0.3, 0.04, SCHWARZ, { umriss: 0.003 }), 0, 0.5, JL / 2 - 0.02));
+  jeep.add(setze(rundQuader(JB - 0.14, 0.3, 0.05, SCHWARZ, { umriss: 0.003 }, 0.05), 0, 0.5, JL / 2 - 0.02));
   for (let i = 0; i < 7; i++) jeep.add(setze(quader(0.05, 0.22, 0.02, ROSA, { umriss: false }), -0.27 + i * 0.09, 0.5, JL / 2 + 0.005));
   for (const sx of [-1, 1]) {
     jeep.add(setze(zylinder(0.085, 0.085, 0.05, 0x1d1d1f, { umriss: 0.002 }, 16), sx * 0.38, 0.53, JL / 2 + 0.0, Math.PI / 2, 0, 0));
@@ -502,8 +581,8 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
     jeep.add(setze(quader(0.07, 0.04, 0.02, 0xf2a21c, { umriss: false }), sx * 0.38, 0.4, JL / 2 + 0.01));
     jeep.add(setze(teil(new THREE.TorusGeometry(0.03, 0.01, 5, 10), 0xc9cdd2, { umriss: false }), sx * 0.3, 0.22, JL / 2 + 0.1));
   }
-  jeep.add(setze(quader(JB + 0.06, 0.09, 0.12, SCHWARZ, { umriss: 0.003 }), 0, 0.27, JL / 2 + 0.04));
-  jeep.add(setze(quader(JB + 0.06, 0.09, 0.12, SCHWARZ, { umriss: 0.003 }), 0, 0.27, -JL / 2 - 0.02));
+  jeep.add(setze(rundQuader(JB + 0.06, 0.1, 0.12, SCHWARZ, { umriss: 0.003 }, 0.045), 0, 0.27, JL / 2 + 0.04));
+  jeep.add(setze(rundQuader(JB + 0.06, 0.1, 0.12, SCHWARZ, { umriss: 0.003 }, 0.045), 0, 0.27, -JL / 2 - 0.02));
   const schildJ = leinwandTextur(128, 32, (g, b, h) => { g.fillStyle = '#f4f4ef'; g.fillRect(0, 0, b, h); g.fillStyle = '#1f4fa8'; g.fillRect(0, 0, 14, h); g.fillStyle = '#1d1d1f'; g.font = 'bold 20px Arial'; g.fillText('PINK 1', 20, 24); g.strokeRect(1, 1, b - 2, h - 2); });
   const kz = new THREE.Mesh(new THREE.PlaneGeometry(0.26, 0.065), new THREE.MeshBasicMaterial({ map: schildJ }));
   kz.position.set(0, 0.36, -JL / 2 - 0.085); kz.rotation.y = Math.PI;
@@ -511,12 +590,19 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   // Rückleuchten
   for (const sx of [-1, 1]) jeep.add(setze(quader(0.08, 0.12, 0.02, 0xc8352a, { umriss: 0.001 }), sx * 0.42, 0.45, -JL / 2 + 0.02));
   // ausgestellte Kotflügel über allen Rädern
+  // runde, ausgestellte Kotflügel als Bögen über den Rädern
   for (const z of [JL / 2 - 0.42, -JL / 2 + 0.38]) for (const sx of [-1, 1]) {
-    jeep.add(setze(quader(0.18, 0.05, 0.56, ROSA, { umriss: 0.003 }), sx * (JB / 2 + 0.02), 0.52, z));
-    jeep.add(setze(quader(0.04, 0.12, 0.56, ROSA_D, { umriss: 0.002 }), sx * (JB / 2 + 0.1), 0.47, z));
+    const bogen = teil(new THREE.CylinderGeometry(JR + 0.07, JR + 0.07, 0.22, 20, 1, true, Math.PI * 0.08, Math.PI * 0.84), ROSA, { umriss: 0.003, mat: { side: THREE.DoubleSide } });
+    bogen.rotation.z = Math.PI / 2;
+    bogen.position.set(sx * (JB / 2 + 0.03), JR, z);
+    jeep.add(bogen);
+    const rand = teil(new THREE.TorusGeometry(JR + 0.075, 0.018, 6, 20, Math.PI * 0.84), ROSA_D, { umriss: 0.002 });
+    rand.rotation.set(0, Math.PI / 2, Math.PI * 0.08);
+    rand.position.set(sx * (JB / 2 + 0.14), JR, z);
+    jeep.add(rand);
   }
   // Armaturenbrett mit Tacho, Lenkrad auf der Fahrerseite (links), Schalthebel
-  jeep.add(setze(quader(JB - 0.12, 0.13, 0.14, 0x2a2c30, { umriss: 0.003 }), 0, 0.64, 0.24));
+  jeep.add(setze(rundQuader(JB - 0.12, 0.14, 0.16, 0x2a2c30, { umriss: 0.003 }, 0.05), 0, 0.64, 0.24));
   for (const sx of [-0.24, 0.0]) jeep.add(setze(zylinder(0.04, 0.04, 0.01, 0xf4f4ef, { umriss: false }, 12), sx, 0.67, 0.165, Math.PI / 2, 0, 0));
   jeep.add(setze(zylinder(0.018, 0.018, 0.28, SCHWARZ, { umriss: false }, 8), -0.24, 0.66, 0.1, 1.0, 0, 0));
   jeep.add(setze(teil(new THREE.TorusGeometry(0.12, 0.016, 6, 16), SCHWARZ, { umriss: 0.001 }), -0.24, 0.73, -0.01, -1.0, 0, 0));
@@ -524,10 +610,10 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   jeep.add(setze(kugel(0.03, SCHWARZ, { umriss: false }, 8), 0.0, 0.42, -0.08));
   // zwei Schalensitze (Sitzfläche + Lehne)
   for (const sx of [-0.24, 0.24]) {
-    jeep.add(setze(quader(0.38, 0.08, 0.4, 0x2f3136, { umriss: 0.002 }), sx, 0.46, -0.36));
-    jeep.add(setze(quader(0.38, 0.1, 0.12, 0x2f3136, { umriss: 0.002 }), sx, 0.38, -0.36));
-    jeep.add(setze(quader(0.38, 0.46, 0.08, 0x2f3136, { umriss: 0.002 }), sx, 0.72, -0.58, -0.15, 0, 0));
-    jeep.add(setze(quader(0.28, 0.12, 0.085, 0x45474d, { umriss: false }), sx, 0.88, -0.6, -0.15, 0, 0));
+    jeep.add(setze(rundQuader(0.38, 0.09, 0.4, 0x2f3136, { umriss: 0.002 }, 0.04), sx, 0.46, -0.36));
+    jeep.add(setze(rundQuader(0.38, 0.1, 0.12, 0x2f3136, { umriss: 0.002 }, 0.03), sx, 0.38, -0.36));
+    jeep.add(setze(rundQuader(0.38, 0.46, 0.09, 0x2f3136, { umriss: 0.002 }, 0.04), sx, 0.72, -0.58, -0.15, 0, 0));
+    jeep.add(setze(rundQuader(0.28, 0.12, 0.09, 0x45474d, { umriss: false }, 0.035), sx, 0.88, -0.6, -0.15, 0, 0));
   }
   // Windschutzscheibe mit Rahmen (umgeklappt geht nicht, steht), Überrollbügel, Spiegel
   const scheibeG = new THREE.Group();
@@ -538,7 +624,6 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   jeep.add(scheibeG);
   for (const sx of [-1, 1]) {
     jeep.add(setze(zylinder(0.028, 0.028, 0.62, SCHWARZ, { umriss: 0.002 }, 8), sx * (JB / 2 - 0.06), 0.88, -0.72));
-    jeep.add(setze(zylinder(0.024, 0.024, 0.55, SCHWARZ, { umriss: 0.002 }, 8), sx * (JB / 2 - 0.06), 1.0, -0.47, Math.PI / 2 - 0.35, 0, 0));
     jeep.add(setze(quader(0.1, 0.07, 0.02, SCHWARZ, { umriss: 0.001 }), sx * (JB / 2 + 0.06), 0.82, 0.32));
   }
   jeep.add(setze(zylinder(0.028, 0.028, JB - 0.12, SCHWARZ, { umriss: 0.002 }, 8), 0, 1.19, -0.72, 0, 0, Math.PI / 2));
@@ -627,16 +712,41 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   merke(feuerstelle, 'feuerschale', 'Feuerschale', null);
   const feuerHindernis = hindernis(-5.1, -3.5, 7.2, 8.8);
 
-  // ---------- Feldweg nach rechts (Ausfahrt vom Hof): zwei Fahrspuren mit Gras in der Mitte ----------
-  const wegTex = leinwandTextur(256, 64, (g, b, h) => {
+  // ---------- Feldweg (Ausfahrt vom Hof): Band entlang der Kurve, zwei Fahrspuren mit Gras in der Mitte, weiche Ränder ----------
+  const wegTex = leinwandTextur(64, 512, (g, b, h) => {
     g.fillStyle = '#8f8a78'; g.fillRect(0, 0, b, h);
-    for (let i = 0; i < 300; i++) { g.fillStyle = r() < 0.5 ? 'rgba(60,55,45,0.35)' : 'rgba(200,195,180,0.35)'; g.fillRect(r() * b, r() * h, 2 + r() * 3, 2 + r() * 3); }
-    g.fillStyle = '#5f8a3c'; g.fillRect(0, h * 0.4, b, h * 0.2);
-  }, [12, 1]);
-  const feldweg = new THREE.Mesh(new THREE.PlaneGeometry(80, 2.2), toon(0xffffff, { map: wegTex }));
-  feldweg.rotation.x = -Math.PI / 2;
-  feldweg.position.set(9.0 + 40, 0.012, (AUSFAHRT.zMin + AUSFAHRT.zMax) / 2);
-  scene.add(feldweg);
+    for (let i = 0; i < 900; i++) { g.fillStyle = r() < 0.5 ? 'rgba(60,55,45,0.35)' : 'rgba(200,195,180,0.35)'; g.fillRect(r() * b, r() * h, 1 + r() * 3, 1 + r() * 3); }
+    // Grasstreifen in der Mitte und Gras an den Rändern (ausgefranst)
+    for (let y = 0; y < h; y += 2) {
+      const m = 4 + Math.sin(y * 0.11) * 1.5 + r() * 2;
+      g.fillStyle = '#5f8a3c'; g.fillRect(b / 2 - m, y, m * 2, 2);
+      const rl = 5 + r() * 4, rr = 5 + r() * 4;
+      g.fillStyle = '#6f9a45'; g.fillRect(0, y, rl, 2); g.fillRect(b - rr, y, rr, 2);
+    }
+    for (let i = 0; i < 60; i++) { g.fillStyle = 'rgba(60,110,40,0.7)'; g.fillRect(b / 2 + (r() - 0.5) * 14, r() * h, 1, 3); }
+  });
+  wegTex.wrapS = wegTex.wrapT = THREE.RepeatWrapping;
+  {
+    const n = wegPunkte.length;
+    const pos = [], uv = [], idx = [];
+    let laenge = 0;
+    for (let i = 0; i < n; i++) {
+      const p = wegPunkte[i], q = wegPunkte[Math.min(n - 1, i + 1)], o = wegPunkte[Math.max(0, i - 1)];
+      const t = new THREE.Vector3().subVectors(q, o).normalize();
+      const nx = -t.z, nz = t.x;
+      if (i) laenge += p.distanceTo(wegPunkte[i - 1]);
+      for (const sx of [-1, 1]) { pos.push(p.x + nx * sx * WEG_BREITE / 2, 0.012, p.z + nz * sx * WEG_BREITE / 2); uv.push(sx < 0 ? 0 : 1, laenge / 6); }
+      if (i < n - 1) { const k = i * 2; idx.push(k, k + 2, k + 1, k + 1, k + 2, k + 3); }
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    geo.setIndex(idx);
+    geo.computeVertexNormals();
+    const feldweg = new THREE.Mesh(geo, toon(0xffffff, { map: wegTex, side: THREE.DoubleSide }));
+    feldweg.receiveShadow = true;
+    scene.add(feldweg);
+  }
 
   // ---------- Bäume auf der Wiese ----------
   const blatt = [0x3f7a35, 0x4f8a3e, 0x356a2c];
@@ -651,26 +761,29 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
     baum.position.set(x, 0, z);
     baum.rotation.y = r() * 6;
     scene.add(baum);
+    hindernis(x - 0.3 * s, x + 0.3 * s, z - 0.3 * s, z + 0.3 * s);
   }
 
+  const FLAECHEN = [VORPLATZ, SEITE, LINKS, HINTEN];
   return {
-    // Ist (x, z) draußen mit Abstand r begehbar?
+    // Ist (x, z) draußen mit Abstand r begehbar? (rund ums Haus, plus Feldweg)
     begehbar(x, z, rr) {
       const drin = (q, m) => x > q.xMin + m && x < q.xMax - m && z > q.zMin + m && z < q.zMax - m;
       if (x > BAD_HAUS.xMin - rr && x < BAD_HAUS.xMax + rr && z < BAD_HAUS.zMax + rr && z > 3.0) return false;
-      return drin(VORPLATZ, rr) || drin(SEITE, rr) || (x > DURCHGANG.xMin && x < DURCHGANG.xMax && z > DURCHGANG.zMin && z < DURCHGANG.zMax);
+      return FLAECHEN.some((q) => drin(q, rr)) || aufFeldweg(x, z, -rr) || (x > DURCHGANG.xMin && x < DURCHGANG.xMax && z > DURCHGANG.zMin && z < DURCHGANG.zMax);
     },
-    istDraussen(x, z) { return z > RAUM.zMax + 0.1 || x > RAUM.xMax + 0.1; },
-    // Darf ein Fahrzeug hier stehen? Draußen auf dem Hof, nicht durch die Schlupftür, nicht in den Bad-Anbau
+    istDraussen(x, z) { return z > RAUM.zMax + 0.1 || x > RAUM.xMax + 0.1 || x < RAUM.xMin - 0.1 || z < RAUM.zMin - 0.1; },
+    // Darf ein Fahrzeug hier stehen? Draußen rund ums Haus und auf dem Feldweg, nicht durch die Schlupftür, nicht in den Bad-Anbau
     fahrbar(x, z) {
       const drin = (q) => x > q.xMin && x < q.xMax && z > q.zMin && z < q.zMax;
       if (x > BAD_HAUS.xMin && x < BAD_HAUS.xMax && z < BAD_HAUS.zMax && z > 3.0) return false;
-      return (drin(VORPLATZ) && z > RAUM.zMax + 0.15) || (drin(SEITE) && x > RAUM.xMax + 0.15) || drin(AUSFAHRT);
+      if (x > RAUM.xMin - 0.25 && x < RAUM.xMax + 0.25 && z > RAUM.zMin - 0.25 && z < RAUM.zMax + 0.25) return false;
+      return FLAECHEN.some(drin) || aufFeldweg(x, z);
     },
     fahrzeuge: {
       jeep: { gruppe: jeep, raeder: jeepRaeder, lenkung: jeepLenkung, hindernis: jeepHindernis },
       lader: { gruppe: lader, vorne: vorderwagen, hub, gabel, raeder: laderRaeder, hindernis: laderHindernis, hydraulik, zinke: new THREE.Vector3(0, -0.4, 0.53) },
-      feuerstelle, feuerHindernis, tonnen,
+      feuerstelle, feuerHindernis, tonnen, tonnenHindernis,
     },
   };
 }

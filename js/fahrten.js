@@ -3,24 +3,27 @@
 // irgendwo gegen (Grill umgefahren: aufstellen, bevor Dennis es selbst machen muss). In Dennis' Augen fahren alle lebensgefährlich.
 import * as THREE from 'three';
 import { AUGENHOEHE } from './world.js';
-import { DENNIS, JONNY, TORBEN } from './texte.js';
-import { blip, klonk } from './audio.js';
+import { DENNIS, JONNY, WALDO, TORBEN } from './texte.js';
+import { blip, klonk, hupe } from './audio.js';
 import * as ui from './ui.js';
 import { TORBEN_PLATZ } from './torben.js';
+import { FELDWEG, inHindernis } from './draussen.js';
 
 // Vorerst steckt der Schlüssel im Hoflader (Betreiber: später gibt Dennis ihn raus, wenn man etwas damit erledigen muss)
 export const LADER_SCHLUESSEL_STECKT = true;
 
 const TUER_INNEN = { x: -0.35, z: 3.0 }, TUER_AUSSEN = { x: -0.35, z: 5.0 };
-const FELDWEG_FERN = { x: 30, z: 10.6 };
+const FELDWEG_FERN = FELDWEG[8];
+// den Feldweg entlang (vom Hof weg / zum Hof hin)
+const WEG_RAUS = FELDWEG.slice(1, 9), WEG_REIN = FELDWEG.slice(0, 8).reverse();
 // Runden über den Hof (Routen enden kurz vor der Anfahrt zum Parkplatz, siehe fz.mitAnfahrt)
 const RUNDE_JEEP = [{ x: 4.4, z: 7.5 }, { x: 6.2, z: 8.8 }, { x: 5.0, z: 10.9 }, { x: -2.5, z: 11.2 }, { x: -8.5, z: 10.2 }, { x: -9.5, z: 6.8 }, { x: -6.5, z: 6.2 },
   { x: -2.0, z: 6.4 }, { x: -0.6, z: 8.6 }, { x: -0.2, z: 10.6 }];
 const RUNDE_LADER = [{ x: 7.3, z: 4.8 }, { x: 7.6, z: 8.0 }, { x: 5.0, z: 11.0 }, { x: -2.0, z: 11.3 }, { x: -8.5, z: 10.0 }, { x: -9.5, z: 6.6 }, { x: -6.5, z: 6.3 },
   { x: -2.0, z: 6.5 }, { x: -0.8, z: 9.6 }, { x: 4.6, z: 10.7 }, { x: 8.3, z: 8.6 }, { x: 8.9, z: 4.0 }, { x: 8.9, z: 0.0 }, { x: 8.0, z: -1.6 }];
 // weg vom Hof und zurück
-const WEG = { jeep: [{ x: 4.4, z: 7.5 }, { x: 6.5, z: 9.2 }, { x: 9.5, z: 10.6 }, FELDWEG_FERN], lader: [{ x: 7.3, z: 4.8 }, { x: 7.6, z: 8.5 }, { x: 9.5, z: 10.6 }, FELDWEG_FERN] };
-const ZURUECK = { jeep: [{ x: 9.0, z: 10.6 }, { x: 4.0, z: 11.3 }, { x: -0.6, z: 11.0 }], lader: [{ x: 9.0, z: 10.6 }, { x: 8.4, z: 8.6 }, { x: 8.9, z: 4.0 }, { x: 8.9, z: 0.0 }, { x: 8.0, z: -1.6 }] };
+const WEG = { jeep: [{ x: 4.4, z: 7.5 }, { x: 6.0, z: 8.9 }, ...WEG_RAUS], lader: [{ x: 7.3, z: 4.8 }, { x: 7.4, z: 8.2 }, ...WEG_RAUS] };
+const ZURUECK = { jeep: [...WEG_REIN.slice(1), { x: 4.0, z: 11.3 }, { x: -0.6, z: 11.0 }], lader: [...WEG_REIN.slice(1), { x: 8.4, z: 8.6 }, { x: 8.9, z: 4.0 }, { x: 8.9, z: 0.0 }, { x: 8.0, z: -1.6 }] };
 // Fahrstile
 const STIL = {
   jonny: { jeep: { v: 1.3, wackeln: 0.15 }, lader: { v: 2.0, wackeln: 0.1 } },
@@ -36,7 +39,7 @@ export function baueFahrten(c) {
   const figurVon = { jonny, waldo, torben };
   const sagVon = { jonny: ui.jonnySagt, waldo: ui.waldoSagt, torben: ui.torbenSagt };
   const fz2 = { aktiv: null, meckerAb: 0, rumsAb: 0, ersteFahrt: true, npc: false,
-    naechsteFahrt: 150 + Math.random() * 60, grill: 'steht', grillSeit: 0,
+    naechsteFahrt: 150 + Math.random() * 60, grill: 'steht', grillSeit: 0, tonnen: 'stehen', tonnenSeit: 0,
     torben: { da: false, naechsterBesuch: 110 + Math.random() * 80, bisWeg: 0, naechsteFahrt: 0, unterwegs: false } };
 
   // ---------- Spieler fährt ----------
@@ -65,11 +68,15 @@ export function baueFahrten(c) {
   function aussteigen() {
     const f = fz2.aktiv;
     if (!f) return;
-    // neben dem Fahrersitz aussteigen (links), sonst rechts, sonst hinten
-    for (const [lx, lz] of [[1.0, f.sitz.z], [-1.0, f.sitz.z], [0, -1.6], [0, f.art === 'lader' ? 2.6 : 1.4]]) {
+    // neben dem Fahrersitz aussteigen (links), sonst rechts, sonst hinten/vorne – immer mit Abstand zum Fahrzeug selbst
+    // (auch zu dessen Hindernis-Kasten), damit man danach nicht festhängt
+    f.g.updateMatrixWorld(true);
+    const seite = f.art === 'lader' ? 1.25 : 1.0;
+    const kandidaten = [[seite, f.sitz.z], [-seite, f.sitz.z], [seite + 0.5, f.sitz.z], [-seite - 0.5, f.sitz.z], [0, f.art === 'lader' ? -2.4 : -1.6], [0, f.art === 'lader' ? 2.8 : 1.6], [seite, f.sitz.z - 1], [-seite, f.sitz.z + 1]];
+    for (const [lx, lz] of kandidaten) {
       const p = f.g.localToWorld(new THREE.Vector3(lx, 0, lz));
-      const imWeg = welt.hindernisse.some((h) => h !== f.hindernis && p.x > h.xMin - 0.3 && p.x < h.xMax + 0.3 && p.z > h.zMin - 0.3 && p.z < h.zMax + 0.3);
-      if (welt.begehbar(p.x, p.z, 0.3) && !imWeg) {
+      const imWeg = welt.hindernisse.some((h) => !h.niedrig && inHindernis(h, p.x, p.z, 0.32));
+      if (welt.begehbar(p.x, p.z, 0.32) && !imWeg) {
         f.fahrer = null;
         f.v = 0;
         fz2.aktiv = null;
@@ -89,16 +96,31 @@ export function baueFahrten(c) {
     if (f.art === 'lader') {
       const hub = (tasten.has('r') ? 1 : 0) - (tasten.has('f') ? 1 : 0);
       const ereignis = fz.gabel(dt, hub);
-      if (ereignis) { klonk(0.35); ui.hinweis(ereignis === 'aufgenommen' ? 'Palette auf der Gabel.' : 'Palette abgesetzt.'); }
+      if (ereignis) {
+        klonk(0.35);
+        ui.hinweis({ aufgenommen: 'Palette auf der Gabel.', aufgenommenMehrere: `${fz.lader.last.length} Paletten auf der Gabel.`, abgesetzt: 'Palette abgesetzt.', abgesetztMehrere: 'Paletten abgesetzt.',
+          jeepAuf: fz.jeep.fahrer ? 'Jeep samt Fahrer auf der Gabel!' : 'Jeep auf der Gabel.', jeepAb: 'Jeep wieder abgesetzt.' }[ereignis]);
+        if (ereignis === 'jeepAuf') {
+          aerger(2);
+          setTimeout(() => dennisSagt(sag(DENNIS.jeepHoch), true, { prio: 1 }), 800);
+          const wer = fz.jeep.fahrerName;
+          if (fz.jeep.fahrer && sagVon[wer]) setTimeout(() => sagVon[wer](sag({ jonny: JONNY, waldo: WALDO, torben: TORBEN }[wer].angehoben)), 300);
+        }
+      }
     }
-    const { dpsi, rums } = fz.schritt(f, dt, gas, lenk, fz.vMax(f), fussgaenger());
-    if (rums) {
+    const { dpsi, rums, treffer } = fz.schritt(f, dt, gas, lenk, fz.vMax(f), fussgaenger());
+    // gegen Grill oder Mülltonnen gefahren: umgefahren
+    const schnell = Math.abs(fz2.vorher || 0) > 0.5;
+    if (treffer && schnell && treffer === T.feuerHindernis && fz2.grill === 'steht') grillUm();
+    else if (treffer && schnell && treffer === T.tonnenHindernis && fz2.tonnen === 'stehen') tonnenUm();
+    else if (rums) {
       klonk(0.5);
       if (sekunden() > fz2.rumsAb) { fz2.rumsAb = sekunden() + 20; aerger(1); setTimeout(() => dennisSagt(sag(DENNIS.anstoss), true, { prio: 1 }), 600); }
     }
+    fz2.vorher = f.v;
     // beim Fahren meckert Dennis ab und zu
     if (Math.abs(f.v) > 0.4 && sekunden() > fz2.meckerAb) { fz2.meckerAb = sekunden() + 35 + Math.random() * 15; dennisSagt(sag(DENNIS.fahrenSpieler), true, { prio: 0 }); }
-    if (neu.has(' ')) { blip(f.art === 'jeep' ? 880 : 330, 0.35, 0.2); blip(f.art === 'jeep' ? 1100 : 415, 0.35, 0.15); }
+    if (neu.has(' ')) hupe(f.art);
     if (neu.has('e')) setTimeout(aussteigen, 0);
     return { dpsi, auge: f.g.localToWorld(f.auge.clone()) };
   }
@@ -128,6 +150,46 @@ export function baueFahrten(c) {
     dennisSagt(sag(DENNIS.grillSelbst), true, { prio: 1 });
     for (const p of [TUER_INNEN, TUER_AUSSEN, { x: -4.3, z: 6.6 }]) await Promise.race([dennis.gehZu(p.x, p.z, 1.6), warte(9000)]);
     if (fz2.grill === 'um') { klonk(0.5); grillAuf(); aerger(8); }
+    for (const p of [TUER_AUSSEN, TUER_INNEN]) await Promise.race([dennis.gehZu(p.x, p.z, 1.6), warte(9000)]);
+    z.dennisRaeumt = false;
+    dennis.stimmung('ruhig');
+    dennis.heim();
+  }
+  // Tonnen umgefahren (vom Spieler): kippen nach vorn, Müll fliegt raus; aufstellen oder Dennis macht es nach 75 s selbst
+  const tonnenTeile = T.tonnen.children.filter((c) => c.isGroup && c.children.length > 10);
+  const tonnenStart = tonnenTeile.map((t) => ({ pos: t.position.clone(), rot: t.rotation.clone() }));
+  const tonnenH = { ...T.tonnenHindernis };
+  const muell = new THREE.Group();
+  for (let i = 0; i < 9; i++) {
+    const farbe = [0xb08a5a, 0xf2f0ea, 0x6b4a2a, 0x2f5fa8, 0x1d1d1f][i % 5];
+    const m = new THREE.Mesh(new THREE.BoxGeometry(0.08 + Math.random() * 0.14, 0.02 + Math.random() * 0.05, 0.08 + Math.random() * 0.12), new THREE.MeshToonMaterial({ color: farbe }));
+    m.position.set((Math.random() - 0.3) * 2.2, 0.03, 1.2 + Math.random() * 0.9);
+    m.rotation.y = Math.random() * 3;
+    muell.add(m);
+  }
+  muell.visible = false;
+  T.tonnen.add(muell);
+  function tonnenUm() {
+    fz2.tonnen = 'um';
+    fz2.tonnenSeit = sekunden();
+    tonnenTeile.forEach((t, i) => { t.position.y = 0.36; t.position.z = tonnenStart[i].pos.z + 0.05; t.rotation.set(1.45, tonnenStart[i].rot.y + (i - 1) * 0.3, 0); });
+    muell.visible = true;
+    Object.assign(T.tonnenHindernis, { zMax: tonnenH.zMax + 1.0 });
+    klonk(0.8); setTimeout(() => klonk(0.5), 150);
+    setTimeout(() => { aerger(3); dennisSagt(sag(DENNIS.tonnenUm), true, { prio: 1 }); }, 1300);
+  }
+  function tonnenAuf() {
+    tonnenTeile.forEach((t, i) => { t.position.copy(tonnenStart[i].pos); t.rotation.copy(tonnenStart[i].rot); });
+    muell.visible = false;
+    Object.assign(T.tonnenHindernis, tonnenH);
+    fz2.tonnen = 'stehen';
+  }
+  async function dennisStelltTonnenAuf() {
+    z.dennisRaeumt = true;
+    dennis.stimmung('sauer');
+    dennisSagt(sag(DENNIS.tonnenSelbst), true, { prio: 1 });
+    for (const p of [TUER_INNEN, TUER_AUSSEN, { x: -3.6, z: 6.4 }]) await Promise.race([dennis.gehZu(p.x, p.z, 1.6), warte(9000)]);
+    if (fz2.tonnen === 'um') { klonk(0.5); tonnenAuf(); aerger(8); }
     for (const p of [TUER_AUSSEN, TUER_INNEN]) await Promise.race([dennis.gehZu(p.x, p.z, 1.6), warte(9000)]);
     z.dennisRaeumt = false;
     dennis.stimmung('ruhig');
@@ -167,6 +229,7 @@ export function baueFahrten(c) {
       return false;
     }
     fz.figurRein(f, figur, sitzVon[wer]);
+    f.fahrerName = wer;
     blip(f.art === 'lader' ? 120 : 520, 0.25, 0.1);
     if (Math.random() < 0.7) sagVon[wer](sag(wer === 'torben' ? TORBEN.fahren : JONNY.fahren));
     setTimeout(() => { aerger(1); dennisSagt(sag(DENNIS.fahrenAndere), true, { prio: 0 }); }, 2500);
@@ -183,7 +246,7 @@ export function baueFahrten(c) {
       fz.verstecken(f, true);
       figur.wurzel.visible = false;
       await warte((50 + Math.random() * 40) * 1000);
-      f.x = FELDWEG_FERN.x; f.z = FELDWEG_FERN.z; f.psi = -Math.PI / 2; f.knick = 0;
+      f.x = FELDWEG_FERN.x; f.z = FELDWEG_FERN.z; f.psi = Math.atan2(FELDWEG[7].x - FELDWEG_FERN.x, FELDWEG[7].z - FELDWEG_FERN.z); f.knick = 0;
       fz.verstecken(f, false);
       figur.wurzel.visible = true;
       await fz.fahreRoute(f, fz.mitAnfahrt(f, ZURUECK[f.art]), stil, opt);
@@ -214,8 +277,8 @@ export function baueFahrten(c) {
     tb.da = true;
     tb.unterwegs = true;
     torben.sichtbar(true);
-    torben.wurzel.position.set(26, 0, 10.6);
-    await geheWeg(torben, [{ x: 9.0, z: 10.6 }, TORBEN_PLATZ], 1.5);
+    torben.wurzel.position.set(FELDWEG[7].x, 0, FELDWEG[7].z);
+    await geheWeg(torben, [...FELDWEG.slice(0, 7).reverse(), TORBEN_PLATZ], 1.5);
     ui.torbenSagt(sag(TORBEN.hallo));
     setTimeout(() => dennisSagt(sag(DENNIS.torbenDa), true, { prio: 0 }), 2500);
     tb.bisWeg = sekunden() + 120 + Math.random() * 60;
@@ -226,7 +289,7 @@ export function baueFahrten(c) {
     const tb = fz2.torben;
     tb.unterwegs = true;
     ui.torbenSagt(sag(TORBEN.tschuess));
-    await geheWeg(torben, [{ x: 9.0, z: 10.6 }, { x: 26, z: 10.6 }], 1.5);
+    await geheWeg(torben, [FELDWEG[0], ...FELDWEG.slice(1, 8)], 1.5);
     torben.sichtbar(false);
     tb.da = false;
     tb.unterwegs = false;
@@ -238,6 +301,7 @@ export function baueFahrten(c) {
     const t = sekunden();
     // Grill liegt: nach 75 s macht Dennis es selbst
     if (fz2.grill === 'um' && t - fz2.grillSeit > 75 && !z.dennisRaeumt && dennisFrei()) dennisStelltGrillAuf();
+    if (fz2.tonnen === 'um' && t - fz2.tonnenSeit > 75 && !z.dennisRaeumt && dennisFrei()) dennisStelltTonnenAuf();
     const tb = fz2.torben;
     if (!tb.da && !tb.unterwegs && t > tb.naechsterBesuch && !fz2.npc) torbenKommt();
     if (tb.da && !tb.unterwegs && !fz2.npc) {
@@ -288,6 +352,14 @@ export function baueFahrten(c) {
           lob(sag(DENNIS.grillDanke));
         })]];
         return null;
+      case 'muelltonnen':
+        if (fz2.tonnen === 'um') return ['Mülltonnen', 'Umgefahren. Der Müll liegt überall.', [A('Wieder aufstellen und Müll einsammeln', 'hand', () => {
+          tonnenAuf();
+          klonk(0.4);
+          z.wut = Math.max(0, z.wut - 4);
+          lob(sag(DENNIS.tonnenDanke));
+        })]];
+        return null;
       case 'torben':
         return ['Torben', 'Erledigt die schweren Sachen. Fährt alles, was Räder hat.', [
           A('Quatschen', 'frage', () => ui.torbenSagt(sag(TORBEN.quatschen))),
@@ -301,12 +373,27 @@ export function baueFahrten(c) {
     }
   }
 
+  // E ohne etwas in der Hand neben einem Fahrzeug: einsteigen
+  function einsteigenInDerNaehe() {
+    const p = kamera.position;
+    let best = null, bestD = Infinity;
+    for (const f of [fz.jeep, fz.lader]) {
+      if (!f.g.visible || f.fahrer || f.aufGabel) continue;
+      const d = Math.hypot(p.x - f.x, p.z - f.z);
+      if (d < (f.art === 'lader' ? 2.4 : 1.9) && d < bestD) { best = f; bestD = d; }
+    }
+    if (!best) return false;
+    if (best.art === 'lader' && !LADER_SCHLUESSEL_STECKT) { dennisSagt(sag(DENNIS.weidemannZu), true, { prio: 2 }); return true; }
+    einsteigen(best);
+    return true;
+  }
   return {
     menue,
     update,
+    einsteigenInDerNaehe,
     get faehrt() { return !!fz2.aktiv; },
     zustand: fz2,
     // nur für Tests
-    test: { einsteigen, aussteigen, figurFaehrt, torbenKommt, torbenGeht, grillUm, grillAuf, dennisStelltGrillAuf },
+    test: { einsteigen, aussteigen, figurFaehrt, torbenKommt, torbenGeht, grillUm, grillAuf, dennisStelltGrillAuf, tonnenUm, tonnenAuf },
   };
 }

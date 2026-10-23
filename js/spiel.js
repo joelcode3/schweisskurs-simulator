@@ -1,9 +1,10 @@
 // Spielablauf: Zustand, Aktionen, Fehler, Dennis-Reaktionen, Bewertung.
 import * as THREE from 'three';
 import { STATIONEN, AUGENHOEHE } from './world.js';
+import { FELDWEG } from './draussen.js';
 import { auftritt, hatClip, buehneBelegt } from './clips.js';
 import { pfadSpiel, schlackeSpiel, hulaSpiel, DENNIS_HULA_REKORD, ventilSpiel, spuelSpiel, anzeichnenSpiel, lackierSpiel, bitsatzSpiel, akkuschrauberSpiel, siebSpiel, kaffeeSpiel, rohrSpiel } from './minispiele.js';
-import { bierAuf, blip, kratzen, jingle, klonk, brummeln, dauer as dauerTon, technoAn, technoAus, technoBeat, klospuelung, mampfen, klick as schalterKlick, stimmeAbspielen, stimmenVorladen, husten } from './audio.js';
+import { bierAuf, blip, kratzen, jingle, klonk, brummeln, dauer as dauerTon, technoAn, technoAus, technoBeat, klospuelung, mampfen, klick as schalterKlick, stimmeAbspielen, stimmenVorladen, husten, peitschenKnall } from './audio.js';
 import * as ui from './ui.js';
 import { DENNIS, JONNY, WALDO, KUMPEL, satzId } from './texte.js';
 import { SYMBOL } from './gesicht.js';
@@ -919,6 +920,42 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   }
 
 
+  // ---------- Peitsche aus dem Benz-Kofferraum: Dennis damit durch die Gegend jagen ----------
+  // Ein-, zweimal ist das ein Spaß (Wut sinkt), zu oft oder zu schnell hintereinander oder wenn er eh schon sauer ist: Ärger
+  async function dennisJagen() {
+    if (z.jagd || dennis.modus !== 'normal' || z.aufKlo || !dennis.wurzel.visible || z.beschaeftigt || z.dennisRaeumt) { ui.hinweis('Gerade nicht.'); return; }
+    const t = sekundenSeitStart();
+    const zuViel = (z.jagdZahl || 0) >= 2 || t - (z.jagdZuletzt ?? -999) < 60 || z.wut >= 55;
+    z.jagdZahl = (z.jagdZahl || 0) + 1;
+    z.jagdZuletzt = t;
+    z.jagd = true;
+    peitschenKnall();
+    dennis.stimmung(zuViel ? 'sauer' : 'ruhig');
+    dennisSagt(sag(zuViel ? DENNIS.peitsche.zuViel : DENNIS.peitsche.flucht), zuViel, { prio: 2 });
+    // Dennis schlägt Haken weg vom Spieler, man knallt hinterher
+    for (let i = 0; i < 4 && !z.vorbei; i++) {
+      const p = kamera.position, d = dennis.position;
+      let dx = d.x - p.x, dz = d.z - p.z;
+      const l = Math.hypot(dx, dz) || 1;
+      dx /= l; dz /= l;
+      let ziel = null;
+      for (const w of [(Math.random() - 0.5) * 1.4, 0.9, -0.9, 1.6, -1.6, Math.PI]) {
+        const c = Math.cos(w), sn = Math.sin(w);
+        const nx = d.x + (dx * c - dz * sn) * 2.2, nz = d.z + (dx * sn + dz * c) * 2.2;
+        if (welt.begehbar(nx, nz, 0.4) && !welt.hindernisse.some((h) => !h.niedrig && nx > h.xMin - 0.3 && nx < h.xMax + 0.3 && nz > h.zMin - 0.3 && nz < h.zMax + 0.3)) { ziel = { x: nx, z: nz }; break; }
+      }
+      if (ziel) await Promise.race([dennis.gehZu(ziel.x, ziel.z, 3.2), warte(2500)]);
+      else await warte(700);
+      peitschenKnall(0.6);
+      if (i === 1 && !zuViel) dennisSagt(sag(DENNIS.peitsche.quieken), false, { prio: 0 });
+    }
+    if (zuViel) { aerger(8); await dennisSagt(sag(DENNIS.peitsche.sauer), true, { prio: 2 }); }
+    else { z.wut = Math.max(0, z.wut - 6); aktualisieren(); await dennisSagt(sag(DENNIS.peitsche.lacht), false, { prio: 1 }); }
+    z.jagd = false;
+    dennis.stimmung('ruhig');
+    dennis.heim();
+  }
+
   // ---------- Lockencreme: Dennis cremt sich die Locken ein und beruhigt sich ----------
   async function cremeGeben() {
     const creme = hand.weg();
@@ -1008,8 +1045,9 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   const DRAUSSEN = {
     tuerInnen: { x: -0.35, z: 3.2 }, tuerAussen: { x: -0.35, z: 5.0 },
     wege: {
-      hinten: [{ x: 0.2, z: 7.4 }, { x: 4.6, z: 7.7 }, { x: 7.6, z: 4.6 }, { x: 8.6, z: -1.0 }, { x: 8.9, z: -3.7 }],
-      feldweg: [{ x: 2.0, z: 10.0 }, { x: 9.5, z: 10.6 }, { x: 26, z: 10.6 }],
+      // hinten: um die Werkstatt herum und hinten über die Wiese weg (Küche im Wohnhaus dahinter)
+      hinten: [{ x: 0.2, z: 7.4 }, { x: 4.6, z: 7.7 }, { x: 7.6, z: 4.6 }, { x: 8.6, z: -1.0 }, { x: 8.2, z: -6.2 }, { x: 4.0, z: -9.5 }, { x: 2.0, z: -16 }],
+      feldweg: [{ x: 2.0, z: 10.0 }, ...FELDWEG.slice(0, 8)],
       terrasse: [{ x: -6.2, z: 6.3 }, { x: -10.6, z: 11.0 }, { x: -14.4, z: 10.7 }, { x: -14.42, z: 9.25 }],
     },
     // Dennis' Sofa auf der Wohnwagen-Terrasse (Blick nach +z)
@@ -1304,13 +1342,13 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     if (!zuFuss && Math.random() < 0.45) {
       // mit dem Segway den Feldweg hoch, vor der Werkstatt parken
       wz.segway = true;
-      segway.setze(26, 10.6, -Math.PI / 2);
+      segway.setze(FELDWEG[7].x, FELDWEG[7].z, -Math.PI / 2);
       segway.sichtbar(true);
       segway.anker.add(waldo.wurzel);
       waldo.wurzel.position.set(0, 0, 0);
       waldo.wurzel.rotation.set(0, 0, 0);
       waldo.sichtbar(true);
-      for (const p of [{ x: 9.5, z: 10.6 }, { x: 2.0, z: 9.6 }, { x: 0.9, z: 6.6 }]) await Promise.race([segway.fahreZu(p.x, p.z, 3.2), warte(15000)]);
+      for (const p of [...FELDWEG.slice(0, 7).reverse(), { x: 2.0, z: 9.6 }, { x: 0.9, z: 6.6 }]) await Promise.race([segway.fahreZu(p.x, p.z, 3.2), warte(15000)]);
       dennis.wurzel.parent.attach(waldo.wurzel);
       waldo.wurzel.position.y = 0;
       waldo.wurzel.rotation.set(0, waldo.wurzel.rotation.y, 0);
@@ -1329,7 +1367,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       segway.anker.add(waldo.wurzel);
       waldo.wurzel.position.set(0, 0, 0);
       waldo.wurzel.rotation.set(0, 0, 0);
-      for (const p of [{ x: 2.0, z: 9.6 }, { x: 9.5, z: 10.6 }, { x: 26, z: 10.6 }]) await Promise.race([segway.fahreZu(p.x, p.z, 3.2), warte(15000)]);
+      for (const p of [{ x: 2.0, z: 9.6 }, ...FELDWEG.slice(0, 8)]) await Promise.race([segway.fahreZu(p.x, p.z, 3.2), warte(15000)]);
       segway.sichtbar(false);
       dennis.wurzel.parent.attach(waldo.wurzel);
       waldo.sichtbar(false);
@@ -2342,7 +2380,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   }
 
   // ---------- Dinge in der Hand ----------
-  const AUFNEHMBAR = ['brille', 'handschuhe', 'helm', 'flex', 'edding', 'hammer', 'feuerloescher', 'besen', 'figur', 'handy', 'klemmbrett', 'hulahup', 'rohrzange', 'schlauch', 'poempel', 'creme', 'kackpumpe', 'tasse', 'maske'];
+  const AUFNEHMBAR = ['brille', 'handschuhe', 'helm', 'flex', 'edding', 'hammer', 'feuerloescher', 'besen', 'figur', 'handy', 'klemmbrett', 'hulahup', 'rohrzange', 'schlauch', 'poempel', 'creme', 'kackpumpe', 'tasse', 'maske', 'peitsche'];
   const ANZIEHBAR = ['brille', 'handschuhe', 'helm', 'maske'];
   let handyMal = 0;
 
@@ -2458,6 +2496,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     if (id === 'schlauch') return spritzen();
     if (id === 'klemmbrett') return waescheUebernehmen();
     if (id === 'creme') { ui.hinweis('Die ist für Dennis. Klick auf Dennis, dann gibst du sie ihm.'); return; }
+    if (id === 'peitsche') { peitschenKnall(); return; }
     if (id === 'tasse') {
       const k = welt.objekte.kuehlschrank.position;
       if (Math.hypot(kamera.position.x - k.x, kamera.position.z - k.z) < 2.3) return tasseWegraeumen();
@@ -2805,6 +2844,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
         await spruehen(ziel === 'dennis' ? 'dennis' : 'feuer');
         return true;
       }
+      if (it.id === 'peitsche' && ziel === 'dennis') { dennisJagen(); return true; }
       if (it.id === 'creme' && ziel === 'dennis') {
         if (dennis.modus !== 'normal' || z.aufKlo) { ui.hinweis('Dennis hat gerade keine Hand frei.'); return true; }
         await hinZu(info, treffer.obj);
@@ -2871,6 +2911,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     if (!document.getElementById('dialog').classList.contains('versteckt')) return;
     if (fahrten.faehrt) return;
     const k = e.key.toLowerCase();
+    if (k === 'e' && !hand.item && !z.vorbei && !z.beschaeftigt && fahrten.einsteigenInDerNaehe()) return;
     if (k === 'e') handAktion(hand.item && ANZIEHBAR.includes(hand.item.id) ? 'anziehen' : 'benutzen');
     else if (k === 'q') handAktion('werfen');
     else if (k === 'g') handAktion('fallen');
@@ -3116,6 +3157,17 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
         if (z.kaffeeInHand) a.unshift(A('Kaffee geben', 'tasse', kaffeeGeben));
         return ['Dennis', 'Dein Schweißkurslehrer.', a];
       }
+      case 'kofferraum': {
+        const k = welt.carport;
+        return ['Kofferraum', k.kofferAuf ? 'Offen. Drin liegen ein Kettenhemd und eine Peitsche. Fragen wir nicht.' : 'Der Kofferraum vom Benz. Nicht abgeschlossen.',
+          [A(k.kofferAuf ? 'Zumachen' : 'Aufmachen', 'hand', () => { k.kofferraum(!k.kofferAuf); klonk(0.3); })]];
+      }
+      case 'kettenhemd':
+        if (dennisSiehts() && ruhig() && sekundenSeitStart() - (z.kettenhemdZuletzt ?? -99) > 60) { z.kettenhemdZuletzt = sekundenSeitStart(); setTimeout(() => dennisSagt(sag(DENNIS.kettenhemd), false, { prio: 0 }), 500); }
+        return ['Kettenhemd', 'Ein echtes Kettenhemd. Schwer. Riecht nach Mittelaltermarkt.', []];
+      case 'peitsche':
+        if (!welt.carport.kofferAuf && obj?.parent === welt.carport.benz) return ['Peitsche', 'Liegt im Kofferraum. Erst aufmachen.', []];
+        return ['Peitsche', 'Lange geflochtene Lederpeitsche. Was macht die in Dennis\' Kofferraum?', [A('In die Hand nehmen', 'hand', () => aufnehmen('peitsche', obj))]];
       case 'benz':
         if (dennisSiehts() && ruhig() && sekundenSeitStart() - (z.benzZuletzt ?? -99) > 40) { z.benzZuletzt = sekundenSeitStart(); aerger(1); setTimeout(() => dennisSagt(sag(DENNIS.benz), true, { prio: 0 }), 600); }
         return ['Mercedes 123', 'Dennis\' ein und alles: weißer W123. In der Motorhaube steckt eine Gehwegplatte, die Plane darüber hat ein Loch. Passiert heute Nacht um 4.', []];
@@ -3380,7 +3432,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   return {
     zustand: z,
     klick,
-    test: { get z() { return z; }, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
+    test: { get z() { return z; }, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
     stationWaehlen,
     intro,
     aktualisieren,

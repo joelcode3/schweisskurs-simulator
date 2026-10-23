@@ -47,6 +47,7 @@ const steuerung = baueSteuerung(kamera, canvas, {
   hindernisse: welt.hindernisse,
   begehbar: welt.begehbar,
   tuerMitte: welt.kloTuerMitte,
+  bodenHoehe: (x, z) => fz.bodenHoehe(x, z),
   alleZiele: () => zielListe,
   dennisPosition: () => dennis.position,
 }, (t) => spiel && spiel.klick(t), (t, x, y) => ui.hoverName(t ? t.info.name : '', x, y));
