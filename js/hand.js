@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { toon, teil, quader, zylinder, kugel, setze, leinwandTextur } from './toon.js';
 import { RAUM, BAD } from './world.js';
-import { GELAENDE } from './draussen.js';
+import { GELAENDE, gelaendeHoehe } from './landschaft.js';
 
 // Haltung in der Hand: Position vor der Kamera, Drehung, Größe, beidhändig, schwer
 // Wurfgrenzen draußen auf dem Hof
@@ -258,8 +258,9 @@ export function baueHand(scene, kamera) {
           if (f.beiTreffer) f.beiTreffer(f.id);
         }
         // Boden
-        if (p.y <= f.boden) {
-          p.y = f.boden;
+        const grund = f.boden + (f.draussen ? gelaendeHoehe(p.x, p.z) : 0);
+        if (p.y <= grund) {
+          p.y = grund;
           if (Math.abs(f.v.y) > 1.2) {
             f.v.y *= -0.35;
             f.v.x *= 0.6;

@@ -3,29 +3,16 @@
 // Dreibein, Grillrost und alter Bratwurst, Schild „Nicht stören – Schweißkurs!“.
 import * as THREE from 'three';
 import { toon, teil, quader, rundQuader, zylinder, kugel, setze, leinwandTextur, zufall } from './toon.js';
+import { FELDWEG, baueLandschaft, imKreis } from './landschaft.js';
 
 // Begehbare Flächen draußen (Rechtecke): rund um die Werkstatt, Carport, Wohnwagen und Benz. Das Bad-Häuschen vorne
 // rechts ist ausgespart, die Werkstatt selbst sowieso.
-export const GELAENDE = { xMin: -25, xMax: 13, zMin: -9, zMax: 17 };
-const VORPLATZ = { xMin: GELAENDE.xMin, xMax: GELAENDE.xMax, zMin: 4.25, zMax: GELAENDE.zMax };
-const SEITE = { xMin: 5.35, xMax: GELAENDE.xMax, zMin: GELAENDE.zMin, zMax: 4.6 };
-const LINKS = { xMin: GELAENDE.xMin, xMax: -5.35, zMin: GELAENDE.zMin, zMax: 4.6 };
-const HINTEN = { xMin: GELAENDE.xMin, xMax: GELAENDE.xMax, zMin: GELAENDE.zMin, zMax: -4.4 };
+export { GELAENDE, FELDWEG } from './landschaft.js';
 const BAD_HAUS = { xMin: 0.55, xMax: 4.05, zMin: 3.9, zMax: 6.95 };
 const DURCHGANG = { xMin: -0.68, xMax: -0.02, zMin: 3.4, zMax: 4.7 }; // Schlupftür im Tor
-// Feldweg: schließt rechts an die Betonfläche an und läuft in Kurven über die Wiese davon (Mittellinie, für Fahrzeuge
-// und Figuren; FELDWEG[0] liegt am Hof)
-export const FELDWEG = [[7.3, 9.4], [9.8, 10.3], [12.6, 11.5], [16.5, 12.4], [20.5, 11.2], [24.2, 9.4], [28.5, 9.9], [33, 11.8], [39, 12.6], [46, 11.4], [58, 10.5]]
-  .map(([x, z]) => ({ x, z }));
 const WEG_BREITE = 2.4;
 const wegKurve = new THREE.CatmullRomCurve3(FELDWEG.map((p) => new THREE.Vector3(p.x, 0, p.z)), false, 'centripetal');
-const wegPunkte = wegKurve.getSpacedPoints(240);
-function aufFeldweg(x, z, rand = 0) {
-  if (x < FELDWEG[0].x - 1) return false;
-  let best = Infinity;
-  for (const q of wegPunkte) { const d = (q.x - x) ** 2 + (q.z - z) ** 2; if (d < best) best = d; }
-  return Math.sqrt(best) < WEG_BREITE / 2 + rand;
-}
+const wegPunkte = wegKurve.getSpacedPoints(700);
 
 // Liegt (x, z) in einem Hindernis (mit Rand)? Normale Hindernisse sind achsparallele Kästen; Fahrzeuge haben zusätzlich
 // gedrehte Kästen (boxen: { x, z, psi, hx, hz }), damit man dicht an ihnen vorbei- und durch Lücken fahren kann.
@@ -144,7 +131,7 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
     v.addColorStop(0, '#4f8fd0'); v.addColorStop(0.42, '#8ec1ea'); v.addColorStop(0.5, '#dbeef8'); v.addColorStop(1, '#dbeef8');
     g.fillStyle = v; g.fillRect(0, 0, b, h);
   });
-  const himmel = new THREE.Mesh(new THREE.SphereGeometry(100, 32, 16), new THREE.MeshBasicMaterial({ map: himmelTex, side: THREE.BackSide, fog: false }));
+  const himmel = new THREE.Mesh(new THREE.SphereGeometry(1300, 32, 16), new THREE.MeshBasicMaterial({ map: himmelTex, side: THREE.BackSide, fog: false }));
   himmel.raycast = () => {};
   scene.add(himmel);
   // Wolken (flache Kleckse) am Himmel
@@ -155,8 +142,8 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   for (let i = 0; i < 9; i++) {
     const w = i / 9 * Math.PI * 2 + r() * 0.4;
     const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: wolkeTex, transparent: true, depthWrite: false, fog: false }));
-    s.position.set(Math.sin(w) * 80, 24 + r() * 14, Math.cos(w) * 80);
-    s.scale.set(26 + r() * 16, 13 + r() * 6, 1);
+    s.position.set(-110 + Math.sin(w) * 900, 260 + r() * 150, 20 + Math.cos(w) * 900);
+    s.scale.set(280 + r() * 170, 140 + r() * 60, 1);
     s.raycast = () => {};
     scene.add(s);
   }
@@ -172,8 +159,8 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
     for (let x = 0; x <= b; x += 6) g.lineTo(x, 96 - Math.abs(Math.sin(x / 9)) * 10 - Math.sin(x / 90) * 8 - (r() * 6));
     g.lineTo(b, h); g.fill();
   });
-  const horizont = new THREE.Mesh(new THREE.CylinderGeometry(85, 85, 16, 64, 1, true), new THREE.MeshBasicMaterial({ map: horizontTex, side: THREE.BackSide, transparent: true, depthWrite: false, fog: false }));
-  horizont.position.y = 4;
+  const horizont = new THREE.Mesh(new THREE.CylinderGeometry(1000, 1000, 190, 96, 1, true), new THREE.MeshBasicMaterial({ map: horizontTex, side: THREE.BackSide, transparent: true, depthWrite: false, fog: false }));
+  horizont.position.set(-110, 47, 20);
   horizont.raycast = () => {};
   scene.add(horizont);
 
@@ -189,11 +176,8 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
     }
     for (let i = 0; i < 30; i++) { g.fillStyle = r() < 0.5 ? '#f4f0d0' : '#f2d23c'; g.beginPath(); g.arc(r() * b, r() * h, 1.5, 0, Math.PI * 2); g.fill(); }
   }, [60, 60]);
-  const wiese = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), toon(0xffffff, { map: grasTex }));
-  wiese.rotation.x = -Math.PI / 2;
-  wiese.position.y = -0.01;
-  wiese.receiveShadow = true;
-  scene.add(wiese);
+  // Wiese mit Hügeln, Hauptstraße, Lühmanns Hof usw. (js/landschaft.js)
+  const landschaft = baueLandschaft(scene, { merke, hindernis, grasTex });
 
   // ---------- Betonfläche vor der Werkstatt (rissig, Stücke rausgebrochen, Unkraut in den Fugen) ----------
   const BETON = { x0: -7.5, x1: 7.5, z0: 4.0, z1: 10.5 };
@@ -865,21 +849,23 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
     hindernis(x - 0.3 * s, x + 0.3 * s, z - 0.3 * s, z + 0.3 * s);
   }
 
-  const FLAECHEN = [VORPLATZ, SEITE, LINKS, HINTEN];
   return {
-    // Ist (x, z) draußen mit Abstand r begehbar? (rund ums Haus, plus Feldweg)
+    landschaft,
+    update: landschaft.update,
+    // Ist (x, z) draußen mit Abstand r begehbar? Überall innerhalb der Ringstraße (und ein paar Meter dahinter),
+    // nur nicht in der Werkstatt und im Bad-Anbau; in die Werkstatt geht es nur durch die Schlupftür
     begehbar(x, z, rr) {
-      const drin = (q, m) => x > q.xMin + m && x < q.xMax - m && z > q.zMin + m && z < q.zMax - m;
+      if (x > DURCHGANG.xMin && x < DURCHGANG.xMax && z > DURCHGANG.zMin && z < DURCHGANG.zMax) return true;
       if (x > BAD_HAUS.xMin - rr && x < BAD_HAUS.xMax + rr && z < BAD_HAUS.zMax + rr && z > 3.0) return false;
-      return FLAECHEN.some((q) => drin(q, rr)) || aufFeldweg(x, z, -rr) || (x > DURCHGANG.xMin && x < DURCHGANG.xMax && z > DURCHGANG.zMin && z < DURCHGANG.zMax);
+      if (x > RAUM.xMin - 0.08 - rr && x < RAUM.xMax + 0.08 + rr && z > RAUM.zMin - 0.08 - rr && z < RAUM.zMax + 0.08 + rr) return false;
+      return imKreis(x, z, rr);
     },
     istDraussen(x, z) { return z > RAUM.zMax + 0.1 || x > RAUM.xMax + 0.1 || x < RAUM.xMin - 0.1 || z < RAUM.zMin - 0.1; },
     // Darf ein Fahrzeug hier stehen? Draußen rund ums Haus und auf dem Feldweg, nicht durch die Schlupftür, nicht in den Bad-Anbau
     fahrbar(x, z) {
-      const drin = (q) => x > q.xMin && x < q.xMax && z > q.zMin && z < q.zMax;
       if (x > BAD_HAUS.xMin && x < BAD_HAUS.xMax && z < BAD_HAUS.zMax && z > 3.0) return false;
       if (x > RAUM.xMin - 0.25 && x < RAUM.xMax + 0.25 && z > RAUM.zMin - 0.25 && z < RAUM.zMax + 0.25) return false;
-      return FLAECHEN.some(drin) || aufFeldweg(x, z);
+      return imKreis(x, z);
     },
     fahrzeuge: {
       jeep: { gruppe: jeep, raeder: jeepRaeder, lenkung: jeepLenkung, hindernis: jeepHindernis },

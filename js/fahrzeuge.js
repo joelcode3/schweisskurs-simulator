@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { quader, setze, zufall } from './toon.js';
 import { inHindernis } from './draussen.js';
+import { gelaendeHoehe } from './landschaft.js';
 
 const richt = (psi) => new THREE.Vector3(Math.sin(psi), 0, Math.cos(psi));
 const winkelDiff = (a, b) => { let d = b - a; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; return d; };
@@ -137,8 +138,13 @@ export function baueFahrzeuge(scene, welt) {
   function box(f, psi, cz, hx, hz) { return { x: f.x + Math.sin(psi) * cz, z: f.z + Math.cos(psi) * cz, psi, hx, hz }; }
   function anwenden(f, dWeg) {
     if (f.aufGabel) return;
-    f.g.position.set(f.x, 0, f.z);
-    f.g.rotation.y = f.psi;
+    // auf dem Gelände: Höhe und Neigung (vorne/hinten, links/rechts) aus dem Boden unter den Rädern
+    const lang = f.art === 'jeep' ? 0.8 : 1.0, breit = 0.5;
+    const sn = Math.sin(f.psi), cs = Math.cos(f.psi);
+    const hv = gelaendeHoehe(f.x + sn * lang, f.z + cs * lang), hh = gelaendeHoehe(f.x - sn * lang, f.z - cs * lang);
+    const hl = gelaendeHoehe(f.x + cs * breit, f.z - sn * breit), hr = gelaendeHoehe(f.x - cs * breit, f.z + sn * breit);
+    f.g.position.set(f.x, (hv + hh + hl + hr) / 4, f.z);
+    f.g.rotation.set(-Math.atan2(hv - hh, 2 * lang), f.psi, Math.atan2(hl - hr, 2 * breit), 'YXZ');
     for (const rad of f.raeder) rad.rotation.x += dWeg / f.radR;
     if (f.art === 'jeep') for (const l of T.jeep.lenkung) l.rotation.y = f.lenk;
     else {
