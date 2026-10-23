@@ -8,6 +8,7 @@ import { blip, klonk, hupe } from './audio.js';
 import * as ui from './ui.js';
 import { TORBEN_PLATZ } from './torben.js';
 import { FELDWEG, inHindernis, muellTeil } from './draussen.js';
+import { gelaendeHoehe } from './landschaft.js';
 
 // Vorerst steckt der Schlüssel im Hoflader (Betreiber: später gibt Dennis ihn raus, wenn man etwas damit erledigen muss)
 export const LADER_SCHLUESSEL_STECKT = true;
@@ -82,7 +83,8 @@ export function baueFahrten(c) {
         fz2.aktiv = null;
         steuerung.fahrModus(null);
         const vorn = new THREE.Vector3(Math.sin(f.psi), 0, Math.cos(f.psi));
-        steuerung.setze([p.x, AUGENHOEHE, p.z], [p.x + vorn.x * 3, 1.2, p.z + vorn.z * 3]);
+        const gh = gelaendeHoehe(p.x, p.z);
+        steuerung.setze([p.x, AUGENHOEHE + gh, p.z], [p.x + vorn.x * 3, 1.2 + gh, p.z + vorn.z * 3]);
         ui.fahrHilfe('');
         fz.anwenden(f, 0);
         return;

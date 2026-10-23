@@ -278,6 +278,10 @@ export const DENNIS = {
   },
   kettenhemd: ['Finger weg, das ist für den Mittelaltermarkt!', 'Das Kettenhemd geht dich gar nix an.'],
   muellAufgehoben: ['Oh, du räumst den Müll weg? Danke, Mann!', 'Endlich hebt mal einer den Kram auf. Sehr gut.'],
+  einkauf: {
+    eier: ['Lühmanns Landeier! Du bist ein Schatz. Morgen gibt es Rührei.', 'Oh, frische Eier! Hast du angeschrieben? Gut so.'],
+    mettenden: ['Mettenden! Jetzt ist der Tag gerettet.', 'Für mich? Mettenden? Ich könnt dich knutschen. Mach ich aber nicht.'],
+  },
   jeepHoch: ['Bist du wahnsinnig?! Lass sofort den Jeep runter!', 'Der Jeep ist doch keine Palette! Runter damit!'],
   tonnenUm: ['Die Tonnen! Alles voller Müll jetzt! Stell die wieder hin!', 'Ach du Scheiße, die Tonnen! Wer hat dir den Führerschein gegeben?!'],
   tonnenDanke: ['Gut. Und der ganze Müll auch wieder rein. Danke.', 'Na also. Tonnen stehen, Müll ist drin. Geht doch.'],

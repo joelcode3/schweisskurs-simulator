@@ -417,6 +417,7 @@ export function baueWelt(scene) {
 
   // ---------- Draußen (js/draussen.js) ----------
   const draussen = baueDraussen(scene, { merke, hindernis, RAUM });
+  if (draussen.update) animiert.push(draussen.update);
   // Carport mit Wohnwagen und Dennis' Benz auf der Wiese (js/carport.js)
   const carport = baueCarport(scene, { merke, hindernis });
 

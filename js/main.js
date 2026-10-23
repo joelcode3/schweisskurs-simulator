@@ -8,6 +8,7 @@ import { baueTorben } from './torben.js';
 import { baueKumpels } from './kumpels.js';
 import { baueSegway } from './segway.js';
 import { baueFahrzeuge } from './fahrzeuge.js';
+import { gelaendeHoehe } from './landschaft.js';
 import { baueSteuerung } from './steuerung.js';
 import { baueSpiel } from './spiel.js';
 import { baueHand } from './hand.js';
@@ -26,7 +27,9 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
-const kamera = new THREE.PerspectiveCamera(70, 1, 0.05, 220);
+const kamera = new THREE.PerspectiveCamera(70, 1, 0.05, 1500);
+// leichter Dunst in der Ferne (die Landschaft ist groß)
+scene.fog = new THREE.Fog(0xcfe3ee, 260, 1150);
 
 const welt = baueWelt(scene);
 const dennis = baueDennis(scene);
@@ -47,7 +50,7 @@ const steuerung = baueSteuerung(kamera, canvas, {
   hindernisse: welt.hindernisse,
   begehbar: welt.begehbar,
   tuerMitte: welt.kloTuerMitte,
-  bodenHoehe: (x, z) => fz.bodenHoehe(x, z),
+  bodenHoehe: (x, z) => fz.bodenHoehe(x, z) + gelaendeHoehe(x, z),
   alleZiele: () => zielListe,
   dennisPosition: () => dennis.position,
 }, (t) => spiel && spiel.klick(t), (t, x, y) => ui.hoverName(t ? t.info.name : '', x, y));
