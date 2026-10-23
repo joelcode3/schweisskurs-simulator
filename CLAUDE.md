@@ -7,7 +7,7 @@
   (Betreiber-Wunsch): ist der letzte PR noch offen, einen neuen Zweig (Name vom Arbeitszweig abgeleitet, z. B. `…-draussen`)
   von `origin/main` anlegen. Nur kleine Nachbesserungen zum offenen PR kommen in diesen PR.
   Hängt ein neues Update vom noch offenen PR ab, den neuen Zweig auf dessen Stand aufsetzen und im PR vermerken: erst den alten mergen.
-- Projektchat (Session session_01KZ18oujuEFnsAskwuMiw8Y, pflegt die Projektliste) schickt To-dos: OHNE Go des Betreibers umsetzen
+- Projektchat (Session session_012U3BQmPuiyZpwhAoLyJrFQ, pflegt die Projektliste) schickt To-dos: OHNE Go des Betreibers umsetzen
   (Betreiber-Wunsch). Nach jedem erstellten Pull Request dem Projektchat per send_message Bescheid geben (Link + was drin ist).
 - Vor jedem PR im Browser testen (Computer- und iPhone-Ansicht), Playwright mit vorinstalliertem Chromium.
 
