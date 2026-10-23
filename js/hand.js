@@ -34,6 +34,8 @@ const HALTUNG = {
   rohrzange: { pos: [0.24, -0.22, -0.52], rot: [0.4, 0.3, -0.9], name: 'Rohrzange', benutzen: 'Reparieren' },
   schlauch: { pos: [0.2, -0.2, -0.55], rot: [0.1, 0.12, 0], skala: 1.2, name: 'Wasserschlauch', benutzen: 'Spritzen (halten)', nichtWerfen: true, nichtAblegen: true },
   peitsche: { pos: [0.24, -0.3, -0.55], rot: [0.5, 0.4, -0.3], skala: 1.2, name: 'Peitsche', benutzen: 'Knallen lassen' },
+  eier: { pos: [0.2, -0.22, -0.5], rot: [0.2, 0.5, 0], skala: 1.4, name: 'Lühmanns Landeier (10 Stück)', benutzen: 'Dennis geben (auf Dennis klicken)', nichtWerfen: true },
+  mettenden: { pos: [0.2, -0.2, -0.48], rot: [0.3, 0.4, 0], skala: 1.4, name: 'Mettenden (3 Stück)', benutzen: 'Dennis geben (auf Dennis klicken)' },
   kaffee: { pos: [0.2, -0.17, -0.45], rot: [0.1, 2.2, 0], skala: 1.3, name: 'Kaffee für Dennis', nichtAblegen: true, ablegenHinweis: 'Den Kaffee bringst du Dennis. Oder weg damit (Q oder G).' },
 };
 

@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { STATIONEN, AUGENHOEHE } from './world.js';
 import { FELDWEG } from './draussen.js';
+import { setze } from './toon.js';
 import { auftritt, hatClip, buehneBelegt } from './clips.js';
 import { pfadSpiel, schlackeSpiel, hulaSpiel, DENNIS_HULA_REKORD, ventilSpiel, spuelSpiel, anzeichnenSpiel, lackierSpiel, bitsatzSpiel, akkuschrauberSpiel, siebSpiel, kaffeeSpiel, rohrSpiel } from './minispiele.js';
 import { bierAuf, blip, kratzen, jingle, klonk, brummeln, dauer as dauerTon, technoAn, technoAus, technoBeat, klospuelung, mampfen, klick as schalterKlick, stimmeAbspielen, stimmenVorladen, husten, peitschenKnall } from './audio.js';
@@ -919,6 +920,26 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     }
   }
 
+
+  // Einkaufen bei Lühmann: nimmt man, schreibt an, Dennis freut sich, wenn man ihm was mitbringt
+  function einkaufen(art) {
+    if (hand.item) { ui.hinweis(`Du hast schon ${hand.item.cfg.name} in der Hand.`); return; }
+    const obj = new THREE.Group();
+    if (art === 'eier') {
+      obj.add(setze(new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.07, 0.13), new THREE.MeshToonMaterial({ color: 0xb8a888 })), 0, 0, 0));
+      for (let i = 0; i < 10; i++) obj.add(setze(new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 6), new THREE.MeshToonMaterial({ color: i % 3 ? 0xd9b48a : 0xf2ead8 })), -0.12 + (i % 5) * 0.06, 0.045, -0.03 + Math.floor(i / 5) * 0.06));
+    } else {
+      obj.add(setze(new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.03, 0.22), new THREE.MeshToonMaterial({ color: 0xe8dcb8 })), 0, 0, 0));
+      for (let j = 0; j < 3; j++) obj.add(setze(new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.2, 6), new THREE.MeshToonMaterial({ color: 0x8a2a1a })), -0.04 + j * 0.04, 0.03, 0, Math.PI / 2, 0, 0));
+    }
+    obj.userData.interaktiv = { id: art, name: art === 'eier' ? 'Landeier' : 'Mettenden', station: null };
+    hand.nimm(art, obj);
+    handleisteZeigen();
+    const eintrag = art === 'eier' ? '10 Eier' : '3 Mettenden';
+    z.angeschrieben = z.angeschrieben ? `${z.angeschrieben}, ${eintrag}` : eintrag;
+    blip(660, 0.06);
+    ui.hinweis(`Angeschrieben: ${eintrag}. Lühmann kennt uns.`, 3000);
+  }
 
   // ---------- Peitsche aus dem Benz-Kofferraum: Dennis damit durch die Gegend jagen ----------
   // Ein-, zweimal ist das ein Spaß (Wut sinkt), zu oft oder zu schnell hintereinander oder wenn er eh schon sauer ist: Ärger
@@ -2845,6 +2866,17 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
         return true;
       }
       if (it.id === 'peitsche' && ziel === 'dennis') { dennisJagen(); return true; }
+      if ((it.id === 'eier' || it.id === 'mettenden') && ziel === 'dennis') {
+        if (dennis.modus !== 'normal' || z.aufKlo) { ui.hinweis('Dennis hat gerade keine Hand frei.'); return true; }
+        await hinZu(info, treffer.obj);
+        hand.weg();
+        handleisteZeigen();
+        const zuOft = sekundenSeitStart() - (z.einkaufZuletzt ?? -999) < 90;
+        z.einkaufZuletzt = sekundenSeitStart();
+        if (!zuOft) { z.wut = Math.max(0, z.wut - 8); aktualisieren(); }
+        dennisSagt(sag(it.id === 'eier' ? DENNIS.einkauf.eier : DENNIS.einkauf.mettenden), false, { prio: 2 });
+        return true;
+      }
       if (it.id === 'creme' && ziel === 'dennis') {
         if (dennis.modus !== 'normal' || z.aufKlo) { ui.hinweis('Dennis hat gerade keine Hand frei.'); return true; }
         await hinZu(info, treffer.obj);
@@ -3157,6 +3189,35 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
         if (z.kaffeeInHand) a.unshift(A('Kaffee geben', 'tasse', kaffeeGeben));
         return ['Dennis', 'Dein Schweißkurslehrer.', a];
       }
+      // ---------- Landschaft: Lühmanns Hof, Schilder, Briefkasten, umgekippter T5 ----------
+      case 'sb_eier':
+        return ['Lühmanns Landeier', 'Frische Eier vom Hof. Wir dürfen anschreiben.', [A('10 Eier nehmen und anschreiben', 'hand', () => einkaufen('eier'))]];
+      case 'sb_mettenden':
+        return ['Kühlschrank', 'Mettenden, geräuchert. Dennis liebt die.', [A('Mettenden nehmen und anschreiben', 'hand', () => einkaufen('mettenden'))]];
+      case 'sb_liste':
+        return ['Anschreibeliste', `Auf der Liste stehen schon: Dennis 10 Eier, Dennis 4 Mettenden, Waldo 2 Mettenden, Jonny 6 Eier${z.angeschrieben ? `, und von dir: ${z.angeschrieben}` : ''}.`, []];
+      case 'sb_kasse':
+        return ['Vertrauenskasse', 'Bezahlen müssen wir nicht, wir schreiben an. Lühmann kennt uns.', []];
+      case 'kuh':
+        return ['Peters Kuh', sag(['Muuuh. Guckt dich an und kaut weiter.', 'Schwarzbunt und sehr entspannt.', 'Interessiert sich nur für Gras.']), [A('Streicheln', 'hand', () => { ui.hinweis('Die Kuh schnaubt zufrieden.'); blip(160, 0.25, 0.12); })]];
+      case 'huhn':
+        return ['Peters Huhn', 'Pickt im Gras. Legt vermutlich Lühmanns Landeier.', []];
+      case 'huehnermobil':
+        return ['Hühnermobil', 'Peters grüner Hühnerstall auf Rädern. Wird alle paar Tage weitergezogen.', []];
+      case 'schild_landeier':
+        return ['Schild', 'Lühmanns Landeier – da lang.', []];
+      case 'schild_reich':
+        return ['Schild', 'DENNIS REICH – Kein Zutritt! Selbst in den Boden gehauen.', []];
+      case 'schild_rad':
+        return ['Schild', '(Fahrradfahrer werden geduldet)', []];
+      case 'schild_privat':
+        return ['Schild', 'Privatweg. Befahren auf eigene Gefahr.', []];
+      case 'schild_vorsicht':
+        return ['Schild', 'Vorsicht! Freilaufender Dennis.', []];
+      case 'briefkasten':
+        return ['Dennis’ Briefkasten', z.briefGelesen ? 'Leer. Die Werbung hast du schon rausgeholt.' : 'Das Fähnchen ist oben. Da ist Post drin.', z.briefGelesen ? [] : [A('Reingucken', 'auge', () => { z.briefGelesen = true; ui.hinweis('Drin: Werbung vom Baumarkt, eine Mahnung vom Ordnungsamt wegen der Schilder und eine Postkarte von Lydia.', 6000); })]];
+      case 'vw_t5':
+        return ['Umgekippter VW T5', 'Doppelkabine mit Pritsche, liegt auf der Seite. Die Reifenspuren in der Wiese erzählen den Rest. Keiner verletzt, aber der Wagen ist hin.', []];
       case 'kofferraum': {
         const k = welt.carport;
         return ['Kofferraum', k.kofferAuf ? 'Offen. Drin liegen ein Kettenhemd und eine Peitsche. Fragen wir nicht.' : 'Der Kofferraum vom Benz. Nicht abgeschlossen.',

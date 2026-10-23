@@ -252,6 +252,10 @@ export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
     const tafel = new THREE.Mesh(new THREE.PlaneGeometry(b, h), new THREE.MeshBasicMaterial({ map: tex }));
     tafel.position.z = 0.001;
     s.add(tafel);
+    // Rückseite: dasselbe Schild (man liest es von beiden Seiten)
+    const rueck = tafel.clone();
+    rueck.rotation.y = Math.PI; rueck.position.z = -0.051;
+    s.add(rueck);
     return s;
   };
   // Schild an einem schiefen, in den Boden gehauenen Pfahl
@@ -390,7 +394,7 @@ export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
     }
   }
   kuehl.add(setze(quader(0.6, 0.1, 0.01, 0xc8352a, { umriss: false }), 0, 1.6, -0.305));
-  kuehl.position.set(LB / 2 - 0.5, 0, LT / 2 - 0.45); kuehl.rotation.y = Math.PI;
+  kuehl.position.set(LB / 2 - 0.5, 0, LT / 2 - 0.45);
   laden.add(kuehl);
   merke(kuehl, 'sb_mettenden', 'Kühlschrank mit Mettenden');
   // Tisch mit Anschreibeliste (Klemmbrett mit Stift an der Schnur) und Vertrauenskasse
@@ -509,10 +513,23 @@ export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
   {
     const hm = new THREE.Group();
     const GRUEN = 0x3f7a35;
-    hm.add(setze(rundQuader(4.2, 1.6, 2.2, GRUEN, { umriss: 0.005 }, 0.12), 0, 1.5, 0));
-    const dach = teil(new THREE.CylinderGeometry(1.3, 1.3, 4.4, 18, 1, false, -Math.PI / 2, Math.PI), 0x2f5a2a, { umriss: 0.005 });
-    dach.rotation.z = Math.PI / 2; dach.scale.set(1, 1, 0.35); dach.position.y = 2.3;
-    hm.add(dach);
+    // Fahrgestell (verzinkter Rahmen), grüner Stallkasten mit senkrechten Sicken, flaches Satteldach mit Überstand
+    hm.add(setze(quader(4.4, 0.16, 1.9, 0xa9aeb3, { umriss: 0.003 }), 0, 0.7, 0));
+    const sickenTex = leinwandTextur(128, 64, (g, b, h) => { g.fillStyle = '#3f7a35'; g.fillRect(0, 0, b, h); for (let x = 0; x < b; x += 8) { g.fillStyle = 'rgba(0,0,0,0.18)'; g.fillRect(x, 0, 2, h); g.fillStyle = 'rgba(255,255,255,0.08)'; g.fillRect(x + 3, 0, 2, h); } }, [6, 1]);
+    hm.add(setze(teil(new THREE.BoxGeometry(4.2, 1.5, 2.2), 0, { material: toon(0xffffff, { map: sickenTex }), umriss: 0.005 }), 0, 1.53, 0));
+    for (const s of [-1, 1]) {
+      const d = quader(4.6, 0.07, 1.42, 0x2a4a26, { umriss: 0.004 });
+      d.position.set(0, 2.5, s * 0.62); d.rotation.x = s * 0.38;
+      hm.add(d);
+      const giebel = new THREE.Shape(); giebel.moveTo(-1.1, 0); giebel.lineTo(1.1, 0); giebel.lineTo(0, 0.45); giebel.closePath();
+      const gm = new THREE.Mesh(new THREE.ShapeGeometry(giebel), toon(GRUEN, { side: THREE.DoubleSide }));
+      gm.rotation.y = Math.PI / 2; gm.position.set(s * 2.1, 2.28, 0);
+      hm.add(gm);
+    }
+    hm.add(setze(quader(4.6, 0.08, 0.1, 0x2a4a26, { umriss: 0.003 }), 0, 2.74, 0)); // First
+    // Legenester an der Seite (Klappe) und Lüftungsklappe
+    hm.add(setze(quader(1.6, 0.4, 0.35, 0x356a2c, { umriss: 0.003 }), -0.8, 1.35, -1.27));
+    hm.add(setze(quader(1.6, 0.06, 0.42, 0x2a4a26, { umriss: 0.002 }), -0.8, 1.58, -1.29, 0.3, 0, 0));
     for (const sx of [-1.4, 1.4]) for (const sz of [-1, 1]) {
       hm.add(setze(zylinder(0.35, 0.35, 0.18, 0x1d1d1f, { umriss: 0.003 }, 16), sx, 0.35, sz * 1.15, Math.PI / 2, 0, 0));
       hm.add(setze(zylinder(0.18, 0.18, 0.19, 0xc9cdd2, { umriss: false }, 12), sx, 0.35, sz * 1.15, Math.PI / 2, 0, 0));
@@ -536,7 +553,7 @@ export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
     netz.position.set(HM.x, 0.55, HM.z);
     hof.add(netz);
     for (let k = 0; k < 16; k++) { const w = k / 16 * Math.PI * 2; hof.add(setze(zylinder(0.025, 0.025, 1.2, 0xe8e0c8, { umriss: false }, 6), HM.x + Math.cos(w) * (HM.r + 1), 0.6, HM.z + Math.sin(w) * (HM.r + 1))); }
-    for (let k = 0; k < 16; k++) { const w = k / 16 * Math.PI * 2; drehHindernis(hof, HM.x + Math.cos(w) * (HM.r + 1), HM.z + Math.sin(w) * (HM.r + 1), 1.3, 0.2); }
+    for (let k = 0; k < 48; k++) { const w = k / 48 * Math.PI * 2; drehHindernis(hof, HM.x + Math.cos(w) * (HM.r + 1), HM.z + Math.sin(w) * (HM.r + 1), 0.16, 0.16); }
     for (let i = 0; i < 9; i++) {
       const huhn = new THREE.Group();
       const farbe = [0x8a4a1e, 0xf2ece0, 0x6a3a14, 0xc9a46a][i % 4];

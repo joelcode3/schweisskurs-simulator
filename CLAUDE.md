@@ -145,6 +145,19 @@
   textur, ums Loch runtergedrückt, eingerissen (Schlitze), lange verdrehte Fetzen und Fäden. Bananenschale realistisch (4 Lappen
   außen gelb mit Flecken, innen creme). Wohnwagen-Korpus rund (Profil mit runden Ecken, Kanten gefast). Rumliegenden Müll an den
   Tonnen kann man aufheben (Wut -2, DENNIS.muellAufgehoben), nach 3–5 min liegt wieder was rum.
+- Landschaft (js/landschaft.js, `baueLandschaft`, aus draussen.js aufgerufen): Ringstraße RING (Mitte -110|20, Radius 245,
+  7,5 m breit, Leitpfosten alle 50 m, Bäume am Rand; entdrosselter Jeep ca. 2,3 min pro Runde). Innerhalb des Rings überall
+  begeh-/befahrbar (imKreis), außen nur ca. 5 m hinter die Straße. Gelände mit Hügeln (gelaendeHoehe/HUEGEL, flach an Werkstatt,
+  Feldweg, Hof, T5); Kamera, Würfe und Fahrzeuge (Höhe + Neigung) folgen dem Boden. Feldweg (FELDWEG, jetzt in landschaft.js) läuft in
+  Kurven ca. 130 m bis zur Hauptstraße, Büsche/Bäume am Rand. Am Ende: Dennis' Briefkasten (Post: Werbung, Mahnung, Karte von
+  Lydia) und Schilder „DENNIS REICH – Kein Zutritt!“, „(Fahrradfahrer werden geduldet)“, „Privatweg“, „Vorsicht! Freilaufender
+  Dennis“ (beidseitig lesbar). Lühmanns Hof (HOF) am Straßenrand: Schotterparkplatz, SB-Laden (Holzhütte, begehbar: Regal mit
+  Landeiern, Kühlschrank mit Mettenden, Tisch mit Anschreibeliste und Vertrauenskasse) – nehmen = anschreiben (z.angeschrieben),
+  in die Hand (HALTUNG eier/mettenden), Dennis bringen = Wut -8 (höchstens alle 90 s, DENNIS.einkauf.*). Peters Kühe (4, grasen und
+  laufen, Gehege mit Holzzaun, Raufe, Trog, Schild) und grünes Hühnermobil (Satteldach, Räder, Legenester, Rampe) mit 9 Hühnern im
+  Netzzaun. Schilder „Lühmanns Landeier“ mit Pfeil an der Straße. Umgekippter VW T5 Doppelkabine mit Pritsche (T5, innen am Ring,
+  liegt auf der Seite; Kabine hellgrau, Alu-Bordwände mit Sicken, Werkzeugkiste, VW-Logo, Heckträger mit Leuchten, Stahlfelgen),
+  Scherben, geschlängelte Reifenspuren von der Straße durch die Wiese. Himmel/Horizont/Nebel für die große Sichtweite (Kamera 1500).
 - Hand-System (`js/hand.js`): Werkzeug, Ausrüstung, Feuerlöscher, Besen, Figur, Handy kann man aufheben (Hand im Bild),
   auf ebene Flächen legen (Klick), fallen lassen (G), werfen (Q), benutzen/anziehen (E). Leiste unten zeigt, was man hält.
   Edding/Flex/Hammer müssen in der Hand sein zum Anzeichnen/Schneiden/Schlacke. Gasflasche: „Hochheben“, langsamer gehen,
@@ -386,7 +399,7 @@
 - Alle Dennis-Sätze stehen in `js/texte.js` (IDs = Dateinamen der Aufnahmen), `spiel.js` nutzt nur diese.
 - `stimme/stimme.json` + `stimme/<id>.mp3`: Aufnahmen pro Satz, Mund bewegt sich nach Lautstärke.
   Pflege mit `node tools/stimme.mjs liste|eintragen`, siehe `stimme/LIESMICH.md`.
-- Die Jungs sprechen ALLE Sätze ein. Dateinamen kurz: dennis1 … dennis456 (Stand Paket B), jonny1 … jonny48, waldo1 … waldo41, torben1 … torben19, kumpel1 … kumpel7 (KUMPEL) (Endung
+- Die Jungs sprechen ALLE Sätze ein. Dateinamen kurz: dennis1 … dennis460 (Stand Landschaft), jonny1 … jonny48, waldo1 … waldo41, torben1 … torben19, kumpel1 … kumpel7 (KUMPEL) (Endung
   .mp3/.m4a/.wav, Groß-/Kleinschreibung egal). Zuordnung Kurzname -> Satz-ID steht in stimme/zuordnung.csv (vom Projektchat).
   Nummern sind fest und verschieben sich NIE; neue Sätze bekommen die nächste freie Nummer (dennis367 …) und eine neue Zeile.
   Schlüssel in texte.js NIE umbenennen, neue Sätze nur ergänzen. IDs: Dennis wie alleSaetze(), telefon.G.Z = Gespräch G,
