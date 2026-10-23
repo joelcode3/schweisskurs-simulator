@@ -239,7 +239,7 @@ export function baueWelt(scene) {
   });
   const steckdosenMat = toon(0xffffff, { map: steckdosenTex });
   const stromWuerfel = [];
-  for (const [x, z] of [[-0.9, 2.35], [0.0, -1.05]]) {
+  for (const [x, z] of [[2.6, 1.0], [-2.9, -1.4]]) {
     const pendel = new THREE.Group();
     pendel.position.set(x, RAUM.hoehe, z);
     const kabelLaenge = RAUM.hoehe - 1.93;
@@ -788,17 +788,74 @@ export function baueWelt(scene) {
 
   // Kleiner weißer Kühlschrank in Dennis' Pausenecke (neben dem Kaffeetisch), Bier drin
   const kuehl = new THREE.Group();
-  kuehl.add(setze(quader(0.46, 0.84, 0.48, 0xf4f4f0), 0, 0.42, 0));
+  // hohles Gehäuse: Wände, Boden, Deckel (vorne offen), innen hellgrau
+  const KW = 0xf4f4f0, KI = 0xe4e8ea;
+  kuehl.add(setze(quader(0.46, 0.04, 0.48, KW), 0, 0.02, 0));
+  kuehl.add(setze(quader(0.46, 0.04, 0.48, KW), 0, 0.82, 0));
+  for (const sx of [-1, 1]) kuehl.add(setze(quader(0.03, 0.84, 0.48, KW), sx * 0.215, 0.42, 0));
+  kuehl.add(setze(quader(0.46, 0.84, 0.03, KW), 0, 0.42, -0.225));
+  kuehl.add(setze(quader(0.39, 0.75, 0.01, KI, { umriss: false }), 0, 0.42, -0.205));
+  for (const sx of [-1, 1]) kuehl.add(setze(quader(0.01, 0.75, 0.43, KI, { umriss: false }), sx * 0.196, 0.42, 0.0));
+  kuehl.add(setze(quader(0.39, 0.01, 0.43, KI, { umriss: false }), 0, 0.045, 0.0));
+  kuehl.add(setze(quader(0.39, 0.01, 0.43, KI, { umriss: false }), 0, 0.795, 0.0));
+  // Gemüsefach unten, darüber zwei Glasböden
+  kuehl.add(setze(quader(0.37, 0.1, 0.36, 0xdfe9ee, { umriss: 0.0015, wirft: false, mat: { transparent: true, opacity: 0.6 } }), 0, 0.105, -0.02));
+  for (const y of [0.17, 0.46]) kuehl.add(setze(quader(0.38, 0.008, 0.4, 0xcfe3ea, { umriss: 0.0015, wirft: false, mat: { transparent: true, opacity: 0.55 } }), 0, y, -0.01));
+  // Bierflaschen (braun, Kronkorken, Etikett) unten und in der Mitte
+  const bierFlasche = (x, y, z) => {
+    const f = new THREE.Group();
+    f.add(setze(zylinder(0.028, 0.028, 0.15, 0x6b3a14, { umriss: 0.0015 }, 10), 0, 0.075, 0));
+    f.add(setze(zylinder(0.012, 0.026, 0.05, 0x6b3a14, { umriss: 0.0015 }, 10), 0, 0.175, 0));
+    f.add(setze(zylinder(0.013, 0.013, 0.012, 0xc9a52a, { umriss: 0.001 }, 10), 0, 0.205, 0));
+    f.add(setze(zylinder(0.0285, 0.0285, 0.06, 0xe8dcae, { umriss: false }, 10), 0, 0.07, 0));
+    f.position.set(x, y, z);
+    kuehl.add(f);
+  };
+  for (let i = 0; i < 5; i++) bierFlasche(-0.14 + i * 0.07, 0.175, -0.1 + (i % 2) * 0.07);
+  for (let i = 0; i < 3; i++) bierFlasche(-0.14 + i * 0.065, 0.465, -0.12);
+  // Dose „Dennis' Matjes“ (flach, oval, mit Aufschrift) oben und ein Senfglas
+  const matjesTex = leinwandTextur(128, 64, (g, b, h) => {
+    g.fillStyle = '#e7d9a8'; g.fillRect(0, 0, b, h);
+    g.fillStyle = '#1f4f7a'; g.fillRect(0, 0, b, 14); g.fillRect(0, h - 10, b, 10);
+    g.fillStyle = '#1f4f7a'; g.font = 'bold 15px sans-serif'; g.textAlign = 'center';
+    g.fillText("DENNIS'", b / 2, 32); g.fillText('MATJES', b / 2, 49);
+  });
+  const dose = new THREE.Group();
+  const doseKoerper = teil(new THREE.CylinderGeometry(0.075, 0.075, 0.035, 24), 0, { material: toon(0xffffff, { map: matjesTex }), umriss: 0.0015 });
+  doseKoerper.scale.set(1, 1, 0.62);
+  dose.add(doseKoerper);
+  const doseDeckel = teil(new THREE.CylinderGeometry(0.074, 0.074, 0.004, 24), 0xb8bcc2, { umriss: false });
+  doseDeckel.scale.set(1, 1, 0.62);
+  doseDeckel.position.y = 0.019;
+  dose.add(doseDeckel);
+  dose.add(setze(quader(0.03, 0.003, 0.012, 0xd0d4d8, { umriss: false }), 0.045, 0.022, 0));
+  dose.position.set(0.09, 0.485, 0.03);
+  dose.rotation.y = -0.4;
+  kuehl.add(dose);
+  kuehl.add(setze(zylinder(0.03, 0.03, 0.08, 0xe0b830, { umriss: 0.0015 }, 12), 0.13, 0.215, 0.08));
+  kuehl.add(setze(zylinder(0.031, 0.031, 0.02, 0x2a2a2a, { umriss: 0.001 }, 12), 0.13, 0.265, 0.08));
   const kTuer = new THREE.Group();
   kTuer.add(setze(quader(0.44, 0.8, 0.04, 0xf7f7f3, { umriss: 0.003 }), 0.22, 0, 0.02));
   kTuer.add(setze(quader(0.025, 0.25, 0.03, 0xb8bcc2, { umriss: 0.002 }), 0.4, 0.15, 0.05));
   kTuer.add(setze(quader(0.08, 0.025, 0.004, 0x2f5fa8, { umriss: false }), 0.1, 0.32, 0.042));
+  // Türinnenseite: Dichtung und zwei Ablagen mit Flaschen
+  kTuer.add(setze(quader(0.4, 0.74, 0.006, 0xe8ecee, { umriss: false }), 0.22, 0, -0.003));
+  for (const y of [-0.25, 0.05]) {
+    kTuer.add(setze(quader(0.36, 0.06, 0.006, 0xd4dadd, { umriss: 0.0012 }), 0.22, y, -0.065));
+    kTuer.add(setze(quader(0.36, 0.006, 0.06, 0xd4dadd, { umriss: false }), 0.22, y - 0.03, -0.035));
+  }
+  for (let i = 0; i < 4; i++) {
+    const f = new THREE.Group();
+    f.add(setze(zylinder(0.024, 0.024, 0.13, i === 3 ? 0x2f6b2a : 0x6b3a14, { umriss: 0.0015 }, 10), 0, 0.065, 0));
+    f.add(setze(zylinder(0.011, 0.022, 0.04, i === 3 ? 0x2f6b2a : 0x6b3a14, { umriss: 0.0015 }, 10), 0, 0.15, 0));
+    f.add(setze(zylinder(0.012, 0.012, 0.01, 0xc9a52a, { umriss: false }, 8), 0, 0.175, 0));
+    f.position.set(0.1 + i * 0.075, -0.275, -0.035);
+    kTuer.add(f);
+  }
+  kTuer.add(setze(quader(0.08, 0.1, 0.04, 0xf2efe4, { umriss: 0.0015 }), 0.14, 0.07, -0.035));
+  kTuer.add(setze(zylinder(0.022, 0.022, 0.12, 0xe7442f, { umriss: 0.0015 }, 10), 0.3, 0.08, -0.035));
   kTuer.position.set(-0.22, 0.43, 0.24);
   kuehl.add(kTuer);
-  // innen: Bierflaschen im Kasten, dunkles Inneres
-  kuehl.add(setze(quader(0.4, 0.72, 0.02, 0xd9dde0, { umriss: false }), 0, 0.43, -0.2));
-  for (let i = 0; i < 6; i++) kuehl.add(setze(zylinder(0.028, 0.028, 0.2, 0x6b3a14, { umriss: 0.0015 }, 10), -0.13 + (i % 3) * 0.13, 0.2 + Math.floor(i / 3) * 0.32, -0.05 + (i % 2) * 0.06));
-  kuehl.add(setze(quader(0.42, 0.012, 0.4, 0xc9cdd2, { umriss: false }), 0, 0.42, 0));
   for (const sx of [-0.18, 0.18]) for (const sz of [-0.18, 0.18]) kuehl.add(setze(zylinder(0.02, 0.02, 0.03, 0x333333, { umriss: false }, 8), sx, 0.015, sz));
   setze(kuehl, -4.66, 0, 2.42, 0, Math.PI / 2, 0);
   scene.add(kuehl);
@@ -1005,20 +1062,33 @@ export function baueWelt(scene) {
   merke(brille, 'brille', 'Schutzbrille', 'regal');
   objekte.brille = brille;
 
-  // Atemmaske (Halbmaske, graues Gummi, zwei magentafarbene Filter, Kopfbänder) liegt im Regal neben der Brille
+  // Atemmaske (Einweg-Staubmaske FFP3: weißes Vlies, Nasenbügel, rotes Ausatemventil, zwei gelbe Gummibänder) liegt im Regal neben der Brille
   const maske = new THREE.Group();
-  const maskenKoerper = teil(new THREE.SphereGeometry(0.06, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), 0x5a5d62, { mat: { side: THREE.DoubleSide }, umriss: 0.003 });
-  maskenKoerper.scale.set(1.1, 1.25, 0.9);
-  maskenKoerper.rotation.x = Math.PI / 2;
-  maske.add(maskenKoerper);
-  maske.add(setze(zylinder(0.022, 0.022, 0.025, 0x3a3c40, { umriss: 0.002 }, 12), 0, -0.02, 0.055, Math.PI / 2, 0, 0));
-  for (const sx of [-1, 1]) {
-    maske.add(setze(zylinder(0.032, 0.032, 0.03, 0xd0307a, { umriss: 0.002 }, 16), sx * 0.062, -0.01, 0.025, 0, 0, Math.PI / 2 - sx * 0.5));
-    maske.add(setze(zylinder(0.026, 0.026, 0.032, 0xf2f2ee, { umriss: false }, 16), sx * 0.066, -0.012, 0.025, 0, 0, Math.PI / 2 - sx * 0.5));
+  const vlies = teil(new THREE.SphereGeometry(0.065, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.5), 0xf2f0ea, { mat: { side: THREE.DoubleSide }, umriss: 0.003 });
+  vlies.scale.set(1.15, 1.2, 0.85);
+  vlies.rotation.x = Math.PI / 2;
+  maske.add(vlies);
+  // Dichtrand innen und Prägenaht über die Mitte
+  maske.add(setze(teil(new THREE.TorusGeometry(0.066, 0.0035, 5, 32), 0xe2ded2, { umriss: false }), 0, 0, 0.002));
+  maske.add(setze(quader(0.003, 0.11, 0.003, 0xdcd8cc, { umriss: false }), 0, 0, 0.074, -0.05, 0, 0));
+  // Nasenbügel (Alu) oben auf dem Vlies
+  const nasenBuegel = new THREE.CatmullRomCurve3([[-0.03, 0.06, 0.035], [0, 0.068, 0.048], [0.03, 0.06, 0.035]].map((q) => new THREE.Vector3(...q)));
+  maske.add(teil(new THREE.TubeGeometry(nasenBuegel, 10, 0.0035, 4, false), 0xb8bcc2, { umriss: 0.001 }));
+  // rotes Ausatemventil mit Lamellen
+  maske.add(setze(zylinder(0.022, 0.022, 0.012, 0xc8352a, { umriss: 0.002 }, 16), 0, -0.02, 0.072, Math.PI / 2, 0, 0));
+  for (let i = 0; i < 3; i++) maske.add(setze(quader(0.026, 0.003, 0.003, 0x7a1a14, { umriss: false }), 0, -0.026 + i * 0.006, 0.079));
+  // zwei flache gelbe Gummibänder: an den Seiten mit Metallklammern festgetackert, hinten als lockere Schlaufe,
+  // die nach unten aufs Regalbrett hängt
+  const unten = -0.066;
+  for (const [y, weit] of [[0.032, 0.12], [-0.036, 0.15]]) {
+    const pkt = [[-0.074, y, 0.006], [-0.088, (y + unten) / 2, -0.035], [-0.075, unten, -weit * 0.7], [0, unten, -weit], [0.075, unten, -weit * 0.7], [0.088, (y + unten) / 2, -0.035], [0.074, y, 0.006]];
+    const band = new THREE.Group();
+    const tube = teil(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pkt.map((q) => new THREE.Vector3(...q))), 48, 0.0042, 6, false), 0xe8b42a, { umriss: 0.0012 });
+    band.add(tube);
+    maske.add(band);
+    for (const sx of [-1, 1]) maske.add(setze(quader(0.004, 0.012, 0.008, 0xc9cdd2, { umriss: 0.001 }), sx * 0.074, y, 0.008));
   }
-  maske.add(setze(teil(new THREE.TorusGeometry(0.07, 0.004, 4, 20, Math.PI), 0x1d1d1f, { umriss: false }), 0, 0.02, -0.01, 0, 0, 0));
-  maske.add(setze(teil(new THREE.TorusGeometry(0.075, 0.004, 4, 20, Math.PI), 0x1d1d1f, { umriss: false }), 0, -0.03, -0.01, 0, 0, Math.PI));
-  setze(maske, -4.6, 1.325, -1.15, -Math.PI / 2 + 0.2, Math.PI / 2, 0);
+  setze(maske, -4.62, 1.345, -1.15, 0, Math.PI / 2, 0);
   scene.add(maske);
   merke(maske, 'maske', 'Atemmaske', 'regal');
   objekte.maske = maske;
@@ -1218,6 +1288,9 @@ export function baueWelt(scene) {
       sieb.position.set(-0.29, 0.13, 0);
       sieb.userData.sauber = (ja) => { for (const f of fussel) f.visible = !ja; };
       g.add(sieb);
+      // Schacht für das Sieb: dunkles Fach mit Rand; ist das Sieb draußen, sieht man das leere Loch
+      g.add(setze(quader(0.012, 0.17, 0.27, 0x111214, { umriss: false }), -0.315, 0.13, 0));
+      for (const sy of [-1, 1]) g.add(setze(quader(0.016, 0.012, 0.29, 0x8a9096, { umriss: false }), -0.318, 0.13 + sy * 0.09, 0));
     }
     g.position.set(BAD.xMax - 0.33, y, BAD.zMin + 0.5);
     scene.add(g);
@@ -1468,8 +1541,12 @@ export function baueWelt(scene) {
   tWaesche.add(setze(stoff(new THREE.CylinderGeometry(0.023, 0.023, 0.02, 10), 0xf4f0e6), -0.205, 0.37, -0.12, 0.3, 0, 0));
   tasche.add(tWaesche);
   tasche.userData.waesche = tWaesche;
-  tasche.visible = false;
   scene.add(tasche);
+  // liegt anfangs oben auf dem Trockner; runterholen kann nur Dennis
+  tasche.position.set(BAD.xMax - 0.36, 1.71, BAD.zMin + 0.48);
+  tasche.rotation.set(0, 0.3, 0);
+  tasche.userData.trocknerPlatz = { pos: tasche.position.clone(), rot: tasche.rotation.clone() };
+  merke(tasche, 'waeschetasche', 'Wäschetasche', null);
   objekte.waeschetasche = tasche;
 
   // ---------- Schweißplatz ----------
@@ -2735,9 +2812,9 @@ export function baueWelt(scene) {
   // mögliche Abstellplätze (x, z, Strahl-Start): nie auf dem Boden, sondern auf Möbeln und Kram
   const TASSEN_PLAETZE = [
     [1.2, 6.69, 1.2],     // Bad: Spülkasten
-    [-4.7, -0.55, 2.3],   // Regal oben
-    [-4.7, -0.62, 1.2],   // Regal Mitte
-    [-4.72, -1.05, 0.7],  // Regal unten
+    // Regal nur vorne an der Kante und nicht über Augenhöhe (oben/hinten sieht und trifft man sie nicht)
+    [-4.56, -0.4, 1.2],   // Regal Mitte
+    [-4.56, -1.0, 1.2],   // Regal Mitte, andere Seite
     [-2.34, 3.55, 1.0],   // Sofa: Armlehne
     [-4.06, 3.6, 1.0],    // Sofa: andere Armlehne
     [3.1, 3.48, 1.0],     // Stahlträger
@@ -2772,6 +2849,11 @@ export function baueWelt(scene) {
     // Aufdruck (Streifen oder Punkt)
     if (i % 2) t.add(setze(zylinder(0.0425, 0.0405, 0.018, druck, { umriss: false }, 14), 0, 0.06, 0));
     else t.add(setze(kugel(0.012, druck, { umriss: false }, 6), 0, 0.055, -0.039));
+    // unsichtbare, etwas größere Klickfläche: die Tasse ist klein, sonst geht der Klick leicht daneben
+    const huelle = new THREE.Mesh(new THREE.SphereGeometry(0.095, 10, 8), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
+    huelle.position.y = 0.05;
+    huelle.castShadow = false;
+    t.add(huelle);
     t.userData.aufgeraeumt = false;
     merke(t, 'tasse', 'Kaffeetasse', null);
     tassen.push(t);
@@ -2795,20 +2877,60 @@ export function baueWelt(scene) {
     const [x, z, y] = TASSEN_PLAETZE[[9, 10, 11][Math.floor(Math.random() * 3)]];
     return [x + (Math.random() - 0.5) * 0.5, z + wackel(), y];
   }
-  // auf dem Kühlschrank: 4 x 3 Plätze, danach zweite Lage
+  // auf dem Kühlschrank: 4 x 3 Plätze, dann ist er voll (bis jemand mit Spüldienst alles abholt)
   const kuehlOben = 0.845;
+  const KUEHL_PLAETZE = 12;
+  const tassenOben = () => tassen.filter((x) => x.userData.aufgeraeumt);
   function tasseAufKuehlschrank(t) {
-    const n = tassen.filter((x) => x.userData.aufgeraeumt).length;
-    const lage = Math.floor(n / 12), i = n % 12;
+    const belegt = new Set(tassenOben().map((x) => x.userData.kuehlPlatz));
+    let i = 0;
+    while (belegt.has(i) && i < KUEHL_PLAETZE) i++;
+    if (i >= KUEHL_PLAETZE) return false;
     const lx = -0.16 + (i % 4) * 0.105, lz = -0.13 + Math.floor(i / 4) * 0.13;
     scene.add(t);
     t.visible = true;
     // Kühlschrank ist um 90° gedreht: lokale x/z vertauscht
-    t.position.set(-4.66 + lz, kuehlOben + lage * 0.105, 2.42 - lx);
+    t.position.set(-4.66 + lz, kuehlOben, 2.42 - lx);
     t.rotation.set(0, Math.PI / 2 + (Math.random() - 0.5) * 0.4, 0);
     if (t.userData.ruhe) t.scale.copy(t.userData.ruhe.skala);
     t.userData.aufgeraeumt = true;
+    t.userData.kuehlPlatz = i;
+    return true;
   }
+  // Spüldienst holt alles vom Kühlschrank: die Tassen verschwinden (in die Küche)
+  function tassenAbholen() {
+    const weg = tassenOben();
+    for (const t of weg) { scene.remove(t); tassen.splice(tassen.indexOf(t), 1); }
+    return weg.length;
+  }
+  // kleiner Zettel an der Wand über dem Kühlschrank: „Spüldienst diese Woche: …“
+  const zettelLeinwand = document.createElement('canvas');
+  zettelLeinwand.width = 256; zettelLeinwand.height = 192;
+  const zettelTex = new THREE.CanvasTexture(zettelLeinwand);
+  zettelTex.colorSpace = THREE.SRGBColorSpace;
+  function setzeSpueldienst(name) {
+    const g = zettelLeinwand.getContext('2d');
+    g.fillStyle = '#f6f1df'; g.fillRect(0, 0, 256, 192);
+    g.strokeStyle = 'rgba(80,120,200,0.35)'; g.lineWidth = 2;
+    for (let y = 44; y < 192; y += 30) { g.beginPath(); g.moveTo(8, y); g.lineTo(248, y); g.stroke(); }
+    g.fillStyle = "#14286a"; g.textAlign = "center";
+    g.font = '700 38px Caveat, "Segoe Print", "Bradley Hand", cursive';
+    g.fillText('Spüldienst', 128, 60); g.fillText('diese Woche:', 128, 100);
+    g.fillStyle = '#b2241c'; g.font = '700 52px Caveat, "Segoe Print", "Bradley Hand", cursive';
+    g.fillText(name, 128, 158);
+    zettelTex.needsUpdate = true;
+  }
+  const zettel = new THREE.Group();
+  const zettelBlatt = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.225), new THREE.MeshBasicMaterial({ map: zettelTex }));
+  zettel.add(zettelBlatt);
+  zettel.add(setze(quader(0.08, 0.025, 0.002, 0xe8e2c8, { umriss: false }), 0, 0.11, 0.002, 0, 0, 0.12));
+  zettel.add(setze(quader(0.3, 0.225, 0.004, 0x000000, { umriss: false }), 0, 0, -0.004));
+  setze(zettel, RAUM.xMin + 0.03, 1.13, 2.56, 0, Math.PI / 2, 0.04);
+  scene.add(zettel);
+  merke(zettel, 'spuelzettel', 'Zettel: Spüldienst', null);
+  objekte.spuelzettel = zettel;
+  setzeSpueldienst('Jonas');
+  if (document.fonts) document.fonts.ready.then(() => setzeSpueldienst(zettel.userData.name || 'Jonas'));
   let tassenGestellt = false;
   function tassenVerteilen(anzahl = 7) {
     if (tassenGestellt) return;
@@ -2824,8 +2946,12 @@ export function baueWelt(scene) {
     tassen,
     tassenVerteilen,
     tasseAufKuehlschrank,
+    tassenAbholen,
+    kuehlschrankVoll: () => tassenOben().length >= KUEHL_PLAETZE,
+    tassenOben: () => tassenOben().length,
+    setzeSpueldienst(name) { zettel.userData.name = name; setzeSpueldienst(name); },
     neueTasse(bei) {
-      if (tassen.length >= 14) return null;
+      if (tassen.filter((t) => !t.userData.aufgeraeumt).length >= 12) return null;
       const t = tasseBauen(tassen.length);
       const [x, z, y] = freierPlatz(bei);
       tasseHinstellen(t, x, z, y);
@@ -2860,6 +2986,10 @@ export function baueWelt(scene) {
     draussen,
     imBad(x, z) { return x > BAD.xMin && x < BAD.xMax && z > BAD.zMin && z < BAD.zMax; },
     kloTuer(offen) { kloOffen = offen; },
+    // Steht (x, z) in der WC-Tür oder kurz davor/dahinter? Dann darf die Tür nicht zugehen
+    inKloTuer(x, z) { return x > KLO_TUER.xMin - 0.35 && x < KLO_TUER.xMax + 0.35 && z > RAUM.zMax - 0.75 && z < BAD.zMin + 0.75; },
+    // Beim Durchgehen durch die WC-Tür: Richtung Türmitte (x), damit man nicht an der Kante hängen bleibt
+    kloTuerMitte(x, z) { return kloOffen && x > KLO_TUER.xMin - 0.5 && x < KLO_TUER.xMax + 0.5 && z > RAUM.zMax - 1.0 && z < BAD.zMin + 1.0 ? (KLO_TUER.xMin + KLO_TUER.xMax) / 2 : null; },
     kuehlschrank(auf) { kuehlAuf = auf; },
     leereFlasche,
     flascheWeg(f) {

@@ -518,3 +518,38 @@ export function husten(lautst = 1, stoesse = 3) {
     t += 0.24 + Math.random() * 0.12;
   }
 }
+
+// Bierflasche öffnen: Kronkorken-Plopp und kurzes Zischen
+export function bierAuf(lautst = 0.7) {
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  // Plopp: kurzer, tief fallender Ton
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = 'sine';
+  o.frequency.setValueAtTime(900, t);
+  o.frequency.exponentialRampToValueAtTime(180, t + 0.06);
+  huelle(g, t, 0.002, 0.01, 0.08, lautst);
+  o.connect(g).connect(master);
+  o.start(t);
+  o.stop(t + 0.15);
+  // Kronkorken klickt
+  const k = ctx.createOscillator();
+  const kg = ctx.createGain();
+  k.type = 'triangle';
+  k.frequency.value = 3200;
+  huelle(kg, t + 0.01, 0.001, 0.005, 0.04, lautst * 0.35);
+  k.connect(kg).connect(master);
+  k.start(t + 0.01);
+  k.stop(t + 0.08);
+  // Zischen (Kohlensäure)
+  const q = rauschQuelle();
+  const f = ctx.createBiquadFilter();
+  f.type = 'highpass';
+  f.frequency.value = 4500;
+  const zg = ctx.createGain();
+  huelle(zg, t + 0.04, 0.01, 0.12, 0.45, lautst * 0.45);
+  q.connect(f).connect(zg).connect(master);
+  q.start(t + 0.04);
+  q.stop(t + 0.7);
+}

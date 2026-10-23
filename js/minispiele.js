@@ -1564,16 +1564,19 @@ export function bitsatzSpiel() {
   }
   function zeichneBit(ctx, b, x, y, w) {
     ctx.save(); ctx.translate(x, y); ctx.rotate(w);
+    // groß genug zum Erkennen: Bit wächst mit der Spielfläche (gezeichnet in 38er-Einheiten)
+    const gr = Math.max(1.6, Math.min(2.6, f.b * 0.1 / 38));
+    ctx.scale(gr, gr);
     const l = 38, d = 7;
     // Sechskantschaft
-    ctx.fillStyle = b.farbe; ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
+    ctx.fillStyle = b.farbe; ctx.strokeStyle = '#111'; ctx.lineWidth = 1.2;
     ctx.beginPath(); ctx.roundRect(-l / 2, -d / 2, l * 0.7, d, 2); ctx.fill(); ctx.stroke();
     ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(-l / 2 + 2, -d / 2 + 1, l * 0.6, 2);
     // Spitze je nach Art
     const sx = -l / 2 + l * 0.7;
     ctx.fillStyle = b.farbe;
     ctx.beginPath(); ctx.moveTo(sx, -d / 2); ctx.lineTo(sx + l * 0.3, -1.5); ctx.lineTo(sx + l * 0.3, 1.5); ctx.lineTo(sx, d / 2); ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.strokeStyle = '#111'; ctx.lineWidth = 1.5;
+    ctx.strokeStyle = '#111'; ctx.lineWidth = 1;
     if (b.art === 'PH' || b.art === 'PZ') { ctx.beginPath(); ctx.moveTo(sx + 4, 0); ctx.lineTo(sx + l * 0.3, 0); ctx.stroke(); if (b.art === 'PZ') { ctx.beginPath(); ctx.moveTo(sx + 6, -2); ctx.lineTo(sx + 6, 2); ctx.stroke(); } }
     if (b.art === 'TX') { ctx.beginPath(); ctx.arc(sx + l * 0.2, 0, 2.5, 0, Math.PI * 2); ctx.stroke(); }
     // Größe als Zahl auf dem Schaft
@@ -1586,7 +1589,7 @@ export function bitsatzSpiel() {
     events: {
       pointerdown(e) {
         const p = zeigerPos(api.canvas, e);
-        let best = null, bd = 30;
+        let best = null, bd = 55;
         for (const b of bits) { if (b.fertig) continue; const d = Math.hypot(b.x - p.x, b.y - p.y); if (d < bd) { bd = d; best = b; } }
         if (best) { zieht = { b: best, dx: best.x - p.x, dy: best.y - p.y, startX: best.x, startY: best.y }; api.canvas.setPointerCapture?.(e.pointerId); klonk(0.08); }
       },
@@ -1615,8 +1618,9 @@ export function bitsatzSpiel() {
         const a = ARTEN.find((x) => x.id === q.art);
         ctx.fillStyle = '#17181b'; ctx.fillRect(q.x, q.y, q.b, q.h);
         ctx.strokeStyle = '#4a4d52'; ctx.lineWidth = 2; ctx.strokeRect(q.x, q.y, q.b, q.h);
-        ctx.fillStyle = a.farbe; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
-        ctx.fillText(`${a.name} ${q.groesse}`, q.x + 6, q.y + 14);
+        const fs = Math.max(9, Math.min(15, q.b / 6.5));
+        ctx.fillStyle = a.farbe; ctx.font = `bold ${fs}px system-ui`; ctx.textAlign = 'left';
+        ctx.fillText(`${a.name} ${q.groesse}`, q.x + 4, q.y + fs + 3);
       }
       // Ablage unten (Regalbrett)
       ctx.fillStyle = '#8e8e86'; ctx.fillRect(f.x - 10, f.y + f.h * 0.62, f.b + 20, f.h * 0.38);
@@ -1642,12 +1646,23 @@ export function akkuschrauberSpiel() {
   let rost = [];
   let zeiger = null, wischt = false;
   let zuSchrauben = [];
-  const tipp = { schrauben: 'Gehäuse aufmachen: auf jede der 4 Schrauben klicken.', trocknen: 'Wasser drin! Mit dem Lappen über die Tropfen wischen (gedrückt halten).', kontakte: 'Die Akku-Kontakte sind grün angelaufen: auf die Stellen klicken und blank kratzen.', zu: 'Wieder zuschrauben: alle 4 Schrauben anklicken.', fertig: 'Läuft wieder!' };
+  let lupe, zungen = [], letzterKratzer = 0;
+  const tipp = { schrauben: 'Gehäuse aufmachen: auf jede der 4 Schrauben klicken.', trocknen: 'Wasser drin! Mit dem Lappen über die Tropfen wischen (gedrückt halten).', kontakte: 'Die Akku-Kontakte (Lupe) sind grün angelaufen: mit gedrückter Maus über den Grünspan kratzen, bis sie wieder glänzen.', zu: 'Wieder zuschrauben: alle 4 Schrauben anklicken.', fertig: 'Läuft wieder!' };
   function bauen() {
     const cx = f.x + f.b * 0.5, cy = f.y + f.h * 0.45;
     schrauben = [[-0.2, -0.2], [0.18, -0.22], [-0.05, 0.12], [0.02, 0.38]].map(([dx, dy]) => ({ x: cx + dx * f.b, y: cy + dy * f.h, raus: false }));
     tropfen = Array.from({ length: 26 }, () => ({ x: cx + (Math.random() - 0.6) * f.b * 0.4, y: cy + (Math.random() - 0.5) * f.h * 0.35, r: 4 + Math.random() * 7, weg: false }));
-    rost = Array.from({ length: 5 }, (_, i) => ({ x: cx - f.b * 0.08 + i * f.b * 0.04, y: cy + f.h * 0.42, hp: 2 }));
+    // Lupe auf den Akkuschacht: zwei breite Messingzungen voller Grünspan-Krusten
+    lupe = { x: cx + f.b * 0.13, y: cy + f.h * 0.0, b: f.b * 0.3, h: f.h * 0.4 };
+    zungen = [0.28, 0.62].map((u) => ({ x: lupe.x + lupe.b * u, y: lupe.y + lupe.h * 0.22, b: lupe.b * 0.2, h: lupe.h * 0.62 }));
+    rost = [];
+    for (const z of zungen) for (let i = 0; i < 6; i++) rost.push({ x: z.x + z.b * (0.15 + Math.random() * 0.7), y: z.y + z.h * (0.1 + i * 0.15), r: Math.min(z.b, z.h) * (0.22 + Math.random() * 0.14), hp: 1, form: Array.from({ length: 9 }, () => 0.7 + Math.random() * 0.5) });
+  }
+  function kratzen(p, menge) {
+    let ok = false;
+    for (const q of rost) if (q.hp > 0 && Math.hypot(q.x - p.x, q.y - p.y) < q.r + 10) { q.hp = Math.max(0, q.hp - menge); ok = true; }
+    if (ok && Date.now() - letzterKratzer > 160) { letzterKratzer = Date.now(); kratzerTon(); }
+    if (rost.every((q) => q.hp <= 0)) { phase = 'zu'; klonk(0.15); }
   }
   function klickAuf(p) {
     if (phase === 'schrauben' || phase === 'zu') {
@@ -1662,13 +1677,7 @@ export function akkuschrauberSpiel() {
         setTimeout(() => d.stopp(), 900);
         api.fertig({ repariert: true });
       }
-    } else if (phase === 'kontakte') {
-      const r = rost.find((q) => q.hp > 0 && Math.hypot(q.x - p.x, q.y - p.y) < 18);
-      if (!r) return;
-      r.hp--;
-      kratzerTon(); klonk(0.1);
-      if (rost.every((q) => q.hp <= 0)) phase = 'zu';
-    }
+    } else if (phase === 'kontakte') kratzen(p, 0.35);
   }
   window.__akku = { get phase() { return phase; }, get schrauben() { return schrauben; }, get tropfen() { return tropfen; }, get rost() { return rost; } }; // nur für Tests
   const { api, versprechen } = spielRahmen('Akkuschrauber reparieren', 'Waldos Akkuschrauber lag im Regen. Aufschrauben, trocknen, Kontakte säubern, zuschrauben.', {
@@ -1679,11 +1688,12 @@ export function akkuschrauberSpiel() {
       pointerup() { wischt = false; },
       pointercancel() { wischt = false; },
     },
-    schritt() {
+    schritt(dt) {
       if (phase === 'trocknen' && wischt && zeiger) {
         for (const t of tropfen) if (!t.weg && Math.hypot(t.x - zeiger.x, t.y - zeiger.y) < 34) t.weg = true;
         if (tropfen.every((t) => t.weg)) phase = 'kontakte';
       }
+      if (phase === 'kontakte' && wischt && zeiger) kratzen(zeiger, dt * 2.2);
     },
     zeichnen() {
       const { ctx, m } = api;
@@ -1710,8 +1720,46 @@ export function akkuschrauberSpiel() {
         ctx.fillStyle = '#2f7a3a'; ctx.fillRect(cx - f.b * 0.1, cy - f.h * 0.05, f.b * 0.09, f.h * 0.28); ctx.strokeRect(cx - f.b * 0.1, cy - f.h * 0.05, f.b * 0.09, f.h * 0.28);
         ctx.strokeStyle = '#c8352a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx - f.b * 0.06, cy - f.h * 0.05); ctx.quadraticCurveTo(cx - f.b * 0.02, cy - f.h * 0.15, cx - f.b * 0.08, cy - f.h * 0.2); ctx.stroke();
         for (const t of tropfen) if (!t.weg) { ctx.fillStyle = 'rgba(120,190,240,0.9)'; ctx.beginPath(); ctx.arc(t.x, t.y, t.r, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.beginPath(); ctx.arc(t.x - t.r * 0.3, t.y - t.r * 0.3, t.r * 0.25, 0, Math.PI * 2); ctx.fill(); }
-        // Akku-Kontakte
-        for (const r of rost) { ctx.fillStyle = r.hp > 0 ? (r.hp === 2 ? '#4f9a7a' : '#8fb39a') : '#d9b44a'; ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.fillRect(r.x - 7, r.y - 10, 14, 20); ctx.strokeRect(r.x - 7, r.y - 10, 14, 20); }
+      }
+      if (offen && phase !== 'schrauben') {
+        // Lupe: Linie vom Akkuschacht, runder Rahmen, darin die Kontakte groß
+        const ax = cx - f.b * 0.05, ay = cy + f.h * 0.31;
+        ctx.strokeStyle = '#111'; ctx.lineWidth = 3; ctx.setLineDash([8, 6]);
+        ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(lupe.x, lupe.y + lupe.h * 0.8); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = '#1b1c1f'; ctx.beginPath(); ctx.roundRect(lupe.x, lupe.y, lupe.b, lupe.h, 18); ctx.fill();
+        ctx.lineWidth = 6; ctx.strokeStyle = '#e8e2d0'; ctx.stroke(); ctx.lineWidth = 2; ctx.strokeStyle = '#111'; ctx.stroke();
+        ctx.fillStyle = '#ffe9a8'; ctx.font = 'bold 14px system-ui'; ctx.textAlign = 'left'; ctx.fillText('Akku-Kontakte', lupe.x + 12, lupe.y + 22);
+        ctx.fillStyle = '#2b2d31'; ctx.fillRect(lupe.x + lupe.b * 0.12, lupe.y + lupe.h * 0.16, lupe.b * 0.76, lupe.h * 0.74);
+        for (const z of zungen) {
+          // blankes Messing mit Glanzstreifen und Plus/Minus
+          const g = ctx.createLinearGradient(z.x, 0, z.x + z.b, 0);
+          g.addColorStop(0, '#b8892c'); g.addColorStop(0.45, '#f2d27a'); g.addColorStop(1, '#a87c26');
+          ctx.fillStyle = g; ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.roundRect(z.x, z.y, z.b, z.h, 5); ctx.fill(); ctx.stroke();
+        }
+        ctx.fillStyle = '#e8e2d0'; ctx.font = 'bold 16px system-ui'; ctx.textAlign = 'center';
+        zungen.forEach((z, i) => ctx.fillText(i ? '-' : '+', z.x + z.b / 2, z.y + z.h + 18));
+        // Grünspan: unregelmäßige Krusten mit hellen Kristallen, werden beim Kratzen blasser
+        for (const q of rost) {
+          if (q.hp <= 0) continue;
+          ctx.globalAlpha = Math.min(1, q.hp * 1.4);
+          ctx.fillStyle = '#4a8f74'; ctx.beginPath();
+          q.form.forEach((k, i) => { const w = (i / q.form.length) * Math.PI * 2; const px = q.x + Math.cos(w) * q.r * k, py = q.y + Math.sin(w) * q.r * k; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); });
+          ctx.closePath(); ctx.fill();
+          ctx.fillStyle = '#7cc2a2'; ctx.beginPath(); ctx.arc(q.x - q.r * 0.2, q.y - q.r * 0.15, q.r * 0.45, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#d8f0e2'; for (let i = 0; i < 4; i++) ctx.fillRect(q.x + Math.cos(i * 1.7) * q.r * 0.5, q.y + Math.sin(i * 2.3) * q.r * 0.5, 2, 2);
+          ctx.globalAlpha = 1;
+        }
+        // Funkeln, wenn alles blank ist
+        if (phase !== 'kontakte') for (const z of zungen) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; const sx = z.x + z.b * 0.6, sy = z.y + z.h * 0.3; ctx.beginPath(); ctx.moveTo(sx - 8, sy); ctx.lineTo(sx + 8, sy); ctx.moveTo(sx, sy - 8); ctx.lineTo(sx, sy + 8); ctx.stroke(); }
+      }
+      // Kratzer (Schraubendreher-Spitze) am Zeiger
+      if (phase === 'kontakte' && zeiger) {
+        ctx.save(); ctx.translate(zeiger.x, zeiger.y); ctx.rotate(-0.7);
+        ctx.fillStyle = '#c9cdd2'; ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(6, -4); ctx.lineTo(6, -40); ctx.lineTo(-6, -40); ctx.lineTo(-6, -4); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#d0302a'; ctx.beginPath(); ctx.roundRect(-10, -86, 20, 48, 6); ctx.fill(); ctx.stroke();
+        ctx.restore();
       }
       // Schrauben
       for (const s of schrauben) {
@@ -1724,5 +1772,241 @@ export function akkuschrauberSpiel() {
       textMitte(ctx, tipp[phase], m.b / 2, f.y + f.h + 30, 18, '#ffe9a8');
     },
   });
+  return versprechen;
+}
+
+// Flusensieb ausblasen: mit gedrückter Maus (Druckluftpistole) über die Fusseln fahren, bis alles weggepustet ist
+export function siebSpiel() {
+  let f, s;
+  let zeiger = null;
+  let druck = false;
+  let ton = null;
+  const fusseln = [];
+  const flug = [];
+  const r = (() => { let q = 91; return () => { q = (q * 1664525 + 1013904223) >>> 0; return q / 4294967296; }; })();
+  const { api, versprechen } = spielRahmen('Flusensieb ausblasen', 'Maus gedrückt halten = Druckluft. Über die Fusseln fahren, bis das Sieb sauber ist. Nicht ins Gesicht pusten!', {
+    beiGroesse(m) {
+      f = flaeche(m);
+      s = { x: f.x + f.b * 0.18, y: f.y + f.h * 0.08, b: f.b * 0.64, h: f.h * 0.84 };
+      if (!fusseln.length) for (let i = 0; i < 70; i++) fusseln.push({ u: 0.05 + r() * 0.9, v: 0.06 + r() * 0.88, g: 6 + r() * 12, w: r() * 6, farbe: ['#a59d91', '#8f877c', '#bdb3a4', '#c23a2e', '#2f5fa8'][Math.floor(r() * (r() < 0.9 ? 3 : 5))], weg: false });
+    },
+    events: {
+      pointerdown(e) { druck = true; zeiger = zeigerPos(api.canvas, e); api.canvas.setPointerCapture?.(e.pointerId); },
+      pointermove(e) { zeiger = zeigerPos(api.canvas, e); },
+      pointerup() { druck = false; },
+      pointercancel() { druck = false; },
+    },
+    schritt(dt) {
+      const pustet = druck && !api.istFertig;
+      if (pustet && !ton) ton = dauer('gas', 0.7);
+      if (!pustet && ton) { ton.stopp(); ton = null; }
+      if (pustet && zeiger) {
+        for (const p of fusseln) {
+          if (p.weg) continue;
+          const x = s.x + p.u * s.b, y = s.y + p.v * s.h;
+          if (Math.hypot(x - zeiger.x, y - zeiger.y) < 46) { p.weg = true; flug.push({ x, y, vx: (x - zeiger.x) * 6 + (r() - 0.5) * 200, vy: -200 - r() * 200, t: 0, g: p.g, farbe: p.farbe }); }
+        }
+      }
+      for (let i = flug.length - 1; i >= 0; i--) { const q = flug[i]; q.t += dt; q.x += q.vx * dt; q.y += q.vy * dt; q.vy += 400 * dt; if (q.t > 1.2) flug.splice(i, 1); }
+      const rest = fusseln.filter((p) => !p.weg).length;
+      if (!api.istFertig && rest <= 2) { if (ton) { ton.stopp(); ton = null; } api.fertig({ sauber: true }); }
+    },
+    zeichnen() {
+      const { ctx, m } = api;
+      ctx.fillStyle = '#26282c'; ctx.fillRect(0, 0, m.b, m.h);
+      // Rahmen und Netz
+      ctx.fillStyle = '#9aa0a6'; ctx.strokeStyle = '#111'; ctx.lineWidth = 5;
+      ctx.beginPath(); ctx.roundRect(s.x - 18, s.y - 18, s.b + 36, s.h + 36, 14); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#e9ecef'; ctx.fillRect(s.x, s.y, s.b, s.h);
+      ctx.strokeStyle = '#8f979e'; ctx.lineWidth = 1;
+      for (let x = s.x; x < s.x + s.b; x += 7) { ctx.beginPath(); ctx.moveTo(x, s.y); ctx.lineTo(x, s.y + s.h); ctx.stroke(); }
+      for (let y = s.y; y < s.y + s.h; y += 7) { ctx.beginPath(); ctx.moveTo(s.x, y); ctx.lineTo(s.x + s.b, y); ctx.stroke(); }
+      ctx.fillStyle = '#7c838b'; ctx.fillRect(s.x + s.b * 0.35, s.y - 34, s.b * 0.3, 18);
+      // Fusseln (flauschige Kleckse)
+      const fussel = (x, y, g, w, farbe) => { ctx.fillStyle = farbe; ctx.beginPath(); for (let k = 0; k < 7; k++) { const a = w + k * 0.9; ctx.ellipse(x + Math.cos(a) * g * 0.5, y + Math.sin(a) * g * 0.35, g * 0.6, g * 0.4, a, 0, Math.PI * 2); } ctx.fill(); };
+      for (const p of fusseln) if (!p.weg) fussel(s.x + p.u * s.b, s.y + p.v * s.h, p.g, p.w, p.farbe);
+      for (const q of flug) { ctx.globalAlpha = Math.max(0, 1 - q.t); fussel(q.x, q.y, q.g, q.t * 9, q.farbe); ctx.globalAlpha = 1; }
+      // Ausblaspistole am Zeiger
+      if (zeiger) {
+        ctx.save(); ctx.translate(zeiger.x, zeiger.y);
+        ctx.fillStyle = '#2f5fa8'; ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.roundRect(14, 4, 70, 26, 8); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#9aa1a8'; ctx.fillRect(-4, 10, 20, 10); ctx.strokeRect(-4, 10, 20, 10);
+        ctx.fillStyle = '#2f5fa8'; ctx.beginPath(); ctx.roundRect(54, 26, 22, 44, 6); ctx.fill(); ctx.stroke();
+        if (druck) for (let k = 0; k < 6; k++) { ctx.strokeStyle = 'rgba(220,235,255,0.7)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-6, 15); ctx.lineTo(-40 - Math.random() * 30, 15 + (Math.random() - 0.5) * 40); ctx.stroke(); }
+        ctx.restore();
+      }
+      const rest = fusseln.filter((p) => !p.weg).length;
+      balken(ctx, f.x, f.y + f.h + 30, f.b, 12, 1 - rest / fusseln.length, '#ffc81e');
+      textMitte(ctx, api.istFertig ? 'Blitzsauber!' : 'Druckluft: Maus gedrückt halten und über die Fusseln fahren', m.b / 2, f.y - 18, 18, '#ffe9a8');
+    },
+  });
+  return versprechen;
+}
+
+// Kaffee kochen: Pulver in den Filter löffeln (3 Löffel, so mag Dennis ihn), Wasser bis zur Markierung, Knopf an
+export function kaffeeSpiel() {
+  let f;
+  let phase = 'pulver';
+  let loeffel = 0;
+  let loeffelAnim = 0;
+  let wasser = 0;
+  let haelt = false;
+  let ton = null;
+  let bruehen = 0;
+  let meldung = '', meldungZeit = 0;
+  const meld = (t) => { meldung = t; meldungZeit = 1.8; };
+  const ZIEL = [0.78, 0.92];
+  let dose, maschine, knopfPos;
+  const { api, versprechen } = spielRahmen('Kaffee kochen', 'Schwarz und stark, so wie Dennis ihn mag: drei Löffel Pulver, Wasser bis zur Markierung, dann einschalten.', {
+    beiGroesse(m) {
+      f = flaeche(m);
+      dose = { x: f.x + f.b * 0.08, y: f.y + f.h * 0.45, b: f.b * 0.16, h: f.h * 0.42 };
+      maschine = { x: f.x + f.b * 0.42, y: f.y + f.h * 0.06, b: f.b * 0.36, h: f.h * 0.9 };
+      knopfPos = { x: maschine.x + maschine.b * 0.8, y: maschine.y + maschine.h * 0.62, r: Math.min(f.b, f.h) * 0.05 };
+    },
+    events: {
+      pointerdown(e) {
+        const p = zeigerPos(api.canvas, e);
+        if (phase === 'pulver') {
+          if (p.x > dose.x - 20 && p.x < dose.x + dose.b + 20 && p.y > dose.y - 40 && p.y < dose.y + dose.h) {
+            loeffel++; loeffelAnim = 0.6; klonk(0.15);
+            if (loeffel === 3) meld('Drei Löffel. Perfekt.');
+            if (loeffel === 5) meld('Fünf?! Das wird Teer.');
+          } else if (loeffel >= 1 && p.x > maschine.x) { phase = 'wasser'; meld(loeffel < 3 ? 'Etwas dünn ... Na gut.' : 'Jetzt Wasser rein!'); }
+        } else if (phase === 'wasser') haelt = true;
+        else if (phase === 'knopf' && Math.hypot(p.x - knopfPos.x, p.y - knopfPos.y) < knopfPos.r * 1.6) { phase = 'bruehen'; blip(700, 0.1); }
+      },
+      pointerup() {
+        if (phase === 'wasser' && haelt) {
+          haelt = false;
+          if (wasser >= ZIEL[0]) { phase = 'knopf'; meld(wasser > 1 ? 'Übergelaufen. Egal.' : 'Genau richtig. Einschalten!'); }
+          else if (wasser > 0.05) meld('Noch nicht genug Wasser.');
+        }
+      },
+      pointercancel() { haelt = false; },
+    },
+    schritt(dt) {
+      meldungZeit = Math.max(0, meldungZeit - dt);
+      loeffelAnim = Math.max(0, loeffelAnim - dt);
+      const laeuft = (phase === 'wasser' && haelt) || phase === 'bruehen';
+      if (laeuft && !ton) ton = dauer('wasser', phase === 'bruehen' ? 0.4 : 0.6);
+      if (!laeuft && ton) { ton.stopp(); ton = null; }
+      if (phase === 'wasser' && haelt) wasser = Math.min(1.08, wasser + dt * 0.35);
+      if (phase === 'bruehen') {
+        bruehen += dt / 2.5;
+        if (bruehen >= 1) { phase = 'fertig'; if (ton) { ton.stopp(); ton = null; } api.fertig({ loeffel, wasser }); }
+      }
+    },
+    zeichnen() {
+      const { ctx, m } = api;
+      ctx.fillStyle = '#2a2622'; ctx.fillRect(0, 0, m.b, m.h);
+      // Kaffeedose mit Löffel
+      ctx.fillStyle = '#a8322a'; ctx.strokeStyle = '#111'; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.roundRect(dose.x, dose.y, dose.b, dose.h, 10); ctx.fill(); ctx.stroke();
+      textMitte(ctx, 'KAFFEE', dose.x + dose.b / 2, dose.y + dose.h * 0.55, 16, '#f2c21c');
+      const lx = dose.x + dose.b / 2 + (loeffelAnim > 0 ? (0.6 - loeffelAnim) / 0.6 * (maschine.x + maschine.b * 0.4 - dose.x - dose.b / 2) : 0);
+      const ly = dose.y - 20 - (loeffelAnim > 0 ? Math.sin((0.6 - loeffelAnim) / 0.6 * Math.PI) * 80 : 0);
+      ctx.strokeStyle = '#c9cdd2'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx + 50, ly - 30); ctx.stroke();
+      ctx.fillStyle = '#c9cdd2'; ctx.beginPath(); ctx.ellipse(lx, ly, 16, 9, 0.5, 0, Math.PI * 2); ctx.fill();
+      if (loeffelAnim > 0) { ctx.fillStyle = '#3a2414'; ctx.beginPath(); ctx.ellipse(lx, ly - 4, 12, 6, 0.5, 0, Math.PI * 2); ctx.fill(); }
+      // Kaffeemaschine: Wassertank links (Schnitt), Filter oben, Kanne unten
+      const mm = maschine;
+      ctx.fillStyle = '#1d1d1f'; ctx.strokeStyle = '#111'; ctx.lineWidth = 5;
+      ctx.beginPath(); ctx.roundRect(mm.x, mm.y, mm.b, mm.h, 16); ctx.fill(); ctx.stroke();
+      const tank = { x: mm.x + mm.b * 0.08, y: mm.y + mm.h * 0.08, b: mm.b * 0.3, h: mm.h * 0.6 };
+      ctx.fillStyle = 'rgba(200,225,240,0.25)'; ctx.fillRect(tank.x, tank.y, tank.b, tank.h);
+      ctx.fillStyle = '#4aa3df'; const wh = tank.h * Math.min(1, wasser * (1 - (phase === 'bruehen' || phase === 'fertig' ? bruehen : 0)));
+      ctx.fillRect(tank.x, tank.y + tank.h - wh, tank.b, wh);
+      ctx.strokeStyle = '#ccc'; ctx.lineWidth = 2; ctx.strokeRect(tank.x, tank.y, tank.b, tank.h);
+      for (const z of ZIEL) { const y = tank.y + tank.h * (1 - z); ctx.strokeStyle = '#ffc81e'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(tank.x - 6, y); ctx.lineTo(tank.x + tank.b * 0.4, y); ctx.stroke(); }
+      // Filter mit Pulver
+      const fx = mm.x + mm.b * 0.55, fy = mm.y + mm.h * 0.1, fbr = mm.b * 0.36;
+      ctx.fillStyle = '#e8dcc0'; ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(fx + fbr, fy); ctx.lineTo(fx + fbr * 0.7, fy + fbr * 0.6); ctx.lineTo(fx + fbr * 0.3, fy + fbr * 0.6); ctx.closePath(); ctx.fill(); ctx.stroke();
+      const pulver = Math.min(1, loeffel / 5);
+      if (pulver > 0) { ctx.fillStyle = '#3a2414'; ctx.beginPath(); ctx.moveTo(fx + fbr * (0.3 - 0.15 * pulver), fy + fbr * (0.6 - 0.45 * pulver)); ctx.lineTo(fx + fbr * (0.7 + 0.15 * pulver), fy + fbr * (0.6 - 0.45 * pulver)); ctx.lineTo(fx + fbr * 0.7, fy + fbr * 0.6); ctx.lineTo(fx + fbr * 0.3, fy + fbr * 0.6); ctx.closePath(); ctx.fill(); }
+      textMitte(ctx, `${loeffel} Löffel`, fx + fbr / 2, fy - 10, 16, '#ffe9a8');
+      // Kanne
+      const kx = mm.x + mm.b * 0.5, ky = mm.y + mm.h * 0.72, kb = mm.b * 0.44, kh = mm.h * 0.24;
+      ctx.fillStyle = 'rgba(200,225,240,0.3)'; ctx.beginPath(); ctx.roundRect(kx, ky, kb, kh, 10); ctx.fill(); ctx.stroke();
+      const kaffee = phase === 'bruehen' || phase === 'fertig' ? bruehen : 0;
+      if (kaffee > 0) { ctx.fillStyle = '#3a2414'; ctx.fillRect(kx + 4, ky + kh * (1 - kaffee * 0.8), kb - 8, kh * kaffee * 0.8 - 4); }
+      if (phase === 'bruehen') for (let i = 0; i < 3; i++) { ctx.fillStyle = '#3a2414'; ctx.beginPath(); ctx.arc(fx + fbr / 2, fy + fbr * 0.7 + ((performance.now() / 6 + i * 25) % (ky - fy - fbr * 0.7)), 4, 0, Math.PI * 2); ctx.fill(); }
+      // Einschaltknopf
+      ctx.fillStyle = phase === 'knopf' ? '#3fbf4f' : phase === 'bruehen' || phase === 'fertig' ? '#ff6a3a' : '#555';
+      ctx.beginPath(); ctx.arc(knopfPos.x, knopfPos.y, knopfPos.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      const tipp = { pulver: 'Auf die Dose klicken = ein Löffel Pulver in den Filter. Dann auf die Maschine klicken.', wasser: 'Gedrückt halten = Wasser einfüllen. Loslassen an der gelben Markierung.', knopf: 'Grünen Knopf drücken.', bruehen: 'Läuft ...', fertig: 'Fertig. Riecht nach Werkstatt.' }[phase];
+      textMitte(ctx, tipp, m.b / 2, f.y - 18, 18, '#ffe9a8');
+      if (meldungZeit > 0) textMitte(ctx, meldung, m.b / 2, f.y + f.h + 40, 22);
+    },
+  });
+  return versprechen;
+}
+
+// Wasserrohrbruch: Rohrzange an die Verschraubung ansetzen, dann rechtsrum festdrehen, bis nichts mehr spritzt
+export function rohrSpiel() {
+  let f, mx, my, r;
+  let angesetzt = false;
+  let fest = 0; // 0..1 (1,5 Umdrehungen)
+  let winkel = 0;
+  let zieht = null;
+  let ton = dauer('wasser', 0.5);
+  const tropfen = [];
+  const { api, versprechen } = spielRahmen('Rohr abdichten', 'Rohrzange an die Verschraubung ansetzen (anklicken) und dann rechtsrum festdrehen (im Kreis ziehen).', {
+    beiGroesse(m) { f = flaeche(m); mx = m.b / 2; my = f.y + f.h * 0.5; r = Math.min(f.b, f.h) * 0.32; },
+    events: {
+      pointerdown(e) {
+        const p = zeigerPos(api.canvas, e);
+        if (!angesetzt) { if (Math.hypot(p.x - mx, p.y - my) < r * 0.6) { angesetzt = true; klonk(0.4); } return; }
+        zieht = Math.atan2(p.y - my, p.x - mx); api.canvas.setPointerCapture?.(e.pointerId);
+      },
+      pointermove(e) {
+        if (zieht === null || api.istFertig) return;
+        const p = zeigerPos(api.canvas, e);
+        const a = Math.atan2(p.y - my, p.x - mx);
+        let d = a - zieht;
+        while (d > Math.PI) d -= Math.PI * 2;
+        while (d < -Math.PI) d += Math.PI * 2;
+        zieht = a;
+        if (d > 0) { winkel += d; fest = Math.min(1, fest + d / (Math.PI * 3)); if (Math.random() < 0.15) klonk(0.12); }
+        if (fest >= 1 && !api.istFertig) { if (ton) { ton.stopp(); ton = null; } klonk(0.6); api.fertig({ dicht: true }); }
+      },
+      pointerup() { zieht = null; },
+      pointercancel() { zieht = null; },
+    },
+    schritt(dt) {
+      const staerke = 1 - fest;
+      if (ton) ton.staerke?.(0.5 * staerke + 0.05);
+      if (staerke > 0.02) for (let i = 0; i < 3 * staerke + 0.5; i++) tropfen.push({ x: mx + r * 0.05, y: my - r * 0.25, vx: (Math.random() - 0.3) * 500 * staerke, vy: -300 * staerke - Math.random() * 150, t: 0 });
+      for (let i = tropfen.length - 1; i >= 0; i--) { const q = tropfen[i]; q.t += dt; q.x += q.vx * dt; q.y += q.vy * dt; q.vy += 900 * dt; if (q.t > 1) tropfen.splice(i, 1); }
+    },
+    zeichnen() {
+      const { ctx, m } = api;
+      ctx.fillStyle = '#3a4048'; ctx.fillRect(0, 0, m.b, m.h);
+      // Rohr waagerecht mit Messing-Verschraubung (Sechskant) in der Mitte
+      ctx.fillStyle = '#9aa1a8'; ctx.strokeStyle = '#111'; ctx.lineWidth = 5;
+      ctx.fillRect(f.x, my - r * 0.16, f.b, r * 0.32); ctx.strokeRect(f.x, my - r * 0.16, f.b, r * 0.32);
+      ctx.save(); ctx.translate(mx, my); ctx.rotate(winkel * 0.25);
+      ctx.fillStyle = fest >= 1 ? '#d9b04a' : '#c9a24a'; ctx.beginPath();
+      for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2; ctx.lineTo(Math.cos(a) * r * 0.38, Math.sin(a) * r * 0.38); }
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.restore();
+      for (const q of tropfen) { ctx.fillStyle = 'rgba(120,190,240,0.85)'; ctx.beginPath(); ctx.arc(q.x, q.y, 5, 0, Math.PI * 2); ctx.fill(); }
+      // Rohrzange (roter Griff), dreht mit
+      if (angesetzt) {
+        ctx.save(); ctx.translate(mx, my); ctx.rotate(winkel - Math.PI / 2);
+        ctx.fillStyle = '#c8352a'; ctx.beginPath(); ctx.roundRect(r * 0.3, -r * 0.08, r * 1.0, r * 0.16, 8); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#5d6268'; ctx.beginPath(); ctx.roundRect(-r * 0.15, -r * 0.45, r * 0.5, r * 0.22, 6); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.roundRect(-r * 0.15, r * 0.23, r * 0.5, r * 0.22, 6); ctx.fill(); ctx.stroke();
+        ctx.restore();
+      } else {
+        const puls = 0.5 + Math.sin(performance.now() / 200) * 0.5;
+        ctx.strokeStyle = `rgba(255,200,30,${0.5 + puls * 0.5})`; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(mx, my, r * (0.5 + puls * 0.08), 0, Math.PI * 2); ctx.stroke();
+      }
+      balken(ctx, f.x, f.y + f.h + 30, f.b, 12, fest, '#ffc81e');
+      textMitte(ctx, !angesetzt ? 'Klick auf die Verschraubung = Rohrzange ansetzen' : api.istFertig ? 'Dicht!' : 'Rechtsrum drehen (im Uhrzeigersinn im Kreis ziehen)', m.b / 2, f.y - 18, 18, '#ffe9a8');
+    },
+  });
+  versprechen.then(() => { if (ton) { ton.stopp(); ton = null; } });
   return versprechen;
 }

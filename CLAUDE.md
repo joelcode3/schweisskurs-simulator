@@ -102,6 +102,16 @@
   anderem Grund: Johnny hat seine Kippe reingeschnippt (eigene Sprüche). Dennis ruft (Blase rechts),
   holt den Feuerlöscher (rechte Wand zwischen Schweißplatz und Waschplatz) und löscht selbst, wird sauer. Löscht man selbst: Lob, Wut sinkt. Hält man den Löscher
   und tut nichts, drängelt Dennis (Wut steigt).
+- Paket A (Bugliste Projektchat): Bad-Tür (nicht drin festhängen, schließt nicht, wenn man drin steht; welt.inKloTuer/
+  kloTuerMitte), Waldo steht vom Sofa nach vorn auf, Trockner: Sieb direkt rausnehmen (dreckig wieder einsetzen geht), Sieb mit
+  dunklem Schacht dahinter, Wäschetasche liegt oben auf dem Trockner und NUR Dennis holt sie runter (DENNIS.waesche.holen),
+  Sieb ausblasen / Kaffee kochen / Rohrbruch als Minispiele (siebSpiel, kaffeeSpiel, rohrSpiel), Werkzeug per Klick zurück an
+  die Wand, Feuerlöscher sprüht nur solange E gedrückt, Lockencreme-Geste, Dennis guckt nur aus der Nähe und nicht beim Tanzen
+  zum Spieler, Stromwürfel versetzt ((2,6 | 1,0), (-2,9 | -1,4)), Waldo kommt von hinten oder auf grünem Segway (js/segway.js),
+  Jonny/Waldo gehen sichtbar raus an verschiedene Orte (DRAUSSEN in spiel.js: hinten, feldweg, terrasse = Dennis' Sofa),
+  Jonny trinkt an wechselnden Plätzen (BIER_PLAETZE), Bier-auf-Geräusch, mehr Kippenrauch, Waldos Handy-Töne weg.
+  Ausraster-Video (vielleichtAusraster): ab Wut 50, nur wenn gerade etwas passiert ist, nicht wenn die Wut sinkt, mind. 75 s
+  Abstand, Videos vorgeladen ohne Standbild.
 - Hand-System (`js/hand.js`): Werkzeug, Ausrüstung, Feuerlöscher, Besen, Figur, Handy kann man aufheben (Hand im Bild),
   auf ebene Flächen legen (Klick), fallen lassen (G), werfen (Q), benutzen/anziehen (E). Leiste unten zeigt, was man hält.
   Edding/Flex/Hammer müssen in der Hand sein zum Anzeichnen/Schneiden/Schlacke. Gasflasche: „Hochheben“, langsamer gehen,
@@ -162,7 +172,8 @@
   opts.aussehen: kurze dunkelblonde Haare, Stoppelbart, keine Brille/Cap/Brusthaar, orange Weste, blaue Hose). Kommt alle
   2,5–4 min zu Fuß den Feldweg hoch, steht beim Hoflader (5,6 | 6,2), fährt 1–2 Mal, geht nach 2–3 min wieder. Menü: Quatschen,
   „Lieb fragen: Jeep entdrosseln?“. Texte in TORBEN (texte.js), Sprechblase ui.torbenSagt.
-- Platzhalter-Kumpels (js/kumpels.js): Uwe, Steffen, Jonas, David, Joel – noch OHNE Aufgabe, im Spiel unsichtbar. Vorläufiges
+- Platzhalter-Kumpels (js/kumpels.js): Uwe, Steffen, Jonas, David, Joel – noch OHNE Aufgabe, im Spiel unsichtbar (Ausnahme:
+  wer Spüldienst hat, kommt ab und zu vorbei). Vorläufiges
   Aussehen (baueJonny mit eigenen Farben/Merkmalen), echtes Aussehen kommt vom Betreiber. Ansehen: Seite mit ?kumpels öffnen,
   dann stehen alle draußen in einer Reihe (z 9). Anklicken: „Platzhalter. Hat noch keinen Job im Spiel.“
 - Bad (begehbar) hinter der WC-Tür vorne rechts (BAD in world.js, x 0,7–3,9, z 4,0–6,8): Schachbrett-Boden, Fliesen bis 1,4 m,
@@ -215,23 +226,35 @@
   (ruhigeLage()). Feuer und Wasserrohrbruch bleiben mit 90 s Abstand. Muss Dennis mit kaputter Hüfte aufstehen: +6, DENNIS.huefteTrotzdem.
   Nett sein (Menü an Dennis): „Nach der Hüfte fragen“, „Zuhören“, „Über Lydia reden“ (DENNIS.nett.*). Wut unter 40: −5 und er
   erzählt; ab 40 (sauer): +4, DENNIS.nettGestresst. Dasselbe Thema innerhalb 60 s oder irgendwas innerhalb 15 s: +3, DENNIS.nettNerven.
-- Kühlschrank (klein, weiß, Bier drin) in der Pausenecke neben dem Kaffeetisch.
+- Kühlschrank (klein, weiß, hohl mit Glasböden, Gemüsefach, Bierflaschen, Dose „DENNIS' MATJES“, Senf; Tür innen mit Ablagen
+  und Flaschen) in der Pausenecke neben dem Kaffeetisch.
 - Kaffeetassen: zu Spielbeginn 7 benutzte Tassen (bunt, Kaffeerest) zufällig verteilt, NIE auf dem Boden: Spülkasten im Bad,
   Regal (3 Bretter), Sofa-Armlehnen, Stahlträger, Erste-Hilfe-Kasten, Werkbank, Schweißtisch (TASSEN_PLAETZE mit Strahl-
   Starthöhe, Linien/Umrisse zählen nicht als Fläche). In die Hand, Klick auf den Kühlschrank (oder E davor) = oben abstellen
-  (4 x 3 Plätze, dann zweite Lage), Wut -2, alle weg = Lob und -4. Ab 3 offenen Tassen meckert Dennis alle 80–130 s (+2) oder
-  räumt 2 Tassen selbst weg (+4, DENNIS.tassenSelbst). Jonny/Waldo bringen beim Kommen mit 40 % eine Tasse mit (max. 14).
-- Dennis RUFT SELBST AN, alle 75–135 s (kein Klingeln: Handy ans Ohr, Wähltöne, Freizeichen; linke Hand mit Handy am Ohr,
+  (4 x 3 Plätze, dann VOLL), Wut -2 und Dennis ist pro Tasse kurz dankbar (DENNIS.tasseDanke); für alle weg gibt es nichts extra.
+  Es tauchen immer wieder neue Tassen auf (alle 45–90 s, bei 0 offenen nach 12–22 s, max. 9 offene), aufgeräumt ist nie alles.
+  Kühlschrank voll: es passt keine mehr drauf (DENNIS.tassenVoll). Zettel über dem Kühlschrank „Spüldienst diese Woche: NAME“
+  (Name je Spiel zufällig: Jonas, David, Waldo, Joel, Jonny; `sd` in spiel.js, welt.setzeSpueldienst). Ist der Spüldienst da,
+  kann man ihn bitten, die Tassen zu spülen: er holt alle vom Kühlschrank und bringt sie in die Küche (hinten raus),
+  Dennis freut sich (−3, DENNIS.spueldienstDanke). Jonas/David/Joel kommen dafür alle 2,5–4 min kurz auf einen Kaffee
+  vorbei (KUMPEL in texte.js), Jonny kommt danach zurück, Waldos Besuch endet damit.
+  Ab 3 offenen Tassen meckert Dennis alle 80–130 s (+2) oder
+  räumt 2 Tassen selbst weg (+4, DENNIS.tassenSelbst). Jonny/Waldo bringen beim Kommen mit 40 % eine Tasse mit.
+  Tassen haben eine unsichtbare größere Klickfläche; im Regal stehen sie nur vorne auf dem mittleren Brett (sonst nicht sichtbar).
+- Dennis RUFT SELBST AN, alle 3–4 min (erstes Mal nach 2–3 min) und geht dafür raus vor die Werkstatt (kein Klingeln, keine
+  Wähltöne; linke Hand mit Handy am Ohr, danach wieder rein; dennisLaufZu springt bei sehr langsamen Geräten ans Ziel;
   TELEFON-Pose per Suche bestimmt). Gespräche (DENNIS.telefon, der Reihe nach gemischt): Lydia (Motorhauben-Dilemma),
   Versicherung (Schaden an der Motorhaube), Metallhändler (Bestellung mit sehr genauen Details). Fehler/Ärger beenden das Telefonat.
 - Bitsatz (Nebenaufgabe, wird NICHT angekündigt, muss man selbst finden): offene schwarze Kassette im Regal (mittleres Brett),
   Bits durcheinander. Menü „Bitsatz sortieren“ = Minispiel (12 Bits: Kreuz PH, Pozi PZ, Torx TX, Schlitz je Größe 1–3 per
-  Ziehen ins passende Fach), danach ordentlich, Lob, Wut -8, erscheint als erledigte Nebenaufgabe.
+  Ziehen ins passende Fach, Bits groß gezeichnet, wachsen mit der Fläche), danach ordentlich, Lob, Wut -8, erscheint als erledigte Nebenaufgabe.
 - Waldos nasser Akkuschrauber (einmal pro Spiel nach 2,5–4,5 min, nur wenn Jonny nicht da ist): Waldo kommt mit dem Schrauber,
   fragt Dennis, Dennis: „Nicht meine Branche.“ Waldo legt ihn trotzdem auf Dennis' Werkbank, Dennis regt sich auf (+5),
   meckert später bis zu 2-mal. Reparieren (Menü am Schrauber) = Minispiel: 4 Schrauben raus, Wasser mit Lappen wegwischen,
-  grüne Akku-Kontakte blank kratzen, zuschrauben. Danach Lob, Wut -8. Nebenaufgabe in der Liste. waldo.trage(obj).
-- Atemmaske (Halbmaske mit magenta Filtern) liegt im Regal neben der Brille, 4. Symbol in der Ausrüstung. Lackieren ohne
+  grüne Akku-Kontakte blank kratzen (Lupe mit zwei Messingzungen voller Grünspan-Krusten, mit gedrückter Maus wegkratzen),
+  zuschrauben. Danach Lob, Wut -8. Nebenaufgabe in der Liste. waldo.trage(obj).
+- Atemmaske (Einweg-Staubmaske FFP3, Betreiber-Wahl C: weißes Vlies, Nasenbügel, rotes Ventil, zwei flache gelbe Gummibänder
+  mit Metallklammern, hinten als lockere Schlaufe) steht im Regal neben der Brille, 4. Symbol in der Ausrüstung. Lackieren ohne
   Maske = Fehler maske (mittel, +15).
 - Waldo (js/waldo.js, nach Fotos): kleiner (Skala 0,85), breit, Gesicht länglich mit hoher Stirn (Cap weit hinten), im Profil mit Tiefe
   (Schädel tiefer, kräftiger Brauenbogen, Nase steht deutlich vor, Bart/Kinn/Schnurrbart weiter vorn), gerade
@@ -241,7 +264,8 @@
   (HANDY_R/HANDY_L per Suche bestimmt). Kurze dunkle Haare (ganzer Hinterkopf bis Nacken, gehen hinter
   den Ohren und über die Koteletten nahtlos in den Bart über, gleiche Farbe/Textur), langer voller braun-dunkler Vollbart mit
   vielen Essensresten (Krümel, Salat, Tomate, Käse, Sesam, Mayo), beige Cap, dunkelroter Pulli OHNE Logo mit geradem Saum
-  (Betreiber), weite, detaillierte kurze graue Jogginghose (meliert, Löcher mit Fäden, Risse, Fransen, sauberer gerippter
+  (Betreiber), weite, lockere kurze graue Jogginghose mit ZWEI getrennten, leicht nach außen gestellten Hosenbeinen und runder Schrittpartie
+  ohne Querstrich (sah sonst wie ein Rock aus), meliert, viele Löcher mit Fäden, Risse, Fransen, sauberer gerippter
   Gummibund direkt unter dem Pulli, KEIN Gürtel, Kordel, Taschen, Flecken), breite Beine OHNE Haare mit Knie und Wade,
   weiße Söckchen, beige Sneaker. Sitzt normal nach vorn (Sofa: z 3,42, Höhe 0,52; Träger: z 3,36, Höhe 0,57), Oberschenkel
   leicht abfallend, Füße auf dem Boden (Neigung aus der Sitzhöhe berechnet).
@@ -329,7 +353,7 @@
 - Alle Dennis-Sätze stehen in `js/texte.js` (IDs = Dateinamen der Aufnahmen), `spiel.js` nutzt nur diese.
 - `stimme/stimme.json` + `stimme/<id>.mp3`: Aufnahmen pro Satz, Mund bewegt sich nach Lautstärke.
   Pflege mit `node tools/stimme.mjs liste|eintragen`, siehe `stimme/LIESMICH.md`.
-- Die Jungs sprechen ALLE Sätze ein. Dateinamen kurz: dennis1 … dennis418 (Stand Wut-PR), jonny1 … jonny41, waldo1 … waldo37 (Endung
+- Die Jungs sprechen ALLE Sätze ein. Dateinamen kurz: dennis1 … dennis433 (Stand Paket A), jonny1 … jonny46, waldo1 … waldo39, kumpel1 … kumpel7 (KUMPEL) (Endung
   .mp3/.m4a/.wav, Groß-/Kleinschreibung egal). Zuordnung Kurzname -> Satz-ID steht in stimme/zuordnung.csv (vom Projektchat).
   Nummern sind fest und verschieben sich NIE; neue Sätze bekommen die nächste freie Nummer (dennis367 …) und eine neue Zeile.
   Schlüssel in texte.js NIE umbenennen, neue Sätze nur ergänzen. IDs: Dennis wie alleSaetze(), telefon.G.Z = Gespräch G,

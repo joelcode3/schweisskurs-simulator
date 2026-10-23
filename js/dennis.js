@@ -306,6 +306,7 @@ export function baueDennis(scene) {
   links.hand.add(telefonHandy);
   let telefoniert = false;
   let geste = null;
+  let getragen = null;
   const TELEFON = { s: [-2.0, -0.47, 0.3], e: [-1.82, 0, 0.8] }; // per Suche bestimmt: Handy am linken Ohr
 
   // Hula-Hoop-Reifen (nur beim Hula-Hoop sichtbar), kreist um die Hüfte
@@ -562,6 +563,12 @@ export function baueDennis(scene) {
     // Auf dem Sofa schlafen: eingeknickte Haltung (Wurzel auf den Hintern setzen)
     sofa(an) { aufSofa = an; },
     telefon(an) { telefoniert = an; telefonHandy.visible = an; },
+    // irgendein Ding in der linken Hand tragen (z. B. die Wäschetasche), null = loslassen
+    trage(obj) {
+      if (getragen && getragen.parent === links.hand) getragen.removeFromParent();
+      getragen = obj;
+      if (obj) { links.hand.add(obj); obj.position.set(0, -0.28, 0.06); obj.rotation.set(0, Math.PI / 2, 0); obj.scale.setScalar(1); obj.visible = true; }
+    },
     // kurze Gesten als Vorzeichen: 'gaehnen' (Arme hoch, Mund weit auf), 'huefte' (Hand reibt hinten links die Hüfte), 'uhr'
     geste(name, dauer = 3) { geste = { name, start: zeit, dauer }; },
     get aktuelleGeste() { return geste && zeit - geste.start < geste.dauer ? geste.name : null; },
@@ -760,7 +767,7 @@ export function baueDennis(scene) {
 
       // Arme und Kaffee
       const wuetend = stimmung === 'wut';
-      becher.visible = !wuetend && !tanzt && !essen && !besenInHand.visible && !loescherHand.visible && modus !== 'liegen' && modus !== 'schlafen' && modus !== 'sitzen' && modus !== 'hula';
+      becher.visible = !(g && g.name === 'creme') && !wuetend && !tanzt && !essen && !besenInHand.visible && !loescherHand.visible && modus !== 'liegen' && modus !== 'schlafen' && modus !== 'sitzen' && modus !== 'hula';
       if (!besenInHand.visible) rumpf.rotation.y = 0;
       if (modus === 'schlafen') {
         links.schulter.rotation.set(-0.15, 0, 0.05);
@@ -828,6 +835,13 @@ export function baueDennis(scene) {
           rechts.schulter.rotation.set(-0.25, 0, 0.12);
           rechts.ellbogen.rotation.set(-0.9, 0, 0);
           rumpf.rotation.z = -0.1 * gk;
+        } else if (g.name === 'creme') {
+          // beide Hände in die Locken, abwechselnd kneten
+          const k1 = Math.sin(zeit * 8) * 0.18, k2 = Math.sin(zeit * 8 + 1.6) * 0.18;
+          links.schulter.rotation.set(m(-0.1, -2.55 + k1), m(0, 0.25), m(-0.12, -0.95));
+          links.ellbogen.rotation.set(m(-0.15, -1.75 + k2), 0, 0);
+          rechts.schulter.rotation.set(m(-0.25, -2.55 + k2), m(0, -0.25), m(0.12, 0.95));
+          rechts.ellbogen.rotation.set(m(-0.9, -1.75 + k1), 0, 0);
         } else {
           // Blick auf die Armbanduhr: linker Unterarm quer vor die Brust
           links.schulter.rotation.set(m(-0.1, -1.05), m(0, 0.55), m(-0.12, 0.1));

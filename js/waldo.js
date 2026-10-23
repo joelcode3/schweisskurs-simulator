@@ -40,7 +40,7 @@ export function baueWaldo(scene) {
     g.beginPath(); g.moveTo(0, h - 10); g.lineTo(b, h - 10); g.stroke();
     g.setLineDash([]);
     // Löcher: Haut schaut durch, weiße Fäden spannen sich drüber, dunkler Rand
-    for (const [x, y, rx, ry] of [[40, 120, 18, 10], [150, 80, 12, 8], [120, 190, 20, 9], [215, 150, 10, 14], [80, 50, 8, 6]]) {
+    for (const [x, y, rx, ry] of [[40, 120, 18, 10], [150, 80, 12, 8], [120, 190, 20, 9], [215, 150, 10, 14], [80, 50, 8, 6], [20, 210, 9, 7], [100, 140, 7, 11], [180, 200, 14, 7], [235, 60, 8, 8], [60, 230, 11, 6], [140, 30, 6, 5]]) {
       g.fillStyle = '#e9b896'; g.beginPath(); g.ellipse(x, y, rx, ry, r() * 0.6, 0, Math.PI * 2); g.fill();
       g.strokeStyle = 'rgba(0,0,0,0.25)'; g.lineWidth = 3; g.beginPath(); g.ellipse(x, y - 2, rx, ry * 0.8, 0, Math.PI, Math.PI * 2); g.stroke();
       g.strokeStyle = '#f4f4f0'; g.lineWidth = 1.3;
@@ -53,10 +53,15 @@ export function baueWaldo(scene) {
   });
   const joggerMat = toon(0xffffff, { map: joggerTex });
   // Hosenoberteil (Gesäß/Hüfte) als leicht ausgestellter Zylinder, damit Bund und Beine sauber anschließen
-  const becken = teil(new THREE.CylinderGeometry(0.245, 0.27, 0.16, 32), 0, { material: joggerMat });
+  const becken = teil(new THREE.CylinderGeometry(0.245, 0.25, 0.12, 32), 0, { material: joggerMat });
   becken.scale.set(1.08, 1, 0.82);
-  becken.position.y = 0.8;
+  becken.position.y = 0.82;
   koerper.add(becken);
+  // Schritt: runde, lockere Rundung unter dem Becken (ohne Umriss), damit keine harte Kante quer über die Hose läuft
+  const schrittRund = teil(new THREE.SphereGeometry(0.2, 24, 14), 0, { material: joggerMat, umriss: false });
+  schrittRund.scale.set(1.25, 0.42, 0.95);
+  schrittRund.position.y = 0.77;
+  koerper.add(schrittRund);
   // Gummibund (fein gerippt) direkt unter dem Pullisaum, mit Kordel und Metallenden
   const bundTex = leinwandTextur(256, 32, (g, b, h) => {
     g.fillStyle = '#a3a7ac'; g.fillRect(0, 0, b, h);
@@ -75,27 +80,31 @@ export function baueWaldo(scene) {
   // Eingriffstaschen vorne (schräge Kante)
   for (const s of [-1, 1]) koerper.add(setze(quader(0.01, 0.12, 0.008, 0x7a7e83, { umriss: false }), s * 0.2, 0.8, 0.165, 0.15, s * 0.75, s * 0.35));
   const beine = [];
-  for (const x of [-0.14, 0.14]) {
+  for (const x of [-0.135, 0.135]) {
     const huefte = new THREE.Group();
     huefte.position.set(x, 0.88, 0);
-    // weites, kurzes Hosenbein (endet kurz über dem Knie)
-    const bein = teil(new THREE.CylinderGeometry(0.135, 0.15, 0.22, 18), 0, { material: joggerMat });
-    bein.position.y = -0.1;
-    huefte.add(bein);
+    // weites, lockeres, kurzes Hosenbein (endet kurz über dem Knie), leicht nach außen gestellt:
+    // unten bleibt zwischen den Beinen eine Lücke, so sieht man klar zwei Hosenbeine
+    const hosenBein = new THREE.Group();
+    hosenBein.rotation.z = x > 0 ? 0.1 : -0.1;
+    huefte.add(hosenBein);
+    const bein = teil(new THREE.CylinderGeometry(0.118, 0.132, 0.26, 18), 0, { material: joggerMat, umriss: 0.003 });
+    bein.position.y = -0.12;
+    hosenBein.add(bein);
     // Riss an einer Seite: Lasche klappt raus
-    huefte.add(setze(quader(0.05, 0.07, 0.008, JOGGER, { umriss: 0.0015 }), x > 0 ? 0.13 : -0.13, -0.17, 0.06, 0.2, x > 0 ? 1.2 : -1.2, x > 0 ? -0.4 : 0.4));
+    hosenBein.add(setze(quader(0.05, 0.07, 0.008, JOGGER, { umriss: 0.0015 }), x > 0 ? 0.125 : -0.125, -0.19, 0.05, 0.2, x > 0 ? 1.2 : -1.2, x > 0 ? -0.4 : 0.4));
     // ausgefranster Saum: Fetzen, Lappen und lange Fäden
     for (let i = 0; i < 24; i++) {
       const w = (i / 24) * Math.PI * 2;
       const lang = 0.015 + zufall() * 0.06;
       const fetzen = quader(0.02 + zufall() * 0.025, lang, 0.006, i % 3 ? JOGGER : 0x80848a, { umriss: 0.0012 });
-      fetzen.position.set(Math.sin(w) * 0.148, -0.21 - lang / 2, Math.cos(w) * 0.148);
+      fetzen.position.set(Math.sin(w) * 0.131, -0.25 - lang / 2, Math.cos(w) * 0.131);
       fetzen.rotation.set((zufall() - 0.5) * 0.4, w, (zufall() - 0.5) * 0.3);
-      huefte.add(fetzen);
+      hosenBein.add(fetzen);
     }
     for (let i = 0; i < 14; i++) {
       const w = zufall() * Math.PI * 2;
-      huefte.add(setze(zylinder(0.0016, 0.0016, 0.05 + zufall() * 0.07, 0xf2f2ee, { umriss: false, wirft: false }, 3), Math.sin(w) * 0.147, -0.25 - zufall() * 0.03, Math.cos(w) * 0.147, (zufall() - 0.5) * 0.5, 0, (zufall() - 0.5) * 0.5));
+      hosenBein.add(setze(zylinder(0.0016, 0.0016, 0.05 + zufall() * 0.07, 0xf2f2ee, { umriss: false, wirft: false }, 3), Math.sin(w) * 0.13, -0.29 - zufall() * 0.03, Math.cos(w) * 0.13, (zufall() - 0.5) * 0.5, 0, (zufall() - 0.5) * 0.5));
     }
     // nackte, kräftige, stark behaarte Beine mit Knie und Wade
     const beinTex = leinwandTextur(128, 128, (g) => {
@@ -108,7 +117,7 @@ export function baueWaldo(scene) {
       g.fillStyle = 'rgba(90,80,140,0.25)'; g.beginPath(); g.ellipse(90, 30, 8, 6, 0, 0, Math.PI * 2); g.fill();
     });
     const beinMat = toon(0xffffff, { map: beinTex });
-    huefte.add(setze(teil(new THREE.CapsuleGeometry(0.108, 0.12, 4, 14), 0, { material: beinMat }), 0, -0.3, 0));
+    huefte.add(setze(teil(new THREE.CapsuleGeometry(0.1, 0.12, 4, 14), 0, { material: beinMat }), 0, -0.3, 0));
     const k = new THREE.Group();
     k.position.y = -0.42;
     k.add(teil(new THREE.SphereGeometry(0.1, 14, 10), 0, { material: beinMat }));
@@ -350,8 +359,8 @@ export function baueWaldo(scene) {
   // vorne von der Cap verdeckt; vor den Ohren gehen sie in die Koteletten über
   const haarGeo = zuschnitt(new THREE.SphereGeometry(0.176, 36, 26, 0, Math.PI * 2, Math.PI * 0.12, Math.PI * 0.7), (x, y, z) => z < 0.02 || (Math.abs(x) > 0.15 && y > -0.02 && z < 0.09) || y > 0.125);
   const haar = teil(haarGeo, 0, { material: haarMat, umriss: 0.003 });
-  haar.scale.set(1.04, 1.13, 1.0);
-  haar.position.y = 0.13;
+  haar.scale.set(1.07, 1.15, 1.1);
+  haar.position.set(0, 0.13, -0.008);
   kopf.add(haar);
   // Vollbart (wie auf den Fotos: lang, voll, mittelbraun bis dunkel): Schale über Kiefer und Wangen mit klarer,
   // schräger Wangenlinie; vor den Ohren hoch bis zu den Haaren, unter den Ohren nach hinten bis in die Nackenhaare

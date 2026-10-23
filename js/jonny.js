@@ -304,7 +304,7 @@ export function baueJonny(scene, opts = {}) {
   rechts.hand.add(kippe);
   // Rauchwölkchen
   const rauchTex = leinwandTextur(32, 32, (g) => { const gr = g.createRadialGradient(16, 16, 1, 16, 16, 15); gr.addColorStop(0, 'rgba(230,230,230,0.8)'); gr.addColorStop(1, 'rgba(230,230,230,0)'); g.fillStyle = gr; g.fillRect(0, 0, 32, 32); });
-  const rauch = [0, 1, 2].map((i) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: rauchTex, transparent: true, depthWrite: false })); sp.visible = false; sp.userData.t = i / 3; scene.add(sp); return sp; });
+  const rauch = Array.from({ length: 16 }, (_, i) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: rauchTex, transparent: true, depthWrite: false })); sp.visible = false; sp.userData.t = i / 16; sp.userData.dx = (Math.random() - 0.5) * 0.2; scene.add(sp); return sp; });
 
   // Bierflasche (braun, Etikett, Kronkorken) in der linken Faust: die Finger liegen um den Flaschenbauch
   const bier = new THREE.Group();
@@ -577,14 +577,20 @@ export function baueJonny(scene, opts = {}) {
         const zielE = zug ? -2.45 : -1.9;
         rechts.ellbogen.rotation.x += (zielE - rechts.ellbogen.rotation.x) * Math.min(1, dt * 4);
         glut.material.color.set(zug ? 0xffb030 : 0xff5a1f);
+        // dicker Qualm: steigt von der Kippe auf, nach jedem Zug pustet er eine Wolke aus dem Mund
         const p = new THREE.Vector3();
-        kopf.getWorldPosition(p);
-        for (const r of rauch) {
-          r.userData.t = (r.userData.t + dt * 0.35) % 1;
+        kippe.getWorldPosition(p);
+        const mundP = new THREE.Vector3();
+        kopf.getWorldPosition(mundP);
+        const puste = (zeit % 6) > 1.2 && (zeit % 6) < 2.6;
+        for (const [i, r] of rauch.entries()) {
+          r.userData.t = (r.userData.t + dt * 0.28) % 1;
           const t = r.userData.t;
-          r.position.set(p.x + Math.sin(zeit + t * 5) * 0.05, p.y + 0.05 + t * 0.6, p.z + 0.1);
-          r.scale.setScalar(0.06 + t * 0.2);
-          r.material.opacity = (1 - t) * 0.6;
+          const ausMund = puste && i % 2 === 0;
+          const q = ausMund ? mundP : p;
+          r.position.set(q.x + r.userData.dx * t * 3 + Math.sin(zeit * 0.8 + i) * 0.08 * t, q.y + (ausMund ? 0.02 : 0.03) + t * 1.3, q.z + Math.cos(zeit * 0.6 + i) * 0.08 * t);
+          r.scale.setScalar((ausMund ? 0.14 : 0.08) + t * 0.5);
+          r.material.opacity = (1 - t) * (ausMund ? 0.8 : 0.65);
         }
       }
     },
