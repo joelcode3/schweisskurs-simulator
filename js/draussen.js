@@ -47,19 +47,57 @@ const pizzaTex = leinwandTextur(128, 128, (g, b, h) => {
   for (let i = 0; i < 4; i++) { g.fillStyle = 'rgba(120,80,20,0.25)'; g.beginPath(); g.ellipse(20 + i * 28, 100 - i * 9, 9, 6, 0, 0, Math.PI * 2); g.fill(); }
 });
 const dosenTex = leinwandTextur(64, 32, (g, b, h) => { g.fillStyle = '#c8352a'; g.fillRect(0, 0, b, h); g.fillStyle = '#f4f4ef'; g.fillRect(0, 12, b, 8); g.fillStyle = '#1d1d1f'; g.font = 'bold 9px Arial'; g.fillText('COLA', 18, 19); });
+const bananeAussen = leinwandTextur(32, 128, (g, b, h) => {
+  const v = g.createLinearGradient(0, 0, 0, h);
+  v.addColorStop(0, '#d8b43a'); v.addColorStop(0.75, '#ecc94a'); v.addColorStop(0.92, '#9a7a2a'); v.addColorStop(1, '#3a2a14');
+  g.fillStyle = v; g.fillRect(0, 0, b, h);
+  for (let i = 0; i < 26; i++) { g.fillStyle = `rgba(90,55,20,${0.3 + Math.random() * 0.5})`; g.beginPath(); g.ellipse(Math.random() * b, Math.random() * h * 0.9, 1 + Math.random() * 3, 1 + Math.random() * 4, 0, 0, Math.PI * 2); g.fill(); }
+  g.fillStyle = 'rgba(120,140,40,0.25)'; g.fillRect(0, 0, b, 10);
+});
+const bananeInnen = leinwandTextur(32, 128, (g, b, h) => {
+  g.fillStyle = '#f2e7c2'; g.fillRect(0, 0, b, h);
+  g.strokeStyle = 'rgba(190,160,100,0.45)'; g.lineWidth = 1;
+  for (let x = 3; x < b; x += 5) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + (Math.random() - 0.5) * 3, h); g.stroke(); }
+  g.fillStyle = 'rgba(150,110,50,0.35)'; for (let i = 0; i < 8; i++) g.fillRect(Math.random() * b, Math.random() * h, 3, 6);
+  g.fillStyle = '#6a4a20'; g.fillRect(0, h - 8, b, 8);
+});
 export function muellTeil(art) {
   const m = new THREE.Group();
   if (art === 'banane') {
-    // Bananenschale: braun-gelber Stiel mit 4 auseinanderfallenden Lappen
-    m.add(setze(zylinder(0.012, 0.016, 0.06, 0x6b4a1e, { umriss: 0.001 }, 6), 0, 0.012, 0, 0, 0, Math.PI / 2));
-    for (let k = 0; k < 4; k++) {
-      const lappen = teil(new THREE.SphereGeometry(0.06, 8, 6, 0, Math.PI, 0, Math.PI / 2), k % 2 ? 0xe8c84a : 0xd9b43a, { umriss: 0.001, mat: { side: THREE.DoubleSide } });
-      lappen.scale.set(0.45, 0.25, 1.6);
-      lappen.position.set(0.03 + Math.cos(k * 1.57) * 0.05, 0.01, Math.sin(k * 1.57) * 0.05);
-      lappen.rotation.set(Math.PI, k * 1.57 + 0.4, 0);
-      m.add(lappen);
-      m.add(setze(kugel(0.006, 0x3a2a14, { umriss: false }, 4), 0.03 + Math.cos(k * 1.57) * 0.09, 0.014, Math.sin(k * 1.57) * 0.09));
-    }
+    // Bananenschale: braune Stielspitze, kurzer Schalenrest, von dem 4 lange, gebogene Lappen sternförmig auseinanderfallen;
+    // außen gelb mit braunen Flecken und dunkler Spitze, innen hell cremefarben mit Fasern
+    const lappen = (w, lang, innenOben) => {
+      const n = 10, pos = [], uv = [], idx = [];
+      for (let i = 0; i <= n; i++) {
+        const t = i / n;
+        const breite = 0.034 * Math.sin(Math.min(1, t * 1.4 + 0.25) * Math.PI) + 0.006;
+        const bieg = Math.sin(t * 2.2) * 0.06; // leicht seitlich gebogen
+        const x = t * lang, z = bieg, y = 0.006 + 0.03 * Math.pow(Math.max(0, 0.25 - t), 1) * 4 + (t > 0.8 ? (t - 0.8) * 0.06 : 0);
+        for (const sx of [-1, 1]) { pos.push(x, y + (1 - Math.abs(sx)) * 0.0, z + sx * breite); uv.push(sx < 0 ? 0 : 1, t); }
+        if (i < n) { const k = i * 2; idx.push(k, k + 1, k + 2, k + 1, k + 3, k + 2); }
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+      g.setIndex(idx);
+      g.computeVertexNormals();
+      const grp = new THREE.Group();
+      const innen = new THREE.Mesh(g, toon(0xffffff, { map: bananeInnen, side: THREE.FrontSide }));
+      const aussen = new THREE.Mesh(g, toon(0xffffff, { map: bananeAussen, side: THREE.BackSide }));
+      grp.add(innen, aussen);
+      if (!innenOben) grp.rotation.x = Math.PI; // umgeklappter Lappen: gelbe Seite oben
+      const halter = new THREE.Group();
+      halter.add(grp);
+      if (!innenOben) grp.position.y = 0.012;
+      halter.rotation.y = w;
+      return halter;
+    };
+    [[0.3, 0.17, true], [1.75, 0.15, true], [3.3, 0.16, false], [4.9, 0.13, true]].forEach(([w, l, io]) => m.add(lappen(w, l, io)));
+    const rest = teil(new THREE.CylinderGeometry(0.02, 0.026, 0.05, 10), 0xe2c24a, { umriss: 0.001 });
+    rest.rotation.z = Math.PI / 2 - 0.4; rest.position.set(-0.025, 0.022, 0);
+    m.add(rest);
+    m.add(setze(zylinder(0.008, 0.012, 0.045, 0x5a3a14, { umriss: 0.001 }, 6), -0.065, 0.04, 0, 0, 0, Math.PI / 2 - 0.6));
+    m.add(setze(kugel(0.009, 0x3a2410, { umriss: false }, 6), -0.087, 0.052, 0));
   } else if (art === 'pizza') {
     // Pizzakarton, Deckel halb auf, drin Krümel und ein vergessener Rand
     const kart = toon(0xffffff, { map: pizzaTex });
@@ -418,7 +456,7 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   tonnen.add(sack);
   // ein bisschen Müll liegt immer rum (Bananenschale, Dose, Becher)
   for (const [art, x, z, w] of [['banane', -0.75, 0.75, 0.6], ['dose', 1.9, 0.6, 1.2], ['becher', -0.3, 0.95, 2.1], ['zeitung', 1.6, 1.0, 0.3], ['pizza', 2.3, 0.95, 0.5], ['banane', 2.6, 0.5, 2.0]]) {
-    const t = muellTeil(art); t.position.set(x, 0, z); t.rotation.y = w; tonnen.add(t);
+    const t = muellTeil(art); t.position.set(x, 0, z); t.rotation.y = w; t.userData.liegeMuell = true; tonnen.add(t);
   }
   setze(tonnen, -4.6, 0, RAUM.zMax + 0.6, 0, 0, 0);
   scene.add(tonnen);

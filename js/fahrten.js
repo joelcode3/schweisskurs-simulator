@@ -352,7 +352,19 @@ export function baueFahrten(c) {
           lob(sag(DENNIS.grillDanke));
         })]];
         return null;
-      case 'muelltonnen':
+      case 'muelltonnen': {
+        // rumliegender Müll neben den Tonnen: aufheben und reinwerfen freut Dennis; nach ein paar Minuten liegt wieder was rum
+        const liegt = T.tonnen.children.filter((c) => c.userData.liegeMuell && c.visible);
+        if (fz2.tonnen !== 'um' && liegt.length) return ['Mülltonnen', 'Daneben liegt Müll rum: Bananenschalen, Pizzakarton, Dose ...', [A('Müll aufheben und in die Tonne', 'hand', () => {
+          for (const c of liegt) c.visible = false;
+          klonk(0.3);
+          z.wut = Math.max(0, z.wut - 2);
+          lob(sag(DENNIS.muellAufgehoben));
+          setTimeout(() => { for (const c of liegt) c.visible = true; }, (200 + Math.random() * 120) * 1000);
+        })]];
+      }
+      // falls through
+      case 'muelltonnenUm':
         if (fz2.tonnen === 'um') return ['Mülltonnen', 'Umgefahren. Der Müll liegt überall.', [A('Wieder aufstellen und Müll einsammeln', 'hand', () => {
           tonnenAuf();
           klonk(0.4);

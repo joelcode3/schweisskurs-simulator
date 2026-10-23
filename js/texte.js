@@ -277,6 +277,7 @@ export const DENNIS = {
     sauer: ['Leg das Ding zurück in den Kofferraum. SOFORT.', 'Noch einmal und du fliegst. Mit Peitsche.'],
   },
   kettenhemd: ['Finger weg, das ist für den Mittelaltermarkt!', 'Das Kettenhemd geht dich gar nix an.'],
+  muellAufgehoben: ['Oh, du räumst den Müll weg? Danke, Mann!', 'Endlich hebt mal einer den Kram auf. Sehr gut.'],
   jeepHoch: ['Bist du wahnsinnig?! Lass sofort den Jeep runter!', 'Der Jeep ist doch keine Palette! Runter damit!'],
   tonnenUm: ['Die Tonnen! Alles voller Müll jetzt! Stell die wieder hin!', 'Ach du Scheiße, die Tonnen! Wer hat dir den Führerschein gegeben?!'],
   tonnenDanke: ['Gut. Und der ganze Müll auch wieder rein. Danke.', 'Na also. Tonnen stehen, Müll ist drin. Geht doch.'],

@@ -136,6 +136,15 @@
   Chromrahmen). Müll: muellTeil(art) in draussen.js (Bananenschale, Pizzakarton, Dose, Flasche, Chipstüte, Becher, Zeitung,
   Karton), ein paar liegen immer bei den Tonnen, beim Umfahren viel mehr. Heruntergewehte Turnmatte liegt flach im Gras an der
   Rückseite vom Carport (begeh- und befahrbar).
+  Benz komplett neu nach den W123-Fotos des Betreibers: Seitenprofil-Karosserie (profilKoerper in carport.js: Kern + zwei Schalen
+  mit sauber ausgeschnittenen weißen Radläufen, Kanten abgerundet), langes Dach, Scheiben durchsichtig wie die Werkstattfenster,
+  Innenraum mit dunkelblauen Sitzen, Armaturenbrett, Lenkrad; Haube und Kofferraumdeckel flach (keine Wulst), dünne schwarze
+  Seitenleiste mit Chrom, W123-Scheinwerfer (Chromrand, gerippte Streuscheibe, Blinker um die Ecke), keine Nebelscheinwerfer,
+  Kennzeichen vorne auf Halter unter der Stoßstange. Haube = eigenes Blech mit Delle, zackigem Loch, Blechlappen, Knicken,
+  abgeplatztem Lack, Motorraum darunter; Gehwegplatte steckt drin, abgebrochene Ecke daneben. Plane: verblichen mit Gewebe-
+  textur, ums Loch runtergedrückt, eingerissen (Schlitze), lange verdrehte Fetzen und Fäden. Bananenschale realistisch (4 Lappen
+  außen gelb mit Flecken, innen creme). Wohnwagen-Korpus rund (Profil mit runden Ecken, Kanten gefast). Rumliegenden Müll an den
+  Tonnen kann man aufheben (Wut -2, DENNIS.muellAufgehoben), nach 3–5 min liegt wieder was rum.
 - Hand-System (`js/hand.js`): Werkzeug, Ausrüstung, Feuerlöscher, Besen, Figur, Handy kann man aufheben (Hand im Bild),
   auf ebene Flächen legen (Klick), fallen lassen (G), werfen (Q), benutzen/anziehen (E). Leiste unten zeigt, was man hält.
   Edding/Flex/Hammer müssen in der Hand sein zum Anzeichnen/Schneiden/Schlacke. Gasflasche: „Hochheben“, langsamer gehen,
@@ -377,7 +386,7 @@
 - Alle Dennis-Sätze stehen in `js/texte.js` (IDs = Dateinamen der Aufnahmen), `spiel.js` nutzt nur diese.
 - `stimme/stimme.json` + `stimme/<id>.mp3`: Aufnahmen pro Satz, Mund bewegt sich nach Lautstärke.
   Pflege mit `node tools/stimme.mjs liste|eintragen`, siehe `stimme/LIESMICH.md`.
-- Die Jungs sprechen ALLE Sätze ein. Dateinamen kurz: dennis1 … dennis454 (Stand Paket B), jonny1 … jonny48, waldo1 … waldo41, torben1 … torben19, kumpel1 … kumpel7 (KUMPEL) (Endung
+- Die Jungs sprechen ALLE Sätze ein. Dateinamen kurz: dennis1 … dennis456 (Stand Paket B), jonny1 … jonny48, waldo1 … waldo41, torben1 … torben19, kumpel1 … kumpel7 (KUMPEL) (Endung
   .mp3/.m4a/.wav, Groß-/Kleinschreibung egal). Zuordnung Kurzname -> Satz-ID steht in stimme/zuordnung.csv (vom Projektchat).
   Nummern sind fest und verschieben sich NIE; neue Sätze bekommen die nächste freie Nummer (dennis367 …) und eine neue Zeile.
   Schlüssel in texte.js NIE umbenennen, neue Sätze nur ergänzen. IDs: Dennis wie alleSaetze(), telefon.G.Z = Gespräch G,
