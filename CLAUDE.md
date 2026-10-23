@@ -204,6 +204,17 @@
   Wut +3 je Husten).
   Jonny und Waldo sind selten gleichzeitig da: Waldo kommt meist nur, wenn Jonny draußen ist (85 %), Jonny kommt erst
   zurück, wenn Waldo weg ist (85 %), und geht nicht raus, solange Waldo da ist. Kippen-Feuer nur, wenn Jonny da ist.
+- Wut-Mechanik (spiel.js `wutUndVorzeichen`, `nettSein`): Wut sinkt von selbst, wenn 20 s kein neuer Ärger kam, 1 Punkt alle
+  10 s (auch die Startwut 15). Gute Arbeit freut ihn mehr: Lob bei sauberem Anzeichnen/Schnitt/Naht/Lack −10, bei Spitzenqualität
+  −12 (sonst Lob −5). Vorzeichen: Dennis gähnt alle 100–160 s (Geste, Mund weit auf, ab und zu DENNIS.gaehnen); 40 s danach wirkt
+  Kaffee besser (−10 extra, DENNIS.kaffeeMuede). Vor der Hüfte reibt er sich ~28 s die Hüfte hinten links (Geste 'huefte',
+  DENNIS.huefteVorzeichen); wer jetzt „Nach der Hüfte fragen“ wählt, kommt ihm zuvor (Hüfte fällt aus, −8, DENNIS.huefteVermieden).
+  Vor der Mittagspause schaut er ~20 s auf die Armbanduhr (Geste 'uhr', DENNIS.mittagBald) – Zeit, Sofa freizumachen/Musik aus.
+  Gesten: dennis.geste(name, dauer). Überlappende Ereignisse: in den ersten 4 min nie, danach alle 20 s neu gewürfelt (bis 55 %):
+  Feuer/Wasserrohrbruch auch während Hüfte (liegt) oder Mittagspause, Klo/Mittag/Hüfte/Waldo-Besuch auch während anderer Ereignisse
+  (ruhigeLage()). Feuer und Wasserrohrbruch bleiben mit 90 s Abstand. Muss Dennis mit kaputter Hüfte aufstehen: +6, DENNIS.huefteTrotzdem.
+  Nett sein (Menü an Dennis): „Nach der Hüfte fragen“, „Zuhören“, „Über Lydia reden“ (DENNIS.nett.*). Wut unter 40: −5 und er
+  erzählt; ab 40 (sauer): +4, DENNIS.nettGestresst. Dasselbe Thema innerhalb 60 s oder irgendwas innerhalb 15 s: +3, DENNIS.nettNerven.
 - Kühlschrank (klein, weiß, Bier drin) in der Pausenecke neben dem Kaffeetisch.
 - Kaffeetassen: zu Spielbeginn 7 benutzte Tassen (bunt, Kaffeerest) zufällig verteilt, NIE auf dem Boden: Spülkasten im Bad,
   Regal (3 Bretter), Sofa-Armlehnen, Stahlträger, Erste-Hilfe-Kasten, Werkbank, Schweißtisch (TASSEN_PLAETZE mit Strahl-
@@ -318,7 +329,7 @@
 - Alle Dennis-Sätze stehen in `js/texte.js` (IDs = Dateinamen der Aufnahmen), `spiel.js` nutzt nur diese.
 - `stimme/stimme.json` + `stimme/<id>.mp3`: Aufnahmen pro Satz, Mund bewegt sich nach Lautstärke.
   Pflege mit `node tools/stimme.mjs liste|eintragen`, siehe `stimme/LIESMICH.md`.
-- Die Jungs sprechen ALLE Sätze ein. Dateinamen kurz: dennis1 … dennis366, jonny1 … jonny41, waldo1 … waldo37 (Endung
+- Die Jungs sprechen ALLE Sätze ein. Dateinamen kurz: dennis1 … dennis418 (Stand Wut-PR), jonny1 … jonny41, waldo1 … waldo37 (Endung
   .mp3/.m4a/.wav, Groß-/Kleinschreibung egal). Zuordnung Kurzname -> Satz-ID steht in stimme/zuordnung.csv (vom Projektchat).
   Nummern sind fest und verschieben sich NIE; neue Sätze bekommen die nächste freie Nummer (dennis367 …) und eine neue Zeile.
   Schlüssel in texte.js NIE umbenennen, neue Sätze nur ergänzen. IDs: Dennis wie alleSaetze(), telefon.G.Z = Gespräch G,
