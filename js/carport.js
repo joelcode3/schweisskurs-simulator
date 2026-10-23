@@ -408,7 +408,7 @@ export function baueCarport(scene, { merke, hindernis }) {
   const vorneHinten = (s) => {
     s.lineTo(-2.3, 0.24); s.lineTo(-2.36, 0.32); s.lineTo(-2.37, 0.62); s.quadraticCurveTo(-2.37, 0.86, -2.31, 0.875);
   };
-  const front = (s) => { s.lineTo(1.0, 0.865); s.lineTo(2.26, 0.855); s.quadraticCurveTo(2.35, 0.85, 2.355, 0.78); s.lineTo(2.36, 0.4); s.lineTo(2.3, 0.22); };
+  const front = (s) => { s.lineTo(1.0, 0.865); s.lineTo(2.12, 0.85); s.quadraticCurveTo(2.35, 0.84, 2.36, 0.66); s.lineTo(2.36, 0.4); s.lineTo(2.3, 0.22); };
   // Seitenschalen mit Radläufen
   const schale = (s) => {
     s.moveTo(2.3, 0.22);
@@ -419,7 +419,7 @@ export function baueCarport(scene, { merke, hindernis }) {
     s.lineTo(KO_Z1, 0.885); s.lineTo(0.98, 0.88);
     front(s);
   };
-  for (const sx of [-1, 1]) benz.add(profilKoerper(schale, 0.28, sx * (B / 2 - 0.14), WEISS, { umriss: 0.004 }, 0.045));
+  for (const sx of [-1, 1]) benz.add(profilKoerper(schale, 0.28, sx * (B / 2 - 0.14), WEISS, { umriss: 0.004 }, 0.07));
   // Kern zwischen den Rädern: Motorhaube, Armaturenbrett-Wand, Innenraumboden, Kofferraumboden, Heckwand
   benz.add(profilKoerper((s) => {
     s.moveTo(2.3, 0.22); s.lineTo(-2.3, 0.24);
@@ -434,8 +434,11 @@ export function baueCarport(scene, { merke, hindernis }) {
   for (const sx of [-1, 1]) {
     benz.add(setze(quader(0.012, 0.004, 1.3, DUNKEL, { umriss: false }), sx * (B / 2 - 0.13), 0.862, 1.63));
     const x = sx * (B / 2 + 0.002);
-    benz.add(setze(quader(0.012, 0.016, L - 0.4, 0x1d1d1f, { umriss: false }), x, 0.6, 0));
-    benz.add(setze(quader(0.012, 0.004, L - 0.4, CHROM, { umriss: false }), x, 0.61, 0));
+    // Seitenleiste in drei Stücken, unterbrochen an den Radläufen (läuft nicht über den Radkasten)
+    for (const [z0, z1] of [[VA + BOGEN + 0.04, L / 2 - 0.15], [HA + BOGEN + 0.04, VA - BOGEN - 0.04], [-L / 2 + 0.15, HA - BOGEN - 0.04]]) {
+      benz.add(setze(quader(0.012, 0.016, z1 - z0, 0x1d1d1f, { umriss: false }), x, 0.6, (z0 + z1) / 2));
+      benz.add(setze(quader(0.012, 0.004, z1 - z0, CHROM, { umriss: false }), x, 0.61, (z0 + z1) / 2));
+    }
     for (const z of [0.98, -0.04, -1.02]) benz.add(setze(quader(0.006, 0.6, 0.006, DUNKEL, { umriss: false }), x, 0.58, z));
     benz.add(setze(quader(0.006, 0.006, 2.0, DUNKEL, { umriss: false }), x, 0.29, -0.03));
     for (const z of [0.3, -0.75]) benz.add(setze(rundQuader(0.025, 0.03, 0.12, CHROM, { umriss: 0.001 }, 0.012), x, 0.79, z));
@@ -582,7 +585,8 @@ export function baueCarport(scene, { merke, hindernis }) {
     glasScheinw.position.set(x, 0.66, L / 2 + 0.062);
     if (sx > 0) glasScheinw.scale.x = -1; // Fernlicht jeweils innen
     benz.add(glasScheinw);
-    benz.add(setze(rundQuader(0.11, 0.21, 0.13, 0xf2a21c, { umriss: 0.002 }, 0.035), sx * (B / 2 - 0.055), 0.66, L / 2 - 0.045));
+    benz.add(setze(rundQuader(0.12, 0.2, 0.16, 0xf29a14, { umriss: 0.002 }, 0.04), sx * (B / 2 - 0.06), 0.66, L / 2 + 0.0));
+    benz.add(setze(quader(0.1, 0.17, 0.01, 0xffb43a, { umriss: false }), sx * (B / 2 - 0.06), 0.66, L / 2 + 0.082));
   }
   // Rückleuchten: flach im Blech, eine geriffelte Fläche (rot, orange Blinker, weißer Rückfahrscheinwerfer, rot) mit Chromrahmen
   const ruecklichtTex = leinwandTextur(256, 112, (g, b, h) => {
@@ -593,9 +597,9 @@ export function baueCarport(scene, { merke, hindernis }) {
     g.fillStyle = '#c9cdd2'; for (const a of [0.52, 0.74, 0.88]) g.fillRect(a * b - 2, 0, 4, h);
   });
   for (const sx of [-1, 1]) {
-    benz.add(setze(quader(0.52, 0.24, 0.01, CHROM, { umriss: 0.002 }), sx * 0.56, 0.69, -L / 2 - 0.055));
-    const rl = new THREE.Mesh(new THREE.PlaneGeometry(0.49, 0.21), toon(0xffffff, { map: ruecklichtTex }));
-    rl.position.set(sx * 0.56, 0.69, -L / 2 - 0.062); rl.rotation.y = Math.PI;
+    benz.add(setze(quader(0.66, 0.15, 0.01, CHROM, { umriss: 0.002 }), sx * 0.52, 0.7, -L / 2 - 0.055));
+    const rl = new THREE.Mesh(new THREE.PlaneGeometry(0.63, 0.12), toon(0xffffff, { map: ruecklichtTex }));
+    rl.position.set(sx * 0.52, 0.7, -L / 2 - 0.062); rl.rotation.y = Math.PI;
     if (sx < 0) rl.scale.x = -1; // Blinker und Rückfahrlicht jeweils innen
     benz.add(rl);
   }
@@ -687,7 +691,7 @@ export function baueCarport(scene, { merke, hindernis }) {
       cx /= 3; cz /= 3;
       const w = Math.atan2(cz - HZ, cx - HX);
       if (Math.hypot(cx - HX, cz - HZ) < lochR(w)) continue;
-      for (let k = 0; k < 3; k++) { const x = p.getX(i + k), z = p.getZ(i + k) + mz; P.push(x, HAUBE.y + delle(x, z), z); }
+      for (let k = 0; k < 3; k++) { const x = p.getX(i + k), z = p.getZ(i + k) + mz; P.push(x, HAUBE.y + delle(x, z) + 0.025 * (1 - (x / 0.62) ** 2) - 0.06 * Math.max(0, (z - 2.08) / 0.19) ** 2, z); }
     }
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
