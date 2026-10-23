@@ -180,12 +180,13 @@
 - Draußen (js/draussen.js, `baueDraussen`): rotes Backsteingebäude mit flachem Satteldach aus schwarzem Wellblech (Giebel vorne/
   hinten, Regenrinnen, Fallrohre), Bad als Anbau mit flachem Dach und Milchglasfenster, Fenster links außen. Kaputte Betonfläche
   vor der Werkstatt (Fugen, Risse mit Unkraut, ausgebrochene Stellen mit Schotter, lose Brocken), Wiese, Bäume, Horizont
-  (Hügel + Waldrand), Himmel mit Wolken (Kamera-Sichtweite 220). Mülltonnen (grau, blau, braun, detailliert, OHNE
+  (Hügel + Waldrand), Himmel mit Wolken (Kamera-Sichtweite 1500, Nebel ab 260 m, siehe Landschaft). Mülltonnen (grau, blau, braun, detailliert, OHNE
   Schilder, Müllsack daneben) links vom Tor, kein großes Fassadenschild mehr, roter Hoflader OHNE Logo/Schrift (detailliert:
   Kühlergrill, Gegengewicht, Knicklenkung, Kabine mit Sitz/Joystick, Rundumleuchte, Stollenreifen, Hubzylinder) mit Palettengabel
   rechts neben der Werkstatt, rosa Mini-Jeep (Wrangler-Look, ohne Dach, Elektro-Kinderauto), Feuerschale (flach, graue Asche mit Häufchen, verkohlte Holzreste) mit Dreibein, Kette,
-  rundem Grillrost und alter schwarzer Bratwurst. Begehbar: Vorplatz, Streifen rechts neben der Halle, Durchgang durchs Tor
-  (Bad-Anbau ausgespart). Würfe draußen prallen an den Hofgrenzen ab (hand.js AUSSEN).
+  rundem Grillrost und alter schwarzer Bratwurst. Begehbar: draußen überall innerhalb der Ringstraße (imKreis in landschaft.js),
+  in die Werkstatt nur durch die Schlupftür, Bad-Anbau ausgespart. Würfe draußen prallen an der Hauswand und am Geländerand ab
+  (hand.js AUSSEN = GELAENDE).
 - Dennis' Wohnwagen (js/carport.js, `baueCarport`): links auf der Wiese neben der Betonfläche unter einer Eiche ein großes Carport
   (Holz, Wellplatten-Dach) mit Wohnwagen (Deichsel zur Werkstatt hin), kleiner Holzterrasse OHNE Geländer (kleines altes
   Zweisitzer-Sofa mit Decke und Kissen, Bierkiste als Tisch, Aschenbecher), Lichterkette davor. Auf dem
@@ -205,10 +206,10 @@
   Hubarm, graue Hub- und Kippzylinder, die sich mitbewegen (hydraulik()), Schnellwechsler mit Gabelträger und kurzen Zinken
   (0,8 m, x ±0,2). Gabel bleibt beim Heben waagerecht.
   Mini-Jeep: großes Spaßauto (1,9 × 1,06 m), offene Wanne mit Fußraum, zwei Schalensitze, Armaturenbrett, Lenkrad links,
-  Überrollbügel, Scheibe, Kotflügel, Trittbretter, Reserverad, Kennzeichen „PINK 1“. Abgeschlossen-Logik vorbereitet: LADER_SCHLUESSEL_STECKT in fahrten.js (zum Testen true;
+  Überrollbügel (ohne seitliche Schrägstangen), Scheibe, runde Kotflügel, KEINE Trittbretter, Reserverad, Kennzeichen „PINK 1“. Abgeschlossen-Logik vorbereitet: LADER_SCHLUESSEL_STECKT in fahrten.js (zum Testen true;
   später gibt Dennis den Schlüssel raus, wenn man etwas damit erledigen muss, sonst DENNIS.weidemannZu).
   Europaletten (3er-Stapel und einzelne im Hof) mit der Gabel aufnehmen (Zinken rein, heben), herumfahren, absetzen (auch stapeln).
-  Fahrbar: Hof (draussen.fahrbar) plus Feldweg nach rechts (AUSFAHRT), nicht durch die Schlupftür.
+  Fahrbar: überall innerhalb der Ringstraße und auf ihr (draussen.fahrbar), nicht in die Werkstatt, nicht durch die Schlupftür.
   Figuren fahren auf festen, weichen Bahnen (fahreRoute, Catmull-Rom), Parkplätze mit Anfahrt (mitAnfahrt). Alle 2–3,5 min dreht
   Jonny oder Waldo eine Runde (Jonny auch mal weg zum Kiosk und zurück). Fahrstile: Jonny normal, Waldo langsam und schlingernd
   (Handy), Torben rasant (Jeep 7 m/s) und rumst mit dem Hoflader gegen den Grill (Feuerschale kippt um) oder die Mülltonnen.
@@ -228,7 +229,7 @@
   Verstopfung: nach Dennis' Klo einmal pro Spiel mit 30 % Wahrscheinlichkeit; Pömpel steht oben im Regal, in die Hand, aufs Klo
   klicken (Wut -10). Nach 70 s macht Dennis es selbst (+8 Wut).
 - Zwei kleine gelbe Stromverteiler-Würfel (18 cm, genau eine Steckdose pro Seite, KEIN eingesteckter Stecker) hängen an Kabeln tief von der Decke (Unterkante 1,75 m, bei
-  (-0,9 | 2,35) und (0 | -1,05)). Läuft Dennis dagegen: pendelt, Klonk, Spruch (DENNIS.stromwuerfel, max. alle 35 s).
+  (2,6 | 1,0) und (-2,9 | -1,4), seit Paket A; Dennis stößt erst nach 120 s an). Läuft Dennis dagegen: pendelt, Klonk, Spruch (DENNIS.stromwuerfel, max. alle 35 s).
 - Johnnys Leiter (Alu-Kofferraumleiter vom Camper, 6 Sprossen, oben gebogen) hängt quer, hoch und leicht schräg an der rechten
   Wand auf zwei Konsolen. Dennis regt sich alle 2,5–4 min darüber auf (DENNIS.leiter) und beim Anklicken.
 - Lockencreme „CURL KING“ (Tiegel) auf der Ablage unter dem Spiegel im Bad (daneben Tube und Kamm): in die Hand, auf Dennis
@@ -275,7 +276,7 @@
 - Kühlschrank (klein, weiß, hohl mit Glasböden, Gemüsefach, Bierflaschen, Dose „DENNIS' MATJES“, Senf; Tür innen mit Ablagen
   und Flaschen) in der Pausenecke neben dem Kaffeetisch.
 - Kaffeetassen: zu Spielbeginn 7 benutzte Tassen (bunt, Kaffeerest) zufällig verteilt, NIE auf dem Boden: Spülkasten im Bad,
-  Regal (3 Bretter), Sofa-Armlehnen, Stahlträger, Erste-Hilfe-Kasten, Werkbank, Schweißtisch (TASSEN_PLAETZE mit Strahl-
+  Regal (nur vorne auf dem mittleren Brett), Sofa-Armlehnen, Stahlträger, Erste-Hilfe-Kasten, Werkbank, Schweißtisch (TASSEN_PLAETZE mit Strahl-
   Starthöhe, Linien/Umrisse zählen nicht als Fläche). In die Hand, Klick auf den Kühlschrank (oder E davor) = oben abstellen
   (4 x 3 Plätze, dann VOLL), Wut -2 und Dennis ist pro Tasse kurz dankbar (DENNIS.tasseDanke); für alle weg gibt es nichts extra.
   Es tauchen immer wieder neue Tassen auf (alle 45–90 s, bei 0 offenen nach 12–22 s, max. 9 offene), aufgeräumt ist nie alles.
@@ -408,7 +409,22 @@
   nur DENNIS und löst verschachtelte Listen wie telefon nicht auf).
 - KI-Stimmklon ist in dieser Umgebung nicht möglich (huggingface.co gesperrt). Stimmproben nie ins Repo (öffentlich).
 
+## Stand der Pull Requests (23.10.2026)
+- Noch NICHT gemergt, aufeinander aufbauend: #28 Wut-Mechanik → #29 Paket A (Zweig `…-bugs-a`) → #30 Paket B draußen/Fahrzeuge
+  inkl. Benz-Neubau (Zweig `…-draussen-b`) → #31 Landschaft (Zweig `…-landschaft`). Betreiber muss in genau dieser Reihenfolge
+  mergen. Kleine Nachbesserungen gehören in den jeweils passenden offenen PR (Benz/Carport/Jeep → #30, danach #30 in #31 mergen;
+  Landschaft → #31). Neue größere Updates: neuer Zweig auf Stand von #31, im PR „erst #28–#31 mergen“ vermerken.
+- Versionsnummer zuletzt `v=20261023-16` (Zweig #31), `v=20261023-14` (Zweig #30).
+- Projektchat hat zu allen PRs Link, Inhalt, neue Sätze und die Geräusche-Liste bekommen.
+
 ## Offene Themen
+- Hügel sind sanft (max. ca. 9 m). Falls der Betreiber steilere/höhere will: HUEGEL in landschaft.js.
+- Landschaft ggf. weiter ausbauen (Betreiber-Ideen: mehr am Straßenrand, Verkehr auf der Hauptstraße o. Ä. – noch nicht bestellt).
+- Torben und die Kumpels (Uwe, Steffen, Jonas, David, Joel) brauchen noch ihr echtes Aussehen (Fotos/Beschreibung vom Betreiber).
+- Weidemann-Schlüssel: LADER_SCHLUESSEL_STECKT = true zum Testen; später gibt Dennis den Schlüssel nur für Aufgaben raus.
+- Sprachaufnahmen der Jungs (dennisN/jonnyN/waldoN/torbenN/kumpelN laut stimme/zuordnung.csv) einbauen, sobald sie kommen;
+  Abspielen über die Zuordnung auflösen (siehe Abschnitt Stimme).
+- Plakat-Foto (assets/dennis-plakat.jpg) für den späteren Startbildschirm mit Zahlenschloss (Code 1312) fehlt noch.
 - Handy-Video von Dennis einbauen (Betreiber hat Video), sobald geschickt.
 - Weitere Clips von Dennis (Begrüßung, Lob, Tipps, Ende, spezielle Fehler).
 - Weitere Projekte (Grill, Werkzeugwagen), weitere Fehler, ggf. MAG-Schweißen.
