@@ -139,7 +139,7 @@
   Benz komplett neu nach den W123-Fotos des Betreibers: Seitenprofil-Karosserie (profilKoerper in carport.js: Kern + zwei Schalen
   mit sauber ausgeschnittenen weißen Radläufen, Kanten abgerundet), langes Dach, Scheiben durchsichtig wie die Werkstattfenster,
   Innenraum mit dunkelblauen Sitzen, Armaturenbrett, Lenkrad; Haube und Kofferraumdeckel flach (keine Wulst), dünne schwarze
-  Seitenleiste mit Chrom, W123-Scheinwerfer (Chromrand, gerippte Streuscheibe, Blinker um die Ecke), keine Nebelscheinwerfer,
+  Seitenleiste mit Chrom, W123-Scheinwerfer (kräftiger Chromrand, helle Streuscheibe mit Reflektoren als Textur, Blinker um die Ecke), Rückleuchten flach (eine geriffelte Textur-Fläche rot/orange/weiß/rot mit Chromrahmen), keine Nebelscheinwerfer,
   Kennzeichen vorne auf Halter unter der Stoßstange. Haube = eigenes Blech mit Delle, zackigem Loch, Blechlappen, Knicken,
   abgeplatztem Lack, Motorraum darunter; Gehwegplatte steckt drin, abgebrochene Ecke daneben. Plane: verblichen mit Gewebe-
   textur, ums Loch runtergedrückt, eingerissen (Schlitze), lange verdrehte Fetzen und Fäden. Bananenschale realistisch (4 Lappen

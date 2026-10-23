@@ -560,22 +560,44 @@ export function baueCarport(scene, { merke, hindernis }) {
   benz.add(setze(zylinder(0.012, 0.012, 0.05, CHROM, { umriss: false }, 6), 0, 0.88, L / 2 - 0.06));
   benz.add(setze(teil(new THREE.TorusGeometry(0.035, 0.007, 6, 16), CHROM, { umriss: 0.001 }), 0, 0.93, L / 2 - 0.06));
   for (let k = 0; k < 3; k++) benz.add(setze(quader(0.006, 0.035, 0.006, CHROM, { umriss: false }), Math.cos(k * 2.094 + Math.PI / 2) * 0.017, 0.93 + Math.sin(k * 2.094 + Math.PI / 2) * 0.017, L / 2 - 0.06, 0, 0, k * 2.094));
-  // Scheinwerfer wie beim W123: breite Rechteck-Einheit mit Chromrand, gerippte Streuscheibe (Haupt- und Fernlicht),
-  // orangefarbener Blinker außen um die Ecke gezogen
+  // Scheinwerfer wie beim W123: breite Rechteck-Einheit mit kräftigem Chromrand, helle Streuscheibe mit sichtbaren
+  // Reflektoren dahinter (großes Abblend-, kleines Fernlicht), außen der orangefarbene Blinker um die Ecke
+  const scheinwerferTex = leinwandTextur(256, 128, (g, b, h) => {
+    g.fillStyle = '#eef3f5'; g.fillRect(0, 0, b, h);
+    for (const [cx, rr] of [[86, 52], [204, 36]]) {
+      const v = g.createRadialGradient(cx - 8, h / 2 - 10, 4, cx, h / 2, rr);
+      v.addColorStop(0, '#ffffff'); v.addColorStop(0.35, '#dfe6ea'); v.addColorStop(0.75, '#a9b6be'); v.addColorStop(1, '#d6dde1');
+      g.fillStyle = v; g.beginPath(); g.arc(cx, h / 2, rr, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#fff8d8'; g.beginPath(); g.arc(cx, h / 2, rr * 0.18, 0, Math.PI * 2); g.fill();
+    }
+    g.strokeStyle = 'rgba(120,140,150,0.45)'; g.lineWidth = 2;
+    for (let y = 10; y < h; y += 12) { g.beginPath(); g.moveTo(0, y); g.lineTo(b, y); g.stroke(); }
+    for (let x = 12; x < b; x += 16) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); }
+    g.fillStyle = '#b8c2c8'; g.fillRect(150, 0, 5, h);
+  });
   for (const sx of [-1, 1]) {
-    const x = sx * 0.55;
-    benz.add(setze(rundQuader(0.44, 0.22, 0.04, CHROM, { umriss: 0.002 }, 0.02), x, 0.66, L / 2 - 0.0));
-    benz.add(setze(quader(0.38, 0.17, 0.02, 0xe6eef2, { umriss: false }), x, 0.66, L / 2 + 0.018));
-    for (let k = 0; k < 6; k++) benz.add(setze(quader(0.38, 0.004, 0.024, 0xb0c0c8, { umriss: false }), x, 0.59 + k * 0.028, L / 2 + 0.019));
-    benz.add(setze(quader(0.012, 0.17, 0.026, CHROM, { umriss: false }), x - sx * 0.07, 0.66, L / 2 + 0.02));
-    benz.add(setze(rundQuader(0.1, 0.2, 0.12, 0xf2a21c, { umriss: 0.002 }, 0.03), sx * (B / 2 - 0.06), 0.66, L / 2 - 0.04));
+    const x = sx * 0.54;
+    benz.add(setze(rundQuader(0.48, 0.25, 0.05, CHROM, { umriss: 0.003 }, 0.02), x, 0.66, L / 2 + 0.035));
+    const glasScheinw = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.2), new THREE.MeshBasicMaterial({ map: scheinwerferTex }));
+    glasScheinw.position.set(x, 0.66, L / 2 + 0.062);
+    if (sx > 0) glasScheinw.scale.x = -1; // Fernlicht jeweils innen
+    benz.add(glasScheinw);
+    benz.add(setze(rundQuader(0.11, 0.21, 0.13, 0xf2a21c, { umriss: 0.002 }, 0.035), sx * (B / 2 - 0.055), 0.66, L / 2 - 0.045));
   }
-  // Rückleuchten: große, geriffelte Einheiten (rot, orange, weiß), Kennzeichenleuchten
+  // Rückleuchten: flach im Blech, eine geriffelte Fläche (rot, orange Blinker, weißer Rückfahrscheinwerfer, rot) mit Chromrahmen
+  const ruecklichtTex = leinwandTextur(256, 112, (g, b, h) => {
+    const felder = [['#b32a20', 0, 0.52], ['#e8901c', 0.52, 0.74], ['#eeeeea', 0.74, 0.88], ['#b32a20', 0.88, 1]];
+    for (const [f, a0, a1] of felder) { g.fillStyle = f; g.fillRect(a0 * b, 0, (a1 - a0) * b, h); }
+    g.fillStyle = '#8a1f18'; g.fillRect(0, h * 0.55, b * 0.52, h * 0.45);
+    for (let y = 6; y < h; y += 9) { g.fillStyle = 'rgba(0,0,0,0.22)'; g.fillRect(0, y, b, 3); g.fillStyle = 'rgba(255,255,255,0.18)'; g.fillRect(0, y - 3, b, 2); }
+    g.fillStyle = '#c9cdd2'; for (const a of [0.52, 0.74, 0.88]) g.fillRect(a * b - 2, 0, 4, h);
+  });
   for (const sx of [-1, 1]) {
-    for (let k = 0; k < 6; k++) benz.add(setze(quader(0.46, 0.022, 0.03, k % 2 ? 0x9a2a20 : 0xc8352a, { umriss: false }), sx * 0.6, 0.6 + k * 0.035, -L / 2 - 0.022));
-    benz.add(setze(quader(0.13, 0.2, 0.032, 0xf2a21c, { umriss: false }), sx * 0.31, 0.69, -L / 2 - 0.022));
-    benz.add(setze(quader(0.09, 0.2, 0.032, 0xf4f4ef, { umriss: false }), sx * 0.2, 0.69, -L / 2 - 0.022));
-    benz.add(setze(quader(0.48, 0.22, 0.02, CHROM, { umriss: 0.002 }), sx * 0.55, 0.69, -L / 2 - 0.012));
+    benz.add(setze(quader(0.52, 0.24, 0.01, CHROM, { umriss: 0.002 }), sx * 0.56, 0.69, -L / 2 - 0.055));
+    const rl = new THREE.Mesh(new THREE.PlaneGeometry(0.49, 0.21), toon(0xffffff, { map: ruecklichtTex }));
+    rl.position.set(sx * 0.56, 0.69, -L / 2 - 0.062); rl.rotation.y = Math.PI;
+    if (sx < 0) rl.scale.x = -1; // Blinker und Rückfahrlicht jeweils innen
+    benz.add(rl);
   }
   // Räder mit Chrom-Radkappen (Ring, Schlitze, Stern in der Mitte), passend in den weißen Radläufen
   for (const z of [VA, HA]) for (const sx of [-1, 1]) {
