@@ -131,6 +131,11 @@
   Haken, 1.–2. Mal Spaß Wut -6, zu oft/innerhalb 60 s/ab Wut 55: +8, DENNIS.peitsche.*). Deichsel detailliert (Haube, Faltenbalg,
   Kupplung mit Griff, Handbremse, Abreißseil, Spiralkabel, Stützrad mit Kurbel, Gaskasten). Bierkasten mit Griffmulden, Rippen,
   Etikett, 17 Flaschen, Brettchen mit Aschenbecher und offener Flasche.
+  Nachbesserungen: Jeep-Karosserie mit Bodenfreiheit (Wagenboden 0,2 m, Sitz 0,7 m, keine schwarze Platte drunter, Füße bleiben
+  im Wagen). Benz-Kabine nach Fotos vom W123 neu (Seitenprofil-Glashaus, schräge Front-/Heckscheibe, A-/B-/C-Säulen, Dreiecksfenster,
+  Chromrahmen). Müll: muellTeil(art) in draussen.js (Bananenschale, Pizzakarton, Dose, Flasche, Chipstüte, Becher, Zeitung,
+  Karton), ein paar liegen immer bei den Tonnen, beim Umfahren viel mehr. Heruntergewehte Turnmatte liegt flach im Gras an der
+  Rückseite vom Carport (begeh- und befahrbar).
 - Hand-System (`js/hand.js`): Werkzeug, Ausrüstung, Feuerlöscher, Besen, Figur, Handy kann man aufheben (Hand im Bild),
   auf ebene Flächen legen (Klick), fallen lassen (G), werfen (Q), benutzen/anziehen (E). Leiste unten zeigt, was man hält.
   Edding/Flex/Hammer müssen in der Hand sein zum Anzeichnen/Schneiden/Schlacke. Gasflasche: „Hochheben“, langsamer gehen,

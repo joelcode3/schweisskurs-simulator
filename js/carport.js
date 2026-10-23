@@ -61,10 +61,12 @@ export function baueCarport(scene, { merke, hindernis }) {
   platz.add(platte(-0.9, GH + 0.24, -1.6), platte(0.7, GH + 0.24, -1.2), platte(-0.8, GH + 0.24, 1.3), platte(-0.95, GH + 0.24, 2.0));
   // hier lag die vierte Matte: nur noch ein paar Eicheln und Dreck auf dem Dach
   // die runtergewehte Matte liegt verknickt neben dem Carport auf der Wiese
+  // liegt flach im Gras an der Rückseite vom Carport (man kann drüberlaufen und -fahren), etwas verrutscht, Ecke umgeknickt
   const weg = new THREE.Group();
-  weg.add(setze(teil(new THREE.BoxGeometry(1.0, 0.08, 1.1), 0, { material: matteMat, umriss: 0.004 }), 0, 0.05, 0));
-  weg.add(setze(teil(new THREE.BoxGeometry(1.0, 0.08, 0.9), 0, { material: matteMat, umriss: 0.004 }), 0, 0.3, 0.6, 0.6, 0, 0));
-  weg.position.set(GX + 1.4, 0, 1.9); weg.rotation.y = 0.5;
+  weg.add(setze(teil(new THREE.BoxGeometry(1.0, 0.06, 1.7), 0, { material: matteMat, umriss: 0.004 }), 0, 0.03, 0));
+  weg.add(setze(teil(new THREE.BoxGeometry(0.4, 0.05, 0.4), 0, { material: matteMat, umriss: 0.003 }), 0.3, 0.075, 0.65, 0, 0.1, 0));
+  for (const sz of [-0.6, 0.6]) for (const sx of [-1, 1]) weg.add(setze(teil(new THREE.TorusGeometry(0.05, 0.012, 4, 10, Math.PI), 0x1d1d1f, { umriss: false }), sx * 0.5, 0.03, sz, 0, Math.PI / 2, 0));
+  weg.position.set(-1.4, 0, GZ1 + 1.5); weg.rotation.y = 1.2;
   platz.add(weg);
   // Eicheln überall (auf den Matten, auf dem Dach, im Gras)
   const eichel = () => {
@@ -412,13 +414,51 @@ export function baueCarport(scene, { merke, hindernis }) {
   peitsche.rotation.y = -0.4;
   benz.add(peitsche);
   const glas = toon(0x3a4a58);
+  // Kabine wie beim echten W123: Glashaus im Seitenprofil (schräge Front- und Heckscheibe, langes flaches Dach),
+  // dünne A-Säulen, schmale B-Säule, breite C-Säule mit kleinem Dreiecksfenster davor, Chromrahmen und Gummidichtungen
   const kab = new THREE.Group();
-  kab.add(setze(rundQuader(B - 0.16, 0.07, 1.92, WEISS, { umriss: 0.003 }, 0.035), 0, 0.55, 0));
-  kab.add(setze(new THREE.Mesh(new THREE.BoxGeometry(B - 0.22, 0.48, 1.86), glas), 0, 0.27, 0));
-  for (const z of [-0.95, -0.05, 0.9]) for (const sx of [-1, 1]) kab.add(setze(quader(0.06, 0.52, z === -0.05 ? 0.08 : 0.1, WEISS, { umriss: 0.002 }), sx * (B / 2 - 0.12), 0.27, z, 0, 0, sx * 0.06));
-  // Front- und Heckscheibe schräg
-  const front = new THREE.Mesh(new THREE.BoxGeometry(B - 0.24, 0.55, 0.04), glas); front.position.set(0, 0.25, 1.1); front.rotation.x = -0.55; kab.add(front);
-  const heck = new THREE.Mesh(new THREE.BoxGeometry(B - 0.24, 0.5, 0.04), glas); heck.position.set(0, 0.25, -1.08); heck.rotation.x = 0.6; kab.add(heck);
+  const PROFIL = [[0.98, 0.0], [0.4, 0.5], [-0.6, 0.51], [-1.15, 0.03]]; // (z, y) in Kabinen-Koordinaten
+  const seitenPlatte = (punkte, dicke, x, farbe, opt = {}) => {
+    const form = new THREE.Shape();
+    punkte.forEach(([z, y], i) => (i ? form.lineTo(z, y) : form.moveTo(z, y)));
+    form.closePath();
+    const geo = new THREE.ExtrudeGeometry(form, { depth: dicke, bevelEnabled: false });
+    geo.translate(0, 0, -dicke / 2);
+    geo.rotateY(-Math.PI / 2);
+    const m = teil(geo, farbe, opt);
+    m.position.x = x;
+    return m;
+  };
+  // Glashaus (dunkles Glas, oben etwas schmaler wirkt durch die Säulen)
+  kab.add(seitenPlatte(PROFIL, B - 0.28, 0, 0, { material: glas, umriss: 0.003 }));
+  // Stab zwischen zwei Profilpunkten (Säulen, Rahmen)
+  const stab = (a, b, x, breite, dicke, farbe, opt = { umriss: 0.002 }) => {
+    const A = new THREE.Vector3(x, a[1], a[0]), Bv = new THREE.Vector3(x, b[1], b[0]);
+    const m = quader(breite, dicke, A.distanceTo(Bv), farbe, opt);
+    m.position.copy(A).add(Bv).multiplyScalar(0.5);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), Bv.clone().sub(A).normalize());
+    return m;
+  };
+  // Dach (weiß, leicht gewölbt) mit Regenrinne
+  kab.add(setze(rundQuader(B - 0.22, 0.05, 1.06, WEISS, { umriss: 0.003 }, 0.025), 0, 0.525, -0.1));
+  for (const sx of [-1, 1]) {
+    const xs = sx * (B / 2 - 0.13);
+    kab.add(stab(PROFIL[0], PROFIL[1], xs, 0.07, 0.06, WEISS)); // A-Säule
+    kab.add(stab([0.08, 0.0], [0.02, 0.5], xs, 0.07, 0.06, WEISS)); // B-Säule
+    kab.add(seitenPlatte([[-1.15, 0.03], [-0.6, 0.51], [-0.45, 0.51], [-0.82, 0.03]], 0.06, xs, WEISS, { umriss: 0.002 })); // C-Säule
+    kab.add(stab([-0.48, 0.03], [-0.42, 0.47], xs + sx * 0.005, 0.02, 0.02, CHROM, { umriss: false })); // Dreiecksfenster-Steg
+    // Chromrahmen: oben am Dach entlang, unten an der Brüstung, an Säulen
+    kab.add(stab([0.4, 0.49], [-0.6, 0.5], xs + sx * 0.03, 0.015, 0.02, CHROM, { umriss: false }));
+    kab.add(stab([0.95, 0.01], [-1.1, 0.02], xs + sx * 0.03, 0.015, 0.02, CHROM, { umriss: false }));
+    kab.add(stab(PROFIL[0], PROFIL[1], xs + sx * 0.04, 0.012, 0.015, CHROM, { umriss: false }));
+  }
+  // Front- und Heckscheibe: Chromrahmen oben/unten und Gummidichtung
+  for (const [a, b] of [[PROFIL[0], PROFIL[1]], [PROFIL[3], PROFIL[2]]]) {
+    for (const [p, y] of [[a, a[1] + 0.01], [b, b[1] - 0.01]]) kab.add(setze(quader(B - 0.3, 0.02, 0.02, CHROM, { umriss: false }), 0, y, p[0]));
+  }
+  // Innen erahnbar: Kopfstützen und Lenkrad hinter dem Glas
+  for (const sx of [-1, 1]) for (const z of [0.05, -0.75]) kab.add(setze(rundQuader(0.26, 0.2, 0.1, 0x6b4a2a, { umriss: false }, 0.04), sx * 0.38, 0.3, z));
+  kab.add(setze(teil(new THREE.TorusGeometry(0.17, 0.018, 6, 18), 0x1d1d1f, { umriss: false }), 0.38, 0.12, 0.62, -1.1, 0, 0));
   kab.position.set(0, 0.88, -0.15);
   benz.add(kab);
   // Chromstoßstangen mit Gummi, Kühlergrill mit Stern, breite Scheinwerfer, Blinker, Rückleuchten
@@ -461,12 +501,10 @@ export function baueCarport(scene, { merke, hindernis }) {
     const x = sx * (B / 2 + 0.004);
     // Türfugen (vorne, Mitte, hinten) und Unterkante
     for (const z of [0.78, -0.08, -0.98]) benz.add(setze(quader(0.006, 0.5, 0.008, DUNKEL, { umriss: false }), x, 0.6, z));
-    for (const z of [0.78, -0.08, -0.98]) benz.add(setze(quader(0.006, 0.5, 0.008, DUNKEL, { umriss: false }), x * 0.93, 1.13, z - 0.15, sx * 0.06, 0, 0));
     // schwarze Gummi-Schutzleiste und Chrom-Schweller
     benz.add(setze(quader(0.02, 0.05, L - 0.3, DUNKEL, { umriss: false }), sx * (B / 2 + 0.01), 0.68, 0));
     benz.add(setze(quader(0.015, 0.04, 2.0, CHROM, { umriss: false }), sx * (B / 2 + 0.005), 0.37, -0.1));
     // Chromrahmen um die Seitenscheiben und Dachrinne
-    benz.add(setze(quader(0.02, 0.025, 1.95, CHROM, { umriss: false }), sx * (B / 2 - 0.12), 1.38, -0.15));
     benz.add(setze(quader(0.02, 0.02, 2.0, CHROM, { umriss: false }), sx * (B / 2 - 0.05), 0.91, -0.15));
     // Außenspiegel (Chrom, mit Glas)
     const sp = new THREE.Group();
@@ -485,7 +523,7 @@ export function baueCarport(scene, { merke, hindernis }) {
     benz.add(setze(zylinder(0.05, 0.05, 0.04, 0xf4f4ef, { umriss: 0.001 }, 12), sx * 0.6, 0.3, L / 2 + 0.02, Math.PI / 2, 0, 0));
     // Scheibenwischer
     const wi = quader(0.5, 0.012, 0.012, 0x1d1d1f, { umriss: false });
-    wi.position.set(sx * 0.32 - 0.05, 0.94, 0.98); wi.rotation.z = sx * 0.12; wi.rotation.x = -0.3;
+    wi.position.set(sx * 0.32 - 0.05, 0.92, 0.86); wi.rotation.z = sx * 0.12; wi.rotation.x = -0.3;
     benz.add(wi);
   }
   // Grill mit Chromrahmen und senkrechtem Mittelsteg, Stern oben drauf

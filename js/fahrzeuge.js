@@ -69,8 +69,8 @@ export function baueFahrzeuge(scene, welt) {
     art: 'jeep', name: 'Mini-Jeep', g: jeepG, hindernis: T.jeep.hindernis,
     x: jeepG.position.x, z: jeepG.position.z, psi: jeepG.rotation.y, v: 0, lenk: 0,
     radstand: 1.2, maxLenk: 0.55, gedrosselt: true,
-    // Fahrersitz links (Sitzfläche 0,5 m), Augenhöhe eines sitzenden Erwachsenen
-    sitz: new THREE.Vector3(-0.24, 0.5, -0.36), auge: new THREE.Vector3(-0.24, 1.32, -0.3),
+    // Fahrersitz links (Sitzfläche 0,7 m, Füße auf dem Wagenboden bei 0,2 m), Augenhöhe eines sitzenden Erwachsenen
+    sitz: new THREE.Vector3(-0.24, 0.7, -0.36), auge: new THREE.Vector3(-0.24, 1.5, -0.3),
     // Umriss für Zusammenstöße (lokal): Ecken und Mitten
     punkte: [[-0.62, 0.98], [0.62, 0.98], [-0.62, -1.02], [0.62, -1.02], [-0.62, 0], [0.62, 0], [0, 1.02], [0, -1.08]],
     park: { x: jeepG.position.x, z: jeepG.position.z, psi: jeepG.rotation.y },

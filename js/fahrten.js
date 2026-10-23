@@ -7,7 +7,7 @@ import { DENNIS, JONNY, WALDO, TORBEN } from './texte.js';
 import { blip, klonk, hupe } from './audio.js';
 import * as ui from './ui.js';
 import { TORBEN_PLATZ } from './torben.js';
-import { FELDWEG, inHindernis } from './draussen.js';
+import { FELDWEG, inHindernis, muellTeil } from './draussen.js';
 
 // Vorerst steckt der Schlüssel im Hoflader (Betreiber: später gibt Dennis ihn raus, wenn man etwas damit erledigen muss)
 export const LADER_SCHLUESSEL_STECKT = true;
@@ -160,13 +160,13 @@ export function baueFahrten(c) {
   const tonnenStart = tonnenTeile.map((t) => ({ pos: t.position.clone(), rot: t.rotation.clone() }));
   const tonnenH = { ...T.tonnenHindernis };
   const muell = new THREE.Group();
-  for (let i = 0; i < 9; i++) {
-    const farbe = [0xb08a5a, 0xf2f0ea, 0x6b4a2a, 0x2f5fa8, 0x1d1d1f][i % 5];
-    const m = new THREE.Mesh(new THREE.BoxGeometry(0.08 + Math.random() * 0.14, 0.02 + Math.random() * 0.05, 0.08 + Math.random() * 0.12), new THREE.MeshToonMaterial({ color: farbe }));
-    m.position.set((Math.random() - 0.3) * 2.2, 0.03, 1.2 + Math.random() * 0.9);
-    m.rotation.y = Math.random() * 3;
+  // beim Umfahren fliegt richtiger Müll raus: Pizzakarton, Bananenschalen, Dosen, Flaschen, Chipstüte, Zeitung ...
+  ['pizza', 'banane', 'banane', 'dose', 'dose', 'flasche', 'chips', 'becher', 'zeitung', 'karton', 'karton', 'dose'].forEach((art, i) => {
+    const m = muellTeil(art);
+    m.position.set(-0.6 + (i % 6) * 0.42 + (Math.random() - 0.5) * 0.2, 0, 1.15 + Math.floor(i / 6) * 0.5 + Math.random() * 0.3);
+    m.rotation.y = Math.random() * 6.28;
     muell.add(m);
-  }
+  });
   muell.visible = false;
   T.tonnen.add(muell);
   function tonnenUm() {

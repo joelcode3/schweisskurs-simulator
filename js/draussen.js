@@ -38,6 +38,65 @@ export function inHindernis(h, x, z, rand = 0) {
   });
 }
 
+// Müllteile (für den Müll um die Tonnen und den, der beim Umfahren rausfliegt)
+const pizzaTex = leinwandTextur(128, 128, (g, b, h) => {
+  g.fillStyle = '#c9a26a'; g.fillRect(0, 0, b, h);
+  g.strokeStyle = '#a8824e'; g.lineWidth = 3; g.strokeRect(6, 6, b - 12, h - 12);
+  g.fillStyle = '#b2241c'; g.font = 'bold 22px Georgia'; g.textAlign = 'center'; g.fillText('PIZZA', b / 2, 58);
+  g.fillStyle = '#2f6b3a'; g.font = 'italic 14px Georgia'; g.fillText('Bella Napoli', b / 2, 80);
+  for (let i = 0; i < 4; i++) { g.fillStyle = 'rgba(120,80,20,0.25)'; g.beginPath(); g.ellipse(20 + i * 28, 100 - i * 9, 9, 6, 0, 0, Math.PI * 2); g.fill(); }
+});
+const dosenTex = leinwandTextur(64, 32, (g, b, h) => { g.fillStyle = '#c8352a'; g.fillRect(0, 0, b, h); g.fillStyle = '#f4f4ef'; g.fillRect(0, 12, b, 8); g.fillStyle = '#1d1d1f'; g.font = 'bold 9px Arial'; g.fillText('COLA', 18, 19); });
+export function muellTeil(art) {
+  const m = new THREE.Group();
+  if (art === 'banane') {
+    // Bananenschale: braun-gelber Stiel mit 4 auseinanderfallenden Lappen
+    m.add(setze(zylinder(0.012, 0.016, 0.06, 0x6b4a1e, { umriss: 0.001 }, 6), 0, 0.012, 0, 0, 0, Math.PI / 2));
+    for (let k = 0; k < 4; k++) {
+      const lappen = teil(new THREE.SphereGeometry(0.06, 8, 6, 0, Math.PI, 0, Math.PI / 2), k % 2 ? 0xe8c84a : 0xd9b43a, { umriss: 0.001, mat: { side: THREE.DoubleSide } });
+      lappen.scale.set(0.45, 0.25, 1.6);
+      lappen.position.set(0.03 + Math.cos(k * 1.57) * 0.05, 0.01, Math.sin(k * 1.57) * 0.05);
+      lappen.rotation.set(Math.PI, k * 1.57 + 0.4, 0);
+      m.add(lappen);
+      m.add(setze(kugel(0.006, 0x3a2a14, { umriss: false }, 4), 0.03 + Math.cos(k * 1.57) * 0.09, 0.014, Math.sin(k * 1.57) * 0.09));
+    }
+  } else if (art === 'pizza') {
+    // Pizzakarton, Deckel halb auf, drin Krümel und ein vergessener Rand
+    const kart = toon(0xffffff, { map: pizzaTex });
+    m.add(setze(quader(0.34, 0.035, 0.34, 0xc9a26a, { umriss: 0.002 }), 0, 0.018, 0));
+    const deckel = new THREE.Group();
+    deckel.add(setze(teil(new THREE.BoxGeometry(0.34, 0.006, 0.34), 0, { material: kart, umriss: 0.002 }), 0, 0, -0.17));
+    deckel.position.set(0, 0.037, 0.17); deckel.rotation.x = -0.7;
+    m.add(deckel);
+    const rand = teil(new THREE.TorusGeometry(0.1, 0.014, 6, 12, Math.PI * 0.6), 0xd8a050, { umriss: 0.001 });
+    rand.rotation.x = Math.PI / 2; rand.position.set(0.03, 0.04, -0.02);
+    m.add(rand);
+  } else if (art === 'dose') {
+    m.add(setze(teil(new THREE.CylinderGeometry(0.033, 0.033, 0.08, 10), 0, { material: toon(0xffffff, { map: dosenTex }), umriss: 0.001 }), 0, 0.03, 0, Math.PI / 2, 0, 0.3));
+    m.children[0].scale.set(1, 0.6, 1); // zerdrückt
+  } else if (art === 'flasche') {
+    m.add(setze(zylinder(0.035, 0.035, 0.2, 0xa8d4e6, { umriss: 0.001, mat: { transparent: true, opacity: 0.7 } }, 10), 0, 0.035, 0, Math.PI / 2, 0, 0));
+    m.add(setze(zylinder(0.015, 0.015, 0.03, 0x2f5fa8, { umriss: false }, 8), 0, 0.035, 0.115, Math.PI / 2, 0, 0));
+  } else if (art === 'chips') {
+    const tuete = kugel(0.09, 0x2f8f4a, { umriss: 0.002 }, 8);
+    tuete.scale.set(1, 0.25, 1.3); tuete.position.y = 0.02;
+    m.add(tuete);
+    m.add(setze(quader(0.18, 0.01, 0.02, 0xc9cdd2, { umriss: false }), 0, 0.03, 0.12));
+  } else if (art === 'becher') {
+    m.add(setze(zylinder(0.04, 0.03, 0.1, 0xf2f0ea, { umriss: 0.001 }, 10), 0, 0.04, 0, Math.PI / 2, 0, 0));
+    m.add(setze(zylinder(0.04, 0.04, 0.01, 0x1d1d1f, { umriss: false }, 10), 0, 0.04, 0.055, Math.PI / 2, 0, 0));
+  } else if (art === 'zeitung') {
+    for (let k = 0; k < 3; k++) m.add(setze(quader(0.28, 0.004, 0.2, k ? 0xe8e4d8 : 0xd8d4c8, { umriss: 0.001 }), (k - 1) * 0.03, 0.003 + k * 0.004, (k - 1) * 0.02, 0, k * 0.3, 0));
+  } else {
+    // zerknüllter Karton
+    m.add(setze(quader(0.16, 0.06, 0.12, 0xb08a5a, { umriss: 0.002 }), 0, 0.03, 0, 0.2, 0.3, 0.1));
+  }
+  // etwas größer als echt, damit man es im Spiel erkennt
+  m.scale.setScalar(art === 'pizza' || art === 'zeitung' ? 1.2 : 1.6);
+  return m;
+}
+export const MUELL_ARTEN = ['banane', 'pizza', 'dose', 'flasche', 'chips', 'becher', 'zeitung', 'karton'];
+
 export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   const r = zufall(303);
 
@@ -357,6 +416,10 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   sack.position.set(-0.5, 0, 0.18);
   sack.rotation.y = 0.6;
   tonnen.add(sack);
+  // ein bisschen Müll liegt immer rum (Bananenschale, Dose, Becher)
+  for (const [art, x, z, w] of [['banane', -0.75, 0.75, 0.6], ['dose', 1.9, 0.6, 1.2], ['becher', -0.3, 0.95, 2.1], ['zeitung', 1.6, 1.0, 0.3], ['pizza', 2.3, 0.95, 0.5], ['banane', 2.6, 0.5, 2.0]]) {
+    const t = muellTeil(art); t.position.set(x, 0, z); t.rotation.y = w; tonnen.add(t);
+  }
   setze(tonnen, -4.6, 0, RAUM.zMax + 0.6, 0, 0, 0);
   scene.add(tonnen);
   merke(tonnen, 'muelltonnen', 'Mülltonnen', null);
@@ -556,12 +619,8 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   const jeep = new THREE.Group();
   // Unterboden, Bodenblech im Fußraum
   // tief liegender Boden: die Füße der Fahrer stehen im Fußraum und gucken unten nicht raus
-  // rosa Karosserie mit Bodenfreiheit; darunter eine schmalere dunkle Bodenwanne, in der die Füße stehen (nicht sichtbar)
-  jeep.add(setze(quader(JB - 0.24, 0.07, JL - 0.3, 0x2a2c30, { umriss: 0.003 }), 0, 0.045, 0));
-  for (const sx of [-1, 1]) jeep.add(setze(quader(0.03, 0.22, 1.3, 0x2a2c30, { umriss: 0.002 }), sx * (JB / 2 - 0.13), 0.12, -0.3));
-  jeep.add(setze(quader(JB - 0.24, 0.34, 0.03, 0x2a2c30, { umriss: 0.002 }), 0, 0.18, 0.34));
-  jeep.add(setze(quader(JB - 0.24, 0.22, 0.03, 0x2a2c30, { umriss: 0.002 }), 0, 0.12, -JL / 2 + 0.1));
-  jeep.add(setze(quader(JB - 0.14, 0.02, 1.15, 0x3a3c40, { umriss: false }), 0, 0.09, -0.3));
+  // rosa Karosserie mit Bodenfreiheit: Wagenboden auf 0,2 m, die Fahrer sitzen etwas höher, damit die Füße darauf stehen
+  jeep.add(setze(quader(JB - 0.1, 0.025, JL - 0.3, 0x3a3c40, { umriss: 0.002 }), 0, 0.205, -0.02));
   // Wanne: Seitenwände (vorne bis zur Haube, hinten bis zum Heck), Heckwand, Ladefläche hinter den Sitzen
   for (const sx of [-1, 1]) {
     jeep.add(setze(rundQuader(0.07, 0.4, 1.25, ROSA, { umriss: 0.004 }, 0.035), sx * (JB / 2 - 0.035), 0.38, -0.3));
@@ -572,7 +631,7 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   jeep.add(setze(rundQuader(JB - 0.02, 0.4, 0.08, ROSA, { umriss: 0.004 }, 0.04), 0, 0.38, -JL / 2 + 0.07));
   jeep.add(setze(quader(JB - 0.14, 0.03, 0.4, 0x3a3c40, { umriss: false }), 0, 0.38, -0.72));
   // Motorhaube (vorne höher als die Wanne), Lüftungsschlitze, Haubenverschlüsse
-  jeep.add(setze(rundQuader(JB - 0.02, 0.32, 0.64, ROSA, { umriss: 0.004 }, 0.12), 0, 0.5, 0.62));
+  jeep.add(setze(rundQuader(JB - 0.02, 0.46, 0.64, ROSA, { umriss: 0.004 }, 0.12), 0, 0.43, 0.62));
   jeep.add(setze(rundQuader(JB - 0.2, 0.03, 0.5, ROSA_D, { umriss: 0.002 }, 0.04), 0, 0.665, 0.62));
   for (let k = 0; k < 6; k++) jeep.add(setze(quader(0.012, 0.005, 0.22, 0x8a4a6a, { umriss: false }), -0.2 + k * 0.08, 0.683, 0.72));
   for (const sx of [-1, 1]) jeep.add(setze(quader(0.04, 0.06, 0.03, SCHWARZ, { umriss: false }), sx * (JB / 2 - 0.02), 0.6, 0.82));
@@ -606,25 +665,25 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
     jeep.add(rand);
   }
   // Armaturenbrett mit Tacho, Lenkrad auf der Fahrerseite (links), Schalthebel
-  jeep.add(setze(rundQuader(JB - 0.12, 0.14, 0.16, 0x2a2c30, { umriss: 0.003 }, 0.05), 0, 0.64, 0.24));
-  for (const sx of [-0.24, 0.0]) jeep.add(setze(zylinder(0.04, 0.04, 0.01, 0xf4f4ef, { umriss: false }, 12), sx, 0.67, 0.165, Math.PI / 2, 0, 0));
-  jeep.add(setze(zylinder(0.018, 0.018, 0.28, SCHWARZ, { umriss: false }, 8), -0.24, 0.66, 0.1, 1.0, 0, 0));
-  jeep.add(setze(teil(new THREE.TorusGeometry(0.12, 0.016, 6, 16), SCHWARZ, { umriss: 0.001 }), -0.24, 0.73, -0.01, -1.0, 0, 0));
-  jeep.add(setze(zylinder(0.012, 0.012, 0.2, 0x8a8f96, { umriss: false }, 6), 0.0, 0.32, -0.05, 0.3, 0, 0));
-  jeep.add(setze(kugel(0.03, SCHWARZ, { umriss: false }, 8), 0.0, 0.42, -0.08));
+  jeep.add(setze(rundQuader(JB - 0.12, 0.16, 0.16, 0x2a2c30, { umriss: 0.003 }, 0.05), 0, 0.76, 0.24));
+  for (const sx of [-0.24, 0.0]) jeep.add(setze(zylinder(0.04, 0.04, 0.01, 0xf4f4ef, { umriss: false }, 12), sx, 0.8, 0.165, Math.PI / 2, 0, 0));
+  jeep.add(setze(zylinder(0.018, 0.018, 0.28, SCHWARZ, { umriss: false }, 8), -0.24, 0.8, 0.1, 1.0, 0, 0));
+  jeep.add(setze(teil(new THREE.TorusGeometry(0.12, 0.016, 6, 16), SCHWARZ, { umriss: 0.001 }), -0.24, 0.87, -0.01, -1.0, 0, 0));
+  jeep.add(setze(zylinder(0.012, 0.012, 0.2, 0x8a8f96, { umriss: false }, 6), 0.0, 0.52, -0.05, 0.3, 0, 0));
+  jeep.add(setze(kugel(0.03, SCHWARZ, { umriss: false }, 8), 0.0, 0.62, -0.08));
   // zwei Schalensitze (Sitzfläche + Lehne)
   for (const sx of [-0.24, 0.24]) {
-    jeep.add(setze(rundQuader(0.38, 0.09, 0.4, 0x2f3136, { umriss: 0.002 }, 0.04), sx, 0.46, -0.36));
-    jeep.add(setze(rundQuader(0.38, 0.1, 0.12, 0x2f3136, { umriss: 0.002 }, 0.03), sx, 0.38, -0.36));
-    jeep.add(setze(rundQuader(0.38, 0.46, 0.09, 0x2f3136, { umriss: 0.002 }, 0.04), sx, 0.72, -0.58, -0.15, 0, 0));
-    jeep.add(setze(rundQuader(0.28, 0.12, 0.09, 0x45474d, { umriss: false }, 0.035), sx, 0.88, -0.6, -0.15, 0, 0));
+    jeep.add(setze(rundQuader(0.38, 0.09, 0.4, 0x2f3136, { umriss: 0.002 }, 0.04), sx, 0.66, -0.36));
+    jeep.add(setze(rundQuader(0.34, 0.42, 0.3, 0x2f3136, { umriss: 0.002 }, 0.03), sx, 0.42, -0.42));
+    jeep.add(setze(rundQuader(0.38, 0.46, 0.09, 0x2f3136, { umriss: 0.002 }, 0.04), sx, 0.92, -0.58, -0.15, 0, 0));
+    jeep.add(setze(rundQuader(0.28, 0.12, 0.09, 0x45474d, { umriss: false }, 0.035), sx, 1.08, -0.6, -0.15, 0, 0));
   }
   // Windschutzscheibe mit Rahmen (umgeklappt geht nicht, steht), Überrollbügel, Spiegel
   const scheibeG = new THREE.Group();
   scheibeG.add(setze(quader(JB - 0.04, 0.05, 0.05, ROSA, { umriss: 0.003 }), 0, 0.42, 0));
   for (const sx of [-1, 1]) scheibeG.add(setze(quader(0.05, 0.42, 0.05, ROSA, { umriss: 0.003 }), sx * (JB / 2 - 0.04), 0.21, 0));
   scheibeG.add(setze(new THREE.Mesh(new THREE.PlaneGeometry(JB - 0.14, 0.36), new THREE.MeshBasicMaterial({ color: 0xcfe6f4, transparent: true, opacity: 0.45, side: THREE.DoubleSide })), 0, 0.21, 0));
-  scheibeG.position.set(0, 0.66, 0.33); scheibeG.rotation.x = -0.22;
+  scheibeG.position.set(0, 0.82, 0.33); scheibeG.rotation.x = -0.22;
   jeep.add(scheibeG);
   for (const sx of [-1, 1]) {
     jeep.add(setze(zylinder(0.028, 0.028, 0.62, SCHWARZ, { umriss: 0.002 }, 8), sx * (JB / 2 - 0.06), 0.88, -0.72));
