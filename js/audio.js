@@ -553,3 +553,51 @@ export function bierAuf(lautst = 0.7) {
   q.start(t + 0.04);
   q.stop(t + 0.7);
 }
+
+// Hupen: Jeep = helle Spielzeug-Doppelhupe („möp möp“), Hoflader = tiefes, kräftiges Zweiklang-Horn
+export function hupe(art = 'jeep', lautst = 0.5) {
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  const toene = art === 'jeep' ? [[0, 0.16, [740, 932]], [0.22, 0.2, [740, 932]]] : [[0, 0.7, [233, 294]]];
+  for (const [ab, lang, frequenzen] of toene) {
+    const g = ctx.createGain();
+    const f = ctx.createBiquadFilter();
+    f.type = 'lowpass';
+    f.frequency.value = art === 'jeep' ? 2600 : 1400;
+    f.Q.value = 2;
+    huelle(g, t + ab, 0.015, lang - 0.05, 0.06, lautst * (art === 'jeep' ? 0.35 : 0.45));
+    g.connect(master);
+    f.connect(g);
+    for (const hz of frequenzen) {
+      const o = ctx.createOscillator();
+      o.type = art === 'jeep' ? 'square' : 'sawtooth';
+      o.frequency.setValueAtTime(hz * (art === 'jeep' ? 1.04 : 1), t + ab);
+      o.frequency.exponentialRampToValueAtTime(hz, t + ab + 0.05);
+      // leichtes Flattern wie bei einer echten Membran
+      const lfo = ctx.createOscillator();
+      const lg = ctx.createGain();
+      lfo.frequency.value = art === 'jeep' ? 28 : 7;
+      lg.gain.value = hz * 0.01;
+      lfo.connect(lg).connect(o.frequency);
+      o.connect(f);
+      o.start(t + ab); lfo.start(t + ab);
+      o.stop(t + ab + lang + 0.1); lfo.stop(t + ab + lang + 0.1);
+    }
+  }
+}
+
+// Peitschenknall: kurzes Zischen (Schnur), dann ein trockener, heller Knall
+export function peitschenKnall(lautst = 0.8) {
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  const zisch = rauschQuelle();
+  const zf = ctx.createBiquadFilter(); zf.type = 'bandpass'; zf.frequency.setValueAtTime(900, t); zf.frequency.exponentialRampToValueAtTime(3500, t + 0.12); zf.Q.value = 1.5;
+  const zg = ctx.createGain(); huelle(zg, t, 0.04, 0.05, 0.04, lautst * 0.12);
+  zisch.connect(zf).connect(zg).connect(master);
+  zisch.start(t); zisch.stop(t + 0.2);
+  const knall = rauschQuelle();
+  const kf = ctx.createBiquadFilter(); kf.type = 'highpass'; kf.frequency.value = 1800;
+  const kg = ctx.createGain(); huelle(kg, t + 0.13, 0.002, 0.004, 0.06, lautst * 0.9);
+  knall.connect(kf).connect(kg).connect(master);
+  knall.start(t + 0.13); knall.stop(t + 0.3);
+}

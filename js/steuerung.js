@@ -2,6 +2,7 @@
 // Touch = Wischen. Gehen per WASD, Stationen per Knopf, Klick = benutzen.
 import * as THREE from 'three';
 import { AUGENHOEHE, STATIONEN } from './world.js';
+import { inHindernis } from './draussen.js';
 
 export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
   let gier = 0;
@@ -179,9 +180,11 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
     const r = 0.3;
     const p = kamera.position;
     // Werkstatt, Bad und offene WC-Tür sind begehbar
-    if (!welt.begehbar(x, z, r)) return true;
-    const drin = (h, px, pz) => px > h.xMin - r && px < h.xMax + r && pz > h.zMin - r && pz < h.zMax + r;
+    // steht man schon an einer Stelle, die eigentlich zu eng ist (z. B. nach dem Aussteigen), darf man sich frei herausbewegen
+    if (!welt.begehbar(x, z, r)) return welt.begehbar(p.x, p.z, r) || !welt.begehbar(x, z, 0.05);
+    const drin = (h, px, pz) => inHindernis(h, px, pz, r);
     for (const h of welt.hindernisse) {
+      if (h.niedrig) continue;
       if (drin(h, x, z) && !drin(h, p.x, p.z)) return true;
     }
     const dp = welt.dennisPosition();
@@ -262,6 +265,11 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
           if (xOk) p.x += dx;
           const zOk = !kollidiert(p.x, p.z + dz);
           if (zOk) p.z += dz;
+          // auf Paletten steigen: Augenhöhe folgt dem Untergrund
+          if (welt.bodenHoehe) {
+            const soll = AUGENHOEHE + welt.bodenHoehe(p.x, p.z);
+            p.y += (soll - p.y) * Math.min(1, dt * 10);
+          }
           // an einer Türkante hängen geblieben: sanft zur Türmitte rutschen
           if (!zOk && Math.abs(dz) > 1e-4 && welt.tuerMitte) {
             const m = welt.tuerMitte(p.x, p.z);

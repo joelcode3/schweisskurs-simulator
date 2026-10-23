@@ -269,6 +269,19 @@ export const DENNIS = {
   akkuLob: ['Du hast den Akkuschrauber wieder hingekriegt? Na guck mal an. Dann ist er wenigstens weg von meiner Werkbank.', 'Der surrt ja wieder! Nicht schlecht. Waldo schuldet dir ein Bier.'],
   tassenMecker: ['Wem gehören die ganzen Tassen hier?! Das ist doch kein Café!', 'Überall Tassen! Ab auf den Kühlschrank damit!', 'Ich hab gleich keine Tasse mehr, weil alle hier rumstehen!'],
   tassenSelbst: ['Muss ich die Tassen jetzt auch noch wegräumen?! Unglaublich.', 'Na toll. Tassen-Dienst. Ich mach das ja gern. NICHT.'],
+  peitsche: {
+    flucht: ['Hilfe! Nicht die Peitsche! Hahaha!', 'Neiiin! Ich bin unschuldig! Hahaha!', 'Ich hab nix gemacht! Lass mich!'],
+    quieken: ['Aua! Hahaha!', 'Hihi! Nicht! Nicht!'],
+    lacht: ['Okay, okay! Du hast gewonnen! Jetzt aber wieder an die Arbeit.', 'Haha, der Tag wird doch noch gut. Weiter jetzt!'],
+    zuViel: ['Jetzt reicht\'s mit dem Quatsch!', 'Ey! Einmal ist lustig. Jetzt nervt\'s!'],
+    sauer: ['Leg das Ding zurück in den Kofferraum. SOFORT.', 'Noch einmal und du fliegst. Mit Peitsche.'],
+  },
+  kettenhemd: ['Finger weg, das ist für den Mittelaltermarkt!', 'Das Kettenhemd geht dich gar nix an.'],
+  muellAufgehoben: ['Oh, du räumst den Müll weg? Danke, Mann!', 'Endlich hebt mal einer den Kram auf. Sehr gut.'],
+  jeepHoch: ['Bist du wahnsinnig?! Lass sofort den Jeep runter!', 'Der Jeep ist doch keine Palette! Runter damit!'],
+  tonnenUm: ['Die Tonnen! Alles voller Müll jetzt! Stell die wieder hin!', 'Ach du Scheiße, die Tonnen! Wer hat dir den Führerschein gegeben?!'],
+  tonnenDanke: ['Gut. Und der ganze Müll auch wieder rein. Danke.', 'Na also. Tonnen stehen, Müll ist drin. Geht doch.'],
+  tonnenSelbst: ['Jetzt sammel ich hier auch noch den Müll vom Hof. Super.', 'Tonnen aufstellen, Müll aufsammeln. Mein Traumjob.'],
   tasseDanke: ['Danke dir.', 'Ah, sehr gut. Danke!', 'Na also. Danke.', 'Danke, Tassen-Held.'],
   tassenVoll: ['Der Kühlschrank ist voll! Wer hat denn diese Woche Spüldienst?', 'Da passt nix mehr drauf. Guck mal auf den Zettel, wer spülen muss!'],
   spueldienstDanke: ['Endlich spült mal einer! Danke.', 'Na bitte, geht doch. Saubere Tassen!'],
@@ -340,6 +353,7 @@ export function satzId(text) {
 
 // Jonny (Zimmermann, Kumpel von Dennis)
 export const JONNY = {
+  angehoben: ['Ey! Lass mich runter! Ich hab mein Bier hier drin!', 'Wooah! Was soll das denn?!'],
   spueldienst: ['Spüldienst? Ich? Na gut. Aber nur, weil du so lieb fragst.', 'Steht da echt mein Name? Na schön, gib her.'],
   quatschen: ['Na, Schweißer? Läuft bei dir?', 'Ich bin nur kurz hier. Seit drei Stunden.', 'Holz ist ehrlicher als Stahl. Sag ich nur.', 'Hast du mal Feuer? Nee, war Spaß. Hab selbst.', 'Dennis ist heute wieder voll in seinem Element, oder?'],
   leiter: ['Die Leiter? Die hol ich nächste Woche. Ganz sicher.', 'Welche Leiter? Ach DIE. Ja, irgendwann.', 'Der Camper ist weg, aber die Leiter ist noch gut. Die bleibt hier.'],
@@ -362,6 +376,7 @@ export const JONNY = {
 
 // Waldo (Kumpel, isst eigentlich immer)
 export const WALDO = {
+  angehoben: ['Äh. Hallo? Ich bin hier noch drin.', 'Ey, mein Handy! Fast runtergefallen!'],
   spueldienst: ['Hm? Spülen? Okay, okay. Ich nehm die mit.', 'Ich? Schon wieder? ... Na gut.'],
   quatschen: ['Mmh. Willst du auch was? Nee, ist meins.', 'Ich hab Hunger. Ich hab immer Hunger.', 'Feine Sahne live, das war so gut. Warst du dabei?', 'Schweißen macht hungrig. Auch vom Zugucken.'],
   pumpe: ['Dennis! DENNIS! Die Kackepumpe! Der Tank im Garten ist schon wieder voll! Ich muss umpumpen!', 'Dennis, schnell! Wo ist die Kackepumpe?! Der Tank läuft gleich über!'],
@@ -383,6 +398,7 @@ export const WALDO = {
 
 // Torben (Kumpel, erledigt die schweren Sachen, fährt alles, was Räder hat)
 export const TORBEN = {
+  angehoben: ['Haha! Höher! Höher!', 'Okay, okay, das ist sogar für mich zu viel.'],
   hallo: ['Moin! Ich bin nur kurz da. Wo steht der Hoflader?', 'Na, ihr Schweißer? Ich dreh nur mal ne Runde.'],
   tschuess: ['So, ich bin wieder weg. Bis die Tage!', 'Tschö! Die Träger mach ich nächste Woche.'],
   quatschen: ['Stahlträger? Ja, die mach ich. Bald.', 'Der Jeep geht ab, wenn man ihn lässt. Glaub mir.', 'Ich fahr nie irgendwo gegen. Fast nie.'],

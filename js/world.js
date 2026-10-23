@@ -178,9 +178,13 @@ export function baueWelt(scene) {
       g.stroke();
     }
   }
-  const wandStueck = (b, x, z, ry, saat, hoehe = RAUM.hoehe, unten = 0) => {
-    const tex = leinwandTextur(Math.round(b * PX), Math.round(hoehe * PX), (g, bb, hh) => wandMalen(g, bb, hh, saat, unten));
-    const w = new THREE.Mesh(new THREE.PlaneGeometry(b, hoehe), toon(0xffffff, { map: tex }));
+  // loch: [u0, u1, v0, v1] in Anteilen der Wand (v von oben) – dort ist die Wand durchsichtig ausgeschnitten (Fenster)
+  const wandStueck = (b, x, z, ry, saat, hoehe = RAUM.hoehe, unten = 0, loch = null) => {
+    const tex = leinwandTextur(Math.round(b * PX), Math.round(hoehe * PX), (g, bb, hh) => {
+      wandMalen(g, bb, hh, saat, unten);
+      if (loch) g.clearRect(loch[0] * bb, loch[2] * hh, (loch[1] - loch[0]) * bb, (loch[3] - loch[2]) * hh);
+    });
+    const w = new THREE.Mesh(new THREE.PlaneGeometry(b, hoehe), toon(0xffffff, loch ? { map: tex, alphaTest: 0.5, side: THREE.DoubleSide } : { map: tex }));
     w.position.set(x, unten + hoehe / 2, z);
     w.rotation.y = ry;
     w.receiveShadow = true;
@@ -195,7 +199,8 @@ export function baueWelt(scene) {
   wandStueck(TOR_R - TOR_L, -0.85, RAUM.zMax, Math.PI, 18, RAUM.hoehe - TOR_HOEHE, TOR_HOEHE);
   wandStueck(RAUM.xMax - KLO_TUER.xMax, (KLO_TUER.xMax + RAUM.xMax) / 2, RAUM.zMax, Math.PI, 15);
   wandStueck(KLO_TUER.xMax - KLO_TUER.xMin, (KLO_TUER.xMin + KLO_TUER.xMax) / 2, RAUM.zMax, Math.PI, 16, RAUM.hoehe - KLO_TUER.hoehe, KLO_TUER.hoehe);
-  wandStueck(8, RAUM.xMin, 0, Math.PI / 2, 13);
+  // linke Wand mit echtem Fensterloch (z 0,82–2,38, Höhe 1,47–2,43): man kann rein- und rausgucken
+  wandStueck(8, RAUM.xMin, 0, Math.PI / 2, 13, RAUM.hoehe, 0, [(4 - 2.38) / 8, (4 - 0.82) / 8, (RAUM.hoehe - 2.43) / RAUM.hoehe, (RAUM.hoehe - 1.47) / RAUM.hoehe]);
   wandStueck(8, RAUM.xMax, 0, -Math.PI / 2, 14);
 
   // Decke: heller Putz, ohne Balken (MeshBasic, damit sie von unten nicht dunkel wirkt)
@@ -264,7 +269,8 @@ export function baueWelt(scene) {
 
   // Fenster links
   const fenster = new THREE.Group();
-  const glas = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.0), new THREE.MeshBasicMaterial({ color: 0xbfe3f2 }));
+  const glas = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.0), new THREE.MeshBasicMaterial({ color: 0xbfe3f2, transparent: true, opacity: 0.18, depthWrite: false, side: THREE.DoubleSide }));
+  glas.raycast = () => {};
   fenster.add(glas);
   const rahmenTeile = [[1.7, 0.08, 0, 0.52], [1.7, 0.08, 0, -0.52], [0.08, 1.1, -0.82, 0], [0.08, 1.1, 0.82, 0], [0.05, 1.0, 0, 0], [1.6, 0.05, 0, 0]];
   for (const [b, h, x, y] of rahmenTeile) {
@@ -412,7 +418,7 @@ export function baueWelt(scene) {
   // ---------- Draußen (js/draussen.js) ----------
   const draussen = baueDraussen(scene, { merke, hindernis, RAUM });
   // Carport mit Wohnwagen und Dennis' Benz auf der Wiese (js/carport.js)
-  baueCarport(scene, { merke, hindernis });
+  const carport = baueCarport(scene, { merke, hindernis });
 
   // Feuerlöscher an der rechten Wand zwischen Schweißplatz und Waschplatz
   const loescher = new THREE.Group();
@@ -2984,6 +2990,7 @@ export function baueWelt(scene) {
     },
     istDraussen: (x, z) => draussen.istDraussen(x, z),
     draussen,
+    carport,
     imBad(x, z) { return x > BAD.xMin && x < BAD.xMax && z > BAD.zMin && z < BAD.zMax; },
     kloTuer(offen) { kloOffen = offen; },
     // Steht (x, z) in der WC-Tür oder kurz davor/dahinter? Dann darf die Tür nicht zugehen

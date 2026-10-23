@@ -94,3 +94,25 @@ export function zufall(saat = 1) {
     return s / 4294967296;
   };
 }
+
+// Quader mit abgerundeten Kanten (r = Kantenradius): Rechteck mit runden Ecken, mit Fase/Rundung an den Stirnseiten
+// ausgeformt. Maße wie quader(b, h, t), Mitte im Ursprung.
+const rundCache = new Map();
+export function rundQuader(b, h, t, farbe, opt, r = 0.05) {
+  const schluessel = [b, h, t, r].join('|');
+  let geo = rundCache.get(schluessel);
+  if (!geo) {
+    const bev = Math.min(r, t * 0.45, b * 0.45, h * 0.45);
+    const w = b / 2 - bev, hh = h / 2 - bev, rr = Math.max(0.001, Math.min(r - bev * 0.5, w * 0.95, hh * 0.95));
+    const s = new THREE.Shape();
+    s.moveTo(-w + rr, -hh);
+    s.lineTo(w - rr, -hh); s.quadraticCurveTo(w, -hh, w, -hh + rr);
+    s.lineTo(w, hh - rr); s.quadraticCurveTo(w, hh, w - rr, hh);
+    s.lineTo(-w + rr, hh); s.quadraticCurveTo(-w, hh, -w, hh - rr);
+    s.lineTo(-w, -hh + rr); s.quadraticCurveTo(-w, -hh, -w + rr, -hh);
+    geo = new THREE.ExtrudeGeometry(s, { depth: Math.max(0.001, t - 2 * bev), bevelEnabled: true, bevelThickness: bev, bevelSize: bev, bevelSegments: 3, curveSegments: 5 });
+    geo.translate(0, 0, -(t - 2 * bev) / 2);
+    rundCache.set(schluessel, geo);
+  }
+  return teil(geo, farbe, opt);
+}

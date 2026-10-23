@@ -112,6 +112,39 @@
   Jonny trinkt an wechselnden Plätzen (BIER_PLAETZE), Bier-auf-Geräusch, mehr Kippenrauch, Waldos Handy-Töne weg.
   Ausraster-Video (vielleichtAusraster): ab Wut 50, nur wenn gerade etwas passiert ist, nicht wenn die Wut sinkt, mind. 75 s
   Abstand, Videos vorgeladen ohne Standbild.
+- Paket B (draußen/Fahrzeuge): Gelände viel größer (GELAENDE in draussen.js: x -25…13, z -9…17, rund ums Haus, um Carport,
+  Wohnwagen und Benz; Bäume und Carport-Teile als einzelne Hindernisse). Feldweg = Band entlang einer Kurve (FELDWEG-Punkte,
+  schließt rechts an die Betonfläche an), alle Wege der Figuren/Fahrzeuge/Segway folgen ihm. Fenster links: echtes Loch in Innen-
+  und Außenwand (Laibung), Glas durchsichtig. Müllsack als Sack (Lathe mit Beulen, Knoten). Weidemann: runde Motorhaube hinten
+  (Extrude-Profil), rundes Heck-Gegengewicht. Jeep: runder (rundQuader in toon.js, Kotflügel als Bögen), ohne seitliche Schrägstangen und
+  ohne Trittbretter, rosa Karosserie mit Bodenfreiheit (ab 0,2 m), darunter schmale dunkle Bodenwanne (Füße gucken nicht raus), entdrosselt 11 m/s mit ca. 1,5 s Beschleunigung. Hupen: audio.js `hupe`
+  (Jeep „möp möp“, Lader tiefes Horn). E neben einem Fahrzeug (Hände frei) = einsteigen. Aussteigen mit Abstand zum eigenen Fahrzeug,
+  aus zu engen Stellen kann man sich immer herausbewegen. Fahrzeuge haben gedrehte Hindernis-Kästen (inHindernis, boxen), dadurch
+  kommt man dicht vorbei und durch Lücken. Paletten: niedrig (Fußgänger laufen drüber, Augenhöhe steigt), der Lader nimmt ganze
+  Stapel (bis 5) auf und setzt sie zusammen ab. Lader schiebt den Jeep (wenn Platz) und hebt ihn mit der Gabel an, auch mit Fahrer
+  (Fahrt der Figur endet dann, sie parkt neu ein; DENNIS.jeepHoch, *.angehoben). Spieler fährt Grill um (wie Torben) oder die
+  Mülltonnen (kippen, Müll liegt rum; Klick = aufstellen, Wut -4, sonst Dennis nach 75 s, +8; DENNIS.tonnen*).
+  Benz: andersrum (Front zur Werkstatt), runder, Kennzeichen „SE XY 238H“ (H-Kennzeichen, Plaketten statt Bindestrich), Auspuff
+  komplett (Rohr, Mitteltopf, Endtopf, Halter), tiefer Kofferraum (Teppich, Verkleidung, Radkästen, Dichtung, Ersatzrad,
+  Warndreieck, Verbandskasten, Schwanenhals-Scharniere; Deckel per Klick auf/zu, welt.carport.kofferraum). Darin Kettenhemd
+  (DENNIS.kettenhemd) und Peitsche (aufnehmbar, E = knallen, audio `peitschenKnall`; auf Dennis klicken = jagen: er schlägt
+  Haken, 1.–2. Mal Spaß Wut -6, zu oft/innerhalb 60 s/ab Wut 55: +8, DENNIS.peitsche.*). Deichsel detailliert (Haube, Faltenbalg,
+  Kupplung mit Griff, Handbremse, Abreißseil, Spiralkabel, Stützrad mit Kurbel, Gaskasten). Bierkasten mit Griffmulden, Rippen,
+  Etikett, 17 Flaschen, Brettchen mit Aschenbecher und offener Flasche.
+  Nachbesserungen: Jeep-Karosserie mit Bodenfreiheit (Wagenboden 0,2 m, Sitz 0,7 m, keine schwarze Platte drunter, Füße bleiben
+  im Wagen). Benz-Kabine nach Fotos vom W123 neu (Seitenprofil-Glashaus, schräge Front-/Heckscheibe, A-/B-/C-Säulen, Dreiecksfenster,
+  Chromrahmen). Müll: muellTeil(art) in draussen.js (Bananenschale, Pizzakarton, Dose, Flasche, Chipstüte, Becher, Zeitung,
+  Karton), ein paar liegen immer bei den Tonnen, beim Umfahren viel mehr. Heruntergewehte Turnmatte liegt flach im Gras an der
+  Rückseite vom Carport (begeh- und befahrbar).
+  Benz komplett neu nach den W123-Fotos des Betreibers: Seitenprofil-Karosserie (profilKoerper in carport.js: Kern + zwei Schalen
+  mit sauber ausgeschnittenen weißen Radläufen, Kanten abgerundet), langes Dach, Scheiben durchsichtig wie die Werkstattfenster,
+  Innenraum mit dunkelblauen Sitzen, Armaturenbrett, Lenkrad; Haube und Kofferraumdeckel flach (keine Wulst), dünne schwarze
+  Seitenleiste mit Chrom, W123-Scheinwerfer (kräftiger Chromrand, helle Streuscheibe mit Reflektoren als Textur, Blinker um die Ecke), Rückleuchten flach (eine geriffelte Textur-Fläche rot/orange/weiß/rot mit Chromrahmen), keine Nebelscheinwerfer,
+  Kennzeichen vorne auf Halter unter der Stoßstange. Haube = eigenes Blech mit Delle, zackigem Loch, Blechlappen, Knicken,
+  abgeplatztem Lack, Motorraum darunter; Gehwegplatte steckt drin, abgebrochene Ecke daneben. Plane: verblichen mit Gewebe-
+  textur, ums Loch runtergedrückt, eingerissen (Schlitze), lange verdrehte Fetzen und Fäden. Bananenschale realistisch (4 Lappen
+  außen gelb mit Flecken, innen creme). Wohnwagen-Korpus rund (Profil mit runden Ecken, Kanten gefast). Rumliegenden Müll an den
+  Tonnen kann man aufheben (Wut -2, DENNIS.muellAufgehoben), nach 3–5 min liegt wieder was rum.
 - Hand-System (`js/hand.js`): Werkzeug, Ausrüstung, Feuerlöscher, Besen, Figur, Handy kann man aufheben (Hand im Bild),
   auf ebene Flächen legen (Klick), fallen lassen (G), werfen (Q), benutzen/anziehen (E). Leiste unten zeigt, was man hält.
   Edding/Flex/Hammer müssen in der Hand sein zum Anzeichnen/Schneiden/Schlacke. Gasflasche: „Hochheben“, langsamer gehen,
@@ -146,13 +179,13 @@
   Carport-Dach alte blaue Turnmatten mit Gehwegplatten beschwert (gegen Eicheln-Lärm), Eicheln im Gras. SEITLICH am großen
   Carport (gegenüber der Terrasse) ein schief angebautes kleines Carport mit blauer Plane als Dach (Loch drin), darunter Dennis'
   weißer Mercedes W123 (detailliert: Radläufe, Radkappen, Türfugen, Chromleisten, Spiegel, Wischer, geriffelte Rückleuchten,
-  Kennzeichen, Auspuff, Antenne) mit Gehwegplatte IN der Motorhaube (Delle, Risse). Eine Turnmatte liegt heruntergeweht im Gras. Geschichte: heute Nacht um 4 bei
+  Kennzeichen, Auspuff, Antenne; Details siehe Paket B) mit Gehwegplatte IN der Motorhaube (Delle, Risse). Eine Turnmatte liegt heruntergeweht im Gras. Geschichte: heute Nacht um 4 bei
   Wind passiert, deshalb ist Dennis heute gereizt (Wut startet bei 15, Begrüßung erwähnt es). Anklicken: Benz (Dennis stöhnt,
   DENNIS.benz), Wohnwagen, Carport, Turnmatte.
 - Fahrzeuge (js/fahrzeuge.js Physik/Paletten, js/fahrten.js Spiel-Logik): Mini-Jeep und Hoflader sind fahrbar (Klick = Einsteigen
   und fahren, Hände müssen frei sein). Steuerung: W/S fahren, A/D lenken bzw. knicken, R/F Gabel hoch/runter, Leertaste hupen,
   E aussteigen (Fahrhilfe oben eingeblendet). Kamera sitzt im Fahrerhaus und dreht mit. Nur Computer (keine Touch-Knöpfe).
-  Jeep: Elektromotor, gedrosselt Schritttempo (1,4 m/s); Torben lieb fragen (Menü an Torben) = entdrosselt (7,5 m/s).
+  Jeep: Elektromotor, gedrosselt Schritttempo (1,4 m/s); Torben lieb fragen (Menü an Torben) = entdrosselt (11 m/s).
   Hoflader nach Fotos vom Weidemann 1280 (ohne Schriftzug): Knicklenker (Gelenk z = 0, Formel Knicklenkung), Hinterwagen mit
   runder roter Motorhaube und schwarzen Lüftungsfenstern, Kabine auf dem Hinterwagen (grauer Rahmen, rundum Glas, Dach 2,25 m,
   Sitz 1,05 m, Arbeitsscheinwerfer), schwarze Kotflügel, graue Felgen; Vorderwagen mit Turm (etwas rechts), roter geknickter
@@ -353,7 +386,7 @@
 - Alle Dennis-Sätze stehen in `js/texte.js` (IDs = Dateinamen der Aufnahmen), `spiel.js` nutzt nur diese.
 - `stimme/stimme.json` + `stimme/<id>.mp3`: Aufnahmen pro Satz, Mund bewegt sich nach Lautstärke.
   Pflege mit `node tools/stimme.mjs liste|eintragen`, siehe `stimme/LIESMICH.md`.
-- Die Jungs sprechen ALLE Sätze ein. Dateinamen kurz: dennis1 … dennis433 (Stand Paket A), jonny1 … jonny46, waldo1 … waldo39, kumpel1 … kumpel7 (KUMPEL) (Endung
+- Die Jungs sprechen ALLE Sätze ein. Dateinamen kurz: dennis1 … dennis456 (Stand Paket B), jonny1 … jonny48, waldo1 … waldo41, torben1 … torben19, kumpel1 … kumpel7 (KUMPEL) (Endung
   .mp3/.m4a/.wav, Groß-/Kleinschreibung egal). Zuordnung Kurzname -> Satz-ID steht in stimme/zuordnung.csv (vom Projektchat).
   Nummern sind fest und verschieben sich NIE; neue Sätze bekommen die nächste freie Nummer (dennis367 …) und eine neue Zeile.
   Schlüssel in texte.js NIE umbenennen, neue Sätze nur ergänzen. IDs: Dennis wie alleSaetze(), telefon.G.Z = Gespräch G,
