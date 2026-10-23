@@ -117,7 +117,7 @@
   schließt rechts an die Betonfläche an), alle Wege der Figuren/Fahrzeuge/Segway folgen ihm. Fenster links: echtes Loch in Innen-
   und Außenwand (Laibung), Glas durchsichtig. Müllsack als Sack (Lathe mit Beulen, Knoten). Weidemann: runde Motorhaube hinten
   (Extrude-Profil), rundes Heck-Gegengewicht. Jeep: runder (rundQuader in toon.js, Kotflügel als Bögen), ohne seitliche Schrägstangen und
-  ohne Trittbretter, Boden ganz unten (Füße gucken nicht raus), entdrosselt 11 m/s mit ca. 1,5 s Beschleunigung. Hupen: audio.js `hupe`
+  ohne Trittbretter, rosa Karosserie mit Bodenfreiheit (ab 0,2 m), darunter schmale dunkle Bodenwanne (Füße gucken nicht raus), entdrosselt 11 m/s mit ca. 1,5 s Beschleunigung. Hupen: audio.js `hupe`
   (Jeep „möp möp“, Lader tiefes Horn). E neben einem Fahrzeug (Hände frei) = einsteigen. Aussteigen mit Abstand zum eigenen Fahrzeug,
   aus zu engen Stellen kann man sich immer herausbewegen. Fahrzeuge haben gedrehte Hindernis-Kästen (inHindernis, boxen), dadurch
   kommt man dicht vorbei und durch Lücken. Paletten: niedrig (Fußgänger laufen drüber, Augenhöhe steigt), der Lader nimmt ganze

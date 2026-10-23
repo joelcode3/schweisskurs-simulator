@@ -556,16 +556,20 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   const jeep = new THREE.Group();
   // Unterboden, Bodenblech im Fußraum
   // tief liegender Boden: die Füße der Fahrer stehen im Fußraum und gucken unten nicht raus
-  jeep.add(setze(quader(JB - 0.16, 0.07, JL - 0.3, 0x2a2c30, { umriss: 0.003 }), 0, 0.045, 0));
+  // rosa Karosserie mit Bodenfreiheit; darunter eine schmalere dunkle Bodenwanne, in der die Füße stehen (nicht sichtbar)
+  jeep.add(setze(quader(JB - 0.24, 0.07, JL - 0.3, 0x2a2c30, { umriss: 0.003 }), 0, 0.045, 0));
+  for (const sx of [-1, 1]) jeep.add(setze(quader(0.03, 0.22, 1.3, 0x2a2c30, { umriss: 0.002 }), sx * (JB / 2 - 0.13), 0.12, -0.3));
+  jeep.add(setze(quader(JB - 0.24, 0.34, 0.03, 0x2a2c30, { umriss: 0.002 }), 0, 0.18, 0.34));
+  jeep.add(setze(quader(JB - 0.24, 0.22, 0.03, 0x2a2c30, { umriss: 0.002 }), 0, 0.12, -JL / 2 + 0.1));
   jeep.add(setze(quader(JB - 0.14, 0.02, 1.15, 0x3a3c40, { umriss: false }), 0, 0.09, -0.3));
   // Wanne: Seitenwände (vorne bis zur Haube, hinten bis zum Heck), Heckwand, Ladefläche hinter den Sitzen
   for (const sx of [-1, 1]) {
-    jeep.add(setze(rundQuader(0.07, 0.54, 1.25, ROSA, { umriss: 0.004 }, 0.035), sx * (JB / 2 - 0.035), 0.31, -0.3));
+    jeep.add(setze(rundQuader(0.07, 0.4, 1.25, ROSA, { umriss: 0.004 }, 0.035), sx * (JB / 2 - 0.035), 0.38, -0.3));
     // Türausschnitt (dunkle Kante) und Haltegriff
     jeep.add(setze(quader(0.065, 0.025, 0.55, ROSA_D, { umriss: false }), sx * (JB / 2 - 0.03), 0.57, -0.2));
     jeep.add(setze(teil(new THREE.TorusGeometry(0.05, 0.01, 5, 10, Math.PI), SCHWARZ, { umriss: false }), sx * (JB / 2 - 0.08), 0.6, 0.1, 0, Math.PI / 2, 0));
   }
-  jeep.add(setze(rundQuader(JB - 0.02, 0.54, 0.08, ROSA, { umriss: 0.004 }, 0.04), 0, 0.31, -JL / 2 + 0.07));
+  jeep.add(setze(rundQuader(JB - 0.02, 0.4, 0.08, ROSA, { umriss: 0.004 }, 0.04), 0, 0.38, -JL / 2 + 0.07));
   jeep.add(setze(quader(JB - 0.14, 0.03, 0.4, 0x3a3c40, { umriss: false }), 0, 0.38, -0.72));
   // Motorhaube (vorne höher als die Wanne), Lüftungsschlitze, Haubenverschlüsse
   jeep.add(setze(rundQuader(JB - 0.02, 0.32, 0.64, ROSA, { umriss: 0.004 }, 0.12), 0, 0.5, 0.62));
