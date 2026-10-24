@@ -1120,13 +1120,13 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   const SPUELDIENST = { jonas: 'Jonas', david: 'David', waldo: 'Waldo', joel: 'Joel', jonny: 'Jonny' };
   const sd = { id: Object.keys(SPUELDIENST)[Math.floor(Math.random() * 5)], unterwegs: false, kumpelDa: false, kumpelAb: 90 + Math.random() * 60, tasseNeuAb: 50 + Math.random() * 40 };
   welt.setzeSpueldienst(SPUELDIENST[sd.id]);
-  // Dennis ärgert sich über Jonny: Wut steigt etwas, ist aber kein Fehler des Spielers (höchstens bis 99)
+  // Dennis ärgert sich über Jonny: Wut steigt etwas, ist aber kein Fehler des Spielers (höchstens bis 99);
+  // Ausraster-Videos gibt es nur, wenn der Spieler selbst etwas ausgelöst hat (fehler/wutPlus)
   function aerger(n) {
     z.wut = Math.min(99, z.wut + n);
     z.wutMax = Math.max(z.wutMax, z.wut);
     ui.wutZeigen(z.wut, stimmungAusWut());
     ui.wutWackeln();
-    vielleichtAusraster();
   }
   // Wird es ihm zu viel (Wut ab 50, gerade Ärger dazugekommen), rastet er aus (Video). Nicht, wenn er sich gerade beruhigt
   // (Wut in den letzten ~30 s gesunken), und höchstens alle 75 s.
@@ -1144,6 +1144,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     });
   }
   const KUEHLSCHRANK_VOR = { x: -4.05, z: 2.42 };
+  const BOX_VOR = { x: -4.05, z: 1.0 }; // vor der Soundbox (Box steht bei -4,66 | 1,0)
   async function jonnyBier(ueberredet) {
     if (!jz.da || jz.beschaeftigt) return;
     if (jz.ersterBesuch) { if (ueberredet) ui.jonnySagt(sag(JONNY.bierNochNicht)); return; }
@@ -1304,7 +1305,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     // stellt sich seitlich neben den Spieler
     await Promise.race([jonny.gehZu(p.x + r.z * 0.8 + r.x * 0.4, p.z - r.x * 0.8 + r.z * 0.4, 1.3), warte(9000)]);
     jonny.dreheZu(p);
-    ui.jonnySagt(sag(JONNY.stoeren), 6000);
+    // Sprüche übers Werkstück („Was schweißt du da?“, „Sieht schief aus“) erst, wenn schon geschweißt wurde
+    ui.jonnySagt(sag(irgendeineNaht() ? JONNY.stoeren : JONNY.stoeren.filter((t) => !/schwei|schief/i.test(t))), 6000);
     jz.stoertSeit = sekundenSeitStart();
     for (let i = 0; i < 15 && jz.stoertSeit > 0; i++) await warte(1000);
     if (jz.stoertSeit > 0) {
@@ -1633,6 +1635,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     const dennisFrei = dennis.modus === 'normal' && dennis.wurzel.visible && !z.aufKlo && !z.hula && !z.beschaeftigt && !buehneBelegt() && z.mittag !== 'gerade' && !z.dennisFegt && !z.dennisLoescht;
     if (offen < 3 || !dennisFrei || !ruhig()) return;
     z.tassenMeckerAb = t + 80 + Math.random() * 50;
+    if (weitDraussenLassen()) return;
     if (welt.kuehlschrankVoll()) { aerger(2); dennisSagt(sag(DENNIS.tassenVoll), true, { prio: 0 }); }
     else if (Math.random() < 0.5) dennisRaeumtTassen();
     else { aerger(2); dennisSagt(sag(DENNIS.tassenMecker), true, { prio: 0 }); }
@@ -1851,6 +1854,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     const t = sekundenSeitStart();
     if (t - z.akkuSeit < 60 + z.akkuMecker * 70) return;
     if (dennis.modus !== 'normal' || z.aufKlo || z.beschaeftigt || !ruhig() || !dennisSiehts()) return;
+    if (weitDraussenLassen()) { z.akkuSeit += 40; return; }
     z.akkuMecker++;
     aerger(2);
     dennisSagt(sag(DENNIS.akkuMecker), true, { prio: 0 });
@@ -1879,6 +1883,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     if (t > wz.bleibtBis) { waldoGeht(sag(WALDO.tschuess)); return; }
     if (t > wz.naechsterMecker && dennisSiehts() && ruhig() && !z.beschaeftigt && dennis.modus === 'normal') {
       wz.naechsterMecker = t + 30 + Math.random() * 20;
+      if (weitDraussenLassen()) return;
       aerger(2);
       dennisSagt(sag(DENNIS.waldoMecker), true, { prio: 0 });
     }
@@ -1993,6 +1998,11 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   function dennisSiehts() {
     return dennis.wurzel.visible && dennis.modus !== 'schlafen' && !z.aufKlo;
   }
+  // Spieler ist weit draußen (mehr als ca. 18 m von der Werkstatt): Werkstatt-Ärger kommt dann seltener (meist ausgelassen)
+  function weitDraussenLassen() {
+    const p = kamera.position;
+    return welt.istDraussen(p.x, p.z) && Math.hypot(p.x, p.z) > 18 && Math.random() < 0.7;
+  }
 
   async function kiwiEssen() {
     if (z.kiwisWeg >= 6) { ui.hinweis('Keine Kiwis mehr da.'); return; }
@@ -2023,12 +2033,37 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
         dennis.mittagspause(false);
         welt.objekte.brotdose.visible = true;
         z.mittag = 'erledigt';
-        fehler('musikPause').then(() => dennis.heim());
+        // er macht die Musik selbst aus und hat danach ein paar Minuten keine Lust zu tanzen
+        z.keinTanzBis = sekundenSeitStart() + 180 + Math.random() * 60;
+        fehler('musikPause').then(() => dennisMachtMusikAus(false));
+      } else if (sekundenSeitStart() < (z.keinTanzBis || 0)) {
+        // wieder an, obwohl er gerade keine Lust hat: sauer, bis er sie selbst ausmacht
+        dennisMachtMusikAus(true);
       }
     } else {
       technoAus();
       welt.boxTakt(null);
     }
+  }
+
+  // Dennis geht zur Box und macht die Musik aus; nochmal=true: der Spieler hat sie wieder angemacht (meckern, Wut)
+  async function dennisMachtMusikAus(nochmal) {
+    if (z.musikAusGang) return;
+    z.musikAusGang = true;
+    if (nochmal) { aerger(5); dennisSagt(sag(DENNIS.musikWiederAn), true, { prio: 2 }); }
+    else dennisSagt(sag(DENNIS.musikMachIchAus), true, { prio: 2 });
+    // warten, bis er frei ist (Ausraster, Aufstehen), dann hin; solange die Musik läuft, steigt die Wut
+    for (let i = 0; i < 30 && (z.beschaeftigt || dennis.modus !== 'normal' || buehneBelegt()) && z.musik && !z.vorbei; i++) {
+      await warte(1000);
+      if (nochmal && i % 8 === 7) aerger(3);
+    }
+    const B = BOX_VOR;
+    if (z.musik && !z.vorbei) {
+      await Promise.race([dennis.gehZu(B.x, B.z, 2.4), warte(9000)]);
+      if (z.musik) { dennis.wurzel.rotation.y = -Math.PI / 2; musikUmschalten(); } // Blick zur Box (-x)
+    }
+    z.musikAusGang = false;
+    if (!z.vorbei) await Promise.race([dennis.heim(), warte(9000)]);
   }
 
   function lichtUmschalten() {
@@ -3521,7 +3556,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       }
       if (z.verstopft === 'ja' && sekundenSeitStart() - z.verstopftSeit > 70 && !z.beschaeftigt && dennis.modus === 'normal' && !z.aufKlo && !z.dennisLoescht && !z.dennisFegt && !z.hula && !buehneBelegt()) dennisPoempelt();
       // Tanzen, wenn die Box läuft und Dennis Zeit hat
-      const sollTanzen = z.musik && !z.beschaeftigt && !z.dennisFegt && !z.dennisLoescht && dennis.istDaheim() && dennis.modus !== 'liegen';
+      const sollTanzen = z.musik && !z.musikAusGang && sekundenSeitStart() >= (z.keinTanzBis || 0) && !z.beschaeftigt && !z.dennisFegt && !z.dennisLoescht && dennis.istDaheim() && dennis.modus !== 'liegen';
       if (sollTanzen && dennis.modus === 'normal') dennis.setzeModus('tanzen', technoBeat);
       if (!sollTanzen && dennis.modus === 'tanzen') dennis.setzeModus('normal');
       // Licht aus: Dennis meckert nach kurzer Zeit
@@ -3634,7 +3669,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       if (jz.leiter !== 'weg' && sekundenSeitStart() - z.leiterZuletzt > 150 + (z.leiterZufall ?? 60) && dennisSiehts() && dennis.modus === 'normal' && !z.beschaeftigt && ruhig() && !buehneBelegt()) {
         z.leiterZuletzt = sekundenSeitStart();
         z.leiterZufall = Math.random() * 90;
-        dennisSagt(sag(DENNIS.leiter), true, { prio: 0 });
+        if (!weitDraussenLassen()) dennisSagt(sag(DENNIS.leiter), true, { prio: 0 });
       }
       // Feuer und Wasserrohrbruch nie kurz hintereinander: mindestens 90 s Abstand
       const ereignisPause = sekundenSeitStart() - (z.letztesEreignis ?? -999) > 90;

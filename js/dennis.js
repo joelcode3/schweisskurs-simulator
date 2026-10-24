@@ -871,11 +871,6 @@ export function baueDennis(scene) {
         const schwing = laeuft ? Math.sin(schrittPhase) * 0.45 : 0;
         links.schulter.rotation.set(-schwing, 0, -0.12);
         links.ellbogen.rotation.set(-0.15 - (laeuft ? 0.3 : 0), 0, 0);
-        // telefoniert: linke Hand mit Handy am Ohr, Kopf leicht schräg
-        if (telefoniert) {
-          links.schulter.rotation.set(...TELEFON.s);
-          links.ellbogen.rotation.set(...TELEFON.e);
-        }
         // Schluck Kaffee ab und zu
         schluckTimer -= dt;
         if (!laeuft && schluckTimer < 0) {
@@ -886,6 +881,11 @@ export function baueDennis(scene) {
         const heben = schluck > 0 ? Math.sin((schluck / 2.2) * Math.PI) : 0;
         rechts.schulter.rotation.set(-0.25 - heben * 0.9 + schwing, heben * 0.3, 0.12 - heben * 0.2);
         rechts.ellbogen.rotation.set(-0.9 - heben * 1.3, 0, 0);
+      }
+      // telefoniert: linke Hand mit Handy am Ohr – immer, auch wenn er beim Gespräch sauer wird oder läuft
+      if (telefoniert) {
+        links.schulter.rotation.set(...TELEFON.s);
+        links.ellbogen.rotation.set(...TELEFON.e);
       }
 
       // Becher bleibt aufrecht, egal wie der Arm steht; beim Schluck kippt er etwas zum Mund

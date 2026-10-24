@@ -83,7 +83,7 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Alle Töne mit kurzem Ein- und Ausblenden. Poster (assets/poster.jpg) mit Klebeband über der Kaffeeecke.
 - Kaffee: 1. senkt Wut (-20), 3 hintereinander (seit letztem Klo) = sofort aufs Klo + etwas Wut. Milch (Tüte auf dem
   Kaffeetisch, breit, mit Brotdose) = „Ist da Milch drin? GIFT!!“ + Klo + Wut. Auf dem Klo: laut stimme/klo-1 oder klo-2 (abwechselnd, Ton aus IMG_3472/IMG_6967), danach Klospülung.
-  Musik an, während Dennis Mittagspause macht oder schläft: er steht auf und ist sauer (+14 Wut). Reguläres Klo (nicht ausgelöst) senkt die Wut (-10).
+  Musik an, während Dennis Mittagspause macht oder schläft: er steht auf und ist sauer (+14 Wut). Danach geht er zur Box und macht sie selbst aus (DENNIS.musikMachIchAus), 3–4 min kein Tanzen (z.keinTanzBis); macht man sie in der Zeit wieder an: +5 und alle 8 s +3, bis er sie ausmacht (DENNIS.musikWiederAn, dennisMachtMusikAus). Reguläres Klo (nicht ausgelöst) senkt die Wut (-10).
   Fegen senkt Wut (-8), Aufhelfen nach Hüfte (-12, Dennis freut sich).
 - Dennis aufhelfen (Hüfte) nur mit leeren Händen (Ausnahme: Kaffee, Wäschetasche, Sieb, die man nicht hinlegen kann).
 - Kaffee kann man werfen (Q) und fallen lassen (G); dann ist er weg (neuen kochen), Dennis meckert, wenn er es sieht.
@@ -381,6 +381,10 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   drinnen. Waldo auf dem Terrassen-Sofa: Füße auf der Holzterrasse (waldo.haltung(h, hoehe, boden), DRAUSSEN.sofa.boden 0,18).
   Jonny kitzelt nur direkt an Dennis (läuft ihm bis zu 3-mal hinterher). Unsichtbare Dinge sind nicht anklickbar (kein Name im Leeren).
   Außenmauer im Badbereich ausgespart (sonst Mauer in der WC-Türöffnung). Jonnys Hände runder (Ballen, gespreizte Finger, Nägel).
+- Paket P2 (Projektchat 24.10.): Ausraster-Videos nur bei Spieler-Auslösung (fehler/wutPlus), nicht bei aerger() (Jonny, Waldo usw.).
+  Handy beim Telefonieren immer am Ohr (auch wenn er sauer wird). Weit draußen (über 18 m) fällt Werkstatt-Gemecker meist aus
+  (weitDraussenLassen: Tassen, Akkuschrauber, Waldo, Leiter). Jonnys Werkstück-Sprüche erst nach der ersten Naht. Über die
+  Fahrweise meckert Dennis beim gedrosselten Jeep nicht (Hoflader immer).
 - Paket A (Bugliste Projektchat): Bad-Tür (nicht drin festhängen, schließt nicht, wenn man drin steht; welt.inKloTuer/
   kloTuerMitte), Waldo steht vom Sofa nach vorn auf, Trockner: Sieb direkt rausnehmen (dreckig wieder einsetzen geht), Sieb mit
   dunklem Schacht dahinter, Wäschetasche liegt oben auf dem Trockner und NUR Dennis holt sie runter (DENNIS.waesche.holen),
