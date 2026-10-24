@@ -393,7 +393,7 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   und WC-Tür, draußen um Werkstatt und Bad-Anbau herum). Segway parkt links vor dem Tor (SEGWAY_PARK -1,9 | 6,4), nie am Bad oder
   drinnen. Waldo auf dem Terrassen-Sofa: Füße auf der Holzterrasse (waldo.haltung(h, hoehe, boden), DRAUSSEN.sofa.boden 0,18).
   Jonny kitzelt nur direkt an Dennis (läuft ihm bis zu 3-mal hinterher). Unsichtbare Dinge sind nicht anklickbar (kein Name im Leeren).
-  Außenmauer im Badbereich ausgespart (sonst Mauer in der WC-Türöffnung). Jonnys Hände runder (Ballen, gespreizte Finger, Nägel).
+  Außenmauer im Badbereich ausgespart (sonst Mauer in der WC-Türöffnung). Jonnys Hände runder und größer (Ballen, lange kräftige Finger, Nägel), bei verschränkten Armen greifen sie um den Unterarm (Handgelenk abgeknickt, haendeGerade() für andere Haltungen).
 - Paket P2 (Projektchat 24.10.): Ausraster-Videos nur bei Spieler-Auslösung (fehler/wutPlus), nicht bei aerger() (Jonny, Waldo usw.).
   Handy beim Telefonieren immer am Ohr (auch wenn er sauer wird). Weit draußen (über 18 m) fällt Werkstatt-Gemecker meist aus
   (weitDraussenLassen: Tassen, Akkuschrauber, Waldo, Leiter). Jonnys Werkstück-Sprüche erst nach der ersten Naht. Über die
