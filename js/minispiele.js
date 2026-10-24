@@ -2010,3 +2010,99 @@ export function rohrSpiel() {
   versprechen.then(() => { if (ton) { ton.stopp(); ton = null; } });
   return versprechen;
 }
+
+// Leiter runterholen per Räuberleiter: Jonny macht die Hände zur Stufe, man steht drauf und wackelt.
+// A/D (oder links/rechts, Maus) gegenlenken; im ruhigen Bereich greift man nach der Leiter. Zu schief = runtergefallen, nochmal.
+export function leiterSpiel() {
+  let f;
+  let a = 0.05, w = 0, greifen = 0, stuerze = 0, fallZeit = 0, zeit = 0;
+  let lenk = 0, maus = null;
+  const tasten = new Set();
+  const r = (() => { let q = 7; return () => { q = (q * 1664525 + 1013904223) >>> 0; return q / 4294967296; }; })();
+  let stoss = 0, stossZiel = 0;
+  const { api, versprechen } = spielRahmen('Räuberleiter', 'Jonny macht dir die Räuberleiter. Mit A/D (oder Maus links/rechts) das Gleichgewicht halten. Ruhig stehen = nach der Leiter greifen.', {
+    beiGroesse(m) { f = flaeche(m); },
+    events: {
+      keydown(e) { const k = e.key.toLowerCase(); if (['a', 'd', 'arrowleft', 'arrowright'].includes(k)) { tasten.add(k); e.preventDefault(); } },
+      keyup(e) { tasten.delete(e.key.toLowerCase()); },
+      pointermove(e) { maus = zeigerPos(api.canvas, e); },
+      pointerdown(e) { maus = zeigerPos(api.canvas, e); },
+    },
+    schritt(dt) {
+      zeit += dt;
+      if (api.istFertig) return;
+      if (fallZeit > 0) { fallZeit -= dt; if (fallZeit <= 0) { a = (r() - 0.5) * 0.1; w = 0; greifen = Math.max(0, greifen - 0.35); } return; }
+      // Lenken: Tasten haben Vorrang, sonst Maus relativ zur Mitte
+      const links = tasten.has('a') || tasten.has('arrowleft'), rechts = tasten.has('d') || tasten.has('arrowright');
+      if (links || rechts) lenk = (rechts ? 1 : 0) - (links ? 1 : 0);
+      else if (maus) lenk = Math.max(-1, Math.min(1, (maus.x - (f.x + f.b / 2)) / (f.b * 0.25)));
+      else lenk = 0;
+      // Jonny wackelt ab und zu (Stöße), Schwerkraft kippt weiter, Gegenlenken richtet auf
+      if (zeit > stossZiel) { stoss = (r() - 0.5) * 2.4; stossZiel = zeit + 0.6 + r() * 1.2; }
+      w += (Math.sin(a) * 3.4 + stoss - lenk * 3.0) * dt;
+      w *= 1 - Math.min(1, dt * 0.9);
+      a += w * dt;
+      if (Math.abs(a) > 0.75) { stuerze++; fallZeit = 1.1; blip(140, 0.25, 0.2); return; }
+      if (Math.abs(a) < 0.2) greifen += dt / 3.2;
+      else greifen = Math.max(0, greifen - dt * 0.12);
+      if (greifen >= 1) { greifen = 1; blip(880, 0.15); api.fertig({ stuerze }); }
+    },
+    zeichnen() {
+      const { ctx, m } = api;
+      ctx.fillStyle = '#d8cdb5'; ctx.fillRect(0, 0, m.b, m.h);
+      ctx.fillStyle = '#7d8a7a'; ctx.fillRect(0, f.y + f.h * 0.62, m.b, m.h); // Sockel
+      const boden = f.y + f.h;
+      ctx.fillStyle = '#8b8378'; ctx.fillRect(0, boden, m.b, m.h - boden);
+      const cx = f.x + f.b / 2, s = f.h / 520;
+      // Konsolen und Leiter oben an der Wand
+      const ly = f.y + 30 * s;
+      ctx.fillStyle = '#444'; ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
+      for (const dx of [-120, 120]) { ctx.fillRect(cx + dx * s - 6, ly, 12, 40 * s); ctx.strokeRect(cx + dx * s - 6, ly, 12, 40 * s); }
+      const gehoben = api.istFertig ? -60 * s : -greifen * 10 * s;
+      ctx.save(); ctx.translate(cx, ly + gehoben); ctx.rotate(-0.06);
+      ctx.fillStyle = '#c9ced3'; ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.roundRect(-190 * s, -8 * s, 380 * s, 12 * s, 6); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.roundRect(-190 * s, 18 * s, 380 * s, 12 * s, 6); ctx.fill(); ctx.stroke();
+      for (let k = 0; k < 6; k++) { ctx.fillRect((-160 + k * 64) * s, 0, 8 * s, 22 * s); ctx.strokeRect((-160 + k * 64) * s, 0, 8 * s, 22 * s); }
+      ctx.restore();
+      // Jonny unten: Cap, Bart, Weste, verschränkte Hände als Stufe
+      const jy = boden;
+      ctx.lineWidth = 4; ctx.strokeStyle = '#111';
+      ctx.fillStyle = '#1c1c1c'; ctx.fillRect(cx - 40 * s, jy - 95 * s, 30 * s, 95 * s); ctx.fillRect(cx + 10 * s, jy - 95 * s, 30 * s, 95 * s);
+      ctx.fillStyle = '#f2f0ea'; ctx.beginPath(); ctx.roundRect(cx - 55 * s, jy - 230 * s, 110 * s, 140 * s, 18); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#b08850'; ctx.fillRect(cx - 55 * s, jy - 225 * s, 35 * s, 130 * s); ctx.fillRect(cx + 20 * s, jy - 225 * s, 35 * s, 130 * s);
+      ctx.fillStyle = '#e2b394'; ctx.beginPath(); ctx.arc(cx, jy - 260 * s, 32 * s, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#5a3a22'; ctx.beginPath(); ctx.arc(cx, jy - 245 * s, 26 * s, 0.1 * Math.PI, 0.9 * Math.PI); ctx.fill();
+      ctx.fillStyle = '#3f6b3a'; ctx.beginPath(); ctx.arc(cx, jy - 272 * s, 30 * s, Math.PI, 0); ctx.fill(); ctx.stroke();
+      ctx.fillRect(cx - 4 * s, jy - 276 * s, 48 * s, 8 * s);
+      // Hände als Stufe vor dem Bauch
+      const hy = jy - 160 * s;
+      ctx.fillStyle = '#e2b394'; ctx.beginPath(); ctx.ellipse(cx, hy, 34 * s, 14 * s, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      // man selbst: steht mit einem Fuß in Jonnys Händen und kippt um diesen Punkt
+      const kippe = fallZeit > 0 ? Math.sign(a || 1) * (0.75 + (1.1 - fallZeit) * 1.4) : a;
+      ctx.save(); ctx.translate(cx, hy - 8 * s); ctx.rotate(kippe);
+      if (fallZeit > 0) ctx.translate(0, (1.1 - fallZeit) * 160 * s);
+      ctx.fillStyle = '#2b4f86'; ctx.fillRect(-16 * s, -120 * s, 32 * s, 120 * s); ctx.strokeRect(-16 * s, -120 * s, 32 * s, 120 * s); // Beine
+      ctx.fillStyle = '#c0392b'; ctx.beginPath(); ctx.roundRect(-34 * s, -250 * s, 68 * s, 135 * s, 14); ctx.fill(); ctx.stroke(); // Oberkörper
+      ctx.fillStyle = '#e8b896'; ctx.beginPath(); ctx.arc(0, -282 * s, 30 * s, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); // Kopf
+      // Arme strecken sich zur Leiter, je weiter man greift
+      const arm = Math.PI * (0.55 + greifen * 0.38); // von schräg zur Seite bis fast senkrecht nach oben
+      for (const sx of [-1, 1]) {
+        ctx.save(); ctx.translate(sx * 30 * s, -235 * s); ctx.rotate(-sx * arm);
+        ctx.fillStyle = '#c0392b'; ctx.fillRect(-9 * s, 0, 18 * s, 95 * s); ctx.strokeRect(-9 * s, 0, 18 * s, 95 * s);
+        ctx.fillStyle = '#e8b896'; ctx.beginPath(); ctx.arc(0, 100 * s, 11 * s, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.restore();
+      }
+      ctx.restore();
+      // Gleichgewichtsanzeige: grüner Bereich in der Mitte, Zeiger = Neigung
+      const bx = f.x + f.b * 0.2, bb = f.b * 0.6, by = boden + 26;
+      ctx.fillStyle = '#5b5b5b'; ctx.fillRect(bx, by, bb, 14);
+      ctx.fillStyle = '#4caf50'; ctx.fillRect(bx + bb / 2 - bb * (0.2 / 0.75) / 2, by, bb * (0.2 / 0.75), 14);
+      ctx.fillStyle = '#ffc81e'; ctx.fillRect(bx + bb / 2 + (Math.max(-0.75, Math.min(0.75, a)) / 0.75) * bb / 2 - 4, by - 6, 8, 26);
+      balken(ctx, bx, by + 30, bb, 10, greifen, '#ffc81e');
+      const t = api.istFertig ? 'Hab sie! Runter damit.' : fallZeit > 0 ? 'Runtergefallen! Nochmal.' : Math.abs(a) < 0.2 ? 'Ruhig ... greifen ...' : 'Gegenlenken! (A/D oder Maus)';
+      textMitte(ctx, t, m.b / 2, f.y - 4, 22, '#fff');
+    },
+  });
+  return versprechen;
+}

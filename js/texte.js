@@ -258,6 +258,7 @@ export const DENNIS = {
   jonnyPisst: ['JONNY?! PISST DU IN DEN OFEN?! Bist du komplett bescheuert?!', 'Das ist ein Ofen und kein Pissoir! Raus! Sofort!'],
   jonnyWeg: ['Endlich ist Ruhe. Jonny ist weg.', 'Sodbrennen, ja klar. Vom Bier, du Held.'],
   jonnyQuatschen: ['Nicht quatschen, arbeiten! Jonny, lass den in Ruhe!', 'Du bist hier zum Schweißen, nicht zum Labern!'],
+  leiterKnall: ['Was knallt hier so?! Meine Wand! Mach das doch vernünftig!', 'Ey! Die Leiter wirft man nicht runter!'],
   leiterEndlich: ['Die Leiter ist WEG? Endlich! Danke dir!', 'Halleluja, die Leiter ist raus. Das feier ich.'],
   kuehlschrank: ['Finger weg, das ist kein Selbstbedienungsladen!', 'Da drin ist nix für dich. Erst arbeiten, dann Bier.'],
   // Telefonate: Dennis ruft selbst an (seine Seite des Gesprächs, Zeile für Zeile)
@@ -374,6 +375,10 @@ export const JONNY = {
   leiterHolen: ['Heute nehm ich die Leiter echt mit! Hilfst du mir? Ich komm da nicht ran.', 'Holst du mir mal die Leiter runter? Ich nehm sie heute mit. Ehrlich.'],
   leiterDanke: ['Danke! Die kommt jetzt endlich ins Auto.', 'Super, danke! Dennis wird sich freuen.'],
   leiterNix: ['Na gut. Dann nächste Woche.', 'Egal, die hängt da ja gut.'],
+  leiterRaus: ['So, ab in den Camper damit. Bis gleich!', 'Die nehm ich jetzt mit. Bevor Dennis es sich anders überlegt.'],
+  leiterKnall: ['Uff! Hätte man auch leiser machen können.', 'Ach du Scheiße. Ist sie noch ganz?'],
+  raeuberleiter: ['Komm, ich mach dir die Räuberleiter. Rauf mit dir!', 'Fuß in meine Hände. Ich halt dich. Glaub ich.'],
+  raeuberFall: ['Haha, beim zweiten Mal wird’s. Danke!', 'Wackelig, aber geschafft. Danke!'],
   feuer: ['Upsi. War ich das?', 'Die Kippe war doch aus! Glaub ich.'],
   hallo: ['Moin moin! Na, wird hier geschweißt? Ich guck nur mal.', 'Tach zusammen! Ich bin nur kurz hier. Ehrlich.'],
   bierNochNicht: ['Nee, ich bin doch gerade erst gekommen. Später vielleicht.', 'Jetzt noch nicht. Erst mal ankommen.'],

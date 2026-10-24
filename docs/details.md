@@ -376,6 +376,11 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Scherben, geschlängelte Reifenspuren von der Straße durch die Wiese. Himmel/Horizont/Nebel für die große Sichtweite (Kamera 1500).
 
 ## Paket A (Bugliste Projektchat)
+- Paket P3 (Projektchat 24.10.): Gasflasche überall auf den Boden stellbar (Ort 'boden' drinnen, 'draussen' im Gelände; bleibt genau
+  dort, welt.flaschePlatz), Restgas nur draußen. Schlupftür: an der Torwand rutscht man zur Türmitte (welt.tuerMitte). Leiter
+  runterholen frei wählbar: Räuberleiter mit Jonny (leiterSpiel: Gleichgewicht mit A/D/Maus, ruhig = greifen, zu schief = runter)
+  oder mit dem Besen runterstupsen (laut, +4 Wut, Fehler „Leiter runtergeknallt“). Danach trägt Jonny sie auf der Schulter den
+  Feldweg runter (jonnyTraegtLeiterRaus) und kommt später ohne wieder.
 - Paket P1 (Projektchat 24.10.): Figuren laufen nie durch Wände (js/wege.js: wegNach/bereich, Werkstatt/Bad/draußen über Schlupftür
   und WC-Tür, draußen um Werkstatt und Bad-Anbau herum). Segway parkt links vor dem Tor (SEGWAY_PARK -1,9 | 6,4), nie am Bad oder
   drinnen. Waldo auf dem Terrassen-Sofa: Füße auf der Holzterrasse (waldo.haltung(h, hoehe, boden), DRAUSSEN.sofa.boden 0,18).

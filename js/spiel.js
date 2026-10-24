@@ -4,7 +4,7 @@ import { STATIONEN, AUGENHOEHE } from './world.js';
 import { FELDWEG } from './draussen.js';
 import { setze } from './toon.js';
 import { auftritt, hatClip, buehneBelegt } from './clips.js';
-import { pfadSpiel, schlackeSpiel, hulaSpiel, DENNIS_HULA_REKORD, ventilSpiel, spuelSpiel, anzeichnenSpiel, lackierSpiel, bitsatzSpiel, akkuschrauberSpiel, siebSpiel, kaffeeSpiel, rohrSpiel } from './minispiele.js';
+import { pfadSpiel, schlackeSpiel, hulaSpiel, DENNIS_HULA_REKORD, ventilSpiel, spuelSpiel, anzeichnenSpiel, lackierSpiel, bitsatzSpiel, akkuschrauberSpiel, siebSpiel, kaffeeSpiel, rohrSpiel, leiterSpiel } from './minispiele.js';
 import { bierAuf, blip, kratzen, jingle, klonk, brummeln, dauer as dauerTon, technoAn, technoAus, technoBeat, klospuelung, mampfen, klick as schalterKlick, stimmeAbspielen, stimmenVorladen, husten, peitschenKnall } from './audio.js';
 import * as ui from './ui.js';
 import { DENNIS, JONNY, WALDO, KUMPEL, satzId } from './texte.js';
@@ -1281,17 +1281,53 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       ui.jonnySagt(sag(JONNY.leiterNix));
       if (dennisSiehts()) setTimeout(() => dennisSagt(sag(DENNIS.leiter), true, { prio: 1 }), 2500);
     }
+    // Leiter ist unten: Jonny trägt sie auf der Schulter raus (zum Camper), kommt später ohne wieder
+    if (jz.leiter === 'weg') { await jonnyTraegtLeiterRaus(); return; }
     await Promise.race([jonny.heim(), warte(10000)]);
     jz.beschaeftigt = false;
   }
-  async function leiterRunterreichen() {
+  async function jonnyTraegtLeiterRaus() {
+    const L = welt.objekte.leiter;
+    jonny.wurzel.add(L);
+    // flach auf der rechten Schulter, längs in Gehrichtung (Leiter 1,75 m, Ursprung am Fußende; Jonny ist auf 0,95 skaliert)
+    L.position.set(-0.2, 1.68, -0.9);
+    L.rotation.set(Math.PI / 2, 0, 0, 'XYZ');
+    L.scale.setScalar(1 / 0.95);
+    L.visible = true;
+    L.userData.interaktiv = null;
+    await warte(1200);
+    ui.jonnySagt(sag(JONNY.leiterRaus));
+    jz.da = false;
+    jz.draussen = true;
+    jz.draussenOrt = 'feldweg';
+    await rausgehen(jonny, 'feldweg');
+    L.removeFromParent();
+    jz.zurueckAb = sekundenSeitStart() + 70 + Math.random() * 60;
+    jz.beschaeftigt = false;
+  }
+  // Leiter runterholen, Weg frei wählbar: Räuberleiter mit Jonny (Minispiel) oder mit dem Besen runterstupsen (laut, Dennis sauer)
+  async function leiterRunterreichen(wie = 'raeuber') {
     if (jz.leiter !== 'wartet') return;
-    const ok = await ui.haltenDialog({ titel: 'Leiter runterholen', text: 'Leiter von den Konsolen heben und Jonny in die Hand drücken.', knopf: 'Hochheben (halten)', sekunden: 2 });
-    if (!ok || jz.leiter !== 'wartet') return;
+    if (wie === 'besen') {
+      if (hand.item?.id !== 'besen') { ui.hinweis('Dafür brauchst du den Besen in der Hand.'); return; }
+      jz.leiter = 'weg';
+      klonk(1); setTimeout(() => klonk(0.8), 220); setTimeout(() => klonk(0.5), 480);
+      ui.jonnySagt(sag(JONNY.leiterKnall));
+      const L = welt.objekte.leiter;
+      L.position.set(L.position.x - 0.25, 0.05, L.position.z); L.rotation.set(Math.PI / 2, -Math.PI / 2, Math.PI / 2, 'XYZ');
+      if (dennisSiehts()) { await wutPlus({ wut: 4, name: 'Leiter runtergeknallt' }); setTimeout(() => dennisSagt(sag(DENNIS.leiterKnall), true, { prio: 2 }), 900); }
+      return;
+    }
+    if (hand.item) { ui.hinweis('Für die Räuberleiter brauchst du beide Hände frei.'); return; }
+    ui.jonnySagt(sag(JONNY.raeuberleiter));
+    steuerung.sperre(true);
+    const e = await leiterSpiel();
+    steuerung.sperre(false);
+    if (e.abgebrochen || jz.leiter !== 'wartet') return;
     jz.leiter = 'weg';
     welt.objekte.leiter.visible = false;
     klonk(0.6);
-    ui.jonnySagt(sag(JONNY.leiterDanke));
+    ui.jonnySagt(sag(e.stuerze ? JONNY.raeuberFall : JONNY.leiterDanke));
     z.wut = Math.max(0, z.wut - 10);
     aktualisieren();
     jingle(true);
@@ -2849,17 +2885,21 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     z.ort = 'hand';
     klonk(0.3);
     aktualisieren();
-    ui.hinweis('Schwer! Jetzt auf die Werkbank, den Schweißtisch, den Waschplatz oder draußen auf den Boden klicken.', 3600);
+    ui.hinweis('Schwer! Jetzt auf die Werkbank, den Schweißtisch, den Waschplatz oder irgendwo auf den Boden klicken (Restgas nur draußen).', 3600);
   }
   async function flascheAbstellen(punkt) {
     const beine = z.naehte.beine !== null;
     let ort = punkt ? welt.flaschenOrtBei(punkt, beine) : null;
     if (ort && (irgendeineNaht() || beine) && ort !== 'schweiss') ort = null;
-    if (!ort) { ui.hinweis('Da passt die Flasche nicht hin. Werkbank, Schweißtisch, Waschplatz oder draußen auf den Boden.'); return; }
+    if (!ort) { ui.hinweis('Da passt die Flasche nicht hin. Werkbank, Schweißtisch, Waschplatz oder irgendwo auf den Boden.'); return; }
     hand.loslassen();
+    // auf den Boden (drinnen oder draußen): bleibt genau da stehen, kein Hinlaufen
+    const frei = ort === 'draussen' || ort === 'boden';
+    if (frei) welt.flaschePlatz(ort, punkt);
     z.ort = ort;
     klonk(0.5);
     aktualisieren();
+    if (frei) return;
     steuerung.sperre(true);
     await gehZuStation(ort);
     steuerung.sperre(false);
@@ -2907,6 +2947,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
         return true;
       }
       if (it.id === 'peitsche' && ziel === 'dennis') { dennisJagen(); return true; }
+      if (it.id === 'besen' && ziel === 'leiter' && jz.leiter === 'wartet') { await leiterRunterreichen('besen'); return true; }
       if ((it.id === 'eier' || it.id === 'mettenden') && ziel === 'dennis') {
         if (dennis.modus !== 'normal' || z.aufKlo) { ui.hinweis('Dennis hat gerade keine Hand frei.'); return true; }
         await hinZu(info, treffer.obj);
@@ -3023,7 +3064,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       }
       case 'flasche': {
         const a = [];
-        if (z.ort === 'draussen') {
+        if (z.ort === 'draussen' || z.ort === 'boden') {
           if (!z.ventilAuf) a.push(A('Ventil aufdrehen, Restgas ablassen', 'ventil', ventilAufdrehen));
           a.push(A('Hochheben und tragen', 'tragen', flascheHochheben));
         } else if (z.ort === 'wasch') {
@@ -3041,7 +3082,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
           if (!irgendeineNaht()) a.push(A('Hochheben und tragen', 'tragen', flascheHochheben));
           if (z.lackiert) a.push(A('Hochheben und zu Dennis bringen', 'tragen', ofenHochheben));
         }
-        const info = z.ort === 'draussen' ? `Steht draußen vor der Werkstatt. ${z.ventilAuf ? 'Ventil offen, Restgas ist raus.' : 'Ventil zu. Hier darf das Gas raus.'}`
+        const info = z.ort === 'boden' ? `Steht auf dem Boden. ${z.ventilAuf ? 'Ventil offen.' : 'Restgas darf nur draußen raus!'}`
+          : z.ort === 'draussen' ? `Steht draußen. ${z.ventilAuf ? 'Ventil offen, Restgas ist raus.' : 'Ventil zu. Hier darf das Gas raus.'}`
           : z.ort === 'wasch'
           ? `Propanflasche 11 kg, angeblich leer. ${z.ventilAuf ? 'Ventil offen.' : 'Ventil zu.'} ${z.gespuelt ? 'Gespült.' : 'Nicht gespült.'}`
           : z.ort === 'werkbank' ? (z.geschnitten ? 'Tür ist raus.' : z.angezeichnet ? 'Tür ist angezeichnet.' : 'Liegt bereit.') : z.lackiert ? 'Fertig lackiert. Bring ihn zu Dennis.'
@@ -3168,7 +3210,10 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
           ui.hinweis('Weggeräumt. Dennis nickt anerkennend.');
         })]];
       case 'leiter':
-        if (jz.leiter === 'wartet') return ['Johnnys Leiter', 'Jonny steht drunter und kommt nicht ran.', [A('Leiter für Jonny runterholen', 'hand', leiterRunterreichen)]];
+        if (jz.leiter === 'wartet') return ['Johnnys Leiter', 'Jonny steht drunter und kommt nicht ran. Wie holst du sie runter?', [
+          A('Räuberleiter mit Jonny (Minispiel)', 'hand', () => leiterRunterreichen('raeuber')),
+          A('Mit dem Besen runterstupsen', 'werkzeug', () => leiterRunterreichen('besen')),
+        ]];
         return ['Johnnys Leiter', 'Alu-Leiter von einem alten Camper. Hängt hier schon ewig.', [A('Anfassen', 'hand', () => {
           z.leiterZuletzt = sekundenSeitStart();
           if (dennisSiehts()) dennisSagt(sag(DENNIS.leiter), true, { prio: 2 });
@@ -3534,7 +3579,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   return {
     zustand: z,
     klick,
-    test: { get z() { return z; }, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
+    test: { get z() { return z; }, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
     stationWaehlen,
     intro,
     aktualisieren,
