@@ -245,7 +245,7 @@ export function baueJonny(scene, opts = {}) {
     ellbogen.add(setze(teil(new THREE.CapsuleGeometry(0.05, 0.16, 4, 10), 0, { material: armHaut }), 0, -0.11, 0));
     const hand = new THREE.Group();
     // Hand: runder, kräftiger Handballen, dicke Knöchel, große Finger mit zwei Gliedern und Nägeln, Daumen (gut erkennbar)
-    const flaeche = teil(new THREE.SphereGeometry(0.052, 14, 10), F.HAUT, { umriss: 0.003 });
+    const flaeche = teil(new THREE.SphereGeometry(0.058, 14, 10), F.HAUT, { umriss: 0.003 });
     flaeche.scale.set(1.0, 0.95, 0.46);
     flaeche.position.set(0, -0.03, 0.002);
     hand.add(flaeche);
@@ -255,41 +255,41 @@ export function baueJonny(scene, opts = {}) {
     const finger = new THREE.Group();
     hand.add(finger);
     for (let f = 0; f < 4; f++) {
-      const x = (-0.033 + f * 0.022) * seite;
-      const lang = [0.036, 0.044, 0.041, 0.031][f];
+      const x = (-0.037 + f * 0.0245) * seite;
+      const lang = [0.05, 0.06, 0.056, 0.043][f]; // kräftige, lange Finger (große Hände)
       const neig = [0.06, 0.02, -0.02, -0.07][f] * seite; // leicht gespreizt
       const g = new THREE.Group();
-      g.position.set(x, -0.068, 0.006);
-      g.rotation.z = neig;
+      g.position.set(x, -0.075, 0.006);
+      g.rotation.set(0.3, 0, neig); // locker eingekrümmt, nicht steif gestreckt
       finger.add(g);
-      g.add(teil(new THREE.SphereGeometry(0.0145, 10, 8), 0xe2ab8c, { umriss: 0.0015 })); // Knöchel
-      const glied1 = teil(new THREE.CapsuleGeometry(0.0138, lang, 4, 10), F.HAUT, { umriss: 0.0025 });
+      g.add(teil(new THREE.SphereGeometry(0.0175, 10, 8), 0xe2ab8c, { umriss: 0.0015 })); // Knöchel
+      const glied1 = teil(new THREE.CapsuleGeometry(0.0168, lang, 4, 10), F.HAUT, { umriss: 0.0025 });
       glied1.position.set(0, -lang / 2 - 0.006, 0);
       g.add(glied1);
       // zweites Glied leicht eingekrümmt, mit Nagel an der Kuppe
       const k = new THREE.Group();
       k.position.set(0, -lang - 0.012, 0);
-      k.rotation.x = 0.45;
+      k.rotation.x = 0.75;
       g.add(k);
-      const glied2 = teil(new THREE.CapsuleGeometry(0.0128, lang * 0.7, 4, 10), F.HAUT, { umriss: 0.0025 });
+      const glied2 = teil(new THREE.CapsuleGeometry(0.0158, lang * 0.7, 4, 10), F.HAUT, { umriss: 0.0025 });
       glied2.position.y = -lang * 0.35 - 0.004;
       k.add(glied2);
-      const nagel = teil(new THREE.SphereGeometry(0.0085, 8, 6), 0xf4d8c8, { umriss: 0.001 });
+      const nagel = teil(new THREE.SphereGeometry(0.0105, 8, 6), 0xf4d8c8, { umriss: 0.001 });
       nagel.scale.set(1, 1.2, 0.35);
-      nagel.position.set(0, -lang * 0.7 - 0.004, -0.0105);
+      nagel.position.set(0, -lang * 0.7 - 0.004, -0.013);
       k.add(nagel);
     }
-    const daumen1 = teil(new THREE.CapsuleGeometry(0.0155, 0.036, 4, 10), F.HAUT, { umriss: 0.0025 });
-    daumen1.position.set(0.05 * seite, -0.035, 0.016);
+    const daumen1 = teil(new THREE.CapsuleGeometry(0.019, 0.045, 4, 10), F.HAUT, { umriss: 0.0025 });
+    daumen1.position.set(0.056 * seite, -0.038, 0.018);
     daumen1.rotation.set(0.3, 0, -0.75 * seite);
     finger.add(daumen1);
-    const daumen2 = teil(new THREE.CapsuleGeometry(0.0145, 0.026, 4, 10), F.HAUT, { umriss: 0.0025 });
-    daumen2.position.set(0.072 * seite, -0.066, 0.024);
+    const daumen2 = teil(new THREE.CapsuleGeometry(0.0175, 0.034, 4, 10), F.HAUT, { umriss: 0.0025 });
+    daumen2.position.set(0.082 * seite, -0.078, 0.028);
     daumen2.rotation.set(0.5, 0, -0.3 * seite);
     finger.add(daumen2);
     const dNagel = teil(new THREE.SphereGeometry(0.0085, 8, 6), 0xf4d8c8, { umriss: 0.001 });
     dNagel.scale.set(1, 1.2, 0.35);
-    dNagel.position.set(0.078 * seite, -0.08, 0.036);
+    dNagel.position.set(0.089 * seite, -0.096, 0.042);
     dNagel.rotation.set(0.5, 0, -0.3 * seite);
     finger.add(dNagel);
     // goldener Ring rechts
@@ -308,7 +308,12 @@ export function baueJonny(scene, opts = {}) {
     links.ellbogen.rotation.set(-1.6, 0, 1.38);
     rechts.schulter.rotation.set(-0.48, 0, 0.16);
     rechts.ellbogen.rotation.set(-1.95, 0, -1.38);
+    // Handgelenke abgeknickt: die Finger greifen um den anderen Oberarm statt quer vor der Brust zu stehen
+    links.hand.rotation.set(0.35, 0, -0.85);
+    rechts.hand.rotation.set(0.35, 0, 0.85);
   }
+  // für alle anderen Haltungen (Kitzeln, Rauchen, Bier) Handgelenke wieder gerade
+  function haendeGerade() { links.hand.rotation.set(0, 0, 0); rechts.hand.rotation.set(0, 0, 0); }
   armeVerschraenkt();
   // Kippe in der rechten Hand (nur beim Rauchen)
   const kippe = new THREE.Group();
@@ -490,6 +495,7 @@ export function baueJonny(scene, opts = {}) {
       kippe.visible = an;
       for (const r of rauch) r.visible = an && wurzel.visible;
       if (an) {
+        haendeGerade();
         rechts.schulter.rotation.set(-0.2, 0, 0.15);
         rechts.ellbogen.rotation.set(-1.9, 0, -0.5);
       } else armeVerschraenkt();
@@ -510,12 +516,12 @@ export function baueJonny(scene, opts = {}) {
     get geht() { return !!ziel; },
     dreheZu(p) { wurzel.rotation.y = Math.atan2(p.x - wurzel.position.x, p.z - wurzel.position.z); },
     sichtbar(an) { wurzel.visible = an; for (const r of rauch) r.visible = an && raucht; },
-    bier(an) { bier.visible = an; links.finger.visible = !an; if (!an) { kopf.rotation.x = 0; trinkPhase = 0; if (!kitzelt) armeVerschraenkt(); } },
+    bier(an) { bier.visible = an; links.finger.visible = !an; if (an) haendeGerade(); if (!an) { kopf.rotation.x = 0; trinkPhase = 0; if (!kitzelt) armeVerschraenkt(); } },
     _test: { bierFlasche: () => bier, mund: () => mund, kopf: () => kopf, BIER_MUND, BIER_UNTEN, fix(k) { fixPhase = k; } },
     trinken(an) { trinkt = an; },
     kitzeln(an) {
       kitzelt = an;
-      if (!an) armeVerschraenkt();
+      if (an) haendeGerade(); else armeVerschraenkt();
     },
     pinkeln(an) { strahl.visible = an; },
     // hinsetzen (Höhe der Sitzfläche über dem Boden) oder mit null wieder aufstehen
