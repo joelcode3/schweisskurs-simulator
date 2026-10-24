@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { toon, teil, quader, zylinder, kugel, setze, leinwandTextur, zufall, umriss } from './toon.js';
 import { baueDraussen } from './draussen.js';
 import { baueCarport } from './carport.js';
+import { gelaendeHoehe } from './landschaft.js';
 
 export const RAUM = { xMin: -5, xMax: 5, zMin: -4, zMax: 4, hoehe: 3.9 };
 // Bad hinter der WC-Tür (vorne rechts), begehbar
@@ -2778,8 +2779,16 @@ export function baueWelt(scene) {
     wasch:    { pos: [4.05, 0.335, 1.95], rot: [0, -0.4, 0], station: 'wasch' },
     werkbank: { pos: [0.05, 1.05, -2.85], rot: [0, 0.0, Math.PI / 2], station: 'werkbank' },
     schweiss: { pos: [3.05, 1.185, -2.95], rot: [0, -Math.PI / 2, 0], station: 'schweiss' },
-    draussen: { pos: [-0.55, 0.335, 6.1], rot: [0, 0.4, 0], station: 'draussen' },
+    // draußen und auf dem Boden drinnen: dort, wo man sie abgestellt hat (flaschePlatz), sie bleibt da liegen
+    draussen: { pos: [-0.55, 0.335, 6.1], rot: [0, 0.4, 0], station: null },
+    boden:    { pos: [0, 0.335, 0], rot: [0, 0.4, 0], station: null },
   };
+  function flaschePlatz(ort, p) {
+    const o = flaschenOrte[ort];
+    if (!o || !p || o.station) return;
+    o.pos = [p.x, p.y + 0.335, p.z];
+    o.rot = [0, Math.random() * Math.PI * 2, 0];
+  }
   const ofenPlatz = { xMin: 2.9, xMax: 3.4, zMin: -2.3, zMax: -1.75 };
   function setzeFlasche(ort, beine) {
     const o = flaschenOrte[ort];
@@ -2969,6 +2978,7 @@ export function baueWelt(scene) {
     objekte,
     zeigeStrom,
     setzeFlasche,
+    flaschePlatz,
     klemmeMasse,
     licht,
     kiwisZeigen(n) { kiwis.forEach((k, i) => { k.visible = i < n; }); },
@@ -2997,6 +3007,11 @@ export function baueWelt(scene) {
     // Steht (x, z) in der WC-Tür oder kurz davor/dahinter? Dann darf die Tür nicht zugehen
     inKloTuer(x, z) { return x > KLO_TUER.xMin - 0.35 && x < KLO_TUER.xMax + 0.35 && z > RAUM.zMax - 0.75 && z < BAD.zMin + 0.75; },
     // Beim Durchgehen durch die WC-Tür: Richtung Türmitte (x), damit man nicht an der Kante hängen bleibt
+    // Türmitte für WC-Tür oder Schlupftür im Tor (-0,68 bis -0,02): man rutscht beim Durchgehen zur Mitte statt an der Kante zu hängen
+    tuerMitte(x, z) {
+      if (x > -1.25 && x < 0.55 && z > RAUM.zMax - 1.0 && z < RAUM.zMax + 1.1) return -0.35;
+      return this.kloTuerMitte(x, z);
+    },
     kloTuerMitte(x, z) { return kloOffen && x > KLO_TUER.xMin - 0.5 && x < KLO_TUER.xMax + 0.5 && z > RAUM.zMax - 1.0 && z < BAD.zMin + 1.0 ? (KLO_TUER.xMin + KLO_TUER.xMax) / 2 : null; },
     kuehlschrank(auf) { kuehlAuf = auf; },
     leereFlasche,
@@ -3051,7 +3066,9 @@ export function baueWelt(scene) {
       if (p.x > 2.25 && p.x < 3.95 && p.z > -3.5 && p.z < -2.4 && p.y > 0.75) return mitBeinen ? 'schweiss' : 'schweiss';
       if (mitBeinen && p.x > 2.3 && p.x < 4.0 && p.z > -2.5 && p.z < -1.4) return 'schweiss';
       if (p.x > 3.2 && p.z > 0.6 && p.z < 2.9) return 'wasch';
-      if (!mitBeinen && p.z > RAUM.zMax + 0.3 && p.y < 0.4) return 'draussen';
+      // überall auf den Boden: draußen (Gelände) oder drinnen in Werkstatt/Bad
+      if (!mitBeinen && draussen.istDraussen(p.x, p.z) && p.y - gelaendeHoehe(p.x, p.z) < 0.4) return 'draussen';
+      if (!mitBeinen && p.y < 0.3 && (this.begehbar(p.x, p.z, 0.2))) return 'boden';
       return null;
     },
     // Freier Boden für die Hüfte (liegend ca. 2,3 m lang, Kopf Richtung Werkstattmitte)

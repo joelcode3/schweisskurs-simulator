@@ -49,7 +49,7 @@ const hand = baueHand(scene, kamera);
 const steuerung = baueSteuerung(kamera, canvas, {
   hindernisse: welt.hindernisse,
   begehbar: welt.begehbar,
-  tuerMitte: welt.kloTuerMitte,
+  tuerMitte: (x, z) => welt.tuerMitte(x, z),
   bodenHoehe: (x, z) => fz.bodenHoehe(x, z) + gelaendeHoehe(x, z),
   alleZiele: () => zielListe,
   dennisPosition: () => dennis.position,
