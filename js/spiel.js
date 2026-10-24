@@ -2948,6 +2948,13 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       }
       if (it.id === 'peitsche' && ziel === 'dennis') { dennisJagen(); return true; }
       if (it.id === 'besen' && ziel === 'leiter' && jz.leiter === 'wartet') { await leiterRunterreichen('besen'); return true; }
+      if ((it.id === 'eier' || it.id === 'mettenden') && ziel === 'minijeep') {
+        const o = hand.item.obj;
+        hand.weg();
+        if (!fahrten.aufLadeflaeche(o)) hand.nimm(it.id, o);
+        handleisteZeigen();
+        return true;
+      }
       if ((it.id === 'eier' || it.id === 'mettenden') && ziel === 'dennis') {
         if (dennis.modus !== 'normal' || z.aufKlo) { ui.hinweis('Dennis hat gerade keine Hand frei.'); return true; }
         await hinZu(info, treffer.obj);
@@ -3228,6 +3235,11 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       case 'kackpumpe':
         if (wz.pumpe === 'daheim' || wz.pumpe === 'zurueck') return ['Kackepumpe', 'Waldos Tauchpumpe für den Tank im Garten. Steht hier hinterm Kompressor.', []];
         return ['Kackepumpe', welt.pumpeIstDreckig ? 'Voller Gülle. Stinkt fürchterlich, Fliegen schwirren rum.' : 'Sauber abgewaschen. Gehört hinter den Kompressor.', [A('In die Hand nehmen', 'hand', () => aufnehmen('kackpumpe', welt.objekte.kackPumpe))]];
+      case 'eier':
+      case 'mettenden':
+        return [id === 'eier' ? 'Lühmanns Landeier' : 'Mettenden', 'Für Dennis. Oder hinten auf den Jeep laden.', [A('In die Hand nehmen', 'hand', () => aufnehmen(id, obj))]];
+      case 'eierKaputt':
+        return ['Kaputte Eier', 'Gelber Matsch. Die kann Dennis nicht mehr gebrauchen.', [A('Wegräumen', 'hand', () => { obj.removeFromParent(); klonk(0.1); ui.hinweis('Weggeräumt. Neue gibt’s bei Lühmann.'); })]];
       case 'creme':
         return ['Lockencreme', 'Dennis’ Lockencreme. Ohne die sitzt nix.', [A('In die Hand nehmen', 'hand', () => aufnehmen('creme', welt.objekte.creme))]];
       case 'latexhose':

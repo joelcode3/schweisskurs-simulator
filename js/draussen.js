@@ -693,7 +693,12 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
     jeep.add(rand);
   }
   // Armaturenbrett mit Tacho, Lenkrad auf der Fahrerseite (links), Schalthebel
-  jeep.add(setze(rundQuader(JB - 0.12, 0.16, 0.16, 0x2a2c30, { umriss: 0.003 }, 0.05), 0, 0.76, 0.24));
+  // Armaturenbrett sitzt auf der Spritzwand und reicht bis an die Haube (nicht schwebend)
+  jeep.add(setze(rundQuader(JB - 0.12, 0.18, 0.24, 0x2a2c30, { umriss: 0.003 }, 0.05), 0, 0.745, 0.26));
+  // Spritzwand: rosa Blech zwischen Fußraum und Motorhaube, vom Wagenboden bis unter das Armaturenbrett
+  jeep.add(setze(quader(JB - 0.06, 0.5, 0.06, ROSA, { umriss: 0.003 }), 0, 0.44, 0.31));
+  // Abdeckung zwischen Haube und Scheibe
+  jeep.add(setze(rundQuader(JB - 0.02, 0.06, 0.1, ROSA, { umriss: 0.003 }, 0.025), 0, 0.66, 0.33));
   for (const sx of [-0.24, 0.0]) jeep.add(setze(zylinder(0.04, 0.04, 0.01, 0xf4f4ef, { umriss: false }, 12), sx, 0.8, 0.165, Math.PI / 2, 0, 0));
   jeep.add(setze(zylinder(0.018, 0.018, 0.28, SCHWARZ, { umriss: false }, 8), -0.24, 0.8, 0.1, 1.0, 0, 0));
   jeep.add(setze(teil(new THREE.TorusGeometry(0.12, 0.016, 6, 16), SCHWARZ, { umriss: 0.001 }), -0.24, 0.87, -0.01, -1.0, 0, 0));
@@ -710,6 +715,9 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   const scheibeG = new THREE.Group();
   scheibeG.add(setze(quader(JB - 0.04, 0.05, 0.05, ROSA, { umriss: 0.003 }), 0, 0.42, 0));
   for (const sx of [-1, 1]) scheibeG.add(setze(quader(0.05, 0.42, 0.05, ROSA, { umriss: 0.003 }), sx * (JB / 2 - 0.04), 0.21, 0));
+  // unterer Rahmen und zwei Scharniere: die Scheibe sitzt fest auf der Wanne (nicht schwebend)
+  scheibeG.add(setze(quader(JB - 0.04, 0.05, 0.06, ROSA, { umriss: 0.003 }), 0, 0.0, 0));
+  for (const sx of [-1, 1]) scheibeG.add(setze(quader(0.08, 0.09, 0.08, 0x1d1d1f, { umriss: 0.003 }), sx * (JB / 2 - 0.08), -0.05, 0.01));
   scheibeG.add(setze(new THREE.Mesh(new THREE.PlaneGeometry(JB - 0.14, 0.36), new THREE.MeshBasicMaterial({ color: 0xcfe6f4, transparent: true, opacity: 0.45, side: THREE.DoubleSide })), 0, 0.21, 0));
   scheibeG.position.set(0, 0.82, 0.33); scheibeG.rotation.x = -0.22;
   jeep.add(scheibeG);

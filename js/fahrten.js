@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { AUGENHOEHE } from './world.js';
 import { DENNIS, JONNY, WALDO, TORBEN } from './texte.js';
-import { blip, klonk, hupe } from './audio.js';
+import { blip, klonk, hupe, aufprall } from './audio.js';
 import * as ui from './ui.js';
 import { TORBEN_PLATZ } from './torben.js';
 import { FELDWEG, inHindernis, muellTeil } from './draussen.js';
@@ -55,6 +55,7 @@ export function baueFahrten(c) {
     if (hand.item) return ui.hinweis('Erst die Hände frei machen, dann einsteigen.');
     f.fahrer = 'spieler';
     fz2.aktiv = f;
+    fz2.eingestiegen = performance.now(); // derselbe E-Druck soll nicht gleich wieder aussteigen
     steuerung.fahrModus({ steuern: (tasten, dt, neu) => steuern(f, tasten, dt, neu) }, f.art === 'lader' ? f.psi : f.psi);
     ui.fahrHilfe(f.art === 'lader'
       ? 'W/S fahren · A/D knicken · R/F Gabel hoch/runter · Leertaste hupen · E aussteigen'
@@ -93,6 +94,43 @@ export function baueFahrten(c) {
     }
     ui.hinweis('Hier kommst du nicht raus. Fahr ein Stück weiter.');
   }
+  // ---------- Ladefläche des Jeeps: Eier und Mettenden hinten drauf; scharf lenken, hart bremsen oder Rums = fällt runter ----------
+  const LADE = [[-0.22, -0.7], [0.22, -0.7], [-0.22, -0.82], [0.22, -0.82]];
+  function ladung() { return fz.jeep.g.children.filter((o) => o.userData.ladung); }
+  function aufLadeflaeche(obj) {
+    const l = ladung();
+    if (l.length >= LADE.length) { ui.hinweis('Die Ladefläche ist voll.'); return false; }
+    const frei = LADE.find(([x, zz]) => !l.some((o) => Math.abs(o.position.x - x) < 0.05 && Math.abs(o.position.z - zz) < 0.05));
+    obj.rotation.copy(obj.userData.ruhe ? obj.userData.ruhe.rot : obj.rotation);
+    if (obj.userData.ruhe) obj.scale.copy(obj.userData.ruhe.skala);
+    fz.jeep.g.add(obj);
+    obj.position.set(frei[0], 0.43, frei[1]);
+    obj.rotation.y = Math.random() * 0.6 - 0.3;
+    obj.userData.ladung = true;
+    klonk(0.15);
+    ui.hinweis('Liegt auf der Ladefläche. Vorsichtig fahren!', 2600);
+    return true;
+  }
+  function ladungFaellt(f, warum) {
+    const l = ladung();
+    if (!l.length) return;
+    for (const o of l) {
+      o.userData.ladung = false;
+      scene.attach(o);
+      const sx = (Math.random() - 0.5) * 1.6, sz = -0.6 - Math.random() * 1.2;
+      const p = f.g.localToWorld(new THREE.Vector3(sx, 0, sz));
+      o.position.set(p.x, gelaendeHoehe(p.x, p.z) + 0.04, p.z);
+      o.rotation.set(0, Math.random() * 6, (Math.random() - 0.5) * 0.4);
+      // Eier gehen kaputt: gelber Matsch, nicht mehr zu gebrauchen
+      if (o.userData.interaktiv?.id === 'eier') {
+        o.children.forEach((c, i) => { if (i > 0) c.scale.set(1.4, 0.25, 1.4); if (i > 0 && i % 2) c.material = new THREE.MeshToonMaterial({ color: 0xf2c21b }); });
+        o.userData.interaktiv = { id: 'eierKaputt', name: 'Kaputte Eier', station: null };
+      }
+    }
+    klonk(0.4); blip(300, 0.1, 0.06);
+    ui.hinweis(warum === 'kurve' ? 'Zu scharf in die Kurve: die Ladung ist runtergefallen!' : 'Zu hart gebremst: die Ladung ist runtergefallen!', 3200);
+  }
+  let vAlt = 0;
   function steuern(f, tasten, dt, neu) {
     const gas = (tasten.has('w') || tasten.has('arrowup') ? 1 : 0) - (tasten.has('s') || tasten.has('arrowdown') ? 1 : 0);
     const lenk = (tasten.has('a') || tasten.has('arrowleft') ? 1 : 0) - (tasten.has('d') || tasten.has('arrowright') ? 1 : 0);
@@ -117,28 +155,48 @@ export function baueFahrten(c) {
     if (treffer && schnell && treffer === T.feuerHindernis && fz2.grill === 'steht') grillUm();
     else if (treffer && schnell && treffer === T.tonnenHindernis && fz2.tonnen === 'stehen') tonnenUm();
     else if (rums) {
-      klonk(0.5);
+      aufprall(Math.min(1, Math.abs(fz2.vorher || 0) / 6));
       if (sekunden() > fz2.rumsAb) { fz2.rumsAb = sekunden() + 20; aerger(1); setTimeout(() => dennisSagt(sag(DENNIS.anstoss), true, { prio: 1 }), 600); }
     }
     fz2.vorher = f.v;
+    // Ladung: Querbeschleunigung (v² · tan(lenk) / Radstand) oder Bremsen über ca. 8 m/s²
+    if (f.art === 'jeep' && dt > 0) {
+      const quer = Math.abs(f.v * f.v * Math.tan(f.lenk) / f.radstand);
+      const brems = (Math.abs(vAlt) - Math.abs(f.v)) / dt;
+      if (quer > 8) ladungFaellt(f, 'kurve');
+      else if (brems > 8 || rums) ladungFaellt(f, 'bremsen');
+    }
+    vAlt = f.v;
     // beim Fahren meckert Dennis ab und zu
     if (Math.abs(f.v) > 0.4 && sekunden() > fz2.meckerAb && !(f.art === 'jeep' && f.gedrosselt)) { fz2.meckerAb = sekunden() + 35 + Math.random() * 15; dennisSagt(sag(DENNIS.fahrenSpieler), true, { prio: 0 }); }
     if (neu.has(' ')) hupe(f.art);
-    if (neu.has('e')) setTimeout(aussteigen, 0);
+    if (neu.has('e') && performance.now() - (fz2.eingestiegen || 0) > 400) setTimeout(aussteigen, 0);
     return { dpsi, auge: f.g.localToWorld(f.auge.clone()) };
   }
 
   // ---------- Grill (Feuerschale mit Dreibein) umgefahren ----------
   const grill = T.feuerstelle;
   const grillAufrecht = { pos: grill.position.clone(), rot: grill.rotation.clone(), h: { ...T.feuerHindernis } };
+  // weich kippen: erst langsam, dann schneller (wie fallend), kurzer Nachfeder am Boden
+  function kippe(obj, zielPos, zielRot, dauer = 0.7) {
+    const p0 = obj.position.clone(), r0 = obj.rotation.clone(), t0 = performance.now();
+    const schritt = (jetzt) => {
+      const k = Math.min(1, (jetzt - t0) / 1000 / dauer);
+      const e = k < 0.85 ? (k / 0.85) ** 2 : 1 - Math.sin(((k - 0.85) / 0.15) * Math.PI) * 0.04;
+      obj.position.lerpVectors(p0, zielPos, Math.min(1, e));
+      obj.rotation.set(r0.x + (zielRot.x - r0.x) * e, r0.y + (zielRot.y - r0.y) * e, r0.z + (zielRot.z - r0.z) * e);
+      if (k < 1) requestAnimationFrame(schritt);
+      else { obj.position.copy(zielPos); obj.rotation.copy(zielRot); }
+    };
+    requestAnimationFrame(schritt);
+  }
   function grillUm() {
     if (fz2.grill !== 'steht') return;
     fz2.grill = 'um';
     fz2.grillSeit = sekunden();
-    grill.rotation.set(1.42, grillAufrecht.rot.y, 0.12);
-    grill.position.set(grillAufrecht.pos.x, 0.12, grillAufrecht.pos.z + 0.3);
+    kippe(grill, new THREE.Vector3(grillAufrecht.pos.x, 0.12, grillAufrecht.pos.z + 0.3), new THREE.Euler(1.42, grillAufrecht.rot.y, 0.12), 0.75);
     Object.assign(T.feuerHindernis, { xMin: -5.1, xMax: -3.5, zMin: 7.6, zMax: 9.7 });
-    klonk(0.7);
+    aufprall(0.7); setTimeout(() => klonk(0.6), 650); setTimeout(() => klonk(0.35), 800);
     setTimeout(() => { aerger(3); dennisSagt(sag(DENNIS.grillUm), true, { prio: 1 }); }, 1500);
   }
   function grillAuf() {
@@ -175,10 +233,10 @@ export function baueFahrten(c) {
   function tonnenUm() {
     fz2.tonnen = 'um';
     fz2.tonnenSeit = sekunden();
-    tonnenTeile.forEach((t, i) => { t.position.y = 0.36; t.position.z = tonnenStart[i].pos.z + 0.05; t.rotation.set(1.45, tonnenStart[i].rot.y + (i - 1) * 0.3, 0); });
-    muell.visible = true;
+    tonnenTeile.forEach((t, i) => kippe(t, new THREE.Vector3(t.position.x, 0.36, tonnenStart[i].pos.z + 0.05), new THREE.Euler(1.45, tonnenStart[i].rot.y + (i - 1) * 0.3, 0), 0.55 + i * 0.12));
+    setTimeout(() => { muell.visible = true; }, 500);
     Object.assign(T.tonnenHindernis, { zMax: tonnenH.zMax + 1.0 });
-    klonk(0.8); setTimeout(() => klonk(0.5), 150);
+    aufprall(0.8); setTimeout(() => klonk(0.5), 550); setTimeout(() => klonk(0.4), 700);
     setTimeout(() => { aerger(3); dennisSagt(sag(DENNIS.tonnenUm), true, { prio: 1 }); }, 1300);
   }
   function tonnenAuf() {
@@ -200,7 +258,7 @@ export function baueFahrten(c) {
   }
   // Tonnen wackeln, wenn jemand dagegen fährt
   function tonnenWackeln() {
-    klonk(0.6);
+    aufprall(0.5);
     const t0 = performance.now();
     const tick = () => {
       const k = (performance.now() - t0) / 900;
@@ -237,7 +295,17 @@ export function baueFahrten(c) {
     if (Math.random() < 0.7) sagVon[wer](sag(wer === 'torben' ? TORBEN.fahren : JONNY.fahren));
     if (!(f.art === 'jeep' && f.gedrosselt)) setTimeout(() => { aerger(1); dennisSagt(sag(DENNIS.fahrenAndere), true, { prio: 0 }); }, 2500);
     const opt = {
-      spielerPos: () => (fz2.aktiv ? null : kamera.position),
+      // anhalten vor Leuten (auch dem Spieler) und dem anderen Fahrzeug, nicht durch sie durch
+      hindernisse: () => {
+        const l = [];
+        if (!fz2.aktiv) l.push({ x: kamera.position.x, z: kamera.position.z, r: 1.6 });
+        for (const g of [dennis, jonny, waldo, torben]) if (g !== figur && g.wurzel.visible && g.wurzel.parent === scene) l.push({ x: g.position.x, z: g.position.z, r: 1.2 });
+        for (const o of [fz.jeep, fz.lader]) if (o !== f && o.g.visible && !o.aufGabel) {
+          const sx = Math.sin(o.psi), sz = Math.cos(o.psi);
+          for (const k of [-1, 0, 1]) l.push({ x: o.x + sx * k, z: o.z + sz * k, r: 1.4 });
+        }
+        return l;
+      },
       beiRums: (was) => {
         if (was === 'grill') grillUm();
         else tonnenWackeln();
@@ -394,8 +462,11 @@ export function baueFahrten(c) {
     let best = null, bestD = Infinity;
     for (const f of [fz.jeep, fz.lader]) {
       if (!f.g.visible || f.fahrer || f.aufGabel) continue;
-      const d = Math.hypot(p.x - f.x, p.z - f.z);
-      if (d < (f.art === 'lader' ? 2.4 : 1.9) && d < bestD) { best = f; bestD = d; }
+      // Abstand zum Fahrzeug selbst (Rechteck drumherum), nicht zum Bezugspunkt: auch hinten am Lader klappt E
+      const h = f.hindernis;
+      const dx = Math.max(h.xMin - p.x, 0, p.x - h.xMax), dz = Math.max(h.zMin - p.z, 0, p.z - h.zMax);
+      const d = Math.hypot(dx, dz);
+      if (d < 1.3 && d < bestD) { best = f; bestD = d; }
     }
     if (!best) return false;
     if (best.art === 'lader' && !LADER_SCHLUESSEL_STECKT) { dennisSagt(sag(DENNIS.weidemannZu), true, { prio: 2 }); return true; }
@@ -409,6 +480,7 @@ export function baueFahrten(c) {
     get faehrt() { return !!fz2.aktiv; },
     zustand: fz2,
     // nur für Tests
-    test: { einsteigen, aussteigen, figurFaehrt, torbenKommt, torbenGeht, grillUm, grillAuf, dennisStelltGrillAuf, tonnenUm, tonnenAuf },
+    aufLadeflaeche,
+    test: { ladungFaellt, einsteigen, aussteigen, figurFaehrt, torbenKommt, torbenGeht, grillUm, grillAuf, dennisStelltGrillAuf, tonnenUm, tonnenAuf },
   };
 }
