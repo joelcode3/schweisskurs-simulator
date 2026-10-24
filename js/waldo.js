@@ -3,6 +3,7 @@
 // kurze zerfetzte graue Jogginghose (Löcher, ausgefranster Saum, Gummibund mit Kordel), weiße Söckchen, beige Sneaker.
 // Hält meist einen Toast in der Hand und beißt ab und zu ab.
 import * as THREE from 'three';
+import { wegNach } from './wege.js';
 import { toon, teil, quader, zylinder, kugel, setze, leinwandTextur, zufall as zufallsFolge } from './toon.js';
 
 const HAUT = 0xe9b896;
@@ -482,11 +483,13 @@ export function baueWaldo(scene) {
   let blickZiel = null;
   let ziel = null;
   let zielFertig = null;
+  let weg = []; // restliche Wegpunkte (um Wände herum, durch Türen)
   let tempo = 1.1;
   let schritt = 0;
   let haltung = 'stehen'; // stehen | sitzen | handy | rennen | suchen
   let getragen = null;
   let sitzHoehe = 0;
+  let fussBoden = 0;
   const api = {
     wurzel,
     TOR,
@@ -496,16 +499,20 @@ export function baueWaldo(scene) {
     sichtbar(an) { wurzel.visible = an; },
     gehZu(x, z, t = 1.1) {
       if (zielFertig) zielFertig(false);
-      ziel = new THREE.Vector3(x, 0, z);
+      weg = wegNach(wurzel.position, { x, z });
+      const p = weg.shift();
+      ziel = new THREE.Vector3(p.x, 0, p.z);
       tempo = t;
       return new Promise((r) => { zielFertig = r; });
     },
     // Laufen abbrechen (z. B. beim Einsteigen ins Fahrzeug)
-    halt() { ziel = null; const r = zielFertig; zielFertig = null; if (r) r(false); },
+    halt() { ziel = null; weg = []; const r = zielFertig; zielFertig = null; if (r) r(false); },
     dreheZu(p) { wurzel.rotation.y = Math.atan2(p.x - wurzel.position.x, p.z - wurzel.position.z); },
-    haltung(h, hoehe = 0.46) {
+    // boden: Höhe, auf der die Füße stehen (z. B. Holzterrasse), Sitzhöhe ebenfalls über Grund
+    haltung(h, hoehe = 0.46, boden = 0) {
       haltung = h;
       sitzHoehe = hoehe;
+      fussBoden = boden;
       handy.visible = h === 'handy' || h === 'sitzen';
       rechts.daumen.visible = !handy.visible;
       toast.visible = h === 'stehen';
@@ -526,7 +533,10 @@ export function baueWaldo(scene) {
         const d = new THREE.Vector3().subVectors(ziel, wurzel.position);
         d.y = 0;
         const rest = d.length();
-        if (rest < 0.05) {
+        if (rest < 0.05 && weg.length) {
+          const p = weg.shift();
+          ziel.set(p.x, 0, p.z);
+        } else if (rest < 0.05) {
           ziel = null;
           const r = zielFertig; zielFertig = null;
           if (r) r(true);
@@ -542,7 +552,7 @@ export function baueWaldo(scene) {
       }
       const sitzt = haltung === 'sitzen' && !ziel;
       // im Sitzen: Oberschenkel nach vorn, leicht abfallend, so dass die Unterschenkel senkrecht auf den Boden reichen
-      const neigung = sitzt ? Math.asin(THREE.MathUtils.clamp((sitzHoehe - 0.42) / 0.357, 0, 1)) : 0;
+      const neigung = sitzt ? Math.asin(THREE.MathUtils.clamp((sitzHoehe - fussBoden - 0.42) / 0.357, 0, 1)) : 0;
       // Beine: laufen, rennen oder sitzen
       const schwung = ziel ? Math.sin(schritt) * (tempo > 2 ? 0.8 : 0.5) : 0;
       for (const [i, b] of beine.entries()) {
