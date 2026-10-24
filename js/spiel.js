@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { STATIONEN, AUGENHOEHE } from './world.js';
 import { FELDWEG } from './draussen.js';
+import { eierKartonModell, mettendenModell } from './landschaft.js';
 import { setze } from './toon.js';
 import { auftritt, hatClip, buehneBelegt } from './clips.js';
 import { pfadSpiel, schlackeSpiel, hulaSpiel, DENNIS_HULA_REKORD, ventilSpiel, spuelSpiel, anzeichnenSpiel, lackierSpiel, bitsatzSpiel, akkuschrauberSpiel, siebSpiel, kaffeeSpiel, rohrSpiel, leiterSpiel } from './minispiele.js';
@@ -924,14 +925,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   // Einkaufen bei Lühmann: nimmt man, schreibt an, Dennis freut sich, wenn man ihm was mitbringt
   function einkaufen(art) {
     if (hand.item) { ui.hinweis(`Du hast schon ${hand.item.cfg.name} in der Hand.`); return; }
-    const obj = new THREE.Group();
-    if (art === 'eier') {
-      obj.add(setze(new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.07, 0.13), new THREE.MeshToonMaterial({ color: 0xb8a888 })), 0, 0, 0));
-      for (let i = 0; i < 10; i++) obj.add(setze(new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 6), new THREE.MeshToonMaterial({ color: i % 3 ? 0xd9b48a : 0xf2ead8 })), -0.12 + (i % 5) * 0.06, 0.045, -0.03 + Math.floor(i / 5) * 0.06));
-    } else {
-      obj.add(setze(new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.03, 0.22), new THREE.MeshToonMaterial({ color: 0xe8dcb8 })), 0, 0, 0));
-      for (let j = 0; j < 3; j++) obj.add(setze(new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.2, 6), new THREE.MeshToonMaterial({ color: 0x8a2a1a })), -0.04 + j * 0.04, 0.03, 0, Math.PI / 2, 0, 0));
-    }
+    // dieselben detaillierten Modelle wie im Laden (landschaft.js)
+    const obj = art === 'eier' ? eierKartonModell() : mettendenModell();
     obj.userData.interaktiv = { id: art, name: art === 'eier' ? 'Landeier' : 'Mettenden', station: null };
     hand.nimm(art, obj);
     handleisteZeigen();
@@ -2109,16 +2104,46 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     z.lichtAusSeit = 0;
   }
 
-  async function fegen() {
+  // Fegen wie echt: Besen in der Hand, E gedrückt halten und über den Dreck gehen; der Besen schwingt, Dreck wird vor
+  // einem hergeschoben und verschwindet, dazu Staub und Kehrgeräusch. Ist alles weg: Lob, Wut sinkt.
+  let fegeLauf = null;
+  function fegen() {
     if (!welt.dreck) { ui.hinweis('Ist schon sauber.'); return; }
-    const ok = await ui.haltenDialog({ titel: 'Fegen', text: 'Schleifstaub und Zunder zusammenkehren.', knopf: 'Fegen (halten)', sekunden: 2.5, geraeusch: 'gas' });
-    if (!ok) return;
-    welt.dreckWeg();
-    z.gefegt = true;
-    z.wut = Math.max(0, z.wut - 8);
-    aktualisieren();
-    ui.hinweis('Boden ist sauber.');
-    ui.lobZeigen(sag(DENNIS.fegen));
+    if (hand.item?.id !== 'besen') {
+      if (hand.item) { ui.hinweis('Erst die Hände frei machen, dann den Besen nehmen.'); return; }
+      aufnehmen('besen', welt.objekte.besen);
+      ui.hinweis('E gedrückt halten und über den Dreck gehen.', 3200);
+      return;
+    }
+    if (!fegeLauf) fegeLauf = { w: 0, ton: dauerTon('gas', 0.35), staub: 0 };
+  }
+  function fegeStopp() {
+    if (!fegeLauf) return;
+    fegeLauf.ton.stopp();
+    fegeLauf = null;
+    hand.fegeSchwung(0);
+  }
+  function fegeUpdate(dt) {
+    if (!fegeLauf) return;
+    if (hand.item?.id !== 'besen' || z.beschaeftigt || z.vorbei) { fegeStopp(); return; }
+    const f = fegeLauf;
+    f.w += dt * 9;
+    hand.fegeSchwung(f.w);
+    const r = steuerung.blickRichtung();
+    const l = Math.hypot(r.x, r.z) || 1;
+    const p = { x: kamera.position.x + (r.x / l) * 0.9, z: kamera.position.z + (r.z / l) * 0.9 };
+    const menge = welt.kehre(p, r.x / l, r.z / l, 1.0, dt);
+    f.ton.staerke && f.ton.staerke(menge > 0 ? 1 : 0.2);
+    f.staub += dt;
+    if (menge > 0 && f.staub > 0.15) { f.staub = 0; welt.staub && welt.staub(p.x, p.z); }
+    if (!welt.dreck) {
+      fegeStopp();
+      z.gefegt = true;
+      z.wut = Math.max(0, z.wut - 8);
+      aktualisieren();
+      ui.hinweis('Boden ist sauber.');
+      ui.lobZeigen(sag(DENNIS.fegen));
+    }
   }
 
   // ---------- Dennis fegt selbst, wenn der Dreck zu lange liegt ----------
@@ -3037,12 +3062,12 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     else if (k === 'q') handAktion('werfen');
     else if (k === 'g') handAktion('fallen');
   });
-  window.addEventListener('keyup', (e) => { if (e.key.toLowerCase() === 'e') { spritzStopp(); loeschStopp(); } });
+  window.addEventListener('keyup', (e) => { if (e.key.toLowerCase() === 'e') { spritzStopp(); loeschStopp(); fegeStopp(); } });
   window.addEventListener('blur', () => { spritzStopp(); loeschStopp(); });
 
   function menueFuer(id, obj = null) {
     const A = (text, symbol, tun) => ({ text, symbol, tun });
-    const ausFahrten = fahrten.menue(id);
+    const ausFahrten = fahrten.menue(id, obj);
     if (ausFahrten) return ausFahrten;
     // Platzhalter-Kumpels (noch ohne Aufgabe)
     if (id.startsWith('kumpel-')) {
@@ -3599,6 +3624,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       beobachten();
       spritzUpdate(dt);
       loeschUpdate(dt);
+      fegeUpdate(dt);
       if (z.vorbei) return;
       fahrten.update();
       wutUndVorzeichen(dt);

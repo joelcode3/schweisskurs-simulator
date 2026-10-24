@@ -120,6 +120,7 @@ export function muellTeil(art) {
   m.scale.setScalar(art === 'pizza' || art === 'zeitung' ? 1.2 : 1.6);
   return m;
 }
+export const MUELL_NAMEN = { banane: 'Bananenschale', pizza: 'Pizzakarton', dose: 'Dose', flasche: 'Flasche', chips: 'Chipstüte', becher: 'Becher', zeitung: 'Zeitung', karton: 'Karton' };
 export const MUELL_ARTEN = ['banane', 'pizza', 'dose', 'flasche', 'chips', 'becher', 'zeitung', 'karton'];
 
 export function baueDraussen(scene, { merke, hindernis, RAUM }) {
@@ -398,7 +399,7 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
     deckel.add(setze(quader(0.56, 0.02, 0.6, deckelFarbe, { umriss: false }), 0, 0.06, 0.37));
     deckel.add(setze(quader(0.4, 0.05, 0.04, deckelFarbe, { umriss: 0.002 }), 0, 0.0, 0.75));
     deckel.position.set(0, 1.0, -0.37);
-    if (i === 1) deckel.rotation.x = -0.18; // blaue Tonne: Deckel geht nicht zu, Kartons quellen raus
+    if (i === 1) deckel.rotation.x = -0.42; // blaue Tonne: Deckel steht offen, Kartons quellen darunter raus (nicht durch den Deckel)
     t.add(deckel);
     for (const sx of [-0.2, 0.2]) t.add(setze(quader(0.08, 0.06, 0.06, deckelFarbe, { umriss: 0.002 }), sx, 0.99, -0.38));
     // Schiebegriff hinten und Achse mit Rädern
@@ -447,6 +448,8 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   // ein bisschen Müll liegt immer rum (Bananenschale, Dose, Becher)
   for (const [art, x, z, w] of [['banane', -0.75, 0.75, 0.6], ['dose', 1.9, 0.6, 1.2], ['becher', -0.3, 0.95, 2.1], ['zeitung', 1.6, 1.0, 0.3], ['pizza', 2.3, 0.95, 0.5], ['banane', 2.6, 0.5, 2.0]]) {
     const t = muellTeil(art); t.position.set(x, 0, z); t.rotation.y = w; t.userData.liegeMuell = true; tonnen.add(t);
+    // jedes Teil einzeln aufheben
+    t.userData.interaktiv = { id: 'muellStueck', name: MUELL_NAMEN[art] || 'Müll', station: null };
   }
   setze(tonnen, -4.6, 0, RAUM.zMax + 0.6, 0, 0, 0);
   scene.add(tonnen);
@@ -761,17 +764,17 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   const feuerstelle = new THREE.Group();
   const schale = teil(new THREE.SphereGeometry(0.45, 24, 10, 0, Math.PI * 2, Math.PI * 0.55, Math.PI * 0.45), 0x2a2622, { mat: { side: THREE.DoubleSide }, umriss: 0.004 });
   schale.scale.y = 0.5; // flache Schale
-  schale.position.y = 0.6;
+  schale.position.y = 0.38; // tief am Boden, kurze Füße (Betreiber)
   feuerstelle.add(schale);
-  feuerstelle.add(setze(teil(new THREE.TorusGeometry(0.44, 0.02, 6, 32), 0x3a2a1e, { umriss: 0.002 }), 0, 0.57, 0, Math.PI / 2, 0, 0));
+  feuerstelle.add(setze(teil(new THREE.TorusGeometry(0.44, 0.02, 6, 32), 0x3a2a1e, { umriss: 0.002 }), 0, 0.35, 0, Math.PI / 2, 0, 0));
   // Rost und Rostflecken auf der Schale
   // Fuß
-  for (let i = 0; i < 3; i++) { const w = i / 3 * Math.PI * 2; const fuss = zylinder(0.015, 0.015, 0.5, 0x2a2622, { umriss: 0.002 }, 6); fuss.position.set(Math.cos(w) * 0.2, 0.2, Math.sin(w) * 0.2); fuss.rotation.set(Math.sin(w) * 0.35, 0, -Math.cos(w) * 0.35); feuerstelle.add(fuss); }
+  for (let i = 0; i < 3; i++) { const w = i / 3 * Math.PI * 2; const fuss = zylinder(0.016, 0.016, 0.2, 0x2a2622, { umriss: 0.002 }, 6); fuss.position.set(Math.cos(w) * 0.2, 0.085, Math.sin(w) * 0.2); fuss.rotation.set(Math.sin(w) * 0.35, 0, -Math.cos(w) * 0.35); feuerstelle.add(fuss); }
   // Asche und verkohlte Holzscheite
   // graue Asche mit kleinen Häufchen, verkohlte Holzreste
-  const asche = kugel(0.36, 0x77746f, { umriss: false }, 16); asche.scale.set(1, 0.08, 1); asche.position.y = 0.415; feuerstelle.add(asche);
-  for (let i = 0; i < 9; i++) { const h = kugel(0.05 + r() * 0.05, i % 3 ? 0x8a8681 : 0x5f5c58, { umriss: false }, 8); h.scale.set(1, 0.4, 1); h.position.set((r() - 0.5) * 0.45, 0.43, (r() - 0.5) * 0.45); feuerstelle.add(h); }
-  for (let i = 0; i < 3; i++) feuerstelle.add(setze(zylinder(0.03, 0.03, 0.3, 0x1d1a18, { umriss: 0.002 }, 7), (r() - 0.5) * 0.2, 0.45, (r() - 0.5) * 0.2, Math.PI / 2, r() * 3, 0.1));
+  const asche = kugel(0.36, 0x77746f, { umriss: false }, 16); asche.scale.set(1, 0.08, 1); asche.position.y = 0.195; feuerstelle.add(asche);
+  for (let i = 0; i < 9; i++) { const h = kugel(0.05 + r() * 0.05, i % 3 ? 0x8a8681 : 0x5f5c58, { umriss: false }, 8); h.scale.set(1, 0.4, 1); h.position.set((r() - 0.5) * 0.45, 0.21, (r() - 0.5) * 0.45); feuerstelle.add(h); }
+  for (let i = 0; i < 3; i++) feuerstelle.add(setze(zylinder(0.03, 0.03, 0.3, 0x1d1a18, { umriss: 0.002 }, 7), (r() - 0.5) * 0.2, 0.23, (r() - 0.5) * 0.2, Math.PI / 2, r() * 3, 0.1));
   // Dreibein mit Kette
   const spitze = 1.75;
   for (let i = 0; i < 3; i++) {
@@ -785,7 +788,7 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
     feuerstelle.add(bein);
   }
   feuerstelle.add(setze(teil(new THREE.TorusGeometry(0.03, 0.008, 6, 10), 0x1d1d1f, { umriss: false }), 0, spitze - 0.02, 0));
-  const ROST_Y = 0.92;
+  const ROST_Y = 0.7;
   for (let i = 0; i < 14; i++) feuerstelle.add(setze(teil(new THREE.TorusGeometry(0.018, 0.005, 4, 8), 0x3a3c40, { umriss: false }), 0, spitze - 0.06 - i * 0.055, 0, 0, i % 2 ? Math.PI / 2 : 0, 0));
   // drei Ketten zum Rost
   for (let i = 0; i < 3; i++) {

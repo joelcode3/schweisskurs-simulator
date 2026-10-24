@@ -409,9 +409,22 @@ export function baueWelt(scene) {
     g.beginPath(); g.moveTo(128 - 69, 128 - 69); g.lineTo(128 + 69, 128 + 69); g.stroke();
     g.fillStyle = '#111'; g.font = 'bold 34px Arial'; g.textAlign = 'center';
     g.fillText('RAUCHEN', 128, 270); g.fillText('VERBOTEN', 128, 304);
+    // altes Blechschild: Rostflecken, Rostfahnen unter den Schrauben, abgeplatzter Lack an den Ecken
+    const rost = (x, y, rx, ry, a) => { g.fillStyle = `rgba(${140 + Math.random() * 40},${60 + Math.random() * 25},20,${a})`; g.beginPath(); g.ellipse(x, y, rx, ry, Math.random() * 3, 0, Math.PI * 2); g.fill(); };
+    for (const [x, y] of [[14, 14], [242, 14], [14, 306], [242, 306]]) {
+      for (let i = 0; i < 6; i++) rost(x + (Math.random() - 0.5) * 18, y + (Math.random() - 0.5) * 18, 4 + Math.random() * 9, 3 + Math.random() * 7, 0.55);
+      g.fillStyle = 'rgba(130,60,20,0.35)'; g.fillRect(x - 3, y, 6, 40 + Math.random() * 40);
+    }
+    for (let i = 0; i < 26; i++) rost(Math.random() * 256, Math.random() * 320, 1 + Math.random() * 5, 1 + Math.random() * 4, 0.35 + Math.random() * 0.3);
+    g.fillStyle = 'rgba(120,55,20,0.25)'; g.fillRect(0, 300, 256, 20);
+    // Schrauben
+    for (const [x, y] of [[14, 14], [242, 14], [14, 306], [242, 306]]) { g.fillStyle = '#6b6f75'; g.beginPath(); g.arc(x, y, 6, 0, Math.PI * 2); g.fill(); g.strokeStyle = '#333'; g.lineWidth = 2; g.beginPath(); g.moveTo(x - 4, y); g.lineTo(x + 4, y); g.stroke(); }
   });
+  // vor den Streben auf ein Blech geschraubt (vorher verdeckte die schräge Strebe die Schrift)
+  const rauchBlech = setze(quader(0.44, 0.545, 0.008, 0x8a8478, { umriss: 0.002 }), 0, 2.12, 0.115);
+  fluegelRechts.add(rauchBlech);
   const rauchSchild = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.525), new THREE.MeshBasicMaterial({ map: verbotTex }));
-  rauchSchild.position.set(0, 1.85, 0.081);
+  rauchSchild.position.set(0, 2.12, 0.1205);
   fluegelRechts.add(rauchSchild);
   setze(tuer, -0.85, 0, RAUM.zMax - 0.05, 0, Math.PI, 0);
   scene.add(tuer);
@@ -3006,6 +3019,31 @@ export function baueWelt(scene) {
     boxTakt(f) { boxBeat = f; },
     dreckHin,
     dreckWeg() { for (const d of dreck) scene.remove(d); dreck.length = 0; dreckMitte = null; },
+    // kleine graue Staubwolke beim Fegen (steigt auf, wird größer und blasser)
+    staub(x, z) {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), new THREE.MeshBasicMaterial({ color: 0xb8b0a2, transparent: true, opacity: 0.35, depthWrite: false }));
+      m.position.set(x + (Math.random() - 0.5) * 0.4, 0.06, z + (Math.random() - 0.5) * 0.4);
+      scene.add(m);
+      let t = 0;
+      const f = (dt) => { t += dt; m.position.y += dt * 0.25; m.scale.setScalar(1 + t * 2.2); m.material.opacity = Math.max(0, 0.35 * (1 - t / 0.9)); if (t > 0.9) { scene.remove(m); animiert.splice(animiert.indexOf(f), 1); } };
+      animiert.push(f);
+    },
+    // Fegen mit dem Besen: Dreck im Kehrbereich (Punkt p, Radius r) wird in Richtung (rx, rz) geschoben und wird weniger.
+    // Rückgabe: wie viel gerade gekehrt wurde (für Staub und Geräusch)
+    kehre(p, rx, rz, r, dt) {
+      let menge = 0;
+      for (let i = dreck.length - 1; i >= 0; i--) {
+        const d = dreck[i];
+        const ab = Math.hypot(d.position.x - p.x, d.position.z - p.z);
+        if (ab > r) continue;
+        d.position.x += rx * dt * 0.35; d.position.z += rz * dt * 0.35;
+        const s = d.scale.x - dt * 0.8;
+        menge += dt;
+        if (s < 0.12) { scene.remove(d); dreck.splice(i, 1); } else d.scale.setScalar(s);
+      }
+      if (!dreck.length) dreckMitte = null;
+      return menge;
+    },
     get dreckMitte() { return dreckMitte; },
     besenSichtbar(an) { besen.visible = an; },
     BESEN: { x: -4.35, z: 2.05 },

@@ -53,6 +53,56 @@ export function gelaendeNormale(x, z) {
 // Ist (x, z) innerhalb des befahr-/begehbaren Bereichs (innen alles, außen nur bis kurz hinter die Straße)?
 export function imKreis(x, z, rand = 0) { return Math.hypot(x - RING.x, z - RING.z) < RAND_AUSSEN - rand; }
 
+// ---------- Eierkarton und Mettenden (Laden und in der Hand gleich): detailliert ----------
+let eierEtikett = null, mettEtikett = null;
+export function eierKartonModell() {
+  const k = new THREE.Group();
+  const pappe = 0xb9ab8e, pappeD = 0xa59777;
+  // Unterteil: Pappschale mit 10 Mulden (2 x 5), Rand oben
+  k.add(setze(quader(0.3, 0.045, 0.13, pappe, { umriss: 0.002 }), 0, 0.0225, 0));
+  k.add(setze(quader(0.31, 0.008, 0.14, pappeD, { umriss: 0.001 }), 0, 0.047, 0));
+  for (let i = 0; i < 10; i++) {
+    const x = -0.12 + (i % 5) * 0.06, z = -0.03 + Math.floor(i / 5) * 0.06;
+    k.add(setze(zylinder(0.027, 0.02, 0.03, pappeD, { umriss: false }, 10), x, 0.04, z)); // Mulde
+    const ei = kugel(0.021, [0xd9b48a, 0xe8cfa8, 0xf2ead8, 0xcfa478][i % 4], { umriss: 0.001 }, 10);
+    ei.scale.set(1, 1.3, 1); ei.position.set(x, 0.072, z);
+    k.add(ei);
+    // Sprenkel auf den braunen Eiern
+    if (i % 2 === 0) for (let j = 0; j < 3; j++) k.add(setze(kugel(0.0025, 0x6a4a2a, { umriss: false }, 4), x + Math.cos(j * 2.1 + i) * 0.019, 0.07 + j * 0.008, z + Math.sin(j * 2.1 + i) * 0.019));
+  }
+  // aufgeklappter Deckel mit Etikett
+  if (!eierEtikett) eierEtikett = leinwandTextur(128, 48, (g, b, h) => { g.fillStyle = '#b9ab8e'; g.fillRect(0, 0, b, h); g.fillStyle = '#f4efe0'; g.fillRect(8, 6, b - 16, h - 12); g.fillStyle = '#2f5a3a'; g.font = '800 15px Arial'; g.textAlign = 'center'; g.fillText('Lühmanns', b / 2, 22); g.font = '600 12px Arial'; g.fillText('10 Landeier', b / 2, 37); });
+  const deckel = new THREE.Group();
+  deckel.add(setze(quader(0.3, 0.01, 0.13, pappe, { umriss: 0.002 }), 0, 0, -0.065));
+  deckel.add(setze(new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.06), new THREE.MeshBasicMaterial({ map: eierEtikett })), 0, 0.0055, -0.065, -Math.PI / 2, 0, Math.PI));
+  deckel.position.set(0, 0.05, -0.065);
+  deckel.rotation.x = -1.9;
+  k.add(deckel);
+  return k;
+}
+export function mettendenModell() {
+  const p = new THREE.Group();
+  // Pappschale, darüber Folie, drei gebogene Mettenden mit abgebundenen Enden, Etikett
+  p.add(setze(quader(0.14, 0.012, 0.24, 0xe8dcb8, { umriss: 0.001 }), 0, 0.006, 0));
+  for (let j = 0; j < 3; j++) {
+    const x = -0.043 + j * 0.043;
+    const kurve = new THREE.CatmullRomCurve3([new THREE.Vector3(x - 0.006, 0, -0.1), new THREE.Vector3(x + 0.006, 0.006, -0.03), new THREE.Vector3(x + 0.006, 0.006, 0.03), new THREE.Vector3(x - 0.006, 0, 0.1)]);
+    const w = teil(new THREE.TubeGeometry(kurve, 14, 0.017, 10, false), 0x7a2618, { umriss: 0.0015 });
+    w.position.y = 0.03;
+    p.add(w);
+    for (const zz of [-0.1, 0.1]) {
+      p.add(setze(kugel(0.012, 0x5a1a10, { umriss: false }, 6), x - 0.006, 0.03, zz));
+      p.add(setze(zylinder(0.004, 0.004, 0.012, 0xe8e0c8, { umriss: false }, 4), x - 0.006, 0.03, zz + Math.sign(zz) * 0.014, Math.PI / 2, 0, 0)); // Bindfaden
+    }
+    // Fettsprenkel
+    for (let k = 0; k < 5; k++) p.add(setze(kugel(0.003, 0xd8a090, { umriss: false }, 4), x + 0.006 * Math.sin(k), 0.046, -0.07 + k * 0.035));
+  }
+  p.add(setze(quader(0.145, 0.05, 0.245, 0xe8f4f8, { umriss: 0.001, mat: { transparent: true, opacity: 0.22 } }), 0, 0.028, 0)); // Folie
+  if (!mettEtikett) mettEtikett = leinwandTextur(96, 48, (g, b, h) => { g.fillStyle = '#f4efe0'; g.fillRect(0, 0, b, h); g.fillStyle = '#c8352a'; g.fillRect(0, 0, b, 12); g.fillStyle = '#1d1d1f'; g.font = '800 13px Arial'; g.textAlign = 'center'; g.fillText('Mettenden', b / 2, 28); g.font = '600 10px Arial'; g.fillText('3 St. · geräuchert', b / 2, 42); });
+  p.add(setze(new THREE.Mesh(new THREE.PlaneGeometry(0.08, 0.04), new THREE.MeshBasicMaterial({ map: mettEtikett })), 0.02, 0.054, 0.05, -Math.PI / 2, 0, 0));
+  return p;
+}
+
 export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
   const r = zufall(4242);
   const zuWelt = (gruppe, lx, lz) => new THREE.Vector3(lx, 0, lz).applyMatrix4(gruppe.matrixWorld);
@@ -217,7 +267,9 @@ export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
       for (let j = 0; j < 3; j++) {
         const sc = b.s * (b.busch ? 0.55 : 1) * (0.8 + r() * 0.4);
         q.setFromEuler(new THREE.Euler(r(), r() * 6, r()));
-        m.compose(new THREE.Vector3(b.x + (r() - 0.5) * 1.6 * b.s, y0 + (b.busch ? 0.6 : 3.4) * b.s + r() * b.s, b.z + (r() - 0.5) * 1.6 * b.s), q, new THREE.Vector3(sc, sc, sc));
+        // Büsche sitzen auf dem Boden (vorher schwebten sie teils und sahen aus wie Kronen ohne Stamm)
+        const yk = b.busch ? y0 + sc * 1.5 * 0.55 : y0 + 3.4 * b.s + r() * b.s;
+        m.compose(new THREE.Vector3(b.x + (r() - 0.5) * 1.6 * b.s, yk, b.z + (r() - 0.5) * 1.6 * b.s), q, new THREE.Vector3(sc, sc * (b.busch ? 0.75 : 1), sc));
         kronen.setMatrixAt(k, m);
         kronen.setColorAt(k, farbe.setHex(blatt[(j + Math.floor(b.x)) & 3]));
         k++;
@@ -231,6 +283,7 @@ export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
 
   // ---------- Feldweg-Ende an der Hauptstraße: Dennis' Briefkasten und seine Schilder ----------
   const ende = FELDWEG[FELDWEG.length - 1];
+  let holzRueck = null;
   const schildTafel = (zeilen, b = 1.2, h = 0.6, farbe = '#f4efe0', schrift = '#1d1d1f') => {
     const tex = leinwandTextur(Math.round(b * 256), Math.round(h * 256), (g, bb, hh) => {
       g.fillStyle = farbe; g.fillRect(0, 0, bb, hh);
@@ -252,8 +305,9 @@ export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
     const tafel = new THREE.Mesh(new THREE.PlaneGeometry(b, h), new THREE.MeshBasicMaterial({ map: tex }));
     tafel.position.z = 0.001;
     s.add(tafel);
-    // Rückseite: dasselbe Schild (man liest es von beiden Seiten)
-    const rueck = tafel.clone();
+    // Rückseite: nur Holz (Bretter), lesbar ist das Schild nur von der Straße aus (Betreiber)
+    if (!holzRueck) holzRueck = leinwandTextur(128, 64, (g, bb, hh) => { g.fillStyle = '#8a6a44'; g.fillRect(0, 0, bb, hh); for (let y = 0; y < hh; y += 16) { g.fillStyle = 'rgba(40,25,10,0.35)'; g.fillRect(0, y, bb, 2); } for (let i = 0; i < 40; i++) { g.fillStyle = `rgba(60,40,20,${r() * 0.25})`; g.fillRect(r() * bb, r() * hh, 6 + r() * 30, 1); } });
+    const rueck = new THREE.Mesh(new THREE.PlaneGeometry(b + 0.04, h + 0.04), new THREE.MeshBasicMaterial({ map: holzRueck }));
     rueck.rotation.y = Math.PI; rueck.position.z = -0.051;
     s.add(rueck);
     return s;
@@ -261,7 +315,10 @@ export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
   // Schild an einem schiefen, in den Boden gehauenen Pfahl
   const pfahlSchild = (zeilen, x, z, blick, hoehe = 1.3, b, h, farbe, schrift) => {
     const g = new THREE.Group();
-    g.add(setze(quader(0.09, hoehe + 0.3, 0.09, 0x7a5a3a, { umriss: 0.003 }), 0, (hoehe + 0.3) / 2 - 0.3, -0.06));
+    // Pfahl endet unter der Tafel (sonst verdeckt er hinten die Schrift); kurzes Brett als Halter
+    const ph = hoehe - (h || 0.6) / 2 + 0.05;
+    g.add(setze(quader(0.09, ph + 0.3, 0.09, 0x7a5a3a, { umriss: 0.003 }), 0, (ph + 0.3) / 2 - 0.3, -0.025));
+    g.add(setze(quader(0.24, 0.07, 0.07, 0x6a4f32, { umriss: 0.002 }), 0, ph - 0.01, -0.025));
     const t = schildTafel(zeilen, b, h, farbe, schrift);
     t.position.y = hoehe;
     g.add(t);
@@ -368,13 +425,7 @@ export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
   const regal = new THREE.Group();
   for (const y of [0.4, 0.9, 1.4]) regal.add(setze(quader(1.8, 0.04, 0.45, 0xc9a46a, { umriss: 0.002 }), 0, y, 0));
   for (const sx of [-1, 1]) regal.add(setze(quader(0.05, 1.6, 0.45, 0xa8844e, { umriss: 0.002 }), sx * 0.9, 0.8, 0));
-  const eierKarton = () => {
-    const k = new THREE.Group();
-    k.add(setze(quader(0.3, 0.07, 0.13, 0xb8a888, { umriss: 0.002 }), 0, 0.035, 0));
-    for (let i = 0; i < 10; i++) k.add(setze(kugel(0.022, i % 3 ? 0xd9b48a : 0xf2ead8, { umriss: false }, 8), -0.12 + (i % 5) * 0.06, 0.08, -0.03 + Math.floor(i / 5) * 0.06));
-    k.add(setze(quader(0.3, 0.012, 0.06, 0xb8a888, { umriss: 0.001 }), 0, 0.12, -0.08, -0.8, 0, 0)); // aufgeklappter Deckel
-    return k;
-  };
+  const eierKarton = eierKartonModell;
   for (const y of [0.42, 0.92]) for (let i = 0; i < 5; i++) { const k = eierKarton(); k.position.set(-0.7 + i * 0.34, y, 0); regal.add(k); }
   regal.position.set(-0.9, 0, LT / 2 - 0.35);
   laden.add(regal);
@@ -386,9 +437,7 @@ export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
   for (const y of [0.4, 0.8, 1.2]) {
     kuehl.add(setze(quader(0.6, 0.02, 0.5, 0xd0d4d8, { umriss: false }), 0, y, 0));
     for (let i = 0; i < 4; i++) {
-      const p = new THREE.Group();
-      p.add(setze(quader(0.12, 0.03, 0.22, 0xe8dcb8, { umriss: 0.001 }), 0, 0.02, 0));
-      for (let j = 0; j < 3; j++) p.add(setze(zylinder(0.015, 0.015, 0.2, 0x8a2a1a, { umriss: false }, 6), -0.04 + j * 0.04, 0.05, 0, Math.PI / 2, 0, 0));
+      const p = mettendenModell();
       p.position.set(-0.21 + i * 0.14, y + 0.01, 0);
       kuehl.add(p);
     }
@@ -575,7 +624,8 @@ export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
       huehner.push({ g: huhn, kopf, ziel: null, warte: r() * 3, t: r() * 10 });
     }
   }
-  // Schilder an der Straße: „Lühmanns Landeier" mit Pfeil (von beiden Seiten)
+  // Schilder an der Straße: „Lühmanns Landeier" mit Pfeil (von beiden Seiten), 1,5 m neben dem Fahrbahnrand
+  const SCHILD_Z = -(6 - 1.5); // Hof liegt 6 m vom Fahrbahnrand (HOF), lokal -z = zur Straße
   for (const [lx, pfeil] of [[-22, 1], [22, -1]]) {
     const tex = leinwandTextur(384, 128, (g, b, h) => {
       g.fillStyle = '#f4efe0'; g.fillRect(0, 0, b, h);
@@ -589,15 +639,15 @@ export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
     });
     const s = new THREE.Group();
     for (const sx of [-0.7, 0.7]) s.add(setze(quader(0.08, 1.9, 0.08, 0x6a4f32, { umriss: 0.003 }), sx, 0.95, -0.05));
-    s.add(setze(new THREE.Mesh(new THREE.PlaneGeometry(1.8, 0.6), new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide })), 0, 1.5, 0));
+    s.add(setze(new THREE.Mesh(new THREE.PlaneGeometry(1.8, 0.6), new THREE.MeshBasicMaterial({ map: tex })), 0, 1.5, 0));
     s.add(setze(quader(1.84, 0.64, 0.03, 0x6a4f32, { umriss: 0.002 }), 0, 1.5, -0.025));
-    s.position.set(lx, 0, -RING.breite / 2 - 7);
+    s.position.set(lx, 0, SCHILD_Z); // neben der Fahrbahn, nicht drauf
     s.rotation.y = Math.PI;
     hof.add(s);
     merke(s, 'schild_landeier', 'Schild: Lühmanns Landeier');
   }
   // Einfahrt-Hindernisse der Straßenschilder
-  for (const lx of [-22, 22]) drehHindernis(hof, lx, -RING.breite / 2 - 7, 0.8, 0.15);
+  for (const lx of [-22, 22]) drehHindernis(hof, lx, SCHILD_Z, 0.8, 0.15);
   void merke;
 
   // ---------- Umgekippter VW T5 Doppelkabine mit Pritsche, Reifenspuren von der Straße ----------
@@ -639,8 +689,9 @@ export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
         const t = kurve.getTangentAt(i / (proben.length - 1));
         const nx = -t.z, nz = t.x;
         const aufStrasse = Math.abs(Math.hypot(p.x - RING.x, p.z - RING.z) - RING.r) < RING.breite / 2;
-        for (const s of [-1, 1]) pos.push(p.x + nx * (seite + s * 0.11), aufStrasse ? 0.025 : 0.02 + gelaendeHoehe(p.x, p.z), p.z + nz * (seite + s * 0.11));
-        const c = aufStrasse ? [0.08, 0.08, 0.09] : [0.32, 0.25, 0.14];
+        // breite, dunkle Rinnen (aufgewühlte Erde), auf der Straße schwarzer Gummiabrieb
+        for (const s of [-1, 1]) pos.push(p.x + nx * (seite + s * 0.17), aufStrasse ? 0.025 : 0.035 + gelaendeHoehe(p.x, p.z), p.z + nz * (seite + s * 0.17));
+        const c = aufStrasse ? [0.05, 0.05, 0.06] : [0.22, 0.15, 0.08];
         farben.push(...c, ...c);
         if (i < proben.length - 1) { const k = i * 2; idx.push(k, k + 2, k + 1, k + 1, k + 2, k + 3); }
       });
@@ -649,7 +700,15 @@ export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
       geo.setAttribute('color', new THREE.Float32BufferAttribute(farben, 3));
       geo.setIndex(idx);
       geo.computeVertexNormals();
-      scene.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.75, side: THREE.DoubleSide, depthWrite: false })));
+      scene.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.92, side: THREE.DoubleSide, depthWrite: false })));
+    }
+    // Rillen vom Reifenprofil in der Erde und ausgerissene Grasbüschel am Spurrand
+    for (let i = 4; i < proben.length; i += 2) {
+      const p = proben[i], t = kurve.getTangentAt(i / (proben.length - 1));
+      if (Math.abs(Math.hypot(p.x - RING.x, p.z - RING.z) - RING.r) < RING.breite / 2 + 0.5) continue;
+      const nx = -t.z, nz = t.x, h = gelaendeHoehe(p.x, p.z), w = Math.atan2(t.x, t.z);
+      for (const seite of [-0.8, 0.8]) scene.add(setze(quader(0.26, 0.006, 0.035, 0x3a2814, { umriss: false, wirft: false }), p.x + nx * seite, h + 0.04, p.z + nz * seite, 0, w + Math.PI / 2 + 0.35, 0));
+      if (i % 6 === 0) for (const seite of [-1.05, 1.05]) { const b = kugel(0.09 + r() * 0.06, 0x4a6a2a, { umriss: 0.0015 }, 6); b.scale.set(1, 0.45, 1.3); b.position.set(p.x + nx * seite * (1 + r() * 0.3), h + 0.04, p.z + nz * seite * (1 + r() * 0.3)); b.rotation.y = r() * 3; scene.add(b); }
     }
     // aufgewühlte Erdbrocken entlang der Spur
     for (let i = 30; i < proben.length; i += 9) { const p = proben[i]; scene.add(setze(kugel(0.12 + r() * 0.12, 0x5a4428, { umriss: 0.002 }, 6), p.x + (r() - 0.5) * 2, 0.04, p.z + (r() - 0.5) * 2)); }
@@ -750,6 +809,36 @@ function baueT5() {
   offen.rotation.z = -1.2; offen.position.y = 0.8;
   const hinten = bord(W, 0, PZ0 + 0.02, 0);
   hinten.rotation.x = 0.4;
+  // Pritschen-Details: Riffelblech-Boden mit Zurrösen, Längsrahmen darunter, Eckrungen, Bordwandverschlüsse, Scharniere,
+  // verrutschte Ladung (Schaltafel, Kanister, Spanngurt)
+  {
+    const PL = PZ1 - PZ0, PM = (PZ0 + PZ1) / 2;
+    const riffelB = leinwandTextur(64, 64, (g, b, h) => { g.fillStyle = '#9aa0a6'; g.fillRect(0, 0, b, h); g.strokeStyle = '#7a8086'; g.lineWidth = 3; for (let y = 4; y < h; y += 10) for (let x = (y / 10) % 2 ? 0 : 6; x < b; x += 12) { g.beginPath(); g.moveTo(x, y); g.lineTo(x + 6, y + 4); g.stroke(); } }, [4, 6]);
+    t.add(setze(teil(new THREE.BoxGeometry(W - 0.1, 0.012, PL - 0.1), 0, { material: toon(0xffffff, { map: riffelB }), umriss: false }), 0, 0.896, PM));
+    for (const sx of [-1, 1]) {
+      t.add(setze(quader(0.08, 0.14, PL, SCHW, { umriss: 0.002 }), sx * 0.55, 0.74, PM)); // Längsträger
+      for (let k = 0; k < 4; k++) t.add(setze(teil(new THREE.TorusGeometry(0.025, 0.007, 5, 10), 0x5a5d62, { umriss: false }), sx * (W / 2 - 0.12), 0.91, PZ0 + 0.25 + k * (PL - 0.5) / 3, Math.PI / 2, 0, 0)); // Zurrösen
+    }
+    for (let k = 0; k < 5; k++) t.add(setze(quader(W - 0.15, 0.07, 0.06, SCHW, { umriss: false }), 0, 0.77, PZ0 + 0.15 + k * (PL - 0.3) / 4)); // Querträger
+    // Eckrungen (Alu-Profile) und Mittelrunge an der stehenden Seite
+    for (const [x, zz] of [[W / 2 - 0.02, PZ0 + 0.03], [W / 2 - 0.02, PZ1 - 0.03], [-W / 2 + 0.02, PZ1 - 0.03], [-W / 2 + 0.02, PZ0 + 0.03], [W / 2 - 0.02, PM]]) t.add(setze(quader(0.06, 0.46, 0.06, 0xb0b5ba, { umriss: 0.002 }), x, 1.12, zz));
+    // Bordwandverschlüsse (Spannhebel) und Scharniere unten an der stehenden Seitenwand
+    for (const zz of [PZ0 + 0.4, PZ1 - 0.4]) {
+      t.add(setze(quader(0.03, 0.12, 0.1, 0x3a3c40, { umriss: 0.0015 }), W / 2 + 0.01, 1.22, zz));
+      t.add(setze(zylinder(0.012, 0.012, 0.14, 0x3a3c40, { umriss: false }, 6), W / 2 + 0.03, 1.17, zz, Math.PI / 2, 0, 0));
+    }
+    for (let k = 0; k < 4; k++) t.add(setze(zylinder(0.018, 0.018, 0.1, 0x5a5d62, { umriss: 0.001 }, 8), W / 2 + 0.005, 0.9, PZ0 + 0.3 + k * (PL - 0.6) / 3, Math.PI / 2, 0, 0));
+    // Ladung: verrutschte Schaltafel (gelb), umgekippter Kanister, loser Spanngurt
+    t.add(setze(quader(0.9, 0.025, 1.6, 0xe2b33a, { umriss: 0.002 }), -0.15, 0.93, PM + 0.2, 0.06, 0.35, -0.12));
+    const kan = new THREE.Group();
+    kan.add(setze(rundQuader(0.28, 0.36, 0.16, 0xc8352a, { umriss: 0.002 }, 0.03), 0, 0.18, 0));
+    kan.add(setze(zylinder(0.03, 0.03, 0.06, 0x1d1d1f, { umriss: false }, 8), 0.08, 0.38, 0));
+    kan.add(setze(quader(0.14, 0.03, 0.04, 0xc8352a, { umriss: 0.001 }), -0.04, 0.38, 0));
+    setze(kan, 0.45, 0.9, PZ0 + 0.6, 0, 0.8, Math.PI / 2);
+    t.add(kan);
+    const gurtK = new THREE.CatmullRomCurve3([new THREE.Vector3(-0.6, 0.91, PZ0 + 0.3), new THREE.Vector3(-0.2, 0.93, PZ0 + 0.9), new THREE.Vector3(0.1, 0.92, PZ0 + 0.6), new THREE.Vector3(0.4, 0.94, PZ0 + 1.3)]);
+    t.add(teil(new THREE.TubeGeometry(gurtK, 24, 0.012, 4, false), 0xf26a1b, { umriss: false }));
+  }
   // VW-Logo auf der hinteren Bordwand, „TDI" daneben
   const logoTex = leinwandTextur(64, 64, (g, b, h) => {
     g.clearRect(0, 0, b, h); g.fillStyle = '#c9cdd2'; g.beginPath(); g.arc(32, 32, 30, 0, Math.PI * 2); g.fill();
