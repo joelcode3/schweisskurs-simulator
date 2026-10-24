@@ -60,7 +60,8 @@ export function baueFahrten(c) {
       ? 'W/S fahren · A/D knicken · R/F Gabel hoch/runter · Leertaste hupen · E aussteigen'
       : `W/S fahren · A/D lenken · Leertaste hupen · E aussteigen${f.gedrosselt ? ' · (gedrosselt: nur Schritttempo)' : ''}`);
     blip(f.art === 'lader' ? 120 : 520, 0.25, 0.12);
-    if (sekunden() > fz2.meckerAb) {
+    // über die Fahrweise meckert Dennis erst, wenn der Jeep entdrosselt ist (Schritttempo ist ihm egal); Hoflader immer
+    if (sekunden() > fz2.meckerAb && !(f.art === 'jeep' && f.gedrosselt)) {
       fz2.meckerAb = sekunden() + 35 + Math.random() * 15;
       setTimeout(() => dennisSagt(sag(DENNIS.fahrenSpieler), true, { prio: 0 }), 1200);
       if (fz2.ersteFahrt) { fz2.ersteFahrt = false; aerger(2); }
@@ -121,7 +122,7 @@ export function baueFahrten(c) {
     }
     fz2.vorher = f.v;
     // beim Fahren meckert Dennis ab und zu
-    if (Math.abs(f.v) > 0.4 && sekunden() > fz2.meckerAb) { fz2.meckerAb = sekunden() + 35 + Math.random() * 15; dennisSagt(sag(DENNIS.fahrenSpieler), true, { prio: 0 }); }
+    if (Math.abs(f.v) > 0.4 && sekunden() > fz2.meckerAb && !(f.art === 'jeep' && f.gedrosselt)) { fz2.meckerAb = sekunden() + 35 + Math.random() * 15; dennisSagt(sag(DENNIS.fahrenSpieler), true, { prio: 0 }); }
     if (neu.has(' ')) hupe(f.art);
     if (neu.has('e')) setTimeout(aussteigen, 0);
     return { dpsi, auge: f.g.localToWorld(f.auge.clone()) };
@@ -234,7 +235,7 @@ export function baueFahrten(c) {
     f.fahrerName = wer;
     blip(f.art === 'lader' ? 120 : 520, 0.25, 0.1);
     if (Math.random() < 0.7) sagVon[wer](sag(wer === 'torben' ? TORBEN.fahren : JONNY.fahren));
-    setTimeout(() => { aerger(1); dennisSagt(sag(DENNIS.fahrenAndere), true, { prio: 0 }); }, 2500);
+    if (!(f.art === 'jeep' && f.gedrosselt)) setTimeout(() => { aerger(1); dennisSagt(sag(DENNIS.fahrenAndere), true, { prio: 0 }); }, 2500);
     const opt = {
       spielerPos: () => (fz2.aktiv ? null : kamera.position),
       beiRums: (was) => {

@@ -46,6 +46,10 @@ export const DENNIS = {
     'Geht’s noch?! Ich will hier in Ruhe liegen!',
     'Techno in meiner Mittagspause? Du hast sie doch nicht mehr alle!',
   ],
+  // er macht die Musik nach dem Wecken selbst aus
+  musikMachIchAus: ['So. Ich mach das jetzt aus. Und dann ist erstmal Ruhe!', 'Gib her, ich mach das selber aus.'],
+  // Musik wieder an, obwohl er gerade keine Lust hat
+  musikWiederAn: ['Ich hab gesagt AUS! Bist du taub?!', 'Schon wieder?! Jetzt reicht’s aber!'],
   schlauch: {
     nass: ['EY! Spinnst du?! Jetzt bin ich nass!', 'Hör auf mich nasszuspritzen! Sofort!', 'Ich hab schon geduscht, danke!'],
     rumspritzen: ['Hör auf hier rumzuspritzen! Das ist eine Werkstatt, kein Freibad!', 'Wasser ist zum Spülen da, nicht zum Spielen!', 'Jetzt ist alles nass. Super gemacht.'],
