@@ -1072,14 +1072,14 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       terrasse: [{ x: -6.2, z: 6.3 }, { x: -10.6, z: 11.0 }, { x: -14.4, z: 10.7 }, { x: -14.42, z: 9.25 }],
     },
     // Dennis' Sofa auf der Wohnwagen-Terrasse (Blick nach +z)
-    sofa: { x: -14.42, z: 8.95, hoehe: 0.63 },
+    sofa: { x: -14.42, z: 8.95, hoehe: 0.63, boden: 0.18 }, // boden = Holzterrasse
   };
   async function lauf(figur, punkte, tempo = 1.1) {
     for (const p of punkte) if (!(await Promise.race([figur.gehZu(p.x, p.z, tempo), warte(15000).then(() => false)]))) return false;
     return true;
   }
   function sitzt(figur, an) {
-    if (figur === waldo) waldo.haltung(an ? 'sitzen' : 'handy', DRAUSSEN.sofa.hoehe);
+    if (figur === waldo) waldo.haltung(an ? 'sitzen' : 'handy', DRAUSSEN.sofa.hoehe, DRAUSSEN.sofa.boden);
     else figur.sitzen(an ? DRAUSSEN.sofa.hoehe : null);
   }
   // von irgendwo draußen rein in die Werkstatt
@@ -1245,11 +1245,15 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   async function jonnyKitzelt() {
     if (!jz.da || jz.beschaeftigt) return;
     jz.beschaeftigt = true;
+    // schleicht sich von hinten an; ist Dennis inzwischen weitergelaufen, hinterher (höchstens 3 Anläufe)
     const d = dennis.position;
-    const r = dennis.wurzel.rotation.y;
-    // schleicht sich von hinten an
-    await Promise.race([jonny.gehZu(d.x - Math.sin(r) * 0.55, d.z - Math.cos(r) * 0.55, 1.4), warte(9000)]);
-    if (dennis.modus === 'normal' && dennis.wurzel.visible && !z.vorbei) {
+    const nah = () => Math.hypot(jonny.position.x - d.x, jonny.position.z - d.z) < 0.85;
+    for (let i = 0; i < 3 && !nah(); i++) {
+      const r = dennis.wurzel.rotation.y;
+      await Promise.race([jonny.gehZu(d.x - Math.sin(r) * 0.55, d.z - Math.cos(r) * 0.55, 1.4), warte(9000)]);
+    }
+    // gekitzelt wird nur direkt an Dennis
+    if (nah() && dennis.modus === 'normal' && dennis.wurzel.visible && !z.vorbei) {
       jonny.dreheZu(dennis.position);
       jonny.kitzeln(true);
       ui.jonnySagt(sag(JONNY.kitzeln), 2500);
@@ -1354,6 +1358,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     }
     wz.beschaeftigt = false;
   }
+  // Segway-Parkplatz draußen links vor dem Tor (nicht am Bad, nie in der Werkstatt: das mag Dennis nicht)
+  const SEGWAY_PARK = { x: -1.9, z: 6.4 };
   // Waldo ist in der Werkstatt (sichtbar und nicht draußen auf der Terrasse)
   const waldoDa = () => waldo.da && !wz.draussenOrt;
   // Waldo kommt: sitzt er noch auf Dennis' Terrasse, von dort; sonst zu Fuß von hinter der Werkstatt oder mit dem grünen Segway
@@ -1369,11 +1375,11 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       waldo.wurzel.position.set(0, 0, 0);
       waldo.wurzel.rotation.set(0, 0, 0);
       waldo.sichtbar(true);
-      for (const p of [...FELDWEG.slice(0, 7).reverse(), { x: 2.0, z: 9.6 }, { x: 0.9, z: 6.6 }]) await Promise.race([segway.fahreZu(p.x, p.z, 3.2), warte(15000)]);
+      for (const p of [...FELDWEG.slice(0, 7).reverse(), { x: 2.0, z: 9.6 }, SEGWAY_PARK]) await Promise.race([segway.fahreZu(p.x, p.z, 3.2), warte(15000)]);
       dennis.wurzel.parent.attach(waldo.wurzel);
       waldo.wurzel.position.y = 0;
       waldo.wurzel.rotation.set(0, waldo.wurzel.rotation.y, 0);
-      await lauf(waldo, [{ x: 0.2, z: 6.0 }, DRAUSSEN.tuerAussen, DRAUSSEN.tuerInnen], tempo);
+      await lauf(waldo, [DRAUSSEN.tuerAussen, DRAUSSEN.tuerInnen], tempo);
       return;
     }
     await reinkommen(waldo, 'hinten', tempo);
@@ -1382,7 +1388,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   async function waldoWeg(tempo = 1.1) {
     if (wz.segway) {
       wz.segway = false;
-      await lauf(waldo, [DRAUSSEN.tuerInnen, DRAUSSEN.tuerAussen, { x: 0.6, z: 6.3 }], tempo);
+      await lauf(waldo, [DRAUSSEN.tuerInnen, DRAUSSEN.tuerAussen], tempo);
       const S = segway.gruppe.position;
       await Promise.race([waldo.gehZu(S.x, S.z, tempo), warte(6000)]);
       segway.anker.add(waldo.wurzel);

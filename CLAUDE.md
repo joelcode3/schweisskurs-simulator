@@ -35,7 +35,7 @@
 
 ## Dateien
 - `index.html`, `css/style.css`
-- `js/main.js` Einstieg · `js/world.js` Werkstatt + Gasflasche · `js/draussen.js` Hof · `js/carport.js` Wohnwagen/Benz · `js/fahrzeuge.js` + `js/fahrten.js` Fahren · `js/landschaft.js` Landschaft · `js/jonny.js` Jonny · `js/waldo.js` Waldo · `js/torben.js` Torben · `js/kumpels.js` Platzhalter-Kumpels · `js/dennis.js` 3D-Dennis
+- `js/main.js` Einstieg · `js/world.js` Werkstatt + Gasflasche · `js/draussen.js` Hof · `js/carport.js` Wohnwagen/Benz · `js/fahrzeuge.js` + `js/fahrten.js` Fahren · `js/landschaft.js` Landschaft · `js/jonny.js` Jonny · `js/waldo.js` Waldo · `js/torben.js` Torben · `js/kumpels.js` Platzhalter-Kumpels · `js/dennis.js` 3D-Dennis · `js/wege.js` Wegfindung der Figuren (Türen, um Werkstatt/Bad herum; in jedem gehZu)
 - `js/steuerung.js` Kamera/Gehen/Klicks · `js/spiel.js` Ablauf, Fehler, Texte, Note
 - `js/minispiele.js` Schneiden, Schweißen, Schlacke · `js/clips.js` Dennis-Auftritte + Archiv
 - `js/hand.js` Dinge in der Hand (Haltung, Ablegen, Werfen mit Physik) · `js/ui.js` HUD/Dialoge · `js/audio.js` Geräusche (live erzeugt) · `js/gesicht.js` Comic-Gesicht + Icons
@@ -68,4 +68,4 @@
 - KI-Stimmklon ist in dieser Umgebung nicht möglich (huggingface.co gesperrt). Stimmproben nie ins Repo (öffentlich).
 
 ## Stand der Pull Requests (23.10.2026)
-- Alle PRs bis #31 sind gemergt, nichts offen. Neue Zweige von `origin/main`. Versionsnummer zuletzt `v=20261023-16`.
+- Alle PRs bis #31 sind gemergt, nichts offen. Neue Zweige von `origin/main`. Versionsnummer zuletzt `v=20261024-1`.

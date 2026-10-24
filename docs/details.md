@@ -376,6 +376,11 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Scherben, geschlängelte Reifenspuren von der Straße durch die Wiese. Himmel/Horizont/Nebel für die große Sichtweite (Kamera 1500).
 
 ## Paket A (Bugliste Projektchat)
+- Paket P1 (Projektchat 24.10.): Figuren laufen nie durch Wände (js/wege.js: wegNach/bereich, Werkstatt/Bad/draußen über Schlupftür
+  und WC-Tür, draußen um Werkstatt und Bad-Anbau herum). Segway parkt links vor dem Tor (SEGWAY_PARK -1,9 | 6,4), nie am Bad oder
+  drinnen. Waldo auf dem Terrassen-Sofa: Füße auf der Holzterrasse (waldo.haltung(h, hoehe, boden), DRAUSSEN.sofa.boden 0,18).
+  Jonny kitzelt nur direkt an Dennis (läuft ihm bis zu 3-mal hinterher). Unsichtbare Dinge sind nicht anklickbar (kein Name im Leeren).
+  Außenmauer im Badbereich ausgespart (sonst Mauer in der WC-Türöffnung). Jonnys Hände runder und größer (Ballen, lange kräftige Finger, Nägel), bei verschränkten Armen greifen sie um den Unterarm (Handgelenk abgeknickt, haendeGerade() für andere Haltungen).
 - Paket A (Bugliste Projektchat): Bad-Tür (nicht drin festhängen, schließt nicht, wenn man drin steht; welt.inKloTuer/
   kloTuerMitte), Waldo steht vom Sofa nach vorn auf, Trockner: Sieb direkt rausnehmen (dreckig wieder einsetzen geht), Sieb mit
   dunklem Schacht dahinter, Wäschetasche liegt oben auf dem Trockner und NUR Dennis holt sie runter (DENNIS.waesche.holen),

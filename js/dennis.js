@@ -1,5 +1,6 @@
 // Dennis als Comic-Figur in der Werkstatt: steht in der Kaffeeecke, guckt zu, kommt rüber.
 import * as THREE from 'three';
+import { wegNach } from './wege.js';
 import { toon, teil, quader, zylinder, kugel, setze, leinwandTextur, umriss } from './toon.js';
 
 const HAUT = 0xefc3a6;
@@ -494,6 +495,7 @@ export function baueDennis(scene) {
   let blickZiel = null;
   let ziel = null;
   let zielAufloesen = null;
+  let weg = []; // restliche Wegpunkte (um Wände herum, durch Türen)
   let tempo = 1.3;
   let stimmung = 'ruhig';
   let modus = 'normal'; // normal | tanzen | liegen
@@ -579,7 +581,9 @@ export function baueDennis(scene) {
     gehZu(x, z, schnell = 1.3) {
       if (zielAufloesen) zielAufloesen(false);
       tempo = schnell;
-      ziel = new THREE.Vector3(x, 0, z);
+      weg = wegNach(wurzel.position, { x, z });
+      const p = weg.shift();
+      ziel = new THREE.Vector3(p.x, 0, p.z);
       return new Promise((res) => { zielAufloesen = res; });
     },
     // Falls das Laufen zu lange dauert (langsames Gerät): direkt hinstellen
@@ -623,7 +627,10 @@ export function baueDennis(scene) {
         const d = new THREE.Vector3().subVectors(ziel, wurzel.position);
         d.y = 0;
         const dist = d.length();
-        if (dist < 0.05) {
+        if (dist < 0.05 && weg.length) {
+          const p = weg.shift();
+          ziel.set(p.x, 0, p.z);
+        } else if (dist < 0.05) {
           ziel = null;
           const r = zielAufloesen;
           zielAufloesen = null;

@@ -253,6 +253,12 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
     s.moveTo(x0, 0);
     if (mitTor) { s.lineTo(T0, 0); s.lineTo(T0, TH); s.lineTo(T1, TH); s.lineTo(T1, 0); }
     s.lineTo(x1, 0); s.lineTo(x1, TRAUFE); s.lineTo(0, FIRST); s.lineTo(x0, TRAUFE); s.closePath();
+    // im Bad (BAD in world.js) keine Außenmauer (sie stünde ein paar cm im Bad vor Fliesen und WC-Tür)
+    if (mitTor) {
+      const l = new THREE.Path();
+      l.moveTo(0.7, 0.01); l.lineTo(0.7, 2.6); l.lineTo(3.9, 2.6); l.lineTo(3.9, 0.01); l.closePath();
+      s.holes.push(l);
+    }
     const m = new THREE.Mesh(new THREE.ShapeGeometry(s), steinMat);
     m.receiveShadow = true;
     return m;

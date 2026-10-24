@@ -71,6 +71,10 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
     raycaster.setFromCamera(ndc, kamera);
     const hits = raycaster.intersectObjects(welt.alleZiele(), true);
     for (const h of hits) {
+      // unsichtbare Dinge (z. B. Figuren, die gerade nicht da sind) zählen nicht
+      let sichtbar = true;
+      for (let q = h.object; q; q = q.parent) if (!q.visible) { sichtbar = false; break; }
+      if (!sichtbar) continue;
       let o = h.object;
       while (o && !o.userData.interaktiv) o = o.parent;
       if (o) return { obj: o, info: o.userData.interaktiv, punkt: h.point, abstand: h.distance };
