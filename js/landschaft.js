@@ -639,7 +639,8 @@ export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
   });
   {
     const s = new THREE.Group();
-    for (const sx of [-0.7, 0.7]) s.add(setze(quader(0.08, 1.9, 0.08, 0x6a4f32, { umriss: 0.003 }), sx, 0.95, 0));
+    // Pfosten enden unter der Tafel (Unterkante 1,18 m), damit sie die Schrift nicht verdecken
+    for (const sx of [-0.7, 0.7]) s.add(setze(quader(0.08, 1.2, 0.08, 0x6a4f32, { umriss: 0.003 }), sx, 0.6, 0));
     s.add(setze(quader(1.84, 0.64, 0.03, 0x6a4f32, { umriss: 0.002 }), 0, 1.5, 0));
     // Vorderseite (lokal +z) und Rückseite (-z); Pfeilrichtung je Seite so, dass er zum Hof zeigt
     s.add(setze(new THREE.Mesh(new THREE.PlaneGeometry(1.8, 0.6), new THREE.MeshBasicMaterial({ map: schildSeite(PFEIL_VORNE) })), 0, 1.5, 0.017));
