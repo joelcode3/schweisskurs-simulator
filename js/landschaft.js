@@ -624,30 +624,32 @@ export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
       huehner.push({ g: huhn, kopf, ziel: null, warte: r() * 3, t: r() * 10 });
     }
   }
-  // Schilder an der Straße: „Lühmanns Landeier" mit Pfeil (von beiden Seiten), 1,5 m neben dem Fahrbahnrand
-  const SCHILD_Z = -(6 - 1.5); // Hof liegt 6 m vom Fahrbahnrand (HOF), lokal -z = zur Straße
-  for (const [lx, pfeil] of [[-22, 1], [22, -1]]) {
-    const tex = leinwandTextur(384, 128, (g, b, h) => {
-      g.fillStyle = '#f4efe0'; g.fillRect(0, 0, b, h);
-      g.strokeStyle = '#2f5a3a'; g.lineWidth = 8; g.strokeRect(6, 6, b - 12, h - 12);
-      g.fillStyle = '#2f5a3a'; g.font = '800 44px "Arial Black", Arial'; g.textAlign = 'center'; g.fillText('Lühmanns', b / 2 - pfeil * 30, 56); g.fillText('Landeier', b / 2 - pfeil * 30, 104);
-      g.save(); g.translate(pfeil > 0 ? b - 50 : 50, h / 2); g.scale(pfeil, 1);
-      g.beginPath(); g.moveTo(-26, -14); g.lineTo(4, -14); g.lineTo(4, -30); g.lineTo(30, 0); g.lineTo(4, 30); g.lineTo(4, 14); g.lineTo(-26, 14); g.closePath(); g.fillStyle = '#c8352a'; g.fill();
-      g.restore();
-      // ein paar gemalte Eier
-      for (let i = 0; i < 3; i++) { g.fillStyle = i % 2 ? '#d9b48a' : '#ffffff'; g.beginPath(); g.ellipse(30 + i * 22 + (pfeil < 0 ? b - 120 : 0), h - 24, 8, 11, 0, 0, Math.PI * 2); g.fill(); g.strokeStyle = '#8a6a3a'; g.lineWidth = 1.5; g.stroke(); }
-    });
+  // Schild „Lühmanns Landeier": gegenüber der Parkplatz-Einfahrt, 1,5 m hinter dem anderen Fahrbahnrand, quer zur Straße
+  // (Autofahrer aus beiden Richtungen sehen es), der Pfeil zeigt auf beiden Seiten über die Straße zum Eierhaus
+  const PFEIL_VORNE = -1;
+  const SCHILD_Z = -(6 + RING.breite + 1.5); // Hof liegt 6 m vom Fahrbahnrand (HOF), lokal -z = zur Straße und drüber
+  const schildSeite = (pfeil) => leinwandTextur(384, 128, (g, b, h) => {
+    g.fillStyle = '#f4efe0'; g.fillRect(0, 0, b, h);
+    g.strokeStyle = '#2f5a3a'; g.lineWidth = 8; g.strokeRect(6, 6, b - 12, h - 12);
+    g.fillStyle = '#2f5a3a'; g.font = '800 44px "Arial Black", Arial'; g.textAlign = 'center'; g.fillText('Lühmanns', b / 2 - pfeil * 30, 56); g.fillText('Landeier', b / 2 - pfeil * 30, 104);
+    g.save(); g.translate(pfeil > 0 ? b - 50 : 50, h / 2); g.scale(pfeil, 1);
+    g.beginPath(); g.moveTo(-26, -14); g.lineTo(4, -14); g.lineTo(4, -30); g.lineTo(30, 0); g.lineTo(4, 30); g.lineTo(4, 14); g.lineTo(-26, 14); g.closePath(); g.fillStyle = '#c8352a'; g.fill();
+    g.restore();
+    for (let i = 0; i < 3; i++) { g.fillStyle = i % 2 ? '#d9b48a' : '#ffffff'; g.beginPath(); g.ellipse(30 + i * 22 + (pfeil < 0 ? b - 120 : 0), h - 24, 8, 11, 0, 0, Math.PI * 2); g.fill(); g.strokeStyle = '#8a6a3a'; g.lineWidth = 2; g.stroke(); }
+  });
+  {
     const s = new THREE.Group();
-    for (const sx of [-0.7, 0.7]) s.add(setze(quader(0.08, 1.9, 0.08, 0x6a4f32, { umriss: 0.003 }), sx, 0.95, -0.05));
-    s.add(setze(new THREE.Mesh(new THREE.PlaneGeometry(1.8, 0.6), new THREE.MeshBasicMaterial({ map: tex })), 0, 1.5, 0));
-    s.add(setze(quader(1.84, 0.64, 0.03, 0x6a4f32, { umriss: 0.002 }), 0, 1.5, -0.025));
-    s.position.set(lx, 0, SCHILD_Z); // neben der Fahrbahn, nicht drauf
-    s.rotation.y = Math.PI;
+    for (const sx of [-0.7, 0.7]) s.add(setze(quader(0.08, 1.9, 0.08, 0x6a4f32, { umriss: 0.003 }), sx, 0.95, 0));
+    s.add(setze(quader(1.84, 0.64, 0.03, 0x6a4f32, { umriss: 0.002 }), 0, 1.5, 0));
+    // Vorderseite (lokal +z) und Rückseite (-z); Pfeilrichtung je Seite so, dass er zum Hof zeigt
+    s.add(setze(new THREE.Mesh(new THREE.PlaneGeometry(1.8, 0.6), new THREE.MeshBasicMaterial({ map: schildSeite(PFEIL_VORNE) })), 0, 1.5, 0.017));
+    s.add(setze(new THREE.Mesh(new THREE.PlaneGeometry(1.8, 0.6), new THREE.MeshBasicMaterial({ map: schildSeite(-PFEIL_VORNE) })), 0, 1.5, -0.017, 0, Math.PI, 0));
+    s.position.set(0, 0, SCHILD_Z);
+    s.rotation.y = Math.PI / 2; // quer zur Straße
     hof.add(s);
     merke(s, 'schild_landeier', 'Schild: Lühmanns Landeier');
+    drehHindernis(hof, 0, SCHILD_Z, 0.15, 0.8);
   }
-  // Einfahrt-Hindernisse der Straßenschilder
-  for (const lx of [-22, 22]) drehHindernis(hof, lx, SCHILD_Z, 0.8, 0.15);
   void merke;
 
   // ---------- Umgekippter VW T5 Doppelkabine mit Pritsche, Reifenspuren von der Straße ----------

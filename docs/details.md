@@ -378,7 +378,7 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
 ## Paket A (Bugliste Projektchat)
 - Paket P6 Optik (Projektchat 24.10.): Feuerschale tief mit kurzen Füßen (Schale 0,38 m, Rost 0,7 m). Rauchverbot-Schild auf
   Blech vor den Streben, höher, mit Rost und Schrauben. Schilder nur von der Straße lesbar, Rückseite Holz (Betreiber), Pfahl endet
-  unter der Tafel. Landeier-Schilder 1,5 m neben dem Fahrbahnrand (SCHILD_Z). Blaue Tonne: Deckel weiter offen, Kartons quellen
+  unter der Tafel. Landeier-Schild: eins, gegenüber der Parkplatz-Einfahrt hinter dem anderen Fahrbahnrand, quer zur Straße, Pfeil zeigt von beiden Seiten zum Hof (SCHILD_Z, PFEIL_VORNE). Blaue Tonne: Deckel weiter offen, Kartons quellen
   darunter raus. Müll an den Tonnen einzeln aufheben (muellStueck, MUELL_NAMEN; alles weg = Lob, Wut -2). Eierkarton/Mettenden
   detailliert (eierKartonModell, mettendenModell in landschaft.js, auch in der Hand). T5-Pritsche: Riffelboden, Zurrösen, Träger,
   Rungen, Verschlüsse, Ladung (Schaltafel, Kanister, Spanngurt); Spuren breiter/dunkler mit Profilrillen und Grasbüscheln. Ferne
