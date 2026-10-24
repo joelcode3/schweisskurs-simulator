@@ -40,7 +40,7 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
 ## Dennis: Verhalten, Nebenbei-Interaktionen, Sprache
 - Nebenbei-Interaktionen: Kaffee kochen und Dennis bringen (Wut sinkt, ab dem 3. meckert er), Kiwis (1. und 2. erlaubt:
   kein Spruch, nur Bissgeräusch; ab 3. sauer), Brotdose (abbeißen = Ausraster), große Soundbox (Techno, Dennis tanzt),
-  Lichtschalter (Dennis meckert), Besen (Dreck nach Schneiden/Schweißen, zählt in die Note),
+  Lichtschalter (Dennis meckert), Besen (Dreck nach Schneiden/Schweißen, zählt in die Note; fegen = Besen in der Hand, E halten),
   Hüfte (Dennis humpelt einmal pro Spiel auf freien Boden in der Raummitte, legt sich hin und jammert, bis man ihm aufhilft),
   Klo-Pause zwischendurch (frühestens nach 100 s, WC-Tür vorne rechts mit WC-Schild). Dennis sagt erst Bescheid,
   dann rennt er raus; solange er weg ist: Arbeitspause (gelbes Band oben, Arbeitsschritte gesperrt). Geht man zu Dennis hin und bleibt
@@ -376,6 +376,16 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Scherben, geschlängelte Reifenspuren von der Straße durch die Wiese. Himmel/Horizont/Nebel für die große Sichtweite (Kamera 1500).
 
 ## Paket A (Bugliste Projektchat)
+- Paket P6 Optik (Projektchat 24.10.): Feuerschale tief mit kurzen Füßen (Schale 0,38 m, Rost 0,7 m). Rauchverbot-Schild auf
+  Blech vor den Streben, höher, mit Rost und Schrauben. Schilder nur von der Straße lesbar, Rückseite Holz (Betreiber), Pfahl endet
+  unter der Tafel. Landeier-Schild: eins, gegenüber der Parkplatz-Einfahrt hinter dem anderen Fahrbahnrand, quer zur Straße, Pfeil zeigt von beiden Seiten zum Hof (SCHILD_Z, PFEIL_VORNE). Blaue Tonne: Deckel weiter offen, Kartons quellen
+  darunter raus. Müll an den Tonnen einzeln aufheben (muellStueck, MUELL_NAMEN; alles weg = Lob, Wut -2). Eierkarton/Mettenden
+  detailliert (eierKartonModell, mettendenModell in landschaft.js, auch in der Hand). T5-Pritsche: Riffelboden, Zurrösen, Träger,
+  Rungen, Verschlüsse, Ladung (Schaltafel, Kanister, Spanngurt); Spuren breiter/dunkler mit Profilrillen und Grasbüscheln. Ferne
+  Büsche stehen auf dem Boden. Bierkasten: Eckpfosten, Rippenband, Füße, Grifflöcher, Flaschen mit Etiketten/Goldfolie, Brett auf
+  dem Rand mit Kronkorken und Feuerzeug. Benz-Auspuff durchgehend (Krümmer, Mitteltopf, Endtopf, Endrohr, Gummihalter).
+  Wohnwagen-Deichsel: V-Holme treffen sich am Knotenblech, Querträger, Stützrad am Holm. Fegen: Besen in die Hand, E halten und
+  über den Dreck gehen (welt.kehre, Staub welt.staub, hand.fegeSchwung), ersetzt den Halten-Dialog.
 - Paket P5 (Projektchat 24.10.): Klickstrahl zählt Linien nur bei direktem Treffer (raycaster.params.Line.threshold 0,02 in
   steuerung.js; vorher 1 m: die Wäschetasche fing alle Klicks auf Waschmaschine, Trockner und Sieb ab, Linien am Klo die Tasse auf
   dem Spülkasten). Damit sind Maschinen wieder anklickbar, das Sieb ist auch vor der Aufgabe herausnehmbar, die Tasse auf dem
