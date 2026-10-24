@@ -376,6 +376,10 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Scherben, geschlängelte Reifenspuren von der Straße durch die Wiese. Himmel/Horizont/Nebel für die große Sichtweite (Kamera 1500).
 
 ## Paket A (Bugliste Projektchat)
+- Paket P5 (Projektchat 24.10.): Klickstrahl zählt Linien nur bei direktem Treffer (raycaster.params.Line.threshold 0,02 in
+  steuerung.js; vorher 1 m: die Wäschetasche fing alle Klicks auf Waschmaschine, Trockner und Sieb ab, Linien am Klo die Tasse auf
+  dem Spülkasten). Damit sind Maschinen wieder anklickbar, das Sieb ist auch vor der Aufgabe herausnehmbar, die Tasse auf dem
+  Spülkasten aufhebbar. Wäschetasche weich: runde Ecken, ausgebeulte Seiten, runder Saum.
 - Paket P4 (Projektchat 24.10.): Fahrzeuge kommen aus Hindernissen, in denen sie schon stecken, immer heraus (steckt() in
   fahrzeuge.js: z. B. nach Grill/Tonnen umfahren, nach Schieben). Figuren halten beim Fahren vor Leuten und dem anderen Fahrzeug
   (fahreRoute-Option hindernisse, nach 12 s Warten Abbruch). Jeep: Scheibenrahmen unten mit Scharnieren, Armaturenbrett auf rosa
