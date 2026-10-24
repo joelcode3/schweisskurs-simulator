@@ -332,7 +332,7 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   und Außenwand (Laibung), Glas durchsichtig. Müllsack als Sack (Lathe mit Beulen, Knoten). Weidemann: runde Motorhaube hinten
   (Extrude-Profil), rundes Heck-Gegengewicht. Jeep: runder (rundQuader in toon.js, Kotflügel als Bögen), ohne seitliche Schrägstangen und
   ohne Trittbretter, rosa Karosserie mit Bodenfreiheit (ab 0,2 m), darunter schmale dunkle Bodenwanne (Füße gucken nicht raus), entdrosselt 11 m/s mit ca. 1,5 s Beschleunigung. Hupen: audio.js `hupe`
-  (Jeep „möp möp“, Lader tiefes Horn). E neben einem Fahrzeug (Hände frei) = einsteigen. Aussteigen mit Abstand zum eigenen Fahrzeug,
+  (Jeep „möp möp“, Lader Doppelton-Tellerhupe). E neben einem Fahrzeug (Hände frei) = einsteigen. Aussteigen mit Abstand zum eigenen Fahrzeug,
   aus zu engen Stellen kann man sich immer herausbewegen. Fahrzeuge haben gedrehte Hindernis-Kästen (inHindernis, boxen), dadurch
   kommt man dicht vorbei und durch Lücken. Paletten: niedrig (Fußgänger laufen drüber, Augenhöhe steigt), der Lader nimmt ganze
   Stapel (bis 5) auf und setzt sie zusammen ab. Lader schiebt den Jeep (wenn Platz) und hebt ihn mit der Gabel an, auch mit Fahrer
@@ -376,6 +376,14 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Scherben, geschlängelte Reifenspuren von der Straße durch die Wiese. Himmel/Horizont/Nebel für die große Sichtweite (Kamera 1500).
 
 ## Paket A (Bugliste Projektchat)
+- Paket P4 (Projektchat 24.10.): Fahrzeuge kommen aus Hindernissen, in denen sie schon stecken, immer heraus (steckt() in
+  fahrzeuge.js: z. B. nach Grill/Tonnen umfahren, nach Schieben). Figuren halten beim Fahren vor Leuten und dem anderen Fahrzeug
+  (fahreRoute-Option hindernisse, nach 12 s Warten Abbruch). Jeep: Scheibenrahmen unten mit Scharnieren, Armaturenbrett auf rosa
+  Spritzwand bis an die Haube. Ladefläche: Eier/Mettenden auf den Jeep klicken (bis 4 Plätze); Querbeschleunigung oder Bremsen
+  über 8 m/s² oder Rums = fällt runter, Eier kaputt (eierKaputt, wegräumen). Bremsen: Jeep 12, Lader 8 m/s². Entdrosselt auf der
+  Ringstraße 17 m/s. Grill und Tonnen kippen weich um (kippe()). Kollisionsgeräusch audio.js aufprall(). Weidemann-Hupe:
+  Doppelton-Tellerhupe (415/523 Hz, zwei Stöße). E neben dem Fahrzeug (Abstand zum Fahrzeug-Rechteck unter 1,3 m) = einsteigen;
+  derselbe E-Druck steigt nicht gleich wieder aus.
 - Paket P3 (Projektchat 24.10.): Gasflasche überall auf den Boden stellbar (Ort 'boden' drinnen, 'draussen' im Gelände; bleibt genau
   dort, welt.flaschePlatz), Restgas nur draußen. Schlupftür: an der Torwand rutscht man zur Türmitte (welt.tuerMitte). Leiter
   runterholen frei wählbar: Räuberleiter mit Jonny (leiterSpiel: Gleichgewicht mit A/D/Maus, ruhig = greifen, zu schief = runter)

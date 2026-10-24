@@ -5,7 +5,10 @@
 import * as THREE from 'three';
 import { quader, setze, zufall } from './toon.js';
 import { inHindernis } from './draussen.js';
-import { gelaendeHoehe } from './landschaft.js';
+import { gelaendeHoehe, RING } from './landschaft.js';
+
+// auf der Ringstraße (Hauptstraße)?
+const aufRing = (x, z) => Math.abs(Math.hypot(x - RING.x, z - RING.z) - RING.r) < RING.breite / 2 + 0.3;
 
 const richt = (psi) => new THREE.Vector3(Math.sin(psi), 0, Math.cos(psi));
 const winkelDiff = (a, b) => { let d = b - a; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; return d; };
@@ -134,6 +137,19 @@ export function baueFahrzeuge(scene, welt) {
     return f.vorne.every(([lx, lz]) => vorneFrei(lx, lz));
   }
 
+  // Hindernisse, in denen das Fahrzeug gerade schon steckt (z. B. Grill umgefahren und größer geworden, vom Lader geschoben):
+  // die zählen für den nächsten Schritt nicht, damit man immer wieder herausfahren kann
+  function steckt(f, ohne) {
+    const set = new Set(ohne || []);
+    const pts = f.art === 'jeep' ? f.punkte.map(([a, b]) => [a, b, f.psi]) : [...f.hinten.map(([a, b]) => [a, b, f.psi]), ...f.vorne.map(([a, b]) => [a, b, f.psi + f.knick])];
+    for (const [lx, lz, w] of pts) {
+      const c = Math.cos(w), sn = Math.sin(w);
+      const px = f.x + lx * c + lz * sn, pz = f.z - lx * sn + lz * c;
+      for (const h of welt.hindernisse) if (h !== f.hindernis && inHindernis(h, px, pz)) set.add(h);
+    }
+    return set.size ? set : ohne;
+  }
+
   // gedrehter Kasten um ein Fahrzeugteil (Mitte cz vor dem Bezugspunkt, halbe Breite/Länge)
   function box(f, psi, cz, hx, hz) { return { x: f.x + Math.sin(psi) * cz, z: f.z + Math.cos(psi) * cz, psi, hx, hz }; }
   function anwenden(f, dWeg) {
@@ -174,8 +190,10 @@ export function baueFahrzeuge(scene, welt) {
     const beschl = f.art === 'jeep' ? (f.gedrosselt ? 2.5 : 7.5) : 2.2;
     const sollV = gas * vMax;
     const dv = sollV - f.v;
+    // Bremsen (Gegengas) packt kräftig zu: Jeep 12 m/s², Hoflader 8 m/s²
     const bremst = Math.sign(sollV) !== Math.sign(f.v) && Math.abs(f.v) > 0.05;
-    f.v += THREE.MathUtils.clamp(dv, -(bremst ? 6 : beschl) * dt, (bremst ? 6 : beschl) * dt);
+    const bremsKraft = f.art === 'jeep' ? 12 : 8;
+    f.v += THREE.MathUtils.clamp(dv, -(bremst ? bremsKraft : beschl) * dt, (bremst ? bremsKraft : beschl) * dt);
     if (!gas && Math.abs(f.v) < 0.05) f.v = 0;
     const psiAlt = f.psi;
     let rums = false;
@@ -186,7 +204,7 @@ export function baueFahrzeuge(scene, welt) {
       const psi = f.psi + weg * Math.tan(f.lenk) / f.radstand;
       const d = richt(f.psi + (psi - f.psi) / 2);
       const x = f.x + d.x * weg, z = f.z + d.z * weg;
-      if (frei(f, x, z, psi, 0, spieler)) { f.x = x; f.z = z; f.psi = psi; anwenden(f, weg); }
+      if (frei(f, x, z, psi, 0, spieler, steckt(f))) { f.x = x; f.z = z; f.psi = psi; anwenden(f, weg); }
       else { rums = Math.abs(f.v) > 0.6; f.v = 0; anwenden(f, 0); }
     } else {
       // Knicklenker: Hinterachse fährt geradeaus, das Gelenk knickt, der Hinterwagen dreht sich nach (Formel Knicklenkung)
@@ -198,11 +216,12 @@ export function baueFahrzeuge(scene, welt) {
       const R = new THREE.Vector3(f.x, 0, f.z).addScaledVector(richt(f.psi), -f.Lr).addScaledVector(richt(f.psi), weg);
       const psi = f.psi + dpsi;
       const J = R.addScaledVector(richt(psi), f.Lr);
-      let ok = frei(f, J.x, J.z, psi, gNeu, spieler);
+      const drin = steckt(f);
+      let ok = frei(f, J.x, J.z, psi, gNeu, spieler, drin);
       // steht der Jeep im Weg (und fährt nicht gerade der Spieler damit): wegschieben, wenn er Platz hat
-      if (!ok && treffer === jeep.hindernis && jeep.fahrer !== 'spieler' && !jeep.aufGabel && frei(f, J.x, J.z, psi, gNeu, spieler, new Set([jeep.hindernis]))) {
+      if (!ok && treffer === jeep.hindernis && jeep.fahrer !== 'spieler' && !jeep.aufGabel && frei(f, J.x, J.z, psi, gNeu, spieler, new Set([...(drin || []), jeep.hindernis]))) {
         const dx = J.x - f.x, dz = J.z - f.z;
-        if (frei(jeep, jeep.x + dx, jeep.z + dz, jeep.psi, 0, spieler, new Set([f.hindernis]))) {
+        if (frei(jeep, jeep.x + dx, jeep.z + dz, jeep.psi, 0, spieler, steckt(jeep, new Set([f.hindernis])))) {
           jeep.x += dx; jeep.z += dz; anwenden(jeep, Math.hypot(dx, dz));
           jeep.geschoben = true;
           ok = true;
@@ -311,7 +330,8 @@ export function baueFahrzeuge(scene, welt) {
   }
   // Fährt die Route ab: weiche Bahn durch alle Wegpunkte (die Routen sind so gelegt, dass nichts im Weg steht).
   // Wegpunkt { x, z, v?, rums? } – v = Tempo-Faktor, rums = hier gegen etwas fahren (Rückmeldung über beiRums)
-  async function fahreRoute(f, route, stil, { beiRums, spielerPos, abbruch } = {}) {
+  // hindernisse(): Punkte { x, z, r } (Leute, andere Fahrzeuge), vor denen angehalten wird; nach 12 s Warten wird abgebrochen
+  async function fahreRoute(f, route, stil, { beiRums, spielerPos, hindernisse, abbruch } = {}) {
     // Bahn beginnt in Fahrtrichtung (kein Drehen auf der Stelle)
     const start = new THREE.Vector3(f.x, 0, f.z);
     const pts = [start, start.clone().addScaledVector(richt(f.psi), 0.8), ...route.map((p) => new THREE.Vector3(p.x, 0, p.z))];
@@ -325,7 +345,7 @@ export function baueFahrzeuge(scene, welt) {
     });
     const punkt = (s) => kurve.getPointAt(THREE.MathUtils.clamp(s / L, 0, 1));
     const richtung = (s0, s1) => { const a = punkt(s0), b = punkt(s1); return Math.atan2(b.x - a.x, b.z - a.z); };
-    let s = 0, v = Math.max(0, f.v), zeit = 0, stoss = 0;
+    let s = 0, v = Math.max(0, f.v), zeit = 0, stoss = 0, wartet = 0;
     f.geschoben = false;
     while (s < L - 0.02) {
       if (abbruch && abbruch()) return false;
@@ -340,10 +360,14 @@ export function baueFahrzeuge(scene, welt) {
       for (const m of marken) if (m.v && Math.abs(m.s - s) < 2.5) soll = Math.min(soll, stil.v * m.v);
       soll = Math.min(soll, Math.max(0.6, (L - s) * 1.2));
       const sp = spielerPos ? spielerPos() : null;
-      if (sp) {
-        const vorn = punkt(s + 1.4);
-        if (Math.hypot(vorn.x - sp.x, vorn.z - sp.z) < (stil.knapp ? 0.9 : 1.6)) soll = 0;
-      }
+      const hs = hindernisse ? hindernisse() : sp ? [{ x: sp.x, z: sp.z, r: 1.6 }] : [];
+      const vorn = punkt(s + 1.4), mitte = punkt(s + 0.4);
+      const imWeg = hs.some((h) => Math.min(Math.hypot(vorn.x - h.x, vorn.z - h.z), Math.hypot(mitte.x - h.x, mitte.z - h.z)) < (stil.knapp ? Math.min(h.r, 0.9) : h.r));
+      if (imWeg) {
+        soll = 0;
+        wartet += dt;
+        if (wartet > 12) { f.v = 0; return false; }
+      } else wartet = 0;
       if (stoss > 0) { stoss -= dt; soll = 0; }
       v += THREE.MathUtils.clamp(soll - v, -6 * dt, (f.art === 'jeep' ? 4 : 2.2) * dt);
       const weg = v * dt;
@@ -404,7 +428,8 @@ export function baueFahrzeuge(scene, welt) {
     frei: (f) => frei(f, f.x, f.z, f.psi, f.knick || 0, []),
     // Jeep entdrosseln (Torben)
     entdrosseln() { jeep.gedrosselt = false; },
-    vMax(f) { return f.art === 'jeep' ? (f.gedrosselt ? 1.4 : 11) : 4.2; },
+    // entdrosselt auf der Hauptstraße (Ringstraße) geht noch mehr: 17 m/s
+    vMax(f) { return f.art === 'jeep' ? (f.gedrosselt ? 1.4 : aufRing(f.x, f.z) ? 17 : 11) : 4.2; },
     zeitraffer: 1, // nur für Tests
     update(dt) {
       dt *= this.zeitraffer;

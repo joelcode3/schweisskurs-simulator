@@ -558,25 +558,26 @@ export function bierAuf(lautst = 0.7) {
 export function hupe(art = 'jeep', lautst = 0.5) {
   if (!ctx) return;
   const t = ctx.currentTime;
-  const toene = art === 'jeep' ? [[0, 0.16, [740, 932]], [0.22, 0.2, [740, 932]]] : [[0, 0.7, [233, 294]]];
+  // Jeep „möp möp“; Weidemann: kräftige Doppelton-Tellerhupe (zwei kurze, schnarrende Stöße wie beim echten Hoflader)
+  const toene = art === 'jeep' ? [[0, 0.16, [740, 932]], [0.22, 0.2, [740, 932]]] : [[0, 0.32, [415, 523]], [0.42, 0.42, [415, 523]]];
   for (const [ab, lang, frequenzen] of toene) {
     const g = ctx.createGain();
     const f = ctx.createBiquadFilter();
     f.type = 'lowpass';
-    f.frequency.value = art === 'jeep' ? 2600 : 1400;
+    f.frequency.value = art === 'jeep' ? 2600 : 2200;
     f.Q.value = 2;
-    huelle(g, t + ab, 0.015, lang - 0.05, 0.06, lautst * (art === 'jeep' ? 0.35 : 0.45));
+    huelle(g, t + ab, 0.015, lang - 0.05, 0.06, lautst * (art === 'jeep' ? 0.35 : 0.3));
     g.connect(master);
     f.connect(g);
     for (const hz of frequenzen) {
       const o = ctx.createOscillator();
-      o.type = art === 'jeep' ? 'square' : 'sawtooth';
+      o.type = 'square';
       o.frequency.setValueAtTime(hz * (art === 'jeep' ? 1.04 : 1), t + ab);
       o.frequency.exponentialRampToValueAtTime(hz, t + ab + 0.05);
       // leichtes Flattern wie bei einer echten Membran
       const lfo = ctx.createOscillator();
       const lg = ctx.createGain();
-      lfo.frequency.value = art === 'jeep' ? 28 : 7;
+      lfo.frequency.value = art === 'jeep' ? 28 : 55; // Tellerhupe schnarrt
       lg.gain.value = hz * 0.01;
       lfo.connect(lg).connect(o.frequency);
       o.connect(f);
@@ -600,4 +601,30 @@ export function peitschenKnall(lautst = 0.8) {
   const kg = ctx.createGain(); huelle(kg, t + 0.13, 0.002, 0.004, 0.06, lautst * 0.9);
   knall.connect(kf).connect(kg).connect(master);
   knall.start(t + 0.13); knall.stop(t + 0.3);
+}
+
+// Zusammenstoß mit dem Fahrzeug: dumpfer Schlag, Knirschen und etwas Blechscheppern (staerke 0…1)
+export function aufprall(staerke = 0.6) {
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  const v = Math.max(0.15, Math.min(1, staerke));
+  // dumpfer Schlag
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = 'sine';
+  o.frequency.setValueAtTime(95, t);
+  o.frequency.exponentialRampToValueAtTime(38, t + 0.28);
+  huelle(g, t, 0.003, 0.03, 0.3, 0.7 * v);
+  o.connect(g).connect(master);
+  o.start(t); o.stop(t + 0.45);
+  // Knirschen (gefiltertes Rauschen)
+  const q = rauschQuelle();
+  const f = ctx.createBiquadFilter();
+  f.type = 'bandpass'; f.frequency.value = 700 + Math.random() * 400; f.Q.value = 0.9;
+  const gr = ctx.createGain();
+  huelle(gr, t, 0.002, 0.05, 0.25, 0.55 * v);
+  q.connect(f).connect(gr).connect(master);
+  q.start(t);
+  // Scheppern: ein paar kurze Metalltöne hinterher
+  for (let i = 0; i < 3; i++) setTimeout(() => klonk(0.25 * v * (1 - i * 0.25)), 40 + i * 70 + Math.random() * 40);
 }
