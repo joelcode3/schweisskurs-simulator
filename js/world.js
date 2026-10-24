@@ -1430,12 +1430,26 @@ export function baueWelt(scene) {
   }, [3, 2]);
   {
     // Korpus: unten 55 x 37 cm, oben etwas weiter, 35 cm hoch, oben offen
-    const geo = new THREE.BoxGeometry(0.55, 0.35, 0.37, 2, 2, 2);
+    // weiche Plane statt Kasten: Ecken rund (Radius 6 cm), Seiten leicht ausgebeult, unten etwas eingesackt
+    const geo = new THREE.BoxGeometry(0.55, 0.35, 0.37, 14, 8, 10);
     const pos = geo.attributes.position;
+    const HW = 0.275, HD = 0.185, R = 0.06;
     for (let i = 0; i < pos.count; i++) {
-      const t = (pos.getY(i) + 0.175) / 0.35;
-      pos.setX(i, pos.getX(i) * (1 + t * 0.05));
-      pos.setZ(i, pos.getZ(i) * (1 + t * 0.07) + Math.sin(pos.getX(i) * 9) * 0.004 * t);
+      let x = pos.getX(i), z = pos.getZ(i);
+      const y = pos.getY(i);
+      const t = (y + 0.175) / 0.35;
+      // senkrechte Kanten abrunden
+      const ax = Math.abs(x) - (HW - R), az = Math.abs(z) - (HD - R);
+      if (ax > 0 && az > 0) { const l = Math.hypot(ax, az); x = Math.sign(x) * (HW - R + (ax / l) * R); z = Math.sign(z) * (HD - R + (az / l) * R); }
+      // Bauch: Seitenmitte wölbt sich etwas nach außen
+      const bx = 1 - (z / HD) ** 2, bz = 1 - (x / HW) ** 2;
+      x *= 1 + bx * 0.035 * Math.sin(t * Math.PI);
+      z *= 1 + bz * 0.06 * Math.sin(t * Math.PI);
+      // unten eingezogen (Boden sackt), oben etwas weiter
+      const unten = Math.max(0, 1 - t / 0.12);
+      x *= (1 + t * 0.05) * (1 - unten * 0.06);
+      z *= (1 + t * 0.07) * (1 - unten * 0.08);
+      pos.setXYZ(i, x, y - unten * 0.006, z + Math.sin(x * 9) * 0.004 * t);
     }
     geo.translate(0, 0.175, 0);
     geo.computeVertexNormals();
@@ -1448,11 +1462,18 @@ export function baueWelt(scene) {
     innen.scale.setScalar(0.995);
     tasche.add(innen);
     // Comic-Kanten
-    const kanten = new THREE.LineSegments(new THREE.EdgesGeometry(geo, 30), new THREE.LineBasicMaterial({ color: 0x111111 }));
-    tasche.add(kanten);
+    umriss(aussen, 0.004);
     // Saum oben
-    for (const sz of [-1, 1]) tasche.add(setze(quader(0.58, 0.02, 0.006, 0x174e9e, { umriss: 0.002 }), 0, 0.34, sz * 0.198));
-    for (const sx of [-1, 1]) tasche.add(setze(quader(0.006, 0.02, 0.4, 0x174e9e, { umriss: 0.002 }), sx * 0.289, 0.34, 0));
+    // Saum oben als runder Wulst entlang der abgerundeten Öffnung
+    {
+      const sw = HW * 1.05, sd = HD * 1.07, sr = R;
+      const rand = new THREE.Shape();
+      rand.moveTo(-sw + sr, -sd); rand.lineTo(sw - sr, -sd); rand.quadraticCurveTo(sw, -sd, sw, -sd + sr);
+      rand.lineTo(sw, sd - sr); rand.quadraticCurveTo(sw, sd, sw - sr, sd); rand.lineTo(-sw + sr, sd);
+      rand.quadraticCurveTo(-sw, sd, -sw, sd - sr); rand.lineTo(-sw, -sd + sr); rand.quadraticCurveTo(-sw, -sd, -sw + sr, -sd);
+      const kurve = new THREE.CatmullRomCurve3(rand.getSpacedPoints(64).map((q) => new THREE.Vector3(q.x, 0.345, q.y)), true);
+      tasche.add(teil(new THREE.TubeGeometry(kurve, 96, 0.011, 8, true), 0x174e9e, { umriss: 0.002 }));
+    }
   }
   const gurtGelb = 0xf2c21c;
   // flacher, gebogener Gurt-Henkel (Bogen aus Band)

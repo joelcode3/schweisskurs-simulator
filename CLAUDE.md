@@ -69,5 +69,5 @@
 - KI-Stimmklon ist in dieser Umgebung nicht möglich (huggingface.co gesperrt). Stimmproben nie ins Repo (öffentlich).
 
 ## Stand der Pull Requests (23.10.2026)
-- Bis #32 gemergt. Offen und aufeinander aufbauend: #33 P1 → #34 P2 → #35 P3 → P4 (Fahren). In dieser Reihenfolge mergen;
-  neue Pakete auf dem jeweils letzten Zweig aufsetzen. Versionsnummer zuletzt `v=20261024-4`.
+- Bis #32 gemergt. Offen und aufeinander aufbauend: #33 P1 → #34 P2 → #35 P3 → #36 P4 → P5 (Bad/Wäsche). In dieser Reihenfolge mergen;
+  neue Pakete auf dem jeweils letzten Zweig aufsetzen. Versionsnummer zuletzt `v=20261024-5`.

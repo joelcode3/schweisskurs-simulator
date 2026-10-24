@@ -19,6 +19,8 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
   const zeiger = new Map();
   let zieh = null;
   const raycaster = new THREE.Raycaster();
+  // Linien (Nähte, Gurte, Kabel) nur bei direktem Treffer zählen: Standard wäre 1 m Abstand, dann „gewinnt“ z. B. die Wäschetasche alles drumherum
+  raycaster.params.Line.threshold = 0.02;
   raycaster.far = 6;
 
   function richtungAus(gierW, nickW) {
