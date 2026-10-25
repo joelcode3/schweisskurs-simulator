@@ -136,8 +136,8 @@ export function baueJonny(scene, opts = {}) {
   // Körper (Haut) unter dem offenen Hemd; der Hals sitzt direkt darauf, Brust und Hals gehen durchgehend ineinander über
   rumpf.add(teil(huelle(0, 0, -0.04, 0.76, null), F.HAUT, { umriss: 0.003 }));
   rumpf.add(setze(teil(new THREE.CylinderGeometry(0.066, 0.078, 0.26, 18), F.HAUT, { umriss: 0.003 }), 0, 0.79, -0.005));
-  // Hemd: weit offen bis ganz oben (oben ganz auseinander, unten noch zwei Knöpfe zu)
-  const hemdOffen = (y) => (y < 0.16 ? 0 : 0.012 + (y - 0.16) * 0.3);
+  // Hemd: oben offen (V bis zur Brustmitte), darunter zugeknöpft – nicht mehr ganz so weit offen (Betreiber)
+  const hemdOffen = (y) => (y < 0.38 ? 0 : 0.012 + (y - 0.38) * 0.24);
   const H_PLUS = 0.008, H_T = 0.004;
   const hemdMat = toon(F.SHIRT, { side: THREE.DoubleSide });
   rumpf.add(teil(huelle(H_PLUS, H_T, -0.03, 0.735, hemdOffen), 0, { material: hemdMat, umriss: 0.002 }));
@@ -169,13 +169,13 @@ export function baueJonny(scene, opts = {}) {
   // Hemdkanten (Knopfleiste), Kragen, Knöpfe unten
   for (const s of [-1, 1]) {
     const pts = [];
-    for (let y = 0.16; y <= 0.735; y += 0.025) pts.push(aufHuelle(H_PLUS, H_T, s * Math.min(hemdOffen(y), R(y, H_PLUS) * Math.sin(1.3)), y, 0.002).p);
+    for (let y = 0.38; y <= 0.735; y += 0.025) pts.push(aufHuelle(H_PLUS, H_T, s * Math.min(hemdOffen(y), R(y, H_PLUS) * Math.sin(1.3)), y, 0.002).p);
     rumpf.add(teil(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 30, 0.006, 6, false), 0xe9e6de, { umriss: 0.001 }));
     // Kragenecke klappt nach außen auf die Schulter
     const k = aufHuelle(H_PLUS, H_T, s * 0.13, 0.67, 0.006);
     rumpf.add(setze(quader(0.07, 0.09, 0.008, F.SHIRT, { umriss: 0.002 }), k.p.x, k.p.y, k.p.z, -0.45, k.rot, s * -0.5));
   }
-  for (let i = 0; i < 2; i++) { const b = aufHuelle(H_PLUS, H_T, 0, 0.04 + i * 0.07, 0.003); rumpf.add(setze(zylinder(0.006, 0.006, 0.004, 0xd9d4c4, { umriss: false }, 8), b.p.x, b.p.y, b.p.z, Math.PI / 2, 0, 0)); }
+  for (let i = 0; i < 5; i++) { const b = aufHuelle(H_PLUS, H_T, 0, 0.04 + i * 0.075, 0.003); rumpf.add(setze(zylinder(0.006, 0.006, 0.004, 0xd9d4c4, { umriss: false }, 8), b.p.x, b.p.y, b.p.z, Math.PI / 2, 0, 0)); }
   // Kragensteg hinten um den Hals
   rumpf.add(setze(teil(new THREE.CylinderGeometry(0.084, 0.09, 0.045, 20, 1, true, Math.PI * 0.45, Math.PI * 1.1), 0, { material: hemdMat, umriss: 0.002 }), 0, 0.735, -0.004));
 

@@ -223,7 +223,7 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
 
 ## Jonny
 - Jonny (js/jonny.js, nach Fotos): so groß wie Dennis, etwas breiter, lange braune Haare, Vollbart, grüne Cap mit Schirm nach
-  vorn, runde goldene Brille (kein Nasenring), weißes KURZärmliges Hemd bis oben offen (Brust und Hals durchgehend, Haare nur
+  vorn, runde goldene Brille (kein Nasenring), weißes KURZärmliges Hemd oben offen bis zur Brustmitte, darunter zugeknöpft (Brust und Hals durchgehend, Haare nur
   auf der Brust, Hals ohne Haare), hellbraune Cord-Weste eng an Brust und Schultern bis an den Hals, Hemd/Weste/Körper als
   saubere Hüllen (`huelle`, `aufHuelle` in jonny.js, R(y)/T(y) = Rumpfform), große Hände (dicke Finger mit zwei Gliedern, Nägel, Daumen), Arme richtig verschränkt (links unten, rechts darüber),
   kein Gürtel, dünner, flacher Bauch, sehr kurze schwarze Arbeitshose mit
@@ -376,6 +376,13 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Scherben, geschlängelte Reifenspuren von der Straße durch die Wiese. Himmel/Horizont/Nebel für die große Sichtweite (Kamera 1500).
 
 ## Paket A (Bugliste Projektchat)
+- Paket P7 (Projektchat 24./25.10.): Leistung (main.js): kleine Teile (unter 6 cm) und Umrisse werfen keinen Schatten, Schatten nur
+  jedes 2. Bild neu (shadowMap.autoUpdate false), weit entfernte Kleinteile/Umrisse (über 45 m, je Gruppe) per Layer aus, alle
+  Materialien beim Start vorkompiliert (gegen Hakeln beim ersten Auftauchen). Draw-Calls in der Werkstatt ca. 1870 auf 600.
+  Rohrbruch-Minispiel: erst Teflonband wickeln (im Kreis), dann Zange ansetzen, gefühlvoll drehen (über 9 rad/s = abgerutscht).
+  Kaffee-Minispiel als Filterkaffeemaschine: alten Filter mit Satz in den Müll ziehen, neuen Filter vom Stapel in den Korb,
+  Pulver (3 Löffel), Korb zu, Wasserkanne gedrückt halten bis zur Markierung, Knopf. Jonnys Hemd nur noch oben offen
+  (hemdOffen ab 0,38, darunter 5 Knöpfe).
 - Paket P5 (Projektchat 24.10.): Klickstrahl zählt Linien nur bei direktem Treffer (raycaster.params.Line.threshold 0,02 in
   steuerung.js; vorher 1 m: die Wäschetasche fing alle Klicks auf Waschmaschine, Trockner und Sieb ab, Linien am Klo die Tasse auf
   dem Spülkasten). Damit sind Maschinen wieder anklickbar, das Sieb ist auch vor der Aufgabe herausnehmbar, die Tasse auf dem
