@@ -589,9 +589,6 @@ export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
     rampe.position.set(1.2, 0.4, 1.7); rampe.rotation.x = 0.55;
     hm.add(rampe);
     hm.add(setze(quader(0.08, 0.08, 1.4, 0x5a5d62, { umriss: 0.002 }), -2.6, 0.55, 0, 0, Math.PI / 2, 0));
-    const hmSchild = schildTafel([['Peters Hühner', 44, true]], 1.2, 0.3, '#f4efe0', '#2f5a2a');
-    hmSchild.position.set(-0.6, 2.05, 1.12);
-    hm.add(hmSchild);
     hm.position.set(HM.x, 0, HM.z - 3.5);
     hof.add(hm);
     merke(hm, 'huehnermobil', 'Hühnermobil');

@@ -32,6 +32,7 @@ export const DENNIS = {
     loescherSpielen: ['Der Feuerlöscher ist kein Spielzeug! Den muss ich jetzt neu befüllen lassen!', 'Hör auf, mit dem Löscher rumzuspielen!', 'Der Löscher ist für Feuer, nicht für Spaß!'],
   },
   wurf: {
+    tasse: ['Eine Tasse ist kein Wurfgeschoss! Die ist zum Trinken da!', 'Meine schöne Tasse! Wenn die kaputtgeht, zahlst du!'],
     kaffee: ['Mein KAFFEE! Wirfst du jetzt mit Kaffee?!', 'Der Kaffee war für MICH! Und jetzt liegt er auf dem Boden!'],
     werkzeug: ['Werkzeug wird nicht geworfen! Hast du sie noch alle?', 'Ey! Werkzeug fliegt hier nicht durch die Gegend!', 'Das ist Werkzeug, kein Wurfgeschoss!'],
     edding: ['Ey! Der Edding fliegt nicht, der malt!', 'Der Edding ist zum Anzeichnen da, nicht zum Werfen!'],
@@ -275,13 +276,13 @@ export const DENNIS = {
   tassenMecker: ['Wem gehören die ganzen Tassen hier?! Das ist doch kein Café!', 'Überall Tassen! Ab auf den Kühlschrank damit!', 'Ich hab gleich keine Tasse mehr, weil alle hier rumstehen!'],
   tassenSelbst: ['Muss ich die Tassen jetzt auch noch wegräumen?! Unglaublich.', 'Na toll. Tassen-Dienst. Ich mach das ja gern. NICHT.'],
   peitsche: {
-    flucht: ['Hilfe! Nicht die Peitsche! Hahaha!', 'Neiiin! Ich bin unschuldig! Hahaha!', 'Ich hab nix gemacht! Lass mich!'],
+    flucht: ['Hihi! Nicht die Gerte! Hahaha!', 'Oh jaaa! Äh, ich meine: Neiiin! Hahaha!', 'Ich war ein böser Junge! Hihi!'],
     quieken: ['Aua! Hahaha!', 'Hihi! Nicht! Nicht!'],
     lacht: ['Okay, okay! Du hast gewonnen! Jetzt aber wieder an die Arbeit.', 'Haha, der Tag wird doch noch gut. Weiter jetzt!'],
-    zuViel: ['Jetzt reicht\'s mit dem Quatsch!', 'Ey! Einmal ist lustig. Jetzt nervt\'s!'],
-    sauer: ['Leg das Ding zurück in den Kofferraum. SOFORT.', 'Noch einmal und du fliegst. Mit Peitsche.'],
+    zuViel: ['Jetzt reicht\'s mit dem Quatsch!', 'Ey! Zweimal war lustig. Jetzt ist Schluss!'],
+    sauer: ['Leg die Gerte zurück in den Kofferraum. SOFORT.', 'Noch einmal und du fliegst. Mitsamt Gerte.'],
   },
-  kettenhemd: ['Finger weg, das ist für den Mittelaltermarkt!', 'Das Kettenhemd geht dich gar nix an.'],
+  kettenhemd: ['Finger weg, das brauch ich für meine Kinky-Partys!', 'Das Kettenhemd geht dich gar nix an. Das ist für den Fetisch-Abend.'],
   muellAufgehoben: ['Oh, du räumst den Müll weg? Danke, Mann!', 'Endlich hebt mal einer den Kram auf. Sehr gut.'],
   einkauf: {
     eier: ['Lühmanns Landeier! Du bist ein Schatz. Morgen gibt es Rührei.', 'Oh, frische Eier! Hast du angeschrieben? Gut so.'],

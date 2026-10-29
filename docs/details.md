@@ -376,6 +376,12 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Scherben, geschlängelte Reifenspuren von der Straße durch die Wiese. Himmel/Horizont/Nebel für die große Sichtweite (Kamera 1500).
 
 ## Paket A (Bugliste Projektchat)
+- Paket T Texte (Projektchat 29.10.): Briefkasten: Werbung, dicker Stapel GEZ-Forderungen, Postkarte von Lydia. Kettenhemd gehört zu Dennis'
+  Kinky-Partys/Fetisch-Abend (DENNIS.kettenhemd, Text geändert, Nummern dennis445/446 bleiben). Peitsche heißt jetzt Gerte (Anzeigename,
+  intern bleibt der Schlüssel `peitsche`): Klatschgeräusch statt Knall (audio gertenKlatsch), Dennis freut sich (flucht-Texte neu gefasst),
+  klappt nur 2x (Wut je -6); 3. Mal: er schimpft einmal (zuViel + sauer, Wut +4), danach nur noch Hinweis (z.jagdSchluss). Modell sieht noch wie
+  eine Peitsche aus (Optik offen). Tassen sind kein Werkzeug: Wurf einer Tasse hat eigene Sätze (DENNIS.wurf.tasse, dennis467/468) und den
+  Fehlernamen „Tasse geworfen“. Schild am Hühnermobil entfernt.
 - Paket D Dennis draußen (Projektchat 29.10., B13/B18/B19/B29): spiel.js spielerNah(): Dennis bekommt nur etwas mit, wenn der Spieler
   unter 14 m entfernt ist und im selben Bereich (Werkstatt/Bad/draußen, wege.js bereich) oder unter 5 m (Tor). dennisSiehts() nutzt das:
   weit weg oder durch die Wand keine Kommentare, Wut oder Ausraster-Videos (Wurf in die Ferne, Handy, Kiwi, Brotdose, Meckern).
