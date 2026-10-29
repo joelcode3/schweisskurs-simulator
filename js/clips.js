@@ -112,16 +112,6 @@ export function videoFreischalten() {
   }
 }
 
-// Knopf über dem Video, falls der Browser das Abspielen blockiert (z. B. iPhone im Stromsparmodus)
-function knopfUeberVideo(medien, text, beiTipp) {
-  medien.querySelector('.video-knopf')?.remove();
-  const b = document.createElement('button');
-  b.type = 'button';
-  b.className = text === 'Ton an' ? 'video-knopf ecke' : 'video-knopf';
-  b.innerHTML = `<svg viewBox="0 0 24 24" class="ico"><path d="M7 5l12 7-12 7z"/></svg><span>${text}</span>`;
-  b.addEventListener('click', (e) => { e.stopPropagation(); b.remove(); beiTipp(); });
-  medien.appendChild(b);
-}
 
 function waehle(schluessel) {
   for (const k of schluessel) {
@@ -212,8 +202,8 @@ export function auftritt({ schluessel, text, stufe = 'mittel', stimmung = 'sauer
       }
       // Altes Bild nicht kurz aufblitzen lassen: Video erst zeigen, wenn es wirklich läuft
       if (clip.hochkant !== undefined) el.classList.toggle('hochkant', clip.hochkant);
-      // Erstes Bild als Vorschau (vorgeladen): kein gelber Rahmen, kein altes Bild, bis das Video läuft
-      video.poster = `clips/${clip.datei.replace(/\.mp4$/, '.jpg')}`;
+      // kein Standbild mehr (Betreiber): das Video startet sofort
+      video.removeAttribute('poster');
       video.onloadedmetadata = () => el.classList.toggle('hochkant', video.videoHeight > video.videoWidth);
       // Kann das Gerät den Clip nicht abspielen, zeigt es den gezeichneten Dennis
       video.onerror = () => {
@@ -230,19 +220,22 @@ export function auftritt({ schluessel, text, stufe = 'mittel', stimmung = 'sauer
       raster.className = 'raster';
       medien.appendChild(raster);
       blase.textContent = anzeigeText;
-      const mitTon = () => { video.muted = false; video.play().catch(() => {}); };
-      const p = video.play();
-      if (p && p.catch) {
-        p.catch(() => {
+      // Sofort abspielen, nie ein Abspiel-Knopf (Betreiber): klappt es nicht, noch zweimal versuchen (beim ersten Mal
+      // nötigenfalls stumm, der Ton kommt mit dem nächsten Klick), danach der gezeichnete Dennis statt Standbild
+      const spielen = (versuch) => {
+        const p = video.play();
+        if (!p || !p.catch) return;
+        p.catch((err) => {
           if (aus) return;
-          // Ton blockiert: stumm abspielen und Knopf für Ton anbieten
-          video.muted = true;
-          video.play().then(
-            () => { if (!aus) knopfUeberVideo(medien, 'Ton an', () => { video.muted = false; }); },
-            () => { if (!aus) knopfUeberVideo(medien, 'Dennis abspielen', mitTon); },
-          );
+          if (versuch >= 3) { el.classList.remove('hochkant'); medien.innerHTML = dennisPortrait(stimmung); return; }
+          if (err && err.name === 'NotAllowedError' && !video.muted) {
+            video.muted = true;
+            document.addEventListener('pointerdown', () => { video.muted = false; }, { once: true });
+          }
+          setTimeout(() => { if (!aus) spielen(versuch + 1); }, 150);
         });
-      }
+      };
+      spielen(1);
       // Sicherheitsnetz, falls das Video hängt
       if (automatisch) timer = setTimeout(schliessen, Math.max(9000, (clip.ende ? clip.ende - (clip.start || 0) : 8) * 1000 + 2000));
       video.onended = () => {

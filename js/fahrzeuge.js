@@ -103,8 +103,11 @@ export function baueFahrzeuge(scene, welt) {
 
   // letzter Treffer (welches Hindernis hat gebremst?) – für Grill/Tonnen umfahren und Jeep schieben
   let treffer = null;
+  // befreien: hängt ein Fahrzeug fest und man gibt weiter Gas, zählen Hindernisse kurz nicht (nur der Geländerand)
+  let befreien = false;
   function punktFrei(x, z, f, spieler, ohne) {
     if (!welt.draussen.fahrbar(x, z)) { treffer = 'rand'; return false; }
+    if (befreien) return true;
     for (const h of welt.hindernisse) {
       if (h === f.hindernis || (ohne && ohne.has(h))) continue;
       if (f.last && f.last.some((p) => h === p.userData.hindernis)) continue;
@@ -185,7 +188,8 @@ export function baueFahrzeuge(scene, welt) {
 
   // Ein Zeitschritt: gas -1…1, lenkSoll -1…1 (Jeep: Lenkeinschlag, Lader: Knickgeschwindigkeit)
   // Rückgabe: Drehung des Fahrerhauses (für die Kamera) und ob es gerumst hat
-  function schritt(f, dt, gas, lenkSoll, vMax, spieler) {
+  function schritt(f, dt, gas, lenkSoll, vMax, spieler, frei_ = false) {
+    befreien = frei_;
     // entdrosselt zieht der Jeep in gut 1,5 s auf Höchstgeschwindigkeit
     const beschl = f.art === 'jeep' ? (f.gedrosselt ? 2.5 : 7.5) : 2.2;
     const sollV = gas * vMax;
@@ -230,6 +234,7 @@ export function baueFahrzeuge(scene, welt) {
       if (ok) { f.x = J.x; f.z = J.z; f.psi = psi; f.knick = gNeu; anwenden(f, weg); }
       else { rums = Math.abs(f.v) > 0.6; f.v = 0; anwenden(f, 0); }
     }
+    befreien = false;
     return { dpsi: f.psi - psiAlt, rums, treffer: rums || !f.v ? treffer : null };
   }
 

@@ -1,6 +1,6 @@
 // Dennis als Comic-Figur in der Werkstatt: steht in der Kaffeeecke, guckt zu, kommt rüber.
 import * as THREE from 'three';
-import { wegNach } from './wege.js';
+import { wegNach, ausweichen } from './wege.js';
 import { toon, teil, quader, zylinder, kugel, setze, leinwandTextur, umriss } from './toon.js';
 
 const HAUT = 0xefc3a6;
@@ -639,6 +639,7 @@ export function baueDennis(scene) {
           laeuft = true;
           const schritt = Math.min(dist, tempo * dt);
           d.normalize();
+          ausweichen(wurzel.position, d, dist + (weg.length ? 9 : 0));
           wurzel.position.addScaledVector(d, schritt);
           const soll = Math.atan2(d.x, d.z);
           wurzel.rotation.y += winkelDiff(soll, wurzel.rotation.y) * Math.min(1, dt * 10);

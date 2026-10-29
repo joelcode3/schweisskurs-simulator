@@ -139,7 +139,7 @@ export function baueFahrten(c) {
       const ereignis = fz.gabel(dt, hub);
       if (ereignis) {
         klonk(0.35);
-        ui.hinweis({ aufgenommen: 'Palette auf der Gabel.', aufgenommenMehrere: `${fz.lader.last.length} Paletten auf der Gabel.`, abgesetzt: 'Palette abgesetzt.', abgesetztMehrere: 'Paletten abgesetzt.',
+        ui.hinweis({ aufgenommen: 'Palette auf der Gabel.', aufgenommenMehrere: `${fz.lader.last?.length || 2} Paletten auf der Gabel.`, abgesetzt: 'Palette abgesetzt.', abgesetztMehrere: 'Paletten abgesetzt.',
           jeepAuf: fz.jeep.fahrer ? 'Jeep samt Fahrer auf der Gabel!' : 'Jeep auf der Gabel.', jeepAb: 'Jeep wieder abgesetzt.' }[ereignis]);
         if (ereignis === 'jeepAuf') {
           aerger(2);
@@ -149,7 +149,13 @@ export function baueFahrten(c) {
         }
       }
     }
-    const { dpsi, rums, treffer } = fz.schritt(f, dt, gas, lenk, fz.vMax(f), fussgaenger());
+    // festgefahren (Gas gedrückt, aber seit 1,5 s keine Bewegung): kurz durch Hindernisse hindurch befreien
+    const vorher = { x: f.x, z: f.z };
+    if (gas && fz2.festSeit > 1.5 && !fz2.befreiHinweis) { fz2.befreiHinweis = true; ui.hinweis('Festgefahren – du ruckelst dich frei.', 1500); }
+    if (!fz2.festSeit) fz2.befreiHinweis = false;
+    const { dpsi, rums, treffer } = fz.schritt(f, dt, gas, lenk, fz.vMax(f), fussgaenger(), gas !== 0 && fz2.festSeit > 1.5);
+    const bewegt = Math.hypot(f.x - vorher.x, f.z - vorher.z) > 0.002;
+    fz2.festSeit = gas && !bewegt ? (fz2.festSeit || 0) + dt : bewegt ? 0 : fz2.festSeit || 0;
     // gegen Grill oder Mülltonnen gefahren: umgefahren
     const schnell = Math.abs(fz2.vorher || 0) > 0.5;
     if (treffer && schnell && treffer === T.feuerHindernis && fz2.grill === 'steht') grillUm();
@@ -401,7 +407,18 @@ export function baueFahrten(c) {
     }
   }
 
-  function menue(id) {
+  function muellStueckWeg(obj) {
+    obj.visible = false;
+    klonk(0.2);
+    const rest = T.tonnen.children.filter((c) => c.userData.liegeMuell && c.visible).length;
+    if (!rest) {
+      z.wut = Math.max(0, z.wut - 2);
+      lob(sag(DENNIS.muellAufgehoben));
+      const weg = T.tonnen.children.filter((c) => c.userData.liegeMuell);
+      setTimeout(() => { for (const c of weg) c.visible = true; }, (200 + Math.random() * 120) * 1000);
+    } else ui.hinweis(`In die Tonne. Noch ${rest} Teil${rest > 1 ? 'e' : ''}.`, 1600);
+  }
+  function menue(id, obj) {
     switch (id) {
       case 'minijeep': {
         const f = fz.jeep;
@@ -423,19 +440,18 @@ export function baueFahrten(c) {
           lob(sag(DENNIS.grillDanke));
         })]];
         return null;
+      case 'muellStueck': {
+        // ein Teil aufheben und in die Tonne; ist alles weg, freut sich Dennis; nach ein paar Minuten liegt wieder was rum
+        return [obj?.userData.interaktiv.name || 'Müll', '', [A('Aufheben und in die Tonne', 'hand', () => muellStueckWeg(obj))]];
+      }
       case 'muelltonnen': {
         // rumliegender Müll neben den Tonnen: aufheben und reinwerfen freut Dennis; nach ein paar Minuten liegt wieder was rum
         const liegt = T.tonnen.children.filter((c) => c.userData.liegeMuell && c.visible);
-        if (fz2.tonnen !== 'um' && liegt.length) return ['Mülltonnen', 'Daneben liegt Müll rum: Bananenschalen, Pizzakarton, Dose ...', [A('Müll aufheben und in die Tonne', 'hand', () => {
-          for (const c of liegt) c.visible = false;
-          klonk(0.3);
-          z.wut = Math.max(0, z.wut - 2);
-          lob(sag(DENNIS.muellAufgehoben));
-          setTimeout(() => { for (const c of liegt) c.visible = true; }, (200 + Math.random() * 120) * 1000);
-        })]];
+        if (fz2.tonnen !== 'um' && liegt.length) return ['Mülltonnen', 'Daneben liegt Müll rum. Einzeln anklicken und aufheben.', []];
       }
       // falls through
       case 'muelltonnenUm':
+        if (id === 'muellStueck') return null;
         if (fz2.tonnen === 'um') return ['Mülltonnen', 'Umgefahren. Der Müll liegt überall.', [A('Wieder aufstellen und Müll einsammeln', 'hand', () => {
           tonnenAuf();
           klonk(0.4);

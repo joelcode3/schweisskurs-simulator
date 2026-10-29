@@ -1,7 +1,8 @@
 // Spielablauf: Zustand, Aktionen, Fehler, Dennis-Reaktionen, Bewertung.
 import * as THREE from 'three';
 import { STATIONEN, AUGENHOEHE } from './world.js';
-import { FELDWEG } from './draussen.js';
+import { FELDWEG, inHindernis } from './draussen.js';
+import { eierKartonModell, mettendenModell } from './landschaft.js';
 import { setze } from './toon.js';
 import { auftritt, hatClip, buehneBelegt } from './clips.js';
 import { pfadSpiel, schlackeSpiel, hulaSpiel, DENNIS_HULA_REKORD, ventilSpiel, spuelSpiel, anzeichnenSpiel, lackierSpiel, bitsatzSpiel, akkuschrauberSpiel, siebSpiel, kaffeeSpiel, rohrSpiel, leiterSpiel } from './minispiele.js';
@@ -344,7 +345,9 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     ui.schliesseMenue();
     z.beschaeftigt = true;
     if (dennis.modus === 'tanzen') dennis.setzeModus('normal');
-    steuerung.sperre(true);
+    // nur beim richtigen Ausraster steht man still; bei Ermahnungen und Meckern läuft man weiter
+    const sperren = f.stufe === 'voll';
+    if (sperren) steuerung.sperre(true);
     const plus = f.wut * multi;
     z.wut = Math.min(100, z.wut + plus);
     z.wutMax = Math.max(z.wutMax, z.wut);
@@ -377,10 +380,12 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     else if (ARGERN_BEI.includes(id)) ton = ARGERN_TOENE[z.aergern++ % ARGERN_TOENE.length];
     else if (f.ton) ton = f.ton;
     // Video nur beim richtigen Ausraster, sonst Sprechblase mit Ton
-    if (f.nebensache || f.stufe !== 'voll') await Promise.all([kommt, dennisSagt(text, f.stufe !== 'leicht', { ton })]);
+    // Sicherheitsnetz: hängt etwas (Warteschlange, Video), geht es nach spätestens 12 bzw. 20 s trotzdem weiter
+    const notAus = warte(f.stufe === 'voll' ? 20000 : 12000);
+    if (f.nebensache || f.stufe !== 'voll') await Promise.race([Promise.all([kommt, dennisSagt(text, f.stufe !== 'leicht', { ton })]), notAus]);
     else {
       nebenbeiStoppen();
-      await Promise.all([kommt, auftritt({ schluessel: f.nurZeichnung ? [f.clip] : [f.clip, STUFEN_CLIP[f.stufe]], text, stufe: f.stufe, stimmung: STUFEN_STIMMUNG[f.stufe], seite: true })]);
+      await Promise.race([notAus, Promise.all([kommt, auftritt({ schluessel: f.nurZeichnung ? [f.clip] : [f.clip, STUFEN_CLIP[f.stufe]], text, stufe: f.stufe, stimmung: STUFEN_STIMMUNG[f.stufe], seite: true })])]);
     }
     if (z.wut >= 100) {
       await rausgeflogen();
@@ -389,7 +394,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     dennis.stimmung(stimmungAusWut() === 'wut' ? 'sauer' : 'ruhig');
     if (!dennis.istDaheim()) dennis.heim();
     aktualisieren();
-    steuerung.sperre(false);
+    if (sperren) steuerung.sperre(false);
     z.beschaeftigt = false;
     if (f.stufe === 'voll') z.letzterAusraster = sekundenSeitStart();
     else vielleichtAusraster();
@@ -924,14 +929,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   // Einkaufen bei Lühmann: nimmt man, schreibt an, Dennis freut sich, wenn man ihm was mitbringt
   function einkaufen(art) {
     if (hand.item) { ui.hinweis(`Du hast schon ${hand.item.cfg.name} in der Hand.`); return; }
-    const obj = new THREE.Group();
-    if (art === 'eier') {
-      obj.add(setze(new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.07, 0.13), new THREE.MeshToonMaterial({ color: 0xb8a888 })), 0, 0, 0));
-      for (let i = 0; i < 10; i++) obj.add(setze(new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 6), new THREE.MeshToonMaterial({ color: i % 3 ? 0xd9b48a : 0xf2ead8 })), -0.12 + (i % 5) * 0.06, 0.045, -0.03 + Math.floor(i / 5) * 0.06));
-    } else {
-      obj.add(setze(new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.03, 0.22), new THREE.MeshToonMaterial({ color: 0xe8dcb8 })), 0, 0, 0));
-      for (let j = 0; j < 3; j++) obj.add(setze(new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.2, 6), new THREE.MeshToonMaterial({ color: 0x8a2a1a })), -0.04 + j * 0.04, 0.03, 0, Math.PI / 2, 0, 0));
-    }
+    // dieselben detaillierten Modelle wie im Laden (landschaft.js)
+    const obj = art === 'eier' ? eierKartonModell() : mettendenModell();
     obj.userData.interaktiv = { id: art, name: art === 'eier' ? 'Landeier' : 'Mettenden', station: null };
     hand.nimm(art, obj);
     handleisteZeigen();
@@ -1383,7 +1382,11 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     const o = moeglich[Math.floor(Math.random() * moeglich.length)];
     waldo.haltung('handy');
     await waldoKommt();
-    await Promise.race([waldo.gehZu(o.x, o.z, 1.0), warte(20000)]);
+    // Sitzplätze vorne anlaufen, dann genau hinsetzen (nie seitlich oder mit den Beinen im Polster)
+    const vorne = o.haltung === 'sitzen' ? { x: o.x, z: o.z - 0.6 } : o;
+    await Promise.race([waldo.gehZu(vorne.x, vorne.z, 1.0), warte(20000)]);
+    waldo.halt();
+    if (o.haltung === 'sitzen' || Math.hypot(waldo.position.x - o.x, waldo.position.z - o.z) > 0.6) waldo.wurzel.position.set(o.x, 0, o.z);
     waldo.wurzel.rotation.y = o.rot ?? Math.PI * 1.1;
     waldo.haltung(o.haltung, o.hoehe);
     besuchBringtTasse(waldo);
@@ -1946,6 +1949,15 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   }
 
   // ---------- Klicks auf Objekte ----------
+  function wegFrei(a, b) {
+    const n = Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 0.2);
+    for (let i = 1; i <= n; i++) {
+      const x = a.x + (b.x - a.x) * i / n, zz = a.z + (b.z - a.z) * i / n;
+      if (!welt.begehbar(x, zz, 0.25)) return false;
+      for (const h of welt.hindernisse) if (!h.niedrig && inHindernis(h, x, zz, 0.2)) return false;
+    }
+    return true;
+  }
   async function hinZu(info, obj) {
     if (info.station) {
       await gehZuStation(info.station);
@@ -1958,7 +1970,10 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     if (d > 2.2) {
       const richtung = new THREE.Vector3(p.x - ziel.x, 0, p.z - ziel.z).normalize();
       const stand = [ziel.x + richtung.x * 1.3, AUGENHOEHE, ziel.z + richtung.z * 1.3];
-      await steuerung.fahreZu(stand, [ziel.x, ziel.y + (info.id === 'dennis' ? 1.5 : 0), ziel.z]);
+      const blick = [ziel.x, ziel.y + (info.id === 'dennis' ? 1.5 : 0), ziel.z];
+      // nur hinlaufen, wenn der Weg frei ist (nicht durch Zäune, Wände, Möbel: sonst landet man z. B. im Kuhgehege)
+      if (wegFrei(p, { x: stand[0], z: stand[2] })) await steuerung.fahreZu(stand, blick);
+      else await steuerung.dreheZu(new THREE.Vector3(...blick), 0.3);
     }
   }
 
@@ -2109,16 +2124,46 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     z.lichtAusSeit = 0;
   }
 
-  async function fegen() {
+  // Fegen wie echt: Besen in der Hand, E gedrückt halten und über den Dreck gehen; der Besen schwingt, Dreck wird vor
+  // einem hergeschoben und verschwindet, dazu Staub und Kehrgeräusch. Ist alles weg: Lob, Wut sinkt.
+  let fegeLauf = null;
+  function fegen() {
     if (!welt.dreck) { ui.hinweis('Ist schon sauber.'); return; }
-    const ok = await ui.haltenDialog({ titel: 'Fegen', text: 'Schleifstaub und Zunder zusammenkehren.', knopf: 'Fegen (halten)', sekunden: 2.5, geraeusch: 'gas' });
-    if (!ok) return;
-    welt.dreckWeg();
-    z.gefegt = true;
-    z.wut = Math.max(0, z.wut - 8);
-    aktualisieren();
-    ui.hinweis('Boden ist sauber.');
-    ui.lobZeigen(sag(DENNIS.fegen));
+    if (hand.item?.id !== 'besen') {
+      if (hand.item) { ui.hinweis('Erst die Hände frei machen, dann den Besen nehmen.'); return; }
+      aufnehmen('besen', welt.objekte.besen);
+      ui.hinweis('E gedrückt halten und über den Dreck gehen.', 3200);
+      return;
+    }
+    if (!fegeLauf) fegeLauf = { w: 0, ton: dauerTon('gas', 0.35), staub: 0 };
+  }
+  function fegeStopp() {
+    if (!fegeLauf) return;
+    fegeLauf.ton.stopp();
+    fegeLauf = null;
+    hand.fegeSchwung(0);
+  }
+  function fegeUpdate(dt) {
+    if (!fegeLauf) return;
+    if (hand.item?.id !== 'besen' || z.beschaeftigt || z.vorbei) { fegeStopp(); return; }
+    const f = fegeLauf;
+    f.w += dt * 9;
+    hand.fegeSchwung(f.w);
+    const r = steuerung.blickRichtung();
+    const l = Math.hypot(r.x, r.z) || 1;
+    const p = { x: kamera.position.x + (r.x / l) * 0.9, z: kamera.position.z + (r.z / l) * 0.9 };
+    const menge = welt.kehre(p, r.x / l, r.z / l, 1.0, dt);
+    f.ton.staerke && f.ton.staerke(menge > 0 ? 1 : 0.2);
+    f.staub += dt;
+    if (menge > 0 && f.staub > 0.15) { f.staub = 0; welt.staub && welt.staub(p.x, p.z); }
+    if (!welt.dreck) {
+      fegeStopp();
+      z.gefegt = true;
+      z.wut = Math.max(0, z.wut - 8);
+      aktualisieren();
+      ui.hinweis('Boden ist sauber.');
+      ui.lobZeigen(sag(DENNIS.fegen));
+    }
   }
 
   // ---------- Dennis fegt selbst, wenn der Dreck zu lange liegt ----------
@@ -3037,12 +3082,12 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     else if (k === 'q') handAktion('werfen');
     else if (k === 'g') handAktion('fallen');
   });
-  window.addEventListener('keyup', (e) => { if (e.key.toLowerCase() === 'e') { spritzStopp(); loeschStopp(); } });
+  window.addEventListener('keyup', (e) => { if (e.key.toLowerCase() === 'e') { spritzStopp(); loeschStopp(); fegeStopp(); } });
   window.addEventListener('blur', () => { spritzStopp(); loeschStopp(); });
 
   function menueFuer(id, obj = null) {
     const A = (text, symbol, tun) => ({ text, symbol, tun });
-    const ausFahrten = fahrten.menue(id);
+    const ausFahrten = fahrten.menue(id, obj);
     if (ausFahrten) return ausFahrten;
     // Platzhalter-Kumpels (noch ohne Aufgabe)
     if (id.startsWith('kumpel-')) {
@@ -3599,6 +3644,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       beobachten();
       spritzUpdate(dt);
       loeschUpdate(dt);
+      fegeUpdate(dt);
       if (z.vorbei) return;
       fahrten.update();
       wutUndVorzeichen(dt);

@@ -8,6 +8,7 @@ import { baueTorben } from './torben.js';
 import { baueKumpels } from './kumpels.js';
 import { baueSegway } from './segway.js';
 import { baueFahrzeuge } from './fahrzeuge.js';
+import { setzeDynamisch, setzeFiguren } from './wege.js';
 import { gelaendeHoehe } from './landschaft.js';
 import { baueSteuerung } from './steuerung.js';
 import { baueSpiel } from './spiel.js';
@@ -42,8 +43,11 @@ const torben = baueTorben(scene);
 const kumpels = baueKumpels(scene);
 const segway = baueSegway(scene);
 const fz = baueFahrzeuge(scene, welt);
-welt.hindernisse.push({ xMin: jonny.position.x - 0.25, xMax: jonny.position.x + 0.25, zMin: jonny.position.z - 0.25, zMax: jonny.position.z + 0.25 });
 
+// Wege der Figuren: draußen um Jeep und Hoflader herum, unterwegs anderen Figuren und dem Spieler ausweichen
+setzeDynamisch(() => [fz.jeep, fz.lader].filter((f) => f.g.visible && !f.aufGabel).map((f) => f.hindernis));
+setzeFiguren(() => [dennis, jonny, waldo, torben, ...Object.values(kumpels.alle || {})]
+  .filter((f) => f.wurzel && f.wurzel.visible && f.wurzel.parent === scene).map((f) => f.wurzel.position).concat([kamera.position]));
 const zielListe = scene.children;
 const hand = baueHand(scene, kamera);
 const steuerung = baueSteuerung(kamera, canvas, {
@@ -53,6 +57,8 @@ const steuerung = baueSteuerung(kamera, canvas, {
   bodenHoehe: (x, z) => fz.bodenHoehe(x, z) + gelaendeHoehe(x, z),
   alleZiele: () => zielListe,
   dennisPosition: () => dennis.position,
+  // Jonny, Waldo, Torben, Kumpels: man läuft nicht durch sie durch (nur wenn sie da sind und zu Fuß)
+  figuren: () => [jonny, waldo, torben, ...Object.values(kumpels.alle || {})].filter((f) => f.wurzel && f.wurzel.visible && f.wurzel.parent === scene).map((f) => f.wurzel.position),
 }, (t) => spiel && spiel.klick(t), (t, x, y) => ui.hoverName(t ? t.info.name : '', x, y));
 
 const s = STATIONEN.eingang;
@@ -130,39 +136,50 @@ let schattenTakt = 0;
 
 let letzte = performance.now();
 let stationAlt = null;
+// Hauptschleife: das nächste Bild wird ZUERST angefordert und jeder Schritt einzeln abgesichert –
+// ein Fehler in einem Teil (z. B. beim Fahren) darf nie das ganze Spiel einfrieren
+const fehlerGemeldet = new Set();
+function sicher(name, f) {
+  try { f(); } catch (e) {
+    if (!fehlerGemeldet.has(name + e.message)) { fehlerGemeldet.add(name + e.message); console.error(`[${name}]`, e); }
+  }
+}
 function schleife(jetzt) {
+  requestAnimationFrame(schleife);
   const dt = Math.min(0.05, (jetzt - letzte) / 1000);
   letzte = jetzt;
-  steuerung.update(dt);
-  {
+  sicher('steuerung', () => steuerung.update(dt));
+  sicher('dennis', () => {
     const ab = Math.hypot(kamera.position.x - dennis.position.x, kamera.position.z - dennis.position.z);
     dennis.schaue(ab < 3.2 && dennis.modus !== 'tanzen' ? kamera.position : null);
-  }
-  dennis.update(dt);
-  jonny.schauZu(kamera.position);
-  jonny.update(dt);
-  waldo.schauZu(kamera.position);
-  waldo.update(dt);
-  torben.schauZu(kamera.position);
-  torben.update(dt);
-  kumpels.update(dt, kamera.position);
-  fz.update(dt);
-  segway.update(dt);
-  welt.update(dt);
+    dennis.update(dt);
+  });
+  sicher('figuren', () => {
+    jonny.schauZu(kamera.position);
+    jonny.update(dt);
+    waldo.schauZu(kamera.position);
+    waldo.update(dt);
+    torben.schauZu(kamera.position);
+    torben.update(dt);
+    kumpels.update(dt, kamera.position);
+  });
+  sicher('fahrzeuge', () => { fz.update(dt); segway.update(dt); });
+  sicher('welt', () => welt.update(dt));
   if (spiel) {
-    spiel.update(dt);
-    const st = steuerung.station();
-    if (st !== stationAlt) {
-      stationAlt = st;
-      ui.stationenZeigen(st, (id) => spiel.stationWaehlen(id));
-    }
+    sicher('spiel', () => spiel.update(dt));
+    sicher('stationen', () => {
+      const st = steuerung.station();
+      if (st !== stationAlt) {
+        stationAlt = st;
+        ui.stationenZeigen(st, (id) => spiel.stationWaehlen(id));
+      }
+    });
   }
-  hand.update(dt, steuerung.geht, dennis.position, welt.hindernisse);
-  fernUpdate();
-  if (++schattenTakt % 2 === 0) renderer.shadowMap.needsUpdate = true;
+  sicher('hand', () => hand.update(dt, steuerung.geht, dennis.position, welt.hindernisse));
+  sicher('fern', fernUpdate);
+  sicher('schatten', () => { if (++schattenTakt % 2 === 0) renderer.shadowMap.needsUpdate = true; });
   renderer.render(scene, kamera);
-  hand.render(renderer);
-  requestAnimationFrame(schleife);
+  sicher('handBild', () => hand.render(renderer));
 }
 requestAnimationFrame(schleife);
 

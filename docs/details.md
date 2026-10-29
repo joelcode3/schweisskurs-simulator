@@ -40,7 +40,7 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
 ## Dennis: Verhalten, Nebenbei-Interaktionen, Sprache
 - Nebenbei-Interaktionen: Kaffee kochen und Dennis bringen (Wut sinkt, ab dem 3. meckert er), Kiwis (1. und 2. erlaubt:
   kein Spruch, nur Bissgeräusch; ab 3. sauer), Brotdose (abbeißen = Ausraster), große Soundbox (Techno, Dennis tanzt),
-  Lichtschalter (Dennis meckert), Besen (Dreck nach Schneiden/Schweißen, zählt in die Note),
+  Lichtschalter (Dennis meckert), Besen (Dreck nach Schneiden/Schweißen, zählt in die Note; fegen = Besen in der Hand, E halten),
   Hüfte (Dennis humpelt einmal pro Spiel auf freien Boden in der Raummitte, legt sich hin und jammert, bis man ihm aufhilft),
   Klo-Pause zwischendurch (frühestens nach 100 s, WC-Tür vorne rechts mit WC-Schild). Dennis sagt erst Bescheid,
   dann rennt er raus; solange er weg ist: Arbeitspause (gelbes Band oben, Arbeitsschritte gesperrt). Geht man zu Dennis hin und bleibt
@@ -376,6 +376,27 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Scherben, geschlängelte Reifenspuren von der Straße durch die Wiese. Himmel/Horizont/Nebel für die große Sichtweite (Kamera 1500).
 
 ## Paket A (Bugliste Projektchat)
+- Paket F Figuren (Projektchat 29.10.): wege.js plant draußen auch um Jeep und Hoflader herum (setzeDynamisch, main.js
+  meldet die Fahrzeuge an; Fahrzeug, in dem Start/Ziel liegt, zählt nicht). ausweichen(): wer läuft (Dennis, Jonny, Waldo),
+  lenkt seitlich an anderen Figuren und dem Spieler vorbei (setzeFiguren); kurz vor dem Ziel nicht mehr. Waldo läuft Sitzplätze
+  (Sofa, Träger) von vorne an und wird dann genau hingesetzt. Linker Torflügel: unteres Band endet an der Schlupftür.
+- Paket S Stabilität (Projektchat 29.10.): Hauptschleife abgesichert (main.js: nächstes Bild zuerst angefordert, jeder Schritt in
+  sicher(), ein Fehler friert nichts mehr ein). Absturz beim Jeep-Anheben (Hinweistext las lader.last) behoben. Ermahnungen und
+  Meckern sperren die Steuerung nicht mehr, nur Ausraster (stufe voll); Notausgang nach 12/20 s. Festes unsichtbares
+  Jonny-Hindernis an der Tür entfernt, stattdessen Kollision mit allen anwesenden Figuren (welt.figuren). Fahrzeuge: nach 1,5 s
+  Gas ohne Bewegung ruckelt man sich frei (schritt(..., befreien)). Hinlaufen beim Klick nur bei freiem Weg (wegFrei), sonst nur
+  hindrehen (kein Landen im Kuhgehege). Dennis-Videos ohne Standbild und Abspiel-Knopf: sofort, notfalls stumm (Ton beim nächsten
+  Klick), sonst gezeichneter Dennis.
+- Paket P6 Optik (Projektchat 24.10.): Feuerschale tief mit kurzen Füßen (Schale 0,38 m, Rost 0,7 m). Rauchverbot-Schild auf
+  Blech vor den Streben, höher, mit Rost und Schrauben. Schilder nur von der Straße lesbar, Rückseite Holz (Betreiber), Pfahl endet
+  unter der Tafel. Landeier-Schild: eins, gegenüber der Parkplatz-Einfahrt hinter dem anderen Fahrbahnrand, quer zur Straße, Pfeil zeigt von beiden Seiten zum Hof (SCHILD_Z, PFEIL_VORNE). Blaue Tonne: Deckel weiter offen, Kartons quellen
+  darunter raus. Müll an den Tonnen einzeln aufheben (muellStueck, MUELL_NAMEN; alles weg = Lob, Wut -2). Eierkarton/Mettenden
+  detailliert (eierKartonModell, mettendenModell in landschaft.js, auch in der Hand). T5-Pritsche: Riffelboden, Zurrösen, Träger,
+  Rungen, Verschlüsse, Ladung (Schaltafel, Kanister, Spanngurt); Spuren breiter/dunkler mit Profilrillen und Grasbüscheln. Ferne
+  Büsche stehen auf dem Boden. Bierkasten: Eckpfosten, Rippenband, Füße, Grifflöcher, Flaschen mit Etiketten/Goldfolie, Brett auf
+  dem Rand mit Kronkorken und Feuerzeug. Benz-Auspuff durchgehend (Krümmer, Mitteltopf, Endtopf, Endrohr, Gummihalter).
+  Wohnwagen-Deichsel: V-Holme treffen sich am Knotenblech, Querträger, Stützrad am Holm. Fegen: Besen in die Hand, E halten und
+  über den Dreck gehen (welt.kehre, Staub welt.staub, hand.fegeSchwung), ersetzt den Halten-Dialog.
 - Paket P7 (Projektchat 24./25.10.): Leistung (main.js): kleine Teile (unter 6 cm) und Umrisse werfen keinen Schatten, Schatten nur
   jedes 2. Bild neu (shadowMap.autoUpdate false), weit entfernte Kleinteile/Umrisse (über 45 m, je Gruppe) per Layer aus, alle
   Materialien beim Start vorkompiliert (gegen Hakeln beim ersten Auftauchen). Draw-Calls in der Werkstatt ca. 1870 auf 600.

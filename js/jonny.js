@@ -3,7 +3,7 @@
 // Brusthaar, hellbraune Zimmermannsweste (Cord, Perlmuttknöpfe) bis über die Schultern, sehr kurze schwarze Arbeitshose mit Zollstock
 // und Stift in der Seitentasche, weiße Socken, grüne Sneaker mit drei weißen Streifen, goldener Ring.
 import * as THREE from 'three';
-import { wegNach } from './wege.js';
+import { wegNach, ausweichen } from './wege.js';
 import { toon, teil, quader, zylinder, kugel, setze, leinwandTextur } from './toon.js';
 
 const HAUT = 0xeebda0;
@@ -541,12 +541,14 @@ export function baueJonny(scene, opts = {}) {
           const r = zielFertig; zielFertig = null;
           if (r) r(true);
         } else {
+          d.normalize();
+          ausweichen(wurzel.position, d, rest + weg.reduce((s, q, i) => s + (i ? Math.hypot(q.x - weg[i - 1].x, q.z - weg[i - 1].z) : 0), 0));
           const soll = Math.atan2(d.x, d.z);
           let diff = soll - wurzel.rotation.y;
           while (diff > Math.PI) diff -= Math.PI * 2;
           while (diff < -Math.PI) diff += Math.PI * 2;
           wurzel.rotation.y += diff * Math.min(1, dt * 8);
-          wurzel.position.addScaledVector(d.normalize(), Math.min(rest, tempo * dt));
+          wurzel.position.addScaledVector(d, Math.min(rest, tempo * dt));
           schritt += dt * tempo * 7;
         }
       }
