@@ -71,5 +71,5 @@
   nur DENNIS und löst verschachtelte Listen wie telefon nicht auf).
 - KI-Stimmklon ist in dieser Umgebung nicht möglich (huggingface.co gesperrt). Stimmproben nie ins Repo (öffentlich).
 
-## Stand der Pull Requests (29.10.2026)
-- Bis #42 (P1–P7, S, F, D) gemergt. T (Texte, #43) offen, O (Kühe) wartet auf Abnahme der Vorschau. Neue Zweige von `origin/main`. Versionsnummer zuletzt `v=20261029-8`.
+## Stand der Pull Requests (30.10.2026)
+- Bis #43 (P1–P7, S, F, D, T) gemergt. Offen: #44 O (Kühe), M (Minispiele). Neue Zweige von `origin/main`. Versionsnummer zuletzt `v=20261030-2`.
