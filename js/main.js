@@ -8,6 +8,7 @@ import { baueTorben } from './torben.js';
 import { baueKumpels } from './kumpels.js';
 import { baueSegway } from './segway.js';
 import { baueFahrzeuge } from './fahrzeuge.js';
+import { setzeDynamisch, setzeFiguren } from './wege.js';
 import { gelaendeHoehe } from './landschaft.js';
 import { baueSteuerung } from './steuerung.js';
 import { baueSpiel } from './spiel.js';
@@ -43,6 +44,10 @@ const kumpels = baueKumpels(scene);
 const segway = baueSegway(scene);
 const fz = baueFahrzeuge(scene, welt);
 
+// Wege der Figuren: draußen um Jeep und Hoflader herum, unterwegs anderen Figuren und dem Spieler ausweichen
+setzeDynamisch(() => [fz.jeep, fz.lader].filter((f) => f.g.visible && !f.aufGabel).map((f) => f.hindernis));
+setzeFiguren(() => [dennis, jonny, waldo, torben, ...Object.values(kumpels.alle || {})]
+  .filter((f) => f.wurzel && f.wurzel.visible && f.wurzel.parent === scene).map((f) => f.wurzel.position).concat([kamera.position]));
 const zielListe = scene.children;
 const hand = baueHand(scene, kamera);
 const steuerung = baueSteuerung(kamera, canvas, {
@@ -53,7 +58,7 @@ const steuerung = baueSteuerung(kamera, canvas, {
   alleZiele: () => zielListe,
   dennisPosition: () => dennis.position,
   // Jonny, Waldo, Torben, Kumpels: man läuft nicht durch sie durch (nur wenn sie da sind und zu Fuß)
-  figuren: () => [jonny, waldo, torben, ...Object.values(kumpels.alle || {})].filter((f) => f.wurzel.visible && f.wurzel.parent === scene).map((f) => f.position),
+  figuren: () => [jonny, waldo, torben, ...Object.values(kumpels.alle || {})].filter((f) => f.wurzel && f.wurzel.visible && f.wurzel.parent === scene).map((f) => f.wurzel.position),
 }, (t) => spiel && spiel.klick(t), (t, x, y) => ui.hoverName(t ? t.info.name : '', x, y));
 
 const s = STATIONEN.eingang;

@@ -1382,7 +1382,11 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     const o = moeglich[Math.floor(Math.random() * moeglich.length)];
     waldo.haltung('handy');
     await waldoKommt();
-    await Promise.race([waldo.gehZu(o.x, o.z, 1.0), warte(20000)]);
+    // Sitzplätze vorne anlaufen, dann genau hinsetzen (nie seitlich oder mit den Beinen im Polster)
+    const vorne = o.haltung === 'sitzen' ? { x: o.x, z: o.z - 0.6 } : o;
+    await Promise.race([waldo.gehZu(vorne.x, vorne.z, 1.0), warte(20000)]);
+    waldo.halt();
+    if (o.haltung === 'sitzen' || Math.hypot(waldo.position.x - o.x, waldo.position.z - o.z) > 0.6) waldo.wurzel.position.set(o.x, 0, o.z);
     waldo.wurzel.rotation.y = o.rot ?? Math.PI * 1.1;
     waldo.haltung(o.haltung, o.hoehe);
     besuchBringtTasse(waldo);
