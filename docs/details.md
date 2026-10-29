@@ -376,6 +376,12 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Scherben, geschlängelte Reifenspuren von der Straße durch die Wiese. Himmel/Horizont/Nebel für die große Sichtweite (Kamera 1500).
 
 ## Paket A (Bugliste Projektchat)
+- Paket T Texte (Projektchat 29.10.): Briefkasten: Werbung, dicker Stapel GEZ-Forderungen, Postkarte von Lydia. Kettenhemd gehört zu Dennis'
+  Kinky-Partys/Fetisch-Abend (DENNIS.kettenhemd, Text geändert, Nummern dennis445/446 bleiben). Peitsche heißt jetzt Gerte (Anzeigename,
+  intern bleibt der Schlüssel `peitsche`): Klatschgeräusch statt Knall (audio gertenKlatsch), Dennis freut sich (flucht-Texte neu gefasst),
+  klappt nur 2x (Wut je -6); 3. Mal: er schimpft einmal (zuViel + sauer, Wut +4), danach nur noch Hinweis (z.jagdSchluss). Modell sieht noch wie
+  eine Peitsche aus (Optik offen). Tassen sind kein Werkzeug: Wurf einer Tasse hat eigene Sätze (DENNIS.wurf.tasse, dennis467/468) und den
+  Fehlernamen „Tasse geworfen“. Schild am Hühnermobil entfernt.
 - Paket F Figuren (Projektchat 29.10.): wege.js plant draußen auch um Jeep und Hoflader herum (setzeDynamisch, main.js
   meldet die Fahrzeuge an; Fahrzeug, in dem Start/Ziel liegt, zählt nicht). ausweichen(): wer läuft (Dennis, Jonny, Waldo),
   lenkt seitlich an anderen Figuren und dem Spieler vorbei (setzeFiguren); kurz vor dem Ziel nicht mehr. Waldo läuft Sitzplätze

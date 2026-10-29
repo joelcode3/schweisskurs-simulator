@@ -6,7 +6,7 @@ import { eierKartonModell, mettendenModell } from './landschaft.js';
 import { setze } from './toon.js';
 import { auftritt, hatClip, buehneBelegt } from './clips.js';
 import { pfadSpiel, schlackeSpiel, hulaSpiel, DENNIS_HULA_REKORD, ventilSpiel, spuelSpiel, anzeichnenSpiel, lackierSpiel, bitsatzSpiel, akkuschrauberSpiel, siebSpiel, kaffeeSpiel, rohrSpiel, leiterSpiel } from './minispiele.js';
-import { bierAuf, blip, kratzen, jingle, klonk, brummeln, dauer as dauerTon, technoAn, technoAus, technoBeat, klospuelung, mampfen, klick as schalterKlick, stimmeAbspielen, stimmenVorladen, husten, peitschenKnall } from './audio.js';
+import { bierAuf, blip, kratzen, jingle, klonk, brummeln, dauer as dauerTon, technoAn, technoAus, technoBeat, klospuelung, mampfen, klick as schalterKlick, stimmeAbspielen, stimmenVorladen, husten, gertenKlatsch } from './audio.js';
 import * as ui from './ui.js';
 import { DENNIS, JONNY, WALDO, KUMPEL, satzId } from './texte.js';
 import { SYMBOL } from './gesicht.js';
@@ -138,6 +138,10 @@ const FEHLER = {
     stufe: 'leicht', wut: 6, nebensache: true, clip: 'ermahnung', name: 'Mit Werkzeug geworfen',
     texte: [DENNIS.hand.werfen],
   },
+  tasseWerfen: {
+    stufe: 'leicht', wut: 6, nebensache: true, clip: 'ermahnung', name: 'Tasse geworfen',
+    texte: [DENNIS.wurf.tasse],
+  },
   figurWerfen: {
     stufe: 'mittel', wut: 20, nebensache: true, clip: 'sauer', name: 'Dennis’ Skulptur durch die Gegend geworfen',
     texte: DENNIS.hand.figurWerfen,
@@ -182,7 +186,7 @@ const WURF_ART = {
   kaffee: 'kaffee',
   flex: 'werkzeug', hammer: 'werkzeug', rohrzange: 'werkzeug', edding: 'edding',
   brille: 'ausruestung', handschuhe: 'ausruestung', helm: 'ausruestung',
-  hulahup: 'reifen', klemmbrett: 'notizen', besen: 'besen', feuerloescher: 'loescher',
+  tasse: 'tasse', hulahup: 'reifen', klemmbrett: 'notizen', besen: 'besen', feuerloescher: 'loescher',
 };
 const ARGERN_TOENE = ['stimme/aergern-1.mp3', 'stimme/aergern-2.mp3'];
 const STUFEN_CLIP = { leicht: 'ermahnung', mittel: 'sauer', voll: 'ausraster' };
@@ -940,18 +944,29 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     ui.hinweis(`Angeschrieben: ${eintrag}. Lühmann kennt uns.`, 3000);
   }
 
-  // ---------- Peitsche aus dem Benz-Kofferraum: Dennis damit durch die Gegend jagen ----------
-  // Ein-, zweimal ist das ein Spaß (Wut sinkt), zu oft oder zu schnell hintereinander oder wenn er eh schon sauer ist: Ärger
+  // ---------- Gerte aus dem Benz-Kofferraum (Schlüssel intern weiter „peitsche“): Dennis damit durch die Gegend jagen ----------
+  // Die ersten zwei Male freut sich Dennis (Klatsch, Gekicher, Wut sinkt). Beim dritten Mal ist Schluss: er schimpft einmal,
+  // danach will er nichts mehr davon wissen.
   async function dennisJagen() {
     if (z.jagd || dennis.modus !== 'normal' || z.aufKlo || !dennis.wurzel.visible || z.beschaeftigt || z.dennisRaeumt) { ui.hinweis('Gerade nicht.'); return; }
-    const t = sekundenSeitStart();
-    const zuViel = (z.jagdZahl || 0) >= 2 || t - (z.jagdZuletzt ?? -999) < 60 || z.wut >= 55;
+    if ((z.jagdZahl || 0) >= 2) {
+      if (z.jagdSchluss) { ui.hinweis('Dennis will davon nichts mehr wissen. Schluss mit der Gerte.'); return; }
+      z.jagdSchluss = true;
+      z.jagd = true;
+      gertenKlatsch(0.5);
+      dennis.stimmung('sauer');
+      aerger(4);
+      await dennisSagt(sag(DENNIS.peitsche.zuViel), true, { prio: 2 });
+      await dennisSagt(sag(DENNIS.peitsche.sauer), true, { prio: 2 });
+      z.jagd = false;
+      dennis.stimmung('ruhig');
+      return;
+    }
     z.jagdZahl = (z.jagdZahl || 0) + 1;
-    z.jagdZuletzt = t;
     z.jagd = true;
-    peitschenKnall();
-    dennis.stimmung(zuViel ? 'sauer' : 'ruhig');
-    dennisSagt(sag(zuViel ? DENNIS.peitsche.zuViel : DENNIS.peitsche.flucht), zuViel, { prio: 2 });
+    gertenKlatsch();
+    dennis.stimmung('ruhig');
+    dennisSagt(sag(DENNIS.peitsche.flucht), false, { prio: 2 });
     // Dennis schlägt Haken weg vom Spieler, man knallt hinterher
     for (let i = 0; i < 4 && !z.vorbei; i++) {
       const p = kamera.position, d = dennis.position;
@@ -966,11 +981,10 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       }
       if (ziel) await Promise.race([dennis.gehZu(ziel.x, ziel.z, 3.2), warte(2500)]);
       else await warte(700);
-      peitschenKnall(0.6);
-      if (i === 1 && !zuViel) dennisSagt(sag(DENNIS.peitsche.quieken), false, { prio: 0 });
+      gertenKlatsch(0.6);
+      if (i === 1) dennisSagt(sag(DENNIS.peitsche.quieken), false, { prio: 0 });
     }
-    if (zuViel) { aerger(8); await dennisSagt(sag(DENNIS.peitsche.sauer), true, { prio: 2 }); }
-    else { z.wut = Math.max(0, z.wut - 6); aktualisieren(); await dennisSagt(sag(DENNIS.peitsche.lacht), false, { prio: 1 }); }
+    z.wut = Math.max(0, z.wut - 6); aktualisieren(); await dennisSagt(sag(DENNIS.peitsche.lacht), false, { prio: 1 });
     z.jagd = false;
     dennis.stimmung('ruhig');
     dennis.heim();
@@ -2639,7 +2653,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     if (id === 'schlauch') return spritzen();
     if (id === 'klemmbrett') return waescheUebernehmen();
     if (id === 'creme') { ui.hinweis('Die ist für Dennis. Klick auf Dennis, dann gibst du sie ihm.'); return; }
-    if (id === 'peitsche') { peitschenKnall(); return; }
+    if (id === 'peitsche') { gertenKlatsch(); return; }
     if (id === 'tasse') {
       const k = welt.objekte.kuehlschrank.position;
       if (Math.hypot(kamera.position.x - k.x, kamera.position.z - k.z) < 2.3) return tasseWegraeumen();
@@ -2899,7 +2913,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       if (getroffen || !dennisSiehts() || z.vorbei) return;
       if (id === 'figur') fehler('figurWerfen');
       else if (id === 'handy') dennisSagt(sag(DENNIS.hand.handyWerfen));
-      else fehler('werfen', sag(DENNIS.wurf[WURF_ART[id]] || DENNIS.wurf.werkzeug));
+      else fehler(id === 'tasse' ? 'tasseWerfen' : 'werfen', sag(DENNIS.wurf[WURF_ART[id]] || DENNIS.wurf.werkzeug));
     }, 700);
   }
 
@@ -3358,20 +3372,20 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       case 'schild_vorsicht':
         return ['Schild', 'Vorsicht! Freilaufender Dennis.', []];
       case 'briefkasten':
-        return ['Dennis’ Briefkasten', z.briefGelesen ? 'Leer. Die Werbung hast du schon rausgeholt.' : 'Das Fähnchen ist oben. Da ist Post drin.', z.briefGelesen ? [] : [A('Reingucken', 'auge', () => { z.briefGelesen = true; ui.hinweis('Drin: Werbung vom Baumarkt, eine Mahnung vom Ordnungsamt wegen der Schilder und eine Postkarte von Lydia.', 6000); })]];
+        return ['Dennis’ Briefkasten', z.briefGelesen ? 'Leer. Die Werbung hast du schon rausgeholt.' : 'Das Fähnchen ist oben. Da ist Post drin.', z.briefGelesen ? [] : [A('Reingucken', 'auge', () => { z.briefGelesen = true; ui.hinweis('Drin: Werbung vom Baumarkt, ein dicker Stapel GEZ-Forderungen und eine Postkarte von Lydia.', 6000); })]];
       case 'vw_t5':
         return ['Umgekippter VW T5', 'Doppelkabine mit Pritsche, liegt auf der Seite. Die Reifenspuren in der Wiese erzählen den Rest. Keiner verletzt, aber der Wagen ist hin.', []];
       case 'kofferraum': {
         const k = welt.carport;
-        return ['Kofferraum', k.kofferAuf ? 'Offen. Drin liegen ein Kettenhemd und eine Peitsche. Fragen wir nicht.' : 'Der Kofferraum vom Benz. Nicht abgeschlossen.',
+        return ['Kofferraum', k.kofferAuf ? 'Offen. Drin liegen ein Kettenhemd und eine Gerte. Fragen wir nicht.' : 'Der Kofferraum vom Benz. Nicht abgeschlossen.',
           [A(k.kofferAuf ? 'Zumachen' : 'Aufmachen', 'hand', () => { k.kofferraum(!k.kofferAuf); klonk(0.3); })]];
       }
       case 'kettenhemd':
         if (dennisSiehts() && ruhig() && sekundenSeitStart() - (z.kettenhemdZuletzt ?? -99) > 60) { z.kettenhemdZuletzt = sekundenSeitStart(); setTimeout(() => dennisSagt(sag(DENNIS.kettenhemd), false, { prio: 0 }), 500); }
-        return ['Kettenhemd', 'Ein echtes Kettenhemd. Schwer. Riecht nach Mittelaltermarkt.', []];
+        return ['Kettenhemd', 'Ein echtes Kettenhemd. Schwer. Riecht nach Leder und Geheimnissen. Besser nicht nachfragen.', []];
       case 'peitsche':
-        if (!welt.carport.kofferAuf && obj?.parent === welt.carport.benz) return ['Peitsche', 'Liegt im Kofferraum. Erst aufmachen.', []];
-        return ['Peitsche', 'Lange geflochtene Lederpeitsche. Was macht die in Dennis\' Kofferraum?', [A('In die Hand nehmen', 'hand', () => aufnehmen('peitsche', obj))]];
+        if (!welt.carport.kofferAuf && obj?.parent === welt.carport.benz) return ['Gerte', 'Liegt im Kofferraum. Erst aufmachen.', []];
+        return ['Gerte', 'Schwarze Lederwicklung, schmale Schlaufe. Was macht die in Dennis\' Kofferraum?', [A('In die Hand nehmen', 'hand', () => aufnehmen('peitsche', obj))]];
       case 'benz':
         if (dennisSiehts() && ruhig() && sekundenSeitStart() - (z.benzZuletzt ?? -99) > 40) { z.benzZuletzt = sekundenSeitStart(); aerger(1); setTimeout(() => dennisSagt(sag(DENNIS.benz), true, { prio: 0 }), 600); }
         return ['Mercedes 123', 'Dennis\' ein und alles: weißer W123. In der Motorhaube steckt eine Gehwegplatte, die Plane darüber hat ein Loch. Passiert heute Nacht um 4.', []];
