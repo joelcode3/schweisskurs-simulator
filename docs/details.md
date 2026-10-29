@@ -376,6 +376,14 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Scherben, geschlängelte Reifenspuren von der Straße durch die Wiese. Himmel/Horizont/Nebel für die große Sichtweite (Kamera 1500).
 
 ## Paket A (Bugliste Projektchat)
+- Paket M Minispiele (Projektchat 29.10.): Müll an den Tonnen kommt nach dem Aufheben nicht mehr komplett und gleich wieder,
+  sondern einzeln alle 1–2,5 Min. (fahrten.js muellNachschub: neue Sorte, neue Stelle). Hula-Hoop etwas schwerer (Halt +6 statt +7,
+  Abfall 36 + 1,5 je Runde, Fehltaste -26). Neues Minispiel pumpeSpiel (minispiele.js) statt Halten-Dialog: Wasserstrahl über
+  Gülle-Kleckse, Krusten brauchen länger, Luft-Balken beim Spritzen, leer = Würgen (husten), loslassen = durchatmen.
+  Zurücklegen: hand.nimm merkt sich beim ersten Aufheben den Platz (userData.platz), Taste R / Knopf „An seinen Platz“ legt es dort
+  ab (nur unter 3,2 m, nicht für Tasse, Pumpe, Flasche, Ofen, Schlauch, Kaffee, Wäsche, Sieb); Dennis sieht es: Wut -2 (max. alle 2 Min.).
+  Milch: Tüte 1,5x größer und vorne auf dem Kaffeetisch (stand hinter der Kaffeemaschine), Hinweis beim ersten Kaffee.
+  Rohrbruch-Minispiel war schon in P7.
 - Paket T Texte (Projektchat 29.10.): Briefkasten: Werbung, dicker Stapel GEZ-Forderungen, Postkarte von Lydia. Kettenhemd gehört zu Dennis'
   Kinky-Partys/Fetisch-Abend (DENNIS.kettenhemd, Text geändert, Nummern dennis445/446 bleiben). Peitsche heißt jetzt Gerte (Anzeigename,
   intern bleibt der Schlüssel `peitsche`): Klatschgeräusch statt Knall (audio gertenKlatsch), Dennis freut sich (flucht-Texte neu gefasst),

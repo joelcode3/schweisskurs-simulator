@@ -6,7 +6,7 @@ import { bereich } from './wege.js';
 import { eierKartonModell, mettendenModell } from './landschaft.js';
 import { setze } from './toon.js';
 import { auftritt, hatClip, buehneBelegt } from './clips.js';
-import { pfadSpiel, schlackeSpiel, hulaSpiel, DENNIS_HULA_REKORD, ventilSpiel, spuelSpiel, anzeichnenSpiel, lackierSpiel, bitsatzSpiel, akkuschrauberSpiel, siebSpiel, kaffeeSpiel, rohrSpiel, leiterSpiel } from './minispiele.js';
+import { pfadSpiel, schlackeSpiel, hulaSpiel, DENNIS_HULA_REKORD, ventilSpiel, spuelSpiel, anzeichnenSpiel, lackierSpiel, bitsatzSpiel, akkuschrauberSpiel, siebSpiel, kaffeeSpiel, rohrSpiel, leiterSpiel, pumpeSpiel } from './minispiele.js';
 import { bierAuf, blip, kratzen, jingle, klonk as klonkRoh, brummeln, dauer as dauerTon, technoAn, technoAus, technoBeat, klospuelung, mampfen, klick as schalterKlick, stimmeAbspielen, stimmenVorladen, husten, gertenKlatsch } from './audio.js';
 import * as ui from './ui.js';
 import { DENNIS, JONNY, WALDO, KUMPEL, satzId } from './texte.js';
@@ -1546,12 +1546,14 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   function pumpeInDerHand() { return hand.item?.id === 'kackpumpe'; }
   async function pumpeWaschen() {
     if (!welt.pumpeIstDreckig) { ui.hinweis('Die ist schon sauber. Jetzt zurück hinter den Kompressor (auf den Kompressor klicken).', 3500); return; }
-    const ok = await ui.haltenDialog({ titel: 'Kackepumpe abwaschen', text: 'Gülle runterspülen und abschrubben. Luft anhalten!', knopf: 'Abspülen (halten)', sekunden: 3, geraeusch: 'wasser' });
-    if (!ok || !welt.pumpeIstDreckig) return;
+    steuerung.sperre(true);
+    const e = await pumpeSpiel();
+    steuerung.sperre(false);
+    if (e.abgebrochen || !welt.pumpeIstDreckig) return;
     welt.pumpeDreckig(false);
     if (wz.pumpe === 'imWeg') wz.pumpe = 'sauber';
     blip(700, 0.06);
-    ui.hinweis('Sauber! Jetzt zurück hinter den Kompressor stellen (auf den Kompressor klicken).', 4000);
+    ui.hinweis(e.gewuergt > 2 ? 'Sauber! Du bist zwar grün im Gesicht, aber sie glänzt. Jetzt zurück hinter den Kompressor (auf den Kompressor klicken).' : 'Sauber! Jetzt zurück hinter den Kompressor stellen (auf den Kompressor klicken).', 4500);
   }
   function pumpeZurueckstellen() {
     if (welt.pumpeIstDreckig) {
@@ -2006,7 +2008,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     z.kaffeeMilch = false;
     hand.nimm('kaffee', hand.becher);
     handleisteZeigen();
-    ui.hinweis('Kaffee in der Hand. Ab zu Dennis damit.');
+    ui.hinweis(z.milchGezeigt ? 'Kaffee in der Hand. Ab zu Dennis damit.' : 'Kaffee in der Hand. Ab zu Dennis damit. Auf dem Kaffeetisch steht übrigens Milch (anklicken, solange du den Kaffee hältst).', z.milchGezeigt ? 3000 : 6000);
+    z.milchGezeigt = true;
   }
 
   function milchRein() {
@@ -2579,6 +2582,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     if (!cfg.nichtWerfen) knoepfe.push(['werfen', 'Werfen', 'Q']);
     if (!cfg.nichtAblegen && it.id !== 'flasche' && it.id !== 'ofen') knoepfe.push(['fallen', 'Fallen lassen', 'G']);
     if (it.id === 'schlauch') knoepfe.push(['fallen', 'Zurückhängen', 'G']);
+    if (hatPlatz()) knoepfe.push(['zurueck', 'An seinen Platz', 'R']);
     if (it.id === 'kaffee') knoepfe.push(['fallen', 'Fallen lassen', 'G']);
     el.innerHTML = `<div class="hand-name">${SYMBOL.hand}<span>${cfg.name}</span></div>${knoepfe.map(([k, t, taste]) => (k
       ? `<button type="button" data-k="${k}">${taste ? `<kbd>${taste}</kbd>` : ''}${t}</button>`
@@ -2598,6 +2602,25 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     else if (k === 'benutzen') benutzen();
     else if (k === 'werfen') werfen();
     else if (k === 'fallen') fallenLassen();
+    else if (k === 'zurueck') zuruecklegen();
+  }
+  // Werkzeug & Co. an den Platz zurücklegen, an dem es lag (nur in der Nähe). Dennis freut sich über Ordnung.
+  const OHNE_PLATZ = ['tasse', 'kackpumpe', 'flasche', 'ofen', 'schlauch', 'kaffee', 'waeschetasche', 'sieb'];
+  function hatPlatz() { return hand.item && !OHNE_PLATZ.includes(hand.item.id) && !!hand.platz; }
+  function zuruecklegen() {
+    if (!hatPlatz()) return;
+    const pl = hand.platz;
+    if (Math.hypot(pl.x - kamera.position.x, pl.z - kamera.position.z) > 3.2) { ui.hinweis(`Zu weit weg. ${hand.item.cfg.name}: erst zu seinem Platz gehen.`, 2600); return; }
+    const name = hand.item.cfg.name;
+    hand.zuruecklegen();
+    klonk(0.2);
+    handleisteZeigen();
+    ui.hinweis(`${name}: zurück an seinem Platz.`, 1800);
+    if (dennisSiehts() && ruhig() && sekundenSeitStart() - (z.ordnungZuletzt ?? -999) > 120) {
+      z.ordnungZuletzt = sekundenSeitStart();
+      z.wut = Math.max(0, z.wut - 2);
+      aktualisieren();
+    }
   }
 
   function aufnehmen(id, obj) {
@@ -3114,6 +3137,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     if (k === 'e') handAktion(hand.item && ANZIEHBAR.includes(hand.item.id) ? 'anziehen' : 'benutzen');
     else if (k === 'q') handAktion('werfen');
     else if (k === 'g') handAktion('fallen');
+    else if (k === 'r') handAktion('zurueck');
   });
   window.addEventListener('keyup', (e) => { if (e.key.toLowerCase() === 'e') { spritzStopp(); loeschStopp(); fegeStopp(); } });
   window.addEventListener('blur', () => { spritzStopp(); loeschStopp(); });
