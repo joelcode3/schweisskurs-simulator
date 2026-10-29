@@ -198,6 +198,10 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
       const neu = Math.hypot(x - dp.x, z - dp.z);
       if (neu < 0.55 && neu < Math.hypot(p.x - dp.x, p.z - dp.z)) return true;
     }
+    for (const fp of welt.figuren ? welt.figuren() : []) {
+      const neu = Math.hypot(x - fp.x, z - fp.z);
+      if (neu < 0.45 && neu < Math.hypot(p.x - fp.x, p.z - fp.z)) return true;
+    }
     return false;
   }
 

@@ -1,7 +1,7 @@
 // Spielablauf: Zustand, Aktionen, Fehler, Dennis-Reaktionen, Bewertung.
 import * as THREE from 'three';
 import { STATIONEN, AUGENHOEHE } from './world.js';
-import { FELDWEG } from './draussen.js';
+import { FELDWEG, inHindernis } from './draussen.js';
 import { eierKartonModell, mettendenModell } from './landschaft.js';
 import { setze } from './toon.js';
 import { auftritt, hatClip, buehneBelegt } from './clips.js';
@@ -345,7 +345,9 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     ui.schliesseMenue();
     z.beschaeftigt = true;
     if (dennis.modus === 'tanzen') dennis.setzeModus('normal');
-    steuerung.sperre(true);
+    // nur beim richtigen Ausraster steht man still; bei Ermahnungen und Meckern läuft man weiter
+    const sperren = f.stufe === 'voll';
+    if (sperren) steuerung.sperre(true);
     const plus = f.wut * multi;
     z.wut = Math.min(100, z.wut + plus);
     z.wutMax = Math.max(z.wutMax, z.wut);
@@ -378,10 +380,12 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     else if (ARGERN_BEI.includes(id)) ton = ARGERN_TOENE[z.aergern++ % ARGERN_TOENE.length];
     else if (f.ton) ton = f.ton;
     // Video nur beim richtigen Ausraster, sonst Sprechblase mit Ton
-    if (f.nebensache || f.stufe !== 'voll') await Promise.all([kommt, dennisSagt(text, f.stufe !== 'leicht', { ton })]);
+    // Sicherheitsnetz: hängt etwas (Warteschlange, Video), geht es nach spätestens 12 bzw. 20 s trotzdem weiter
+    const notAus = warte(f.stufe === 'voll' ? 20000 : 12000);
+    if (f.nebensache || f.stufe !== 'voll') await Promise.race([Promise.all([kommt, dennisSagt(text, f.stufe !== 'leicht', { ton })]), notAus]);
     else {
       nebenbeiStoppen();
-      await Promise.all([kommt, auftritt({ schluessel: f.nurZeichnung ? [f.clip] : [f.clip, STUFEN_CLIP[f.stufe]], text, stufe: f.stufe, stimmung: STUFEN_STIMMUNG[f.stufe], seite: true })]);
+      await Promise.race([notAus, Promise.all([kommt, auftritt({ schluessel: f.nurZeichnung ? [f.clip] : [f.clip, STUFEN_CLIP[f.stufe]], text, stufe: f.stufe, stimmung: STUFEN_STIMMUNG[f.stufe], seite: true })])]);
     }
     if (z.wut >= 100) {
       await rausgeflogen();
@@ -390,7 +394,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     dennis.stimmung(stimmungAusWut() === 'wut' ? 'sauer' : 'ruhig');
     if (!dennis.istDaheim()) dennis.heim();
     aktualisieren();
-    steuerung.sperre(false);
+    if (sperren) steuerung.sperre(false);
     z.beschaeftigt = false;
     if (f.stufe === 'voll') z.letzterAusraster = sekundenSeitStart();
     else vielleichtAusraster();
@@ -1941,6 +1945,15 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   }
 
   // ---------- Klicks auf Objekte ----------
+  function wegFrei(a, b) {
+    const n = Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 0.2);
+    for (let i = 1; i <= n; i++) {
+      const x = a.x + (b.x - a.x) * i / n, zz = a.z + (b.z - a.z) * i / n;
+      if (!welt.begehbar(x, zz, 0.25)) return false;
+      for (const h of welt.hindernisse) if (!h.niedrig && inHindernis(h, x, zz, 0.2)) return false;
+    }
+    return true;
+  }
   async function hinZu(info, obj) {
     if (info.station) {
       await gehZuStation(info.station);
@@ -1953,7 +1966,10 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     if (d > 2.2) {
       const richtung = new THREE.Vector3(p.x - ziel.x, 0, p.z - ziel.z).normalize();
       const stand = [ziel.x + richtung.x * 1.3, AUGENHOEHE, ziel.z + richtung.z * 1.3];
-      await steuerung.fahreZu(stand, [ziel.x, ziel.y + (info.id === 'dennis' ? 1.5 : 0), ziel.z]);
+      const blick = [ziel.x, ziel.y + (info.id === 'dennis' ? 1.5 : 0), ziel.z];
+      // nur hinlaufen, wenn der Weg frei ist (nicht durch Zäune, Wände, Möbel: sonst landet man z. B. im Kuhgehege)
+      if (wegFrei(p, { x: stand[0], z: stand[2] })) await steuerung.fahreZu(stand, blick);
+      else await steuerung.dreheZu(new THREE.Vector3(...blick), 0.3);
     }
   }
 

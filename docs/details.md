@@ -376,6 +376,13 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Scherben, geschlängelte Reifenspuren von der Straße durch die Wiese. Himmel/Horizont/Nebel für die große Sichtweite (Kamera 1500).
 
 ## Paket A (Bugliste Projektchat)
+- Paket S Stabilität (Projektchat 29.10.): Hauptschleife abgesichert (main.js: nächstes Bild zuerst angefordert, jeder Schritt in
+  sicher(), ein Fehler friert nichts mehr ein). Absturz beim Jeep-Anheben (Hinweistext las lader.last) behoben. Ermahnungen und
+  Meckern sperren die Steuerung nicht mehr, nur Ausraster (stufe voll); Notausgang nach 12/20 s. Festes unsichtbares
+  Jonny-Hindernis an der Tür entfernt, stattdessen Kollision mit allen anwesenden Figuren (welt.figuren). Fahrzeuge: nach 1,5 s
+  Gas ohne Bewegung ruckelt man sich frei (schritt(..., befreien)). Hinlaufen beim Klick nur bei freiem Weg (wegFrei), sonst nur
+  hindrehen (kein Landen im Kuhgehege). Dennis-Videos ohne Standbild und Abspiel-Knopf: sofort, notfalls stumm (Ton beim nächsten
+  Klick), sonst gezeichneter Dennis.
 - Paket P6 Optik (Projektchat 24.10.): Feuerschale tief mit kurzen Füßen (Schale 0,38 m, Rost 0,7 m). Rauchverbot-Schild auf
   Blech vor den Streben, höher, mit Rost und Schrauben. Schilder nur von der Straße lesbar, Rückseite Holz (Betreiber), Pfahl endet
   unter der Tafel. Landeier-Schild: eins, gegenüber der Parkplatz-Einfahrt hinter dem anderen Fahrbahnrand, quer zur Straße, Pfeil zeigt von beiden Seiten zum Hof (SCHILD_Z, PFEIL_VORNE). Blaue Tonne: Deckel weiter offen, Kartons quellen

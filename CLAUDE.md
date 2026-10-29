@@ -69,4 +69,4 @@
 - KI-Stimmklon ist in dieser Umgebung nicht möglich (huggingface.co gesperrt). Stimmproben nie ins Repo (öffentlich).
 
 ## Stand der Pull Requests (23.10.2026)
-- Bis #37 (P1–P5) gemergt. Offen: P6 Optik. Neue Zweige von `origin/main`. Versionsnummer zuletzt `v=20261024-6`.
+- Bis #38 (P1–P6) gemergt. P7 (claude/p7-allgemein) wartet auf Abnahme der Vorschau, S Stabilität als eigener PR. Neue Zweige von `origin/main`. Versionsnummer zuletzt `v=20261029-1`.

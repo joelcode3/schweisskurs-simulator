@@ -565,29 +565,6 @@ button { font: inherit; color: inherit; }
 #dennis-buehne.hochkant #dennis-medien { aspect-ratio: 4 / 5; }
 #dennis-buehne.hochkant #dennis-medien video { object-position: 50% 30%; }
 #dennis-buehne.leicht.hochkant #dennis-rahmen { width: min(230px, 40vw, 34dvh); }
-.video-knopf {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 3;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  font-family: var(--comic);
-  font-size: 22px;
-  letter-spacing: 1px;
-  color: #111;
-  background: var(--gelb);
-  border: 3px solid #111;
-  border-radius: 10px;
-  box-shadow: 0 4px 0 #111;
-  cursor: pointer;
-  pointer-events: auto;
-}
-.video-knopf .ico { fill: #111; }
-.video-knopf.ecke { left: auto; top: auto; right: 10px; bottom: 10px; transform: none; font-size: 16px; padding: 6px 12px; }
 #dennis-medien .raster {
   position: absolute;
   inset: 0;
