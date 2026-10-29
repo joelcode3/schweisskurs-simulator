@@ -577,8 +577,8 @@ export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
       return RUMPF_Y + m;
     };
     // Euter mit Zitzen zwischen den Hinterbeinen
-    kuh.add(setze(teil(forme(16, (v) => v.set(v.x * 0.17, v.y * 0.13, v.z * 0.21)), 0xf0c8c0, { umriss: 0.003 }), 0, 0.7, -0.42));
-    for (const [sx, sz] of [[-1, 1], [1, 1], [-1, -1], [1, -1]]) kuh.add(setze(zylinder(0.013, 0.017, 0.07, rosa, { umriss: false }, 6), sx * 0.06, 0.58, -0.42 + sz * 0.07));
+    kuh.add(setze(teil(forme(18, (v) => v.set(v.x * 0.22, v.y * (v.y < 0 ? 0.19 : 0.14), v.z * 0.26)), 0xf0c8c0, { umriss: 0.003 }), 0, 0.72, -0.42));
+    for (const [sx, sz] of [[-1, 1], [1, 1], [-1, -1], [1, -1]]) kuh.add(setze(zylinder(0.013, 0.017, 0.07, rosa, { umriss: false }, 6), sx * 0.08, 0.51, -0.42 + sz * 0.09));
     // Hals: schlank, vom Widerrist schräg nach vorn oben; am Ansatz drehbar (Grasen)
     const kopf = new THREE.Group();
     kopf.add(setze(teil(forme(20, (v) => {
@@ -605,10 +605,10 @@ export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
       // Ohr: schmales Blatt, waagerecht zur Seite, unter dem Horn
       const ohr = new THREE.Group();
       // großes, rundes Ohr, waagerecht zur Seite, leicht nach vorn gewölbt; gelbe Ohrmarke
-      ohr.add(setze(teil(forme(14, (v) => { const t = (v.x + 1) / 2; v.set(v.x * 0.085 + 0.085, v.y * 0.02 + 0.02 * v.x * v.x, v.z * (0.035 + 0.04 * Math.sin(Math.PI * t))); }), dunkel, { umriss: 0.002 }), 0, 0, 0));
-      ohr.add(setze(teil(forme(10, (v) => { const t = (v.x + 1) / 2; v.set(v.x * 0.065 + 0.085, v.y * 0.006 + 0.018 * v.x * v.x, v.z * (0.022 + 0.026 * Math.sin(Math.PI * t))); }), rosa, { umriss: false }), 0, 0.012, 0));
-      ohr.add(setze(quader(0.04, 0.012, 0.035, 0xf2c81c, { umriss: 0.001 }), 0.1, -0.012, 0.005));
-      ohr.scale.set(sx * 1.35, 1.35, 1.35);
+      // Ohr wächst aus dem Kopf heraus: der dicke Ansatz steckt im Schädel, nach außen flach und rund
+      ohr.add(teil(forme(14, (v) => { const t = (v.x + 1) / 2; v.set(v.x * 0.075 + 0.045, v.y * (0.03 - 0.018 * t) + 0.015 * t * t, v.z * (0.03 + 0.035 * Math.sin(Math.PI * Math.min(1, t * 1.2)))); }), dunkel, { umriss: 0.002 }));
+      ohr.add(setze(quader(0.03, 0.01, 0.026, 0xf2c81c, { umriss: 0.001 }), 0.075, -0.012, 0.005));
+      ohr.scale.set(sx, 1, 1);
       ohr.position.set(sx * 0.1, 0.03, -0.17); ohr.rotation.set(0.25, -sx * 0.15, -sx * 0.15);
       schaedel.add(ohr);
     }
