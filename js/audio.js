@@ -587,8 +587,8 @@ export function hupe(art = 'jeep', lautst = 0.5) {
   }
 }
 
-// Peitschenknall: kurzes Zischen (Schnur), dann ein trockener, heller Knall
-export function peitschenKnall(lautst = 0.8) {
+// Gertenklatsch: kurzes Pfeifen durch die Luft, dann ein klatschender, nicht zu heller Schlag (kein Peitschenknall)
+export function gertenKlatsch(lautst = 0.8) {
   if (!ctx) return;
   const t = ctx.currentTime;
   const zisch = rauschQuelle();
@@ -597,10 +597,15 @@ export function peitschenKnall(lautst = 0.8) {
   zisch.connect(zf).connect(zg).connect(master);
   zisch.start(t); zisch.stop(t + 0.2);
   const knall = rauschQuelle();
-  const kf = ctx.createBiquadFilter(); kf.type = 'highpass'; kf.frequency.value = 1800;
-  const kg = ctx.createGain(); huelle(kg, t + 0.13, 0.002, 0.004, 0.06, lautst * 0.9);
+  const kf = ctx.createBiquadFilter(); kf.type = 'bandpass'; kf.frequency.value = 1100; kf.Q.value = 0.7;
+  const kg = ctx.createGain(); huelle(kg, t + 0.13, 0.002, 0.012, 0.09, lautst * 1.1);
   knall.connect(kf).connect(kg).connect(master);
-  knall.start(t + 0.13); knall.stop(t + 0.3);
+  knall.start(t + 0.13); knall.stop(t + 0.32);
+  // dumpfes Patschen darunter
+  const o = ctx.createOscillator(); o.type = 'sine';
+  o.frequency.setValueAtTime(190, t + 0.13); o.frequency.exponentialRampToValueAtTime(70, t + 0.24);
+  const og = ctx.createGain(); huelle(og, t + 0.13, 0.002, 0.01, 0.1, lautst * 0.5);
+  o.connect(og).connect(master); o.start(t + 0.13); o.stop(t + 0.35);
 }
 
 // Zusammenstoß mit dem Fahrzeug: dumpfer Schlag, Knirschen und etwas Blechscheppern (staerke 0…1)

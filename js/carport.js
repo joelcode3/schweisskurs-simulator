@@ -789,7 +789,7 @@ export function baueCarport(scene, { merke, hindernis }) {
   merke(benz, 'benz', 'Mercedes 123', null);
   merke(kofferDeckel, 'kofferraum', 'Kofferraum', null);
   merke(kettenhemd, 'kettenhemd', 'Kettenhemd', null);
-  merke(peitsche, 'peitsche', 'Peitsche', null);
+  merke(peitsche, 'peitsche', 'Gerte', null);
   // Kofferraum auf/zu (weich), Peitsche/Kettenhemd erst klickbar, wenn offen
   let kofferAuf = false, kofferWinkel = 0;
   const kofferAnimation = () => {
