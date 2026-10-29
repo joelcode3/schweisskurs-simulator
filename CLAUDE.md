@@ -72,4 +72,4 @@
 - KI-Stimmklon ist in dieser Umgebung nicht möglich (huggingface.co gesperrt). Stimmproben nie ins Repo (öffentlich).
 
 ## Stand der Pull Requests (29.10.2026)
-- Bis #40 (P1–P6, S, F) gemergt. P7 (Kaffee/Rohr/Leistung/Hemd) als #41 offen. Neue Zweige von `origin/main`. Versionsnummer zuletzt `v=20261029-4`.
+- Bis #41 (P1–P7, S, F) gemergt. D (Dennis draußen) als eigener PR offen. Neue Zweige von `origin/main`. Versionsnummer zuletzt `v=20261029-5`.
