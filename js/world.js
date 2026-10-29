@@ -379,8 +379,11 @@ export function baueWelt(scene) {
       handSchildFertig = handSchild;
     }
     // schwarze Langbänder an der Außenkante (innen und außen)
+    // am Flügel mit der Schlupftür endet das untere Band an der Türkante (ragt nicht in den Durchgang)
     for (const y of [0.45, TOR_H - 0.45]) for (const z of [0.08, -0.08]) {
-      fluegel.add(setze(quader(0.6, 0.06, 0.02, 0x1d1d1f, { umriss: 0.002 }), seite * (TOR_B / 2 - 0.3), y, z));
+      const kurz = seite === -1 && y < TUER_H;
+      const aussen = seite * TOR_B / 2, innen = kurz ? TUER_X0 - mitte - 0.02 : seite * (TOR_B / 2 - 0.6);
+      fluegel.add(setze(quader(Math.abs(aussen - innen), 0.06, 0.02, 0x1d1d1f, { umriss: 0.002 }), (aussen + innen) / 2, y, z));
     }
     for (const y of [0.45, TOR_H - 0.45]) fluegel.add(setze(zylinder(0.03, 0.03, 0.12, 0x1d1d1f, {}, 8), seite * (TOR_B / 2 + 0.01), y, 0.04));
     // Tor bleibt zu: Flügel stehen geschlossen in der Öffnung

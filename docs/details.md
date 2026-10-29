@@ -376,6 +376,10 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Scherben, geschlängelte Reifenspuren von der Straße durch die Wiese. Himmel/Horizont/Nebel für die große Sichtweite (Kamera 1500).
 
 ## Paket A (Bugliste Projektchat)
+- Paket F Figuren (Projektchat 29.10.): wege.js plant draußen auch um Jeep und Hoflader herum (setzeDynamisch, main.js
+  meldet die Fahrzeuge an; Fahrzeug, in dem Start/Ziel liegt, zählt nicht). ausweichen(): wer läuft (Dennis, Jonny, Waldo),
+  lenkt seitlich an anderen Figuren und dem Spieler vorbei (setzeFiguren); kurz vor dem Ziel nicht mehr. Waldo läuft Sitzplätze
+  (Sofa, Träger) von vorne an und wird dann genau hingesetzt. Linker Torflügel: unteres Band endet an der Schlupftür.
 - Paket S Stabilität (Projektchat 29.10.): Hauptschleife abgesichert (main.js: nächstes Bild zuerst angefordert, jeder Schritt in
   sicher(), ein Fehler friert nichts mehr ein). Absturz beim Jeep-Anheben (Hinweistext las lader.last) behoben. Ermahnungen und
   Meckern sperren die Steuerung nicht mehr, nur Ausraster (stufe voll); Notausgang nach 12/20 s. Festes unsichtbares
