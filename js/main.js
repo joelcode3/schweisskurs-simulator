@@ -79,6 +79,61 @@ function groesse() {
 window.addEventListener('resize', groesse);
 groesse();
 
+// ---------- Leistung (gegen Ruckeln) ----------
+// 1. kleine Teile (Schrauben, Knöpfe, Krümel …) und Umrisse werfen keinen Schatten
+// 2. Schatten nur jedes zweite Bild neu berechnen
+// 3. weit entfernte Kleinteile und Umrisslinien nicht zeichnen (über Layer, damit Spiel-Sichtbarkeit unberührt bleibt)
+// 4. alle Materialien gleich beim Start vorbereiten (sonst hakt es, wenn z. B. Waldo zum ersten Mal reinkommt)
+const FIGUREN = new Set([dennis.wurzel, jonny.wurzel, waldo.wurzel, torben.wurzel, ...Object.values(kumpels.alle || {}).map((k) => k.wurzel)]);
+const fernTeile = []; // { gruppe, lokal (Mitte), radius, teile: [mesh], aus: bool }
+function leistungVorbereiten() {
+  const _s = new THREE.Sphere(), _v = new THREE.Vector3();
+  scene.updateMatrixWorld(true);
+  scene.traverse((o) => {
+    if (!o.isMesh || !o.geometry) return;
+    if (o.userData.umriss) { o.castShadow = false; return; }
+    if (!o.geometry.boundingSphere) o.geometry.computeBoundingSphere();
+    const r = o.geometry.boundingSphere.radius * o.getWorldScale(_v).x;
+    if (r < 0.06) o.castShadow = false;
+  });
+  for (const g of scene.children) {
+    if (!g.isGroup || FIGUREN.has(g)) continue;
+    const box = new THREE.Box3().setFromObject(g);
+    if (box.isEmpty()) continue;
+    box.getBoundingSphere(_s);
+    const teile = [];
+    g.traverse((o) => {
+      if (!o.isMesh || !o.geometry) return;
+      if (!o.geometry.boundingSphere) o.geometry.computeBoundingSphere();
+      if (o.userData.umriss || o.geometry.boundingSphere.radius * o.getWorldScale(_v).x < 0.25) teile.push(o);
+    });
+    if (teile.length > 20) fernTeile.push({ gruppe: g, lokal: g.worldToLocal(_s.center.clone()), radius: _s.radius, teile, aus: false });
+  }
+}
+let fernTakt = 0;
+const _fv = new THREE.Vector3();
+function fernUpdate() {
+  if (++fernTakt % 15) return;
+  for (const f of fernTeile) {
+    // Mitte in Gruppenkoordinaten gemerkt: Fahrzeuge nehmen sie mit
+    const mitte = f.gruppe.localToWorld(_fv.copy(f.lokal));
+    const weit = kamera.position.distanceTo(mitte) - f.radius > 45;
+    if (weit === f.aus) continue;
+    f.aus = weit;
+    for (const t of f.teile) { if (weit) t.layers.disable(0); else t.layers.enable(0); }
+  }
+}
+function materialienVorbereiten() {
+  const versteckt = [];
+  scene.traverse((o) => { if (!o.visible) { versteckt.push(o); o.visible = true; } });
+  try { renderer.compile(scene, kamera); } catch (e) { /* egal */ }
+  for (const o of versteckt) o.visible = false;
+}
+leistungVorbereiten();
+materialienVorbereiten();
+renderer.shadowMap.autoUpdate = false;
+let schattenTakt = 0;
+
 let letzte = performance.now();
 let stationAlt = null;
 // Hauptschleife: das nächste Bild wird ZUERST angefordert und jeder Schritt einzeln abgesichert –
@@ -121,6 +176,8 @@ function schleife(jetzt) {
     });
   }
   sicher('hand', () => hand.update(dt, steuerung.geht, dennis.position, welt.hindernisse));
+  sicher('fern', fernUpdate);
+  sicher('schatten', () => { if (++schattenTakt % 2 === 0) renderer.shadowMap.needsUpdate = true; });
   renderer.render(scene, kamera);
   sicher('handBild', () => hand.render(renderer));
 }
@@ -171,4 +228,4 @@ raeder.forEach((rad) => rad.addEventListener('pointerdown', (e) => {
 }));
 
 // Für Tests im Browser
-window.__werkstatt = { kamera, steuerung, dennis, jonny, waldo, torben, kumpels, fz, segway, welt, hand, get spiel() { return spiel; } };
+window.__werkstatt = { renderer, scene, kamera, steuerung, dennis, jonny, waldo, torben, kumpels, fz, segway, welt, hand, get spiel() { return spiel; } };

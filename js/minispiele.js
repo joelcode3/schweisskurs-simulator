@@ -1846,96 +1846,163 @@ export function siebSpiel() {
 
 // Kaffee kochen: Pulver in den Filter löffeln (3 Löffel, so mag Dennis ihn), Wasser bis zur Markierung, Knopf an
 export function kaffeeSpiel() {
-  let f;
-  let phase = 'pulver';
-  let loeffel = 0;
-  let loeffelAnim = 0;
-  let wasser = 0;
-  let haelt = false;
-  let ton = null;
-  let bruehen = 0;
+  // Filterkaffeemaschine wie in echt:
+  // 1. alten Filter mit nassem Kaffeesatz aus dem Korb ziehen und in den Mülleimer werfen
+  // 2. neuen Papierfilter vom Stapel in den Korb ziehen
+  // 3. Kaffeepulver: auf die Dose klicken = ein Löffel (3 mag Dennis), dann Korb zuklappen (auf den Korb klicken)
+  // 4. Wasser: Kanne gedrückt halten = Wasser in den Tank, an der gelben Markierung loslassen
+  // 5. Einschalten (grüner Knopf), Kaffee läuft durch
+  let f, M = {};
+  let phase = 'alt';
+  let loeffel = 0, loeffelAnim = 0, wasser = 0, bruehen = 0, haelt = false, ton = null;
+  let zieht = null, zx = 0, zy = 0; // gezogenes Teil: 'alt' | 'neu'
+  let altImMuell = 0; // Animation
   let meldung = '', meldungZeit = 0;
   const meld = (t) => { meldung = t; meldungZeit = 1.8; };
   const ZIEL = [0.78, 0.92];
-  let dose, maschine, knopfPos;
-  const { api, versprechen } = spielRahmen('Kaffee kochen', 'Schwarz und stark, so wie Dennis ihn mag: drei Löffel Pulver, Wasser bis zur Markierung, dann einschalten.', {
+  const drin = (p, b) => p.x > b.x && p.x < b.x + b.b && p.y > b.y && p.y < b.y + b.h;
+  const { api, versprechen } = spielRahmen('Kaffee kochen', 'Filterkaffee, wie Dennis ihn mag: alten Filter raus, neuen rein, drei Löffel Pulver, Wasser bis zur Markierung, einschalten.', {
     beiGroesse(m) {
       f = flaeche(m);
-      dose = { x: f.x + f.b * 0.08, y: f.y + f.h * 0.45, b: f.b * 0.16, h: f.h * 0.42 };
-      maschine = { x: f.x + f.b * 0.42, y: f.y + f.h * 0.06, b: f.b * 0.36, h: f.h * 0.9 };
-      knopfPos = { x: maschine.x + maschine.b * 0.8, y: maschine.y + maschine.h * 0.62, r: Math.min(f.b, f.h) * 0.05 };
+      const mm = { x: f.x + f.b * 0.38, y: f.y + f.h * 0.02, b: f.b * 0.3, h: f.h * 0.96 };
+      M = {
+        maschine: mm,
+        korb: { x: mm.x + mm.b * 0.42, y: mm.y + mm.h * 0.14, b: mm.b * 0.5, h: mm.h * 0.2 },
+        tank: { x: mm.x + mm.b * 0.06, y: mm.y + mm.h * 0.1, b: mm.b * 0.28, h: mm.h * 0.55 },
+        knopf: { x: mm.x + mm.b * 0.2, y: mm.y + mm.h * 0.82, r: Math.min(f.b, f.h) * 0.045 },
+        kanne: { x: mm.x + mm.b * 0.48, y: mm.y + mm.h * 0.66, b: mm.b * 0.44, h: mm.h * 0.26 },
+        muell: { x: f.x + f.b * 0.02, y: f.y + f.h * 0.55, b: f.b * 0.16, h: f.h * 0.42 },
+        stapel: { x: f.x + f.b * 0.2, y: f.y + f.h * 0.72, b: f.b * 0.13, h: f.h * 0.2 },
+        dose: { x: f.x + f.b * 0.76, y: f.y + f.h * 0.5, b: f.b * 0.13, h: f.h * 0.38 },
+        hahnKanne: { x: f.x + f.b * 0.76, y: f.y + f.h * 0.08, b: f.b * 0.18, h: f.h * 0.3 },
+      };
     },
     events: {
       pointerdown(e) {
         const p = zeigerPos(api.canvas, e);
-        if (phase === 'pulver') {
-          if (p.x > dose.x - 20 && p.x < dose.x + dose.b + 20 && p.y > dose.y - 40 && p.y < dose.y + dose.h) {
+        if (phase === 'alt' && drin(p, M.korb)) { zieht = 'alt'; zx = p.x; zy = p.y; api.canvas.setPointerCapture?.(e.pointerId); }
+        else if (phase === 'neu' && drin(p, M.stapel)) { zieht = 'neu'; zx = p.x; zy = p.y; api.canvas.setPointerCapture?.(e.pointerId); }
+        else if (phase === 'pulver') {
+          if (drin(p, { x: M.dose.x - 20, y: M.dose.y - 50, b: M.dose.b + 40, h: M.dose.h + 50 })) {
             loeffel++; loeffelAnim = 0.6; klonk(0.15);
-            if (loeffel === 3) meld('Drei Löffel. Perfekt.');
+            if (loeffel === 3) meld('Drei Löffel. Perfekt. Jetzt Korb zuklappen.');
             if (loeffel === 5) meld('Fünf?! Das wird Teer.');
-          } else if (loeffel >= 1 && p.x > maschine.x) { phase = 'wasser'; meld(loeffel < 3 ? 'Etwas dünn ... Na gut.' : 'Jetzt Wasser rein!'); }
-        } else if (phase === 'wasser') haelt = true;
-        else if (phase === 'knopf' && Math.hypot(p.x - knopfPos.x, p.y - knopfPos.y) < knopfPos.r * 1.6) { phase = 'bruehen'; blip(700, 0.1); }
+          } else if (loeffel >= 1 && drin(p, M.korb)) { phase = 'wasser'; klonk(0.3); meld(loeffel < 3 ? 'Etwas dünn ... na gut.' : 'Jetzt Wasser in den Tank!'); }
+        } else if (phase === 'wasser' && drin(p, M.hahnKanne)) haelt = true;
+        else if (phase === 'knopf' && Math.hypot(p.x - M.knopf.x, p.y - M.knopf.y) < M.knopf.r * 1.6) { phase = 'bruehen'; blip(700, 0.1); }
+        else if (phase === 'wasser') meld('Die Wasserkanne gedrückt halten.');
       },
+      pointermove(e) { if (zieht) { const p = zeigerPos(api.canvas, e); zx = p.x; zy = p.y; } },
       pointerup() {
+        if (zieht === 'alt') {
+          if (drin({ x: zx, y: zy }, { x: M.muell.x - 20, y: M.muell.y - 60, b: M.muell.b + 40, h: M.muell.h + 60 })) { phase = 'neu'; altImMuell = 0.5; klonk(0.25); meld('Weg mit dem alten Satz.'); }
+          else meld('Der alte Filter kommt in den Mülleimer (links).');
+        } else if (zieht === 'neu') {
+          if (drin({ x: zx, y: zy }, { x: M.korb.x - 30, y: M.korb.y - 30, b: M.korb.b + 60, h: M.korb.h + 60 })) { phase = 'pulver'; blip(600, 0.05); meld('Neuer Filter drin. Jetzt Pulver (Dose rechts).'); }
+          else meld('Den Filter in den Korb oben an der Maschine ziehen.');
+        }
+        zieht = null;
         if (phase === 'wasser' && haelt) {
           haelt = false;
           if (wasser >= ZIEL[0]) { phase = 'knopf'; meld(wasser > 1 ? 'Übergelaufen. Egal.' : 'Genau richtig. Einschalten!'); }
           else if (wasser > 0.05) meld('Noch nicht genug Wasser.');
         }
       },
-      pointercancel() { haelt = false; },
+      pointercancel() { haelt = false; zieht = null; },
     },
     schritt(dt) {
       meldungZeit = Math.max(0, meldungZeit - dt);
       loeffelAnim = Math.max(0, loeffelAnim - dt);
+      altImMuell = Math.max(0, altImMuell - dt);
       const laeuft = (phase === 'wasser' && haelt) || phase === 'bruehen';
       if (laeuft && !ton) ton = dauer('wasser', phase === 'bruehen' ? 0.4 : 0.6);
       if (!laeuft && ton) { ton.stopp(); ton = null; }
       if (phase === 'wasser' && haelt) wasser = Math.min(1.08, wasser + dt * 0.35);
       if (phase === 'bruehen') {
-        bruehen += dt / 2.5;
+        bruehen += dt / 3;
         if (bruehen >= 1) { phase = 'fertig'; if (ton) { ton.stopp(); ton = null; } api.fertig({ loeffel, wasser }); }
       }
     },
     zeichnen() {
       const { ctx, m } = api;
       ctx.fillStyle = '#2a2622'; ctx.fillRect(0, 0, m.b, m.h);
-      // Kaffeedose mit Löffel
-      ctx.fillStyle = '#a8322a'; ctx.strokeStyle = '#111'; ctx.lineWidth = 4;
-      ctx.beginPath(); ctx.roundRect(dose.x, dose.y, dose.b, dose.h, 10); ctx.fill(); ctx.stroke();
-      textMitte(ctx, 'KAFFEE', dose.x + dose.b / 2, dose.y + dose.h * 0.55, 16, '#f2c21c');
-      const lx = dose.x + dose.b / 2 + (loeffelAnim > 0 ? (0.6 - loeffelAnim) / 0.6 * (maschine.x + maschine.b * 0.4 - dose.x - dose.b / 2) : 0);
-      const ly = dose.y - 20 - (loeffelAnim > 0 ? Math.sin((0.6 - loeffelAnim) / 0.6 * Math.PI) * 80 : 0);
+      ctx.fillStyle = '#5a4630'; ctx.fillRect(0, f.y + f.h * 0.97, m.b, m.h); // Tischplatte
+      ctx.strokeStyle = '#111'; ctx.lineWidth = 4;
+      // Mülleimer (Treteimer) links
+      const mu = M.muell;
+      ctx.fillStyle = '#7d8a7a'; ctx.beginPath(); ctx.moveTo(mu.x, mu.y); ctx.lineTo(mu.x + mu.b, mu.y); ctx.lineTo(mu.x + mu.b * 0.9, mu.y + mu.h); ctx.lineTo(mu.x + mu.b * 0.1, mu.y + mu.h); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#5f6b5c'; ctx.save(); ctx.translate(mu.x + mu.b, mu.y); ctx.rotate(phase === 'alt' && zieht ? -0.9 : altImMuell > 0 ? -0.9 * altImMuell * 2 : 0);
+      ctx.beginPath(); ctx.roundRect(-mu.b - 6, -12, mu.b + 12, 14, 5); ctx.fill(); ctx.stroke(); ctx.restore();
+      textMitte(ctx, 'MÜLL', mu.x + mu.b / 2, mu.y + mu.h * 0.55, 14, '#e8e4d8');
+      // Filterstapel (Papierfilter in der Packung)
+      const st = M.stapel;
+      ctx.fillStyle = '#c8352a'; ctx.beginPath(); ctx.roundRect(st.x, st.y + st.h * 0.35, st.b, st.h * 0.65, 6); ctx.fill(); ctx.stroke();
+      for (let k = 0; k < 4; k++) { ctx.fillStyle = '#f4ecd8'; ctx.beginPath(); ctx.moveTo(st.x + st.b * 0.1, st.y + k * 4); ctx.lineTo(st.x + st.b * 0.9, st.y + k * 4); ctx.lineTo(st.x + st.b * 0.7, st.y + st.h * 0.5 + k * 4); ctx.lineTo(st.x + st.b * 0.3, st.y + st.h * 0.5 + k * 4); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+      textMitte(ctx, 'FILTER 1x4', st.x + st.b / 2, st.y + st.h * 0.82, 12, '#fff');
+      // Kaffeedose rechts mit Löffel
+      const d = M.dose;
+      ctx.fillStyle = '#a8322a'; ctx.beginPath(); ctx.roundRect(d.x, d.y, d.b, d.h, 10); ctx.fill(); ctx.stroke();
+      textMitte(ctx, 'KAFFEE', d.x + d.b / 2, d.y + d.h * 0.55, 14, '#f2c21c');
+      const k = M.korb;
+      const lt = loeffelAnim > 0 ? (0.6 - loeffelAnim) / 0.6 : 0;
+      const lx = d.x + d.b / 2 + lt * (k.x + k.b / 2 - d.x - d.b / 2), ly = d.y - 20 - Math.sin(lt * Math.PI) * 80 + lt * (k.y - d.y + 20);
       ctx.strokeStyle = '#c9cdd2'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx + 50, ly - 30); ctx.stroke();
       ctx.fillStyle = '#c9cdd2'; ctx.beginPath(); ctx.ellipse(lx, ly, 16, 9, 0.5, 0, Math.PI * 2); ctx.fill();
       if (loeffelAnim > 0) { ctx.fillStyle = '#3a2414'; ctx.beginPath(); ctx.ellipse(lx, ly - 4, 12, 6, 0.5, 0, Math.PI * 2); ctx.fill(); }
-      // Kaffeemaschine: Wassertank links (Schnitt), Filter oben, Kanne unten
-      const mm = maschine;
+      // Wasserkanne (zum Einfüllen) rechts oben
+      const hk = M.hahnKanne;
+      ctx.save(); ctx.translate(hk.x + hk.b / 2, hk.y + hk.h / 2); if (haelt) ctx.rotate(-0.6);
+      ctx.fillStyle = 'rgba(200,225,240,0.35)'; ctx.strokeStyle = '#111'; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.roundRect(-hk.b * 0.35, -hk.h * 0.4, hk.b * 0.7, hk.h * 0.8, 8); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#4aa3df'; ctx.fillRect(-hk.b * 0.33, -hk.h * 0.1, hk.b * 0.66, hk.h * 0.48);
+      ctx.beginPath(); ctx.moveTo(-hk.b * 0.35, -hk.h * 0.38); ctx.lineTo(-hk.b * 0.55, -hk.h * 0.5); ctx.lineTo(-hk.b * 0.35, -hk.h * 0.2); ctx.stroke();
+      ctx.restore();
+      if (haelt) { ctx.strokeStyle = '#4aa3df'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(hk.x, hk.y + hk.h * 0.25); ctx.quadraticCurveTo(M.tank.x + M.tank.b, hk.y, M.tank.x + M.tank.b / 2, M.tank.y); ctx.stroke(); }
+      // Kaffeemaschine: Gehäuse, Tank (Schnitt), Filterkorb oben, Warmhalteplatte, Glaskanne, Knopf
+      const mm = M.maschine;
       ctx.fillStyle = '#1d1d1f'; ctx.strokeStyle = '#111'; ctx.lineWidth = 5;
       ctx.beginPath(); ctx.roundRect(mm.x, mm.y, mm.b, mm.h, 16); ctx.fill(); ctx.stroke();
-      const tank = { x: mm.x + mm.b * 0.08, y: mm.y + mm.h * 0.08, b: mm.b * 0.3, h: mm.h * 0.6 };
-      ctx.fillStyle = 'rgba(200,225,240,0.25)'; ctx.fillRect(tank.x, tank.y, tank.b, tank.h);
-      ctx.fillStyle = '#4aa3df'; const wh = tank.h * Math.min(1, wasser * (1 - (phase === 'bruehen' || phase === 'fertig' ? bruehen : 0)));
-      ctx.fillRect(tank.x, tank.y + tank.h - wh, tank.b, wh);
-      ctx.strokeStyle = '#ccc'; ctx.lineWidth = 2; ctx.strokeRect(tank.x, tank.y, tank.b, tank.h);
-      for (const z of ZIEL) { const y = tank.y + tank.h * (1 - z); ctx.strokeStyle = '#ffc81e'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(tank.x - 6, y); ctx.lineTo(tank.x + tank.b * 0.4, y); ctx.stroke(); }
-      // Filter mit Pulver
-      const fx = mm.x + mm.b * 0.55, fy = mm.y + mm.h * 0.1, fbr = mm.b * 0.36;
-      ctx.fillStyle = '#e8dcc0'; ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(fx + fbr, fy); ctx.lineTo(fx + fbr * 0.7, fy + fbr * 0.6); ctx.lineTo(fx + fbr * 0.3, fy + fbr * 0.6); ctx.closePath(); ctx.fill(); ctx.stroke();
-      const pulver = Math.min(1, loeffel / 5);
-      if (pulver > 0) { ctx.fillStyle = '#3a2414'; ctx.beginPath(); ctx.moveTo(fx + fbr * (0.3 - 0.15 * pulver), fy + fbr * (0.6 - 0.45 * pulver)); ctx.lineTo(fx + fbr * (0.7 + 0.15 * pulver), fy + fbr * (0.6 - 0.45 * pulver)); ctx.lineTo(fx + fbr * 0.7, fy + fbr * 0.6); ctx.lineTo(fx + fbr * 0.3, fy + fbr * 0.6); ctx.closePath(); ctx.fill(); }
-      textMitte(ctx, `${loeffel} Löffel`, fx + fbr / 2, fy - 10, 16, '#ffe9a8');
-      // Kanne
-      const kx = mm.x + mm.b * 0.5, ky = mm.y + mm.h * 0.72, kb = mm.b * 0.44, kh = mm.h * 0.24;
-      ctx.fillStyle = 'rgba(200,225,240,0.3)'; ctx.beginPath(); ctx.roundRect(kx, ky, kb, kh, 10); ctx.fill(); ctx.stroke();
+      const t = M.tank;
+      ctx.fillStyle = 'rgba(200,225,240,0.25)'; ctx.fillRect(t.x, t.y, t.b, t.h);
+      ctx.fillStyle = '#4aa3df'; const wh = t.h * Math.min(1, wasser * (1 - (phase === 'bruehen' || phase === 'fertig' ? bruehen : 0)));
+      ctx.fillRect(t.x, t.y + t.h - wh, t.b, wh);
+      ctx.strokeStyle = '#ccc'; ctx.lineWidth = 2; ctx.strokeRect(t.x, t.y, t.b, t.h);
+      for (const zz of ZIEL) { const y = t.y + t.h * (1 - zz); ctx.strokeStyle = '#ffc81e'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(t.x - 6, y); ctx.lineTo(t.x + t.b * 0.4, y); ctx.stroke(); }
+      // Filterkorb (offen, solange man am Filter arbeitet)
+      ctx.fillStyle = '#2f3134'; ctx.strokeStyle = '#111'; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(k.x, k.y); ctx.lineTo(k.x + k.b, k.y); ctx.lineTo(k.x + k.b * 0.72, k.y + k.h); ctx.lineTo(k.x + k.b * 0.28, k.y + k.h); ctx.closePath(); ctx.fill(); ctx.stroke();
+      const filterForm = (x, y, b, h, satz) => {
+        ctx.fillStyle = satz ? '#c9b78f' : '#f4ecd8'; ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(x - b / 2, y); ctx.lineTo(x + b / 2, y); ctx.lineTo(x + b * 0.22, y + h); ctx.lineTo(x - b * 0.22, y + h); ctx.closePath(); ctx.fill(); ctx.stroke();
+        if (satz) { ctx.fillStyle = '#2a1a0e'; ctx.beginPath(); ctx.moveTo(x - b * 0.36, y + h * 0.3); ctx.lineTo(x + b * 0.36, y + h * 0.3); ctx.lineTo(x + b * 0.2, y + h * 0.92); ctx.lineTo(x - b * 0.2, y + h * 0.92); ctx.closePath(); ctx.fill(); }
+      };
+      const kx = k.x + k.b / 2;
+      if (phase === 'alt') filterForm(zieht === 'alt' ? zx : kx, zieht === 'alt' ? zy - k.h * 0.4 : k.y - 4, k.b * 0.9, k.h * 0.9, true);
+      if (zieht === 'neu') filterForm(zx, zy - k.h * 0.4, k.b * 0.9, k.h * 0.9, false);
+      if (['pulver', 'wasser', 'knopf', 'bruehen', 'fertig'].includes(phase)) {
+        filterForm(kx, k.y - 4, k.b * 0.9, k.h * 0.9, false);
+        const pv = Math.min(1, loeffel / 5);
+        if (pv > 0) { ctx.fillStyle = '#3a2414'; ctx.beginPath(); ctx.moveTo(kx - k.b * 0.2 * (0.6 + pv), k.y + k.h * (0.85 - 0.5 * pv)); ctx.lineTo(kx + k.b * 0.2 * (0.6 + pv), k.y + k.h * (0.85 - 0.5 * pv)); ctx.lineTo(kx + k.b * 0.2, k.y + k.h * 0.85); ctx.lineTo(kx - k.b * 0.2, k.y + k.h * 0.85); ctx.closePath(); ctx.fill(); }
+      }
+      if (['wasser', 'knopf', 'bruehen', 'fertig'].includes(phase)) { ctx.fillStyle = '#1d1d1f'; ctx.strokeStyle = '#111'; ctx.beginPath(); ctx.roundRect(k.x - 6, k.y - 16, k.b + 12, 14, 5); ctx.fill(); ctx.stroke(); } // Deckel zu
+      if (phase !== 'alt' && phase !== 'neu') textMitte(ctx, `${loeffel} Löffel`, kx, k.y - 26, 15, '#ffe9a8');
+      // Glaskanne auf der Warmhalteplatte
+      const kn = M.kanne;
+      ctx.fillStyle = '#3a3c40'; ctx.fillRect(kn.x - 6, kn.y + kn.h, kn.b + 12, 8);
+      ctx.fillStyle = 'rgba(200,225,240,0.3)'; ctx.strokeStyle = '#111'; ctx.lineWidth = 4; ctx.beginPath(); ctx.roundRect(kn.x, kn.y, kn.b, kn.h, 12); ctx.fill(); ctx.stroke();
       const kaffee = phase === 'bruehen' || phase === 'fertig' ? bruehen : 0;
-      if (kaffee > 0) { ctx.fillStyle = '#3a2414'; ctx.fillRect(kx + 4, ky + kh * (1 - kaffee * 0.8), kb - 8, kh * kaffee * 0.8 - 4); }
-      if (phase === 'bruehen') for (let i = 0; i < 3; i++) { ctx.fillStyle = '#3a2414'; ctx.beginPath(); ctx.arc(fx + fbr / 2, fy + fbr * 0.7 + ((performance.now() / 6 + i * 25) % (ky - fy - fbr * 0.7)), 4, 0, Math.PI * 2); ctx.fill(); }
+      if (kaffee > 0) { ctx.fillStyle = '#3a2414'; ctx.fillRect(kn.x + 4, kn.y + kn.h * (1 - kaffee * 0.8), kn.b - 8, kn.h * kaffee * 0.8 - 4); }
+      if (phase === 'bruehen') for (let i = 0; i < 3; i++) { ctx.fillStyle = '#3a2414'; ctx.beginPath(); ctx.arc(kx, k.y + k.h + ((performance.now() / 6 + i * 25) % Math.max(1, kn.y - k.y - k.h)), 4, 0, Math.PI * 2); ctx.fill(); }
       // Einschaltknopf
       ctx.fillStyle = phase === 'knopf' ? '#3fbf4f' : phase === 'bruehen' || phase === 'fertig' ? '#ff6a3a' : '#555';
-      ctx.beginPath(); ctx.arc(knopfPos.x, knopfPos.y, knopfPos.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-      const tipp = { pulver: 'Auf die Dose klicken = ein Löffel Pulver in den Filter. Dann auf die Maschine klicken.', wasser: 'Gedrückt halten = Wasser einfüllen. Loslassen an der gelben Markierung.', knopf: 'Grünen Knopf drücken.', bruehen: 'Läuft ...', fertig: 'Fertig. Riecht nach Werkstatt.' }[phase];
+      ctx.strokeStyle = '#111'; ctx.beginPath(); ctx.arc(M.knopf.x, M.knopf.y, M.knopf.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      const tipp = {
+        alt: 'Alten Filter mit Kaffeesatz aus dem Korb in den Mülleimer ziehen.',
+        neu: 'Neuen Papierfilter vom Stapel in den Korb ziehen.',
+        pulver: 'Auf die Dose klicken = ein Löffel Pulver. Dann auf den Korb klicken = zuklappen.',
+        wasser: 'Wasserkanne gedrückt halten = Wasser in den Tank. An der gelben Markierung loslassen.',
+        knopf: 'Grünen Knopf drücken.', bruehen: 'Läuft durch ...', fertig: 'Fertig. Ab zu Dennis!',
+      }[phase];
       textMitte(ctx, tipp, m.b / 2, f.y - 18, 18, '#ffe9a8');
       if (meldungZeit > 0) textMitte(ctx, meldung, m.b / 2, f.y + f.h + 40, 22);
     },
@@ -1945,19 +2012,25 @@ export function kaffeeSpiel() {
 
 // Wasserrohrbruch: Rohrzange an die Verschraubung ansetzen, dann rechtsrum festdrehen, bis nichts mehr spritzt
 export function rohrSpiel() {
+  // Drei Schritte, damit es ein bisschen Spiel ist und nicht nur Halten:
+  // 1. Teflonband ums Gewinde wickeln (3 Runden im Kreis um die Verschraubung ziehen, egal wie schnell)
+  // 2. Rohrzange ansetzen (anklicken)
+  // 3. Festdrehen (rechtsrum im Kreis); zu schnell = die Zange rutscht ab und muss neu angesetzt werden
   let f, mx, my, r;
-  let angesetzt = false;
+  let phase = 'band';
+  let band = 0; // 0..1 (3 Runden)
   let fest = 0; // 0..1 (1,5 Umdrehungen)
-  let winkel = 0;
-  let zieht = null;
+  let winkel = 0, abgerutscht = 0, rutscher = 0;
+  let zieht = null, tempo = 0, rad = 0;
+  const verlauf = []; // [Zeit, Winkel] der letzten 0,3 s
   let ton = dauer('wasser', 0.5);
   const tropfen = [];
-  const { api, versprechen } = spielRahmen('Rohr abdichten', 'Rohrzange an die Verschraubung ansetzen (anklicken) und dann rechtsrum festdrehen (im Kreis ziehen).', {
+  const { api, versprechen } = spielRahmen('Rohr abdichten', 'Erst Teflonband ums Gewinde wickeln (im Kreis ziehen), dann Rohrzange ansetzen (anklicken) und gefühlvoll rechtsrum festdrehen.', {
     beiGroesse(m) { f = flaeche(m); mx = m.b / 2; my = f.y + f.h * 0.5; r = Math.min(f.b, f.h) * 0.32; },
     events: {
       pointerdown(e) {
         const p = zeigerPos(api.canvas, e);
-        if (!angesetzt) { if (Math.hypot(p.x - mx, p.y - my) < r * 0.6) { angesetzt = true; klonk(0.4); } return; }
+        if (phase === 'ansetzen') { if (Math.hypot(p.x - mx, p.y - my) < r * 0.6) { phase = 'drehen'; klonk(0.4); } return; }
         zieht = Math.atan2(p.y - my, p.x - mx); api.canvas.setPointerCapture?.(e.pointerId);
       },
       pointermove(e) {
@@ -1968,16 +2041,38 @@ export function rohrSpiel() {
         while (d > Math.PI) d -= Math.PI * 2;
         while (d < -Math.PI) d += Math.PI * 2;
         zieht = a;
-        if (d > 0) { winkel += d; fest = Math.min(1, fest + d / (Math.PI * 3)); if (Math.random() < 0.15) klonk(0.12); }
-        if (fest >= 1 && !api.istFertig) { if (ton) { ton.stopp(); ton = null; } klonk(0.6); api.fertig({ dicht: true }); }
+        if (phase === 'band') {
+          band = Math.min(1, band + Math.abs(d) / (Math.PI * 6));
+          if (Math.random() < 0.08) blip(900 + Math.random() * 300, 0.02, 0.03);
+          if (band >= 1) { phase = 'ansetzen'; zieht = null; blip(660, 0.08); }
+          return;
+        }
+        if (phase !== 'drehen' || d <= 0) return;
+        tempo += d;
+        // Drehtempo über die letzten ~0,25 s (echte Zeit): zu schnell = Zange rutscht ab
+        const jetzt = performance.now();
+        verlauf.push([jetzt, d]);
+        while (verlauf.length && jetzt - verlauf[0][0] > 300) verlauf.shift();
+        rad = verlauf.length > 3 ? verlauf.reduce((x, v) => x + v[1], 0) / 0.3 : 0;
+        if (rad > 9) {
+          verlauf.length = 0;
+          phase = 'ansetzen'; zieht = null; abgerutscht++; rutscher = 1.2; rad = 0; tempo = 0; fest = Math.max(0, fest - 0.1);
+          klonk(0.9); blip(180, 0.15, 0.15);
+          return;
+        }
+        winkel += d;
+        fest = Math.min(1, fest + d / (Math.PI * 3));
+        if (Math.random() < 0.15) klonk(0.12);
+        if (fest >= 1 && !api.istFertig) { if (ton) { ton.stopp(); ton = null; } klonk(0.6); api.fertig({ dicht: true, abgerutscht }); }
       },
       pointerup() { zieht = null; },
       pointercancel() { zieht = null; },
     },
     schritt(dt) {
-      const staerke = 1 - fest;
+      rutscher = Math.max(0, rutscher - dt);
+      const staerke = (1 - fest) * (phase === 'band' ? 1 : 0.85);
       if (ton) ton.staerke?.(0.5 * staerke + 0.05);
-      if (staerke > 0.02) for (let i = 0; i < 3 * staerke + 0.5; i++) tropfen.push({ x: mx + r * 0.05, y: my - r * 0.25, vx: (Math.random() - 0.3) * 500 * staerke, vy: -300 * staerke - Math.random() * 150, t: 0 });
+      if (staerke > 0.02) for (let i = 0; i < 3 * staerke + 0.5; i++) tropfen.push({ x: mx + r * 0.05, y: my - r * 0.25, vx: (Math.random() - 0.3) * 500 * staerke, vy: -300 * staerke - Math.random() * 200, t: 0 });
       for (let i = tropfen.length - 1; i >= 0; i--) { const q = tropfen[i]; q.t += dt; q.x += q.vx * dt; q.y += q.vy * dt; q.vy += 900 * dt; if (q.t > 1) tropfen.splice(i, 1); }
     },
     zeichnen() {
@@ -1986,25 +2081,36 @@ export function rohrSpiel() {
       // Rohr waagerecht mit Messing-Verschraubung (Sechskant) in der Mitte
       ctx.fillStyle = '#9aa1a8'; ctx.strokeStyle = '#111'; ctx.lineWidth = 5;
       ctx.fillRect(f.x, my - r * 0.16, f.b, r * 0.32); ctx.strokeRect(f.x, my - r * 0.16, f.b, r * 0.32);
+      // Teflonband: weiße Wicklungen links neben der Mutter, je mehr gewickelt, desto mehr Lagen
+      const lagen = Math.floor(band * 9);
+      ctx.strokeStyle = '#f4f4f0'; ctx.lineWidth = 4;
+      for (let k = 0; k < lagen; k++) { const x = mx - r * 0.42 - k * r * 0.045; ctx.beginPath(); ctx.moveTo(x, my - r * 0.17); ctx.lineTo(x - r * 0.03, my + r * 0.17); ctx.stroke(); }
       ctx.save(); ctx.translate(mx, my); ctx.rotate(winkel * 0.25);
-      ctx.fillStyle = fest >= 1 ? '#d9b04a' : '#c9a24a'; ctx.beginPath();
+      ctx.fillStyle = fest >= 1 ? '#d9b04a' : '#c9a24a'; ctx.strokeStyle = '#111'; ctx.lineWidth = 5; ctx.beginPath();
       for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2; ctx.lineTo(Math.cos(a) * r * 0.38, Math.sin(a) * r * 0.38); }
       ctx.closePath(); ctx.fill(); ctx.stroke();
       ctx.restore();
       for (const q of tropfen) { ctx.fillStyle = 'rgba(120,190,240,0.85)'; ctx.beginPath(); ctx.arc(q.x, q.y, 5, 0, Math.PI * 2); ctx.fill(); }
-      // Rohrzange (roter Griff), dreht mit
-      if (angesetzt) {
+      if (phase === 'band' && zieht !== null) {
+        // Bandrolle läuft mit
+        const a = zieht; ctx.fillStyle = '#f4f4f0'; ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(mx + Math.cos(a) * r * 0.75, my + Math.sin(a) * r * 0.75, r * 0.12, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      }
+      if (phase === 'drehen' || api.istFertig) {
         ctx.save(); ctx.translate(mx, my); ctx.rotate(winkel - Math.PI / 2);
-        ctx.fillStyle = '#c8352a'; ctx.beginPath(); ctx.roundRect(r * 0.3, -r * 0.08, r * 1.0, r * 0.16, 8); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#c8352a'; ctx.strokeStyle = '#111'; ctx.lineWidth = 5;
+        ctx.beginPath(); ctx.roundRect(r * 0.3, -r * 0.08, r * 1.0, r * 0.16, 8); ctx.fill(); ctx.stroke();
         ctx.fillStyle = '#5d6268'; ctx.beginPath(); ctx.roundRect(-r * 0.15, -r * 0.45, r * 0.5, r * 0.22, 6); ctx.fill(); ctx.stroke();
         ctx.beginPath(); ctx.roundRect(-r * 0.15, r * 0.23, r * 0.5, r * 0.22, 6); ctx.fill(); ctx.stroke();
         ctx.restore();
-      } else {
+      } else if (phase === 'ansetzen') {
         const puls = 0.5 + Math.sin(performance.now() / 200) * 0.5;
         ctx.strokeStyle = `rgba(255,200,30,${0.5 + puls * 0.5})`; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(mx, my, r * (0.5 + puls * 0.08), 0, Math.PI * 2); ctx.stroke();
       }
-      balken(ctx, f.x, f.y + f.h + 30, f.b, 12, fest, '#ffc81e');
-      textMitte(ctx, !angesetzt ? 'Klick auf die Verschraubung = Rohrzange ansetzen' : api.istFertig ? 'Dicht!' : 'Rechtsrum drehen (im Uhrzeigersinn im Kreis ziehen)', m.b / 2, f.y - 18, 18, '#ffe9a8');
+      balken(ctx, f.x, f.y + f.h + 30, f.b, 12, phase === 'band' ? band : fest, phase === 'band' ? '#f4f4f0' : '#ffc81e');
+      const t = api.istFertig ? 'Dicht!' : rutscher > 0 ? 'Abgerutscht! Zu schnell. Neu ansetzen.' : phase === 'band' ? 'Teflonband wickeln: im Kreis um die Mutter ziehen'
+        : phase === 'ansetzen' ? 'Klick auf die Verschraubung = Rohrzange ansetzen' : 'Rechtsrum drehen, gefühlvoll (nicht zu schnell)';
+      textMitte(ctx, t, m.b / 2, f.y - 18, 18, rutscher > 0 ? '#ff9a8a' : '#ffe9a8');
     },
   });
   versprechen.then(() => { if (ton) { ton.stopp(); ton = null; } });
