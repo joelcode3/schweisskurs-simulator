@@ -382,6 +382,11 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   klappt nur 2x (Wut je -6); 3. Mal: er schimpft einmal (zuViel + sauer, Wut +4), danach nur noch Hinweis (z.jagdSchluss). Modell sieht noch wie
   eine Peitsche aus (Optik offen). Tassen sind kein Werkzeug: Wurf einer Tasse hat eigene Sätze (DENNIS.wurf.tasse, dennis467/468) und den
   Fehlernamen „Tasse geworfen“. Schild am Hühnermobil entfernt.
+- Paket D Dennis draußen (Projektchat 29.10., B13/B18/B19/B29): spiel.js spielerNah(): Dennis bekommt nur etwas mit, wenn der Spieler
+  unter 14 m entfernt ist und im selben Bereich (Werkstatt/Bad/draußen, wege.js bereich) oder unter 5 m (Tor). dennisSiehts() nutzt das:
+  weit weg oder durch die Wand keine Kommentare, Wut oder Ausraster-Videos (Wurf in die Ferne, Handy, Kiwi, Brotdose, Meckern).
+  Werkstatt-Klonken (spiel.js klonk) wird draußen leiser (werkstattLaut(): ab 6 m von der Mitte linear bis 20 m, dann still);
+  der Aufprall eines Wurfs bleibt voll hörbar.
 - Paket F Figuren (Projektchat 29.10.): wege.js plant draußen auch um Jeep und Hoflader herum (setzeDynamisch, main.js
   meldet die Fahrzeuge an; Fahrzeug, in dem Start/Ziel liegt, zählt nicht). ausweichen(): wer läuft (Dennis, Jonny, Waldo),
   lenkt seitlich an anderen Figuren und dem Spieler vorbei (setzeFiguren); kurz vor dem Ziel nicht mehr. Waldo läuft Sitzplätze

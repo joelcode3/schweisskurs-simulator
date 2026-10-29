@@ -2,11 +2,12 @@
 import * as THREE from 'three';
 import { STATIONEN, AUGENHOEHE } from './world.js';
 import { FELDWEG, inHindernis } from './draussen.js';
+import { bereich } from './wege.js';
 import { eierKartonModell, mettendenModell } from './landschaft.js';
 import { setze } from './toon.js';
 import { auftritt, hatClip, buehneBelegt } from './clips.js';
 import { pfadSpiel, schlackeSpiel, hulaSpiel, DENNIS_HULA_REKORD, ventilSpiel, spuelSpiel, anzeichnenSpiel, lackierSpiel, bitsatzSpiel, akkuschrauberSpiel, siebSpiel, kaffeeSpiel, rohrSpiel, leiterSpiel } from './minispiele.js';
-import { bierAuf, blip, kratzen, jingle, klonk, brummeln, dauer as dauerTon, technoAn, technoAus, technoBeat, klospuelung, mampfen, klick as schalterKlick, stimmeAbspielen, stimmenVorladen, husten, gertenKlatsch } from './audio.js';
+import { bierAuf, blip, kratzen, jingle, klonk as klonkRoh, brummeln, dauer as dauerTon, technoAn, technoAus, technoBeat, klospuelung, mampfen, klick as schalterKlick, stimmeAbspielen, stimmenVorladen, husten, gertenKlatsch } from './audio.js';
 import * as ui from './ui.js';
 import { DENNIS, JONNY, WALDO, KUMPEL, satzId } from './texte.js';
 import { SYMBOL } from './gesicht.js';
@@ -2059,9 +2060,27 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     dennis.stimmung('ruhig');
   }
 
-  // Kriegt Dennis gerade mit, was man macht? (nicht beim Schlafen, nicht auf dem Klo)
+  // Ist der Spieler nah genug bei Dennis, dass der etwas mitbekommt? Weit weg (über 14 m) nie, durch die Wand
+  // (einer drinnen, einer draußen) nur auf kurze Entfernung (unter 5 m, z. B. am Tor)
+  function spielerNah() {
+    const p = kamera.position, d = dennis.position;
+    const ab = Math.hypot(p.x - d.x, p.z - d.z);
+    if (ab > 14) return false;
+    return ab < 5 || bereich(p.x, p.z) === bereich(d.x, d.z);
+  }
+  // Kriegt Dennis gerade mit, was man macht? (nicht beim Schlafen, nicht auf dem Klo, nicht weit weg oder hinter der Wand)
   function dennisSiehts() {
-    return dennis.wurzel.visible && dennis.modus !== 'schlafen' && !z.aufKlo;
+    return dennis.wurzel.visible && dennis.modus !== 'schlafen' && !z.aufKlo && spielerNah();
+  }
+  // Werkstatt-Geräusche (Klonken, Scheppern) hört man draußen nur leise, weit weg gar nicht
+  function werkstattLaut() {
+    const p = kamera.position;
+    if (bereich(p.x, p.z) !== 'draussen') return 1;
+    return Math.max(0, Math.min(1, 1 - (Math.hypot(p.x, p.z) - 6) / 14));
+  }
+  function klonk(lautst = 0.6) {
+    const l = lautst * werkstattLaut();
+    if (l > 0.02) klonkRoh(l);
   }
   // Spieler ist weit draußen (mehr als ca. 18 m von der Werkstatt): Werkstatt-Ärger kommt dann seltener (meist ausgelassen)
   function weitDraussenLassen() {
@@ -2903,7 +2922,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     if (id === 'kaffee') kaffeeWeg();
     let getroffen = false;
     hand.wirf(steuerung.blickRichtung(), (gid, obj) => {
-      klonk(gid === 'figur' || gid === 'feuerloescher' ? 0.8 : 0.4);
+      klonkRoh(gid === 'figur' || gid === 'feuerloescher' ? 0.8 : 0.4);
     }, () => {
       getroffen = true;
       fehler('getroffen');
@@ -3650,7 +3669,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   return {
     zustand: z,
     klick,
-    test: { get z() { return z; }, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
+    test: { get z() { return z; }, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
     stationWaehlen,
     intro,
     aktualisieren,
