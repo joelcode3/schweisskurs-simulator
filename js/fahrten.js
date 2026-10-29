@@ -139,7 +139,7 @@ export function baueFahrten(c) {
       const ereignis = fz.gabel(dt, hub);
       if (ereignis) {
         klonk(0.35);
-        ui.hinweis({ aufgenommen: 'Palette auf der Gabel.', aufgenommenMehrere: `${fz.lader.last.length} Paletten auf der Gabel.`, abgesetzt: 'Palette abgesetzt.', abgesetztMehrere: 'Paletten abgesetzt.',
+        ui.hinweis({ aufgenommen: 'Palette auf der Gabel.', aufgenommenMehrere: `${fz.lader.last?.length || 2} Paletten auf der Gabel.`, abgesetzt: 'Palette abgesetzt.', abgesetztMehrere: 'Paletten abgesetzt.',
           jeepAuf: fz.jeep.fahrer ? 'Jeep samt Fahrer auf der Gabel!' : 'Jeep auf der Gabel.', jeepAb: 'Jeep wieder abgesetzt.' }[ereignis]);
         if (ereignis === 'jeepAuf') {
           aerger(2);
@@ -149,7 +149,13 @@ export function baueFahrten(c) {
         }
       }
     }
-    const { dpsi, rums, treffer } = fz.schritt(f, dt, gas, lenk, fz.vMax(f), fussgaenger());
+    // festgefahren (Gas gedrückt, aber seit 1,5 s keine Bewegung): kurz durch Hindernisse hindurch befreien
+    const vorher = { x: f.x, z: f.z };
+    if (gas && fz2.festSeit > 1.5 && !fz2.befreiHinweis) { fz2.befreiHinweis = true; ui.hinweis('Festgefahren – du ruckelst dich frei.', 1500); }
+    if (!fz2.festSeit) fz2.befreiHinweis = false;
+    const { dpsi, rums, treffer } = fz.schritt(f, dt, gas, lenk, fz.vMax(f), fussgaenger(), gas !== 0 && fz2.festSeit > 1.5);
+    const bewegt = Math.hypot(f.x - vorher.x, f.z - vorher.z) > 0.002;
+    fz2.festSeit = gas && !bewegt ? (fz2.festSeit || 0) + dt : bewegt ? 0 : fz2.festSeit || 0;
     // gegen Grill oder Mülltonnen gefahren: umgefahren
     const schnell = Math.abs(fz2.vorher || 0) > 0.5;
     if (treffer && schnell && treffer === T.feuerHindernis && fz2.grill === 'steht') grillUm();
