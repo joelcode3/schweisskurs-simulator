@@ -9,6 +9,9 @@
   Hängt ein neues Update vom noch offenen PR ab, den neuen Zweig auf dessen Stand aufsetzen und im PR vermerken: erst den alten mergen.
 - Projektchat (Session session_01KZ18oujuEFnsAskwuMiw8Y, pflegt die Projektliste) schickt To-dos: OHNE Go des Betreibers umsetzen
   (Betreiber-Wunsch). Nach jedem erstellten Pull Request dem Projektchat per send_message Bescheid geben (Link + was drin ist).
+- Immer nur EIN Paket auf einmal (Betreiber-Wunsch, Limit sparen): nach jedem Paket (PR gemeldet bzw. Vorschau geschickt)
+  stoppen und warten, bis der Projektchat „weiter <Paketname>“ schickt. Nie selbst das nächste Paket anfangen.
+  Der Betreiber wählt pro Paket das Modell (/model).
 - Vor jedem PR im Browser testen (nur Computer-Ansicht, Web hat Prio; iPhone erstmal nicht, Betreiber 24.10.), Playwright mit vorinstalliertem Chromium.
 - Optisches: erst Vorschau (Screenshot) an den Betreiber, PR erst nach Abnahme (Projektchat 24.10.).
 
@@ -68,6 +71,5 @@
   nur DENNIS und löst verschachtelte Listen wie telefon nicht auf).
 - KI-Stimmklon ist in dieser Umgebung nicht möglich (huggingface.co gesperrt). Stimmproben nie ins Repo (öffentlich).
 
-## Stand der Pull Requests (23.10.2026)
-- Bis #32 gemergt. Offen und aufeinander aufbauend: #33 P1 → #34 P2 → #35 P3 → #36 P4 → P5 (Bad/Wäsche). In dieser Reihenfolge mergen;
-  neue Pakete auf dem jeweils letzten Zweig aufsetzen. Versionsnummer zuletzt `v=20261025-1`.
+## Stand der Pull Requests (29.10.2026)
+- Bis #38 (P1–P6) gemergt. Offen: #39 S Stabilität, #40 F Figuren (auf S), P7 (Kaffee/Rohr/Leistung/Hemd). Neue Zweige von `origin/main`. Versionsnummer zuletzt `v=20261029-3`.
