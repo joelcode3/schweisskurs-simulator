@@ -376,6 +376,9 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Scherben, geschlängelte Reifenspuren von der Straße durch die Wiese. Himmel/Horizont/Nebel für die große Sichtweite (Kamera 1500).
 
 ## Paket A (Bugliste Projektchat)
+- Paket O Kühe (Projektchat 29.10., Vorschau): Kuh aus Ellipsoiden statt Kästen (Rumpf aus 3 Kugeln, Euter mit Zitzen, Hals + runder Kopf mit
+  rosa Maul, Ohren, Hörnchen, verjüngte Beine mit Hufen, Quastenschwanz). Der Kopf kippt am Halsansatz zum Grasen (kopf.rotation.x
+  statt position.y). Wichtig fürs Testen: Kleinteile weit weg sind ausgeblendet (fernUpdate alle 15 Bilder), nach dem Umsetzen der Kamera warten.
 - Paket F Figuren (Projektchat 29.10.): wege.js plant draußen auch um Jeep und Hoflader herum (setzeDynamisch, main.js
   meldet die Fahrzeuge an; Fahrzeug, in dem Start/Ziel liegt, zählt nicht). ausweichen(): wer läuft (Dennis, Jonny, Waldo),
   lenkt seitlich an anderen Figuren und dem Spieler vorbei (setzeFiguren); kurz vor dem Ziel nicht mehr. Waldo läuft Sitzplätze
