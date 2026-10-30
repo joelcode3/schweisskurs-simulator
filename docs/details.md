@@ -384,6 +384,13 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   ab (nur unter 3,2 m, nicht für Tasse, Pumpe, Flasche, Ofen, Schlauch, Kaffee, Wäsche, Sieb); Dennis sieht es: Wut -2 (max. alle 2 Min.).
   Milch: Tüte 1,5x größer und vorne auf dem Kaffeetisch (stand hinter der Kaffeemaschine), Hinweis beim ersten Kaffee.
   Rohrbruch-Minispiel war schon in P7.
+- Paket O Kühe (Projektchat 29.10., nach Fotos des Betreibers abgenommen): Holstein-Kuh aus wenigen geformten Teilen
+  (forme(): Kugel Punkt für Punkt verformt). Rumpf mit geradem Rücken, Widerrist, Hüfthöckern, eckigem Becken, leicht hängendem
+  Bauch; kurzer schlanker Hals; großer Kopf (schwarz, weiße Blesse = dieselbe Kopfform schmal und oben etwas höher, dunkles Maul,
+  kräftige Backen), kleine schwarze Ohren aus dem Kopf heraus mit gelber Ohrmarke, keine Hörner. Großes helles Euter, Beine aus
+  geformten Gliedern (Hinterbeine mit Sprunggelenk-Knick), Schwanz als Tube, Ansatzhöhe am Rumpf nachgemessen (obenBei).
+  Grasen: kopf.rotation.x (Ruhe -0,3). Testen: Kleinteile weit weg sind ausgeblendet (fernUpdate alle 15 Bilder), nach dem
+  Umsetzen der Kamera einige Sekunden warten.
 - Paket T Texte (Projektchat 29.10.): Briefkasten: Werbung, dicker Stapel GEZ-Forderungen, Postkarte von Lydia. Kettenhemd gehört zu Dennis'
   Kinky-Partys/Fetisch-Abend (DENNIS.kettenhemd, Text geändert, Nummern dennis445/446 bleiben). Peitsche heißt jetzt Gerte (Anzeigename,
   intern bleibt der Schlüssel `peitsche`): Klatschgeräusch statt Knall (audio gertenKlatsch), Dennis freut sich (flucht-Texte neu gefasst),

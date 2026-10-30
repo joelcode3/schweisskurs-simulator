@@ -513,41 +513,138 @@ export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
     void lx; void lz;
   }
   const kuehe = [];
-  const kuhTex = (braun) => leinwandTextur(128, 128, (g, b, h) => {
+  // Fell: große, unregelmäßige Flecken (Holstein schwarz, eine Kuh rotbunt), gleichmäßig über die Seiten verteilt; Bauch weiß
+  const kuhTex = (braun) => leinwandTextur(256, 256, (g, b, h) => {
     g.fillStyle = '#f4f2ec'; g.fillRect(0, 0, b, h);
     g.fillStyle = braun ? '#7a4a2a' : '#1d1d1f';
-    for (let i = 0; i < 7; i++) { g.beginPath(); const cx = r() * b, cy = r() * h; for (let k = 0; k < 9; k++) { const w = k / 9 * Math.PI * 2, rr = (14 + r() * 18); const px = cx + Math.cos(w) * rr, py = cy + Math.sin(w) * rr * 0.8; k ? g.lineTo(px, py) : g.moveTo(px, py); } g.fill(); }
+    const n = 7;
+    for (let i = 0; i < n; i++) {
+      const cx = (i + 0.2 + r() * 0.6) * b / n, cy = 40 + r() * (h * 0.45), rr = 16 + r() * 18;
+      g.beginPath();
+      for (let k = 0; k <= 16; k++) {
+        const w = k / 16 * Math.PI * 2, q = rr * (0.75 + r() * 0.45);
+        const px = cx + Math.cos(w) * q * 1.2, py = cy + Math.sin(w) * q;
+        k ? g.lineTo(px, py) : g.moveTo(px, py);
+      }
+      g.fill();
+    }
   });
+  // Kuh aus wenigen, durchgehend geformten Teilen. Maße wie bei einer Holstein-Kuh: Widerrist ca. 1,45 m,
+  // Rumpf ca. 1,7 m lang und 0,7 m tief, gerader Rücken, eckiges Becken mit Schwanzansatz, schlanker Hals.
+  // Geformt wird jeweils eine Kugel, Punkt für Punkt.
+  const kantig = (w, e) => Math.sign(w) * Math.pow(Math.abs(w), e);
+  const glocke = (w, m, b) => Math.exp(-(((w - m) / b) ** 2));
+  const forme = (seg, f, laengs = true) => {
+    const g = new THREE.SphereGeometry(1, seg, Math.round(seg * 0.7));
+    if (laengs) g.rotateX(Math.PI / 2); // Pole vorne/hinten (z)
+    const a = g.attributes.position, v = new THREE.Vector3();
+    for (let n = 0; n < a.count; n++) { v.fromBufferAttribute(a, n); f(v); a.setXYZ(n, v.x, v.y, v.z); }
+    g.computeVertexNormals();
+    return g;
+  };
+  // Bein-Glied: oben rOben, unten rUnten, hängt von seinem Drehpunkt nach unten
+  const glied = (lang, rOben, rUnten, tiefe = 1) => forme(14, (v) => {
+    const t = (1 - v.y) / 2;
+    const rr = rOben + (rUnten - rOben) * t;
+    v.set(v.x * rr, v.y * lang / 2 - lang / 2, v.z * rr * tiefe);
+  }, false);
   for (let i = 0; i < 4; i++) {
     const kuh = new THREE.Group();
     const fell = toon(0xffffff, { map: kuhTex(i === 2) });
-    const koerper = rundQuader(0.7, 0.75, 1.6, 0, { material: fell, umriss: 0.005 }, 0.25);
-    koerper.position.y = 1.0;
-    kuh.add(koerper);
+    const rosa = 0xe6a7a0, dunkel = i === 2 ? 0x7a4a2a : 0x1d1d1f, weiss = 0xf4f2ec, maul = 0x4a3f40;
+    const kopfFarbe = toon(dunkel);
+    const RUMPF_Y = 1.1;
+    const rumpfGeo = forme(44, (v) => {
+      const { x, y, z } = v;
+      const e = z < 0 ? 0.55 : 0.7; // hinten eckiger (Becken), vorne runder (Brust)
+      let X = kantig(x, e) * 0.31 * (1 - 0.06 * z);
+      let Y = kantig(y, e) * (y > 0 ? 0.27 : 0.36);
+      const Z = kantig(z, 0.85) * 0.86;
+      if (y < 0) Y -= 0.035 * (1 - z * z) * -y; // Bauch hängt leicht
+      if (y > 0) {
+        Y += 0.04 * glocke(z, 0.6, 0.2) * y; // Widerrist
+        Y += 0.035 * glocke(z, -0.55, 0.15) * Math.abs(x); // Hüfthöcker
+      }
+      v.set(X, Y, Z);
+    });
+    const rumpf = teil(rumpfGeo, 0, { material: fell, umriss: 0.005 });
+    rumpf.position.y = RUMPF_Y;
+    kuh.add(rumpf);
+    // Höhe des Rumpfs oben an einer Stelle (für Schwanz und Hals): am Modell nachgemessen
+    const obenBei = (zz) => {
+      const a = rumpfGeo.attributes.position; let m = 0;
+      for (let n = 0; n < a.count; n++) if (Math.abs(a.getX(n)) < 0.06 && Math.abs(a.getZ(n) - zz) < 0.06) m = Math.max(m, a.getY(n));
+      return RUMPF_Y + m;
+    };
+    // Euter mit Zitzen zwischen den Hinterbeinen
+    kuh.add(setze(teil(forme(18, (v) => v.set(v.x * 0.22, v.y * (v.y < 0 ? 0.19 : 0.14), v.z * 0.26)), 0xf0c8c0, { umriss: 0.003 }), 0, 0.72, -0.42));
+    for (const [sx, sz] of [[-1, 1], [1, 1], [-1, -1], [1, -1]]) kuh.add(setze(zylinder(0.013, 0.017, 0.07, rosa, { umriss: false }, 6), sx * 0.08, 0.51, -0.42 + sz * 0.09));
+    // Hals: schlank, vom Widerrist schräg nach vorn oben; am Ansatz drehbar (Grasen)
     const kopf = new THREE.Group();
-    kopf.add(teil(new THREE.BoxGeometry(0.32, 0.36, 0.5), 0, { material: fell, umriss: 0.004 }));
-    kopf.add(setze(rundQuader(0.3, 0.2, 0.14, 0xe8a8a0, { umriss: 0.003 }, 0.06), 0, -0.1, 0.27));
+    kopf.add(setze(teil(forme(20, (v) => {
+      const t = (v.z + 1) / 2; // 0 = Schulter, 1 = Kopf
+      v.set(v.x * (0.12 - 0.03 * t), v.y * (0.17 - 0.04 * t), v.z * 0.2);
+    }), 0, { material: kopfFarbe, umriss: 0.004 }), 0, -0.02, 0.12));
+    // Kopf: lang, breite flache Stirn, schmal zur Mitte, breites rosa Maul, schräg nach unten
+    const schaedel = new THREE.Group();
+    // Kopfform; die weiße Blesse ist dieselbe Form, nur schmal und oben ein Stück höher: so liegt sie genau auf Stirn und Nasenbein
+    const kopfForm = (breitF, obenF, untenF) => forme(28, (v) => {
+      const t = (v.z + 1) / 2;
+      const breit = (0.13 - 0.05 * t + 0.03 * glocke(t, 1, 0.2)) * breitF(t);
+      let y = v.y * (0.16 - 0.06 * t);
+      if (v.y > 0) y *= 0.7 * obenF; // flache Stirn, gerades Nasenbein
+      else y *= (1 + 0.25 * glocke(t, 0.25, 0.3)) * untenF; // kräftige Backen
+      v.set(v.x * breit, y, v.z * 0.24);
+    });
+    schaedel.add(teil(kopfForm(() => 1, 1, 1), 0, { material: kopfFarbe, umriss: 0.004 }));
+    schaedel.add(teil(kopfForm((t) => 0.62 - 0.38 * t, 1.06, 0.5), weiss, { umriss: false }));
+    schaedel.add(setze(teil(forme(16, (v) => v.set(v.x * 0.092, v.y * 0.062, v.z * 0.066)), maul, { umriss: 0.003 }), 0, -0.02, 0.215));
     for (const sx of [-1, 1]) {
-      kopf.add(setze(quader(0.18, 0.06, 0.1, i === 2 ? 0x7a4a2a : 0x1d1d1f, { umriss: 0.002 }), sx * 0.24, 0.12, -0.05, 0, 0, sx * 0.3));
-      kopf.add(setze(kugel(0.03, 0x1d1d1f, { umriss: false }, 6), sx * 0.15, 0.06, 0.16));
-      kopf.add(setze(zylinder(0.015, 0.025, 0.12, 0xe8e0c8, { umriss: 0.001 }, 6), sx * 0.12, 0.22, -0.12, 0, 0, -sx * 0.6));
+      schaedel.add(setze(kugel(0.015, 0x1a1414, { umriss: false }, 6), sx * 0.042, -0.005, 0.272));
+      schaedel.add(setze(kugel(0.021, 0x141414, { umriss: false }, 8), sx * 0.105, 0.035, -0.07));
+      // Ohr: schmales Blatt, waagerecht zur Seite, unter dem Horn
+      const ohr = new THREE.Group();
+      // großes, rundes Ohr, waagerecht zur Seite, leicht nach vorn gewölbt; gelbe Ohrmarke
+      // Ohr wächst aus dem Kopf heraus: der dicke Ansatz steckt im Schädel, nach außen flach und rund
+      ohr.add(teil(forme(14, (v) => { const t = (v.x + 1) / 2; v.set(v.x * 0.075 + 0.045, v.y * (0.03 - 0.018 * t) + 0.015 * t * t, v.z * (0.03 + 0.035 * Math.sin(Math.PI * Math.min(1, t * 1.2)))); }), dunkel, { umriss: 0.002 }));
+      ohr.add(setze(quader(0.03, 0.01, 0.026, 0xf2c81c, { umriss: 0.001 }), 0.075, -0.012, 0.005));
+      ohr.scale.set(sx, 1, 1);
+      ohr.position.set(sx * 0.1, 0.03, -0.17); ohr.rotation.set(0.25, -sx * 0.15, -sx * 0.15);
+      schaedel.add(ohr);
     }
-    kopf.position.set(0, 1.25, 0.95);
+    schaedel.position.set(0, 0.02, 0.4); schaedel.rotation.x = 0.85; schaedel.scale.setScalar(1.45);
+    kopf.add(schaedel);
+    kopf.position.set(0, obenBei(0.7) - 0.16, 0.7);
+    kopf.rotation.x = 0; kopf.userData.ruheX = -0.3;
     kuh.add(kopf);
+    // Beine: geformte Glieder, die ineinander übergehen (keine Kugelgelenke). Hinterbeine mit Knick nach hinten
+    // (Sprunggelenk), Vorderbeine fast gerade. Das Bein dreht sich beim Laufen an der Hüfte.
     const beine = [];
     for (const [sx, sz] of [[-1, 1], [1, 1], [-1, -1], [1, -1]]) {
+      const hinten = sz < 0;
       const b = new THREE.Group();
-      b.add(setze(quader(0.14, 0.7, 0.14, 0xf4f2ec, { umriss: 0.003 }), 0, -0.35, 0));
-      b.add(setze(quader(0.15, 0.1, 0.16, 0x2a2622, { umriss: 0.002 }), 0, -0.68, 0));
-      b.position.set(sx * 0.24, 0.72, sz * 0.58);
+      const oben = new THREE.Group();
+      oben.add(teil(glied(hinten ? 0.5 : 0.44, hinten ? 0.12 : 0.1, 0.062, hinten ? 1.4 : 1.15), hinten ? 0 : weiss, hinten ? { material: fell, umriss: 0.003 } : { umriss: 0.003 }));
+      oben.rotation.x = hinten ? 0.36 : -0.08;
+      b.add(oben);
+      const unten = new THREE.Group();
+      unten.add(teil(glied(0.38, 0.065, 0.05), weiss, { umriss: 0.003 }));
+      const huf = zylinder(0.052, 0.064, 0.07, 0x3a3434, { umriss: 0.002 }, 10);
+      setze(huf, 0, hinten ? -0.38 : -0.38, 0.015, -(oben.rotation.x + (hinten ? -0.68 : 0.14)), 0, 0);
+      unten.add(huf);
+      unten.position.y = hinten ? -0.47 : -0.41;
+      unten.rotation.x = hinten ? -0.68 : 0.14;
+      oben.add(unten);
+      b.position.set(sx * 0.2, 0.95, sz * (hinten ? 0.6 : 0.56));
       kuh.add(b);
       beine.push(b);
     }
-    kuh.add(setze(kugel(0.16, 0xe8a8a0, { umriss: 0.003 }, 10), 0, 0.62, -0.4));
+    // Schwanz: setzt oben am Becken an (Höhe nachgemessen), kurzer Bogen, hängt locker bis zum Sprunggelenk, Quaste
     const schwanz = new THREE.Group();
-    schwanz.add(setze(zylinder(0.025, 0.025, 0.7, 0xf4f2ec, { umriss: 0.002 }, 6), 0, -0.35, 0));
-    schwanz.add(setze(kugel(0.06, 0x1d1d1f, { umriss: false }, 6), 0, -0.72, 0));
-    schwanz.position.set(0, 1.3, -0.8);
+    const schwanzLinie = new THREE.CatmullRomCurve3([[0, 0, 0.03], [0, 0.0, -0.05], [0, -0.1, -0.1], [0, -0.35, -0.12], [0, -0.62, -0.1], [0, -0.8, -0.08]].map((q) => new THREE.Vector3(...q)));
+    schwanz.add(teil(new THREE.TubeGeometry(schwanzLinie, 24, 0.016, 6, false), weiss, { umriss: 0.002 }));
+    schwanz.add(setze(teil(forme(12, (v) => { const t = (v.z + 1) / 2; v.set(v.x * 0.03 * (0.5 + t), v.y * 0.03 * (0.5 + t), v.z * 0.1); }), dunkel, { umriss: false }), 0, -0.88, -0.08, -Math.PI / 2, 0, 0));
+    schwanz.position.set(0, obenBei(-0.8) - 0.015, -0.8);
     kuh.add(schwanz);
     const start = { x: GEHEGE.x0 + 3 + r() * (GEHEGE.x1 - GEHEGE.x0 - 6), z: GEHEGE.z0 + 3 + r() * (GEHEGE.z1 - GEHEGE.z0 - 6) };
     kuh.position.set(start.x, 0, start.z);
@@ -721,7 +818,7 @@ export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
       k.t += dt;
       if (!k.ziel) {
         k.warte -= dt;
-        k.kopf.position.y = 1.25 - 0.45 * Math.min(1, Math.max(0, Math.sin(k.t * 0.4) + 0.6)); // grasen
+        k.kopf.rotation.x = -0.3 + 1.45 * Math.min(1, Math.max(0, Math.sin(k.t * 0.4) + 0.6)); // grasen: Kopf nach unten kippen
         k.schwanz.rotation.z = Math.sin(k.t * 2.2) * 0.3;
         if (k.warte < 0) k.ziel = new THREE.Vector3(GEHEGE.x0 + 2.5 + r() * (GEHEGE.x1 - GEHEGE.x0 - 5), 0, GEHEGE.z0 + 2.5 + r() * (GEHEGE.z1 - GEHEGE.z0 - 5));
       } else {
@@ -732,7 +829,7 @@ export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
         let diff = soll - k.g.rotation.y; while (diff > Math.PI) diff -= Math.PI * 2; while (diff < -Math.PI) diff += Math.PI * 2;
         k.g.rotation.y += diff * Math.min(1, dt * 1.5);
         if (Math.abs(diff) < 0.5) k.g.position.addScaledVector(_v.normalize(), Math.min(d, 0.6 * dt));
-        k.kopf.position.y += (1.25 - k.kopf.position.y) * Math.min(1, dt * 3);
+        k.kopf.rotation.x += (-0.3 - k.kopf.rotation.x) * Math.min(1, dt * 3);
         k.beine.forEach((b, i) => { b.rotation.x = Math.sin(k.t * 4 + (i % 2 ? Math.PI : 0) + (i > 1 ? Math.PI / 2 : 0)) * 0.3; });
       }
     }
