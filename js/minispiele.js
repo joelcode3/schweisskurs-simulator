@@ -1859,32 +1859,21 @@ export function spanngurtSpiel() {
   let laenge = 0;
   let dreher = [];
   function neuerGurt() {
-    // Weg vom Rand der Rolle in Schlaufen über den Boden, am Ende die Ratsche
-    const pts = [];
-    let x = mx + 60, y = my;
-    let a = r() * Math.PI * 2;
-    pts.push([mx, my]);
-    for (let i = 0; i < 9; i++) {
-      a += (r() - 0.5) * 2.2;
-      x = Math.min(f.x + f.b - 40, Math.max(f.x + 40, x + Math.cos(a) * f.b * 0.14));
-      y = Math.min(f.y + f.h - 30, Math.max(f.y + 30, y + Math.sin(a) * f.h * 0.22));
-      pts.push([x, y]);
-    }
+    // Gurt liegt in losen Schlaufen von der Rolle bis zur Ratsche
+    const schleifen = gurt === 0 ? 5 : 4;
+    const phase = r() * Math.PI;
     bahn = [];
-    for (let i = 0; i < pts.length - 1; i++) {
-      const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
-      for (let k = 0; k < 16; k++) {
-        const t = k / 16, t2 = t * t, t3 = t2 * t;
-        const c = (a0, a1, a2, a3) => 0.5 * ((2 * a1) + (-a0 + a2) * t + (2 * a0 - 5 * a1 + 4 * a2 - a3) * t2 + (-a0 + 3 * a1 - 3 * a2 + a3) * t3);
-        bahn.push([c(p0[0], p1[0], p2[0], p3[0]), c(p0[1], p1[1], p2[1], p3[1])]);
-      }
+    for (let i = 0; i <= 400; i++) {
+      const t = i / 400;
+      const x = mx + 40 + t * f.b * 0.66 + Math.sin(t * Math.PI * schleifen + phase) * f.b * 0.06;
+      const y = my + Math.cos(t * Math.PI * schleifen + phase) * f.h * 0.3 * (0.4 + 0.6 * t) * Math.min(1, t * 6) + Math.sin(t * 9) * 10;
+      bahn.push([x, y]);
     }
-    bahn.push(pts[pts.length - 1]);
     // Bogenlänge je Punkt
     laenge = 0;
     bahn[0][2] = 0;
     for (let i = 1; i < bahn.length; i++) { laenge += Math.hypot(bahn[i][0] - bahn[i - 1][0], bahn[i][1] - bahn[i - 1][1]); bahn[i][2] = laenge; }
-    dreher = [0.3, 0.55, 0.8].map((s) => ({ s: s + (r() - 0.5) * 0.08, glatt: false, weg: false }));
+    dreher = [0.3, 0.55, 0.8].map((q) => ({ s: q + (r() - 0.5) * 0.08, glatt: false, weg: false }));
     w = 0;
   }
   function punktBei(s) {
@@ -1907,7 +1896,7 @@ export function spanngurtSpiel() {
         // verdrehte Stelle angeklickt?
         for (const d of dreher) {
           if (d.glatt || d.weg) continue;
-          const [x, y] = punktBei(d.s);
+          const [x, y] = punktBei(d.s - w);
           if (Math.hypot(p.x - x, p.y - y) < 30) { d.glatt = true; blip(760, 0.05); return; }
         }
         zieht = Math.atan2(p.y - my, p.x - mx); api.canvas.setPointerCapture?.(e.pointerId);
@@ -1942,34 +1931,32 @@ export function spanngurtSpiel() {
       ctx.fillStyle = 'rgba(70,64,56,0.18)';
       for (let i = 0; i < 14; i++) { ctx.beginPath(); ctx.ellipse(f.x + ((i * 97) % f.b), f.y + ((i * 53) % f.h), 30 + (i % 4) * 12, 14 + (i % 3) * 8, i, 0, Math.PI * 2); ctx.fill(); }
       if (!api.istFertig) {
-        // restlicher Gurt: vom Einzugspunkt bis zur Ratsche
-        const s0 = w;
-        const start = punktBei(s0);
+        // restlicher Gurt: wird entlang seiner Schlaufen in die Rolle gezogen (der Rest rutscht nach)
+        const rest = 1 - w;
         const breite = 16;
         ctx.lineCap = 'round'; ctx.lineJoin = 'round';
         const zug = (farbe, b) => {
           ctx.strokeStyle = farbe; ctx.lineWidth = b; ctx.beginPath();
-          const rr = 34 + w * 26;
-          ctx.moveTo(mx, my - rr);
-          ctx.lineTo(start[0], start[1]);
-          for (const q of bahn) if (q[2] >= s0 * laenge) ctx.lineTo(q[0], q[1]);
+          ctx.moveTo(mx, my);
+          for (const q of bahn) { if (q[2] > rest * laenge) break; ctx.lineTo(q[0], q[1]); }
+          const e = punktBei(rest); ctx.lineTo(e[0], e[1]);
           ctx.stroke();
         };
         zug('#111', breite + 5);
         zug(gurt === 0 ? '#e8742a' : '#2f6fd1', breite);
         // Mittelnaht
         ctx.setLineDash([6, 6]); zug('rgba(255,255,255,0.35)', 2); ctx.setLineDash([]);
-        // verdrehte Stellen
+        // verdrehte Stellen wandern mit
         for (const d of dreher) {
           if (d.weg || d.s < w) continue;
-          const [x, y] = punktBei(d.s);
+          const [x, y] = punktBei(d.s - w);
           if (d.glatt) { ctx.strokeStyle = '#ffe9a8'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 12, 0, Math.PI * 2); ctx.stroke(); continue; }
           ctx.fillStyle = '#3a2410'; ctx.beginPath(); ctx.ellipse(x, y, 16, 11, 0.6, 0, Math.PI * 2); ctx.fill();
           ctx.strokeStyle = '#ffd36a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x - 8, y - 8); ctx.lineTo(x + 8, y + 8); ctx.moveTo(x + 8, y - 8); ctx.lineTo(x - 8, y + 8); ctx.stroke();
         }
         // Ratsche am Ende
-        const e = bahn[bahn.length - 1];
-        ctx.save(); ctx.translate(e[0], e[1]);
+        const e = punktBei(1 - w), e0 = punktBei(Math.max(0, 1 - w - 0.01));
+        ctx.save(); ctx.translate(e[0], e[1]); ctx.rotate(Math.atan2(e[1] - e0[1], e[0] - e0[0]));
         ctx.fillStyle = '#8a9096'; ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
         ctx.beginPath(); ctx.roundRect(-26, -16, 52, 32, 6); ctx.fill(); ctx.stroke();
         ctx.fillStyle = '#c8352a'; ctx.fillRect(-20, -7, 30, 14); ctx.strokeRect(-20, -7, 30, 14);

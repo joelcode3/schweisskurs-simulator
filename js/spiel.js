@@ -6,7 +6,7 @@ import { bereich } from './wege.js';
 import { eierKartonModell, mettendenModell } from './landschaft.js';
 import { setze } from './toon.js';
 import { auftritt, hatClip, buehneBelegt } from './clips.js';
-import { pfadSpiel, schlackeSpiel, hulaSpiel, DENNIS_HULA_REKORD, ventilSpiel, spuelSpiel, anzeichnenSpiel, lackierSpiel, bitsatzSpiel, akkuschrauberSpiel, siebSpiel, kaffeeSpiel, rohrSpiel, leiterSpiel } from './minispiele.js';
+import { pfadSpiel, schlackeSpiel, hulaSpiel, DENNIS_HULA_REKORD, ventilSpiel, spuelSpiel, anzeichnenSpiel, lackierSpiel, bitsatzSpiel, akkuschrauberSpiel, siebSpiel, kaffeeSpiel, rohrSpiel, leiterSpiel, spanngurtSpiel } from './minispiele.js';
 import { bierAuf, blip, kratzen, jingle, klonk as klonkRoh, brummeln, dauer as dauerTon, technoAn, technoAus, technoBeat, klospuelung, mampfen, klick as schalterKlick, stimmeAbspielen, stimmenVorladen, husten, gertenKlatsch } from './audio.js';
 import * as ui from './ui.js';
 import { DENNIS, JONNY, WALDO, KUMPEL, satzId } from './texte.js';
@@ -1693,6 +1693,86 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     if (welt.kuehlschrankVoll()) { aerger(2); dennisSagt(sag(DENNIS.tassenVoll), true, { prio: 0 }); }
     else { aerger(2); dennisSagt(sag(DENNIS.tassenMecker), true, { prio: 0 }); }
   }
+  // ---------- Spanngurte (Paket C): jemand schmeißt sie auf den Boden, aufrollen und ins Regal; sonst macht Dennis es (sauer) ----------
+  const REGAL = { x: -4.7, z: -0.6 };
+  const GURT_FRIST = 90;
+  function spanngurtEreignis() {
+    if (z.gurte || z.vorbei || z.beschaeftigt) return false;
+    const p = kamera.position;
+    if (bereich(p.x, p.z) !== 'werkstatt' || !dennis.wurzel.visible || bereich(dennis.position.x, dennis.position.z) !== 'werkstatt') return false;
+    const wer = jz.da && !jz.draussen ? 'jonny' : waldoDa() ? 'waldo' : null;
+    if (!wer) return false;
+    z.gurte = 'boden';
+    z.gurteSeit = sekundenSeitStart();
+    welt.objekte.gurteBoden.visible = true;
+    klonk(0.5); setTimeout(() => klonk(0.35), 180);
+    if (wer === 'jonny') ui.jonnySagt(sag(JONNY.spanngurt)); else ui.waldoSagt(sag(WALDO.spanngurt), 3500);
+    ui.hinweis(`${wer === 'jonny' ? 'Jonny' : 'Waldo'} schmeißt zwei Spanngurte vor das Regal. Dennis guckt schon.`, 4000);
+    if (dennisSiehts()) setTimeout(() => { if (z.gurte === 'boden') { aerger(3); dennisSagt(sag(DENNIS.spanngurt.boden), true, { prio: 1 }); } }, 2500);
+    return true;
+  }
+  async function gurteAufrollen() {
+    if (z.gurte !== 'boden') return;
+    if (hand.item) { ui.hinweis('Leg erst ab, was du in der Hand hast.'); return; }
+    z.beschaeftigt = true;
+    steuerung.sperre(true);
+    const e = await spanngurtSpiel();
+    steuerung.sperre(false);
+    z.beschaeftigt = false;
+    if (!e || e.abgebrochen || z.gurte !== 'boden') return;
+    welt.objekte.gurteBoden.visible = false;
+    z.gurte = 'hand';
+    z.gurteVerdreht = e.verdreht || 0;
+    const rollen = welt.objekte.gurteRegal.clone();
+    rollen.position.set(0, 0, 0);
+    rollen.visible = true;
+    hand.nimm('gurte', rollen);
+    handleisteZeigen();
+    ui.hinweis('Aufgerollt. Jetzt unten ins Regal damit (Klick aufs Regal).', 3500);
+  }
+  function gurteInsRegal() {
+    hand.weg();
+    handleisteZeigen();
+    welt.objekte.gurteRegal.visible = true;
+    z.gurte = 'regal';
+    klonk(0.3);
+    if (dennisSiehts()) {
+      if (z.gurteVerdreht > 1) { dennisSagt(sag(DENNIS.spanngurt.verdreht), false, { prio: 1 }); z.wut = Math.max(0, z.wut - 2); }
+      else { z.wut = Math.max(0, z.wut - 6); jingle(true); setTimeout(() => ui.lobZeigen(sag(DENNIS.spanngurt.danke)), 600); }
+      aktualisieren();
+    } else ui.hinweis('Spanngurte im Regal. Ordnung!', 2000);
+    gurteZurueckSetzen();
+  }
+  // nach einer Weile liegen die Gurte wieder bereit für das nächste Mal (aus dem Regal geholt)
+  function gurteZurueckSetzen() {
+    setTimeout(() => { if (z.gurte === 'regal') { z.gurte = null; welt.objekte.gurteRegal.visible = false; } }, 240000);
+    z.gurteNaechste = sekundenSeitStart() + 300 + Math.random() * 180;
+  }
+  async function dennisRolltGurte() {
+    z.gurte = 'dennis';
+    z.beschaeftigt = true;
+    dennis.stimmung('sauer');
+    await Promise.race([dennis.gehZu(-3.6, 0.0, 1.4), warte(8000)]);
+    aerger(6);
+    await dennisSagt(sag(DENNIS.spanngurt.selbst), true, { prio: 2, minMs: 2500 });
+    welt.objekte.gurteBoden.visible = false;
+    welt.objekte.gurteRegal.visible = true;
+    z.gurte = 'regal';
+    z.beschaeftigt = false;
+    dennis.stimmung('ruhig');
+    dennis.heim();
+    gurteZurueckSetzen();
+  }
+  function gurteUpdate() {
+    const t = sekundenSeitStart();
+    if (!z.gurte) {
+      if (z.gurteNaechste === undefined) z.gurteNaechste = 160 + Math.random() * 120;
+      if (t > z.gurteNaechste && ruhig() && !buehneBelegt()) { if (!spanngurtEreignis()) z.gurteNaechste = t + 30; }
+      return;
+    }
+    if (z.gurte === 'boden' && t - z.gurteSeit > GURT_FRIST && dennis.modus === 'normal' && dennis.wurzel.visible && !z.aufKlo && !z.hula && !z.beschaeftigt && !buehneBelegt() && z.mittag !== 'gerade') dennisRolltGurte();
+  }
+
   // Tassen als Aufgabe mit Frist (Paket B): ab 3 herumstehenden Tassen läuft die Uhr, nach TASSEN_FRIST räumt Dennis selbst
   const TASSEN_FRIST = 100;
   function tassenFrist() {
@@ -1710,6 +1790,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     if (aufgabenTakt > 0) return;
     aufgabenTakt = 0.2;
     tassenFrist();
+    gurteUpdate();
     const t = sekundenSeitStart();
     const l = [];
     const dazu = (id, titel, seit, dauer, dringend = false) => l.push({ id, titel, anteil: seit == null ? 0 : (t - seit) / dauer, dringend });
@@ -1719,6 +1800,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     if (z.verstopft === 'ja') dazu('klo', 'Klo verstopft', z.verstopftSeit, 70);
     if (wz.pumpe === 'imWeg' || wz.pumpe === 'sauber') dazu('pumpe', 'Kackepumpe', wz.pumpeSeit, 120);
     if (z.tassenSeit != null && !z.dennisRaeumt) dazu('tassen', 'Tassen', z.tassenSeit, TASSEN_FRIST);
+    if (z.gurte === 'boden') dazu('gurte', 'Spanngurte', z.gurteSeit, GURT_FRIST);
     ui.aufgabenIcons(z.vorbei ? [] : l);
   }
   // Spüldienst: geht zum Kühlschrank, nimmt alle Tassen mit (Küche im Wohnhaus hinten), Dennis freut sich
@@ -3034,6 +3116,12 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       await flascheAbstellen(treffer.punkt);
       return true;
     }
+    if (it.id === 'gurte') {
+      const p = treffer.punkt;
+      if (p && Math.hypot(p.x - REGAL.x, p.z - REGAL.z) < 1.0 && treffer.abstand < 3.5) gurteInsRegal();
+      else ui.hinweis('Die kommen unten ins Regal (links an der Wand). Klick aufs Regal.', 3000);
+      return true;
+    }
     if (it.obj?.userData.wand && treffer.punkt && treffer.punkt.distanceTo(it.obj.userData.wand.pos) < 0.6 && (!info || info.id === it.id)) {
       const o = hand.weg();
       welt.zurueckAnDieWand(o);
@@ -3427,6 +3515,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
         return ['Kofferraum', k.kofferAuf ? 'Offen. Drin liegen ein Kettenhemd und eine Gerte. Fragen wir nicht.' : 'Der Kofferraum vom Benz. Nicht abgeschlossen.',
           [A(k.kofferAuf ? 'Zumachen' : 'Aufmachen', 'hand', () => { k.kofferraum(!k.kofferAuf); klonk(0.3); })]];
       }
+      case 'spanngurte':
+        return ['Spanngurte', 'Zwei Spanngurte, wild auf den Boden geschmissen. Dennis hasst das.', z.gurte === 'boden' ? [A('Aufrollen', 'hand', gurteAufrollen)] : []];
       case 'kettenhemd':
         if (dennisSiehts() && ruhig() && sekundenSeitStart() - (z.kettenhemdZuletzt ?? -99) > 60) { z.kettenhemdZuletzt = sekundenSeitStart(); setTimeout(() => dennisSagt(sag(DENNIS.kettenhemd), false, { prio: 0 }), 500); }
         return ['Kettenhemd', 'Ein echtes Kettenhemd. Schwer. Riecht nach Leder und Geheimnissen. Besser nicht nachfragen.', []];
@@ -3697,7 +3787,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   return {
     zustand: z,
     klick,
-    test: { get z() { return z; }, feuerStart, leckStart, kloVerstopft, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
+    test: { get z() { return z; }, spanngurtEreignis, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
     stationWaehlen,
     intro,
     aktualisieren,

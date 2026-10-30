@@ -33,6 +33,7 @@ const HALTUNG = {
   kackpumpe: { pos: [0.3, -0.5, -0.85], rot: [0.15, 0.6, 0], skala: 0.85, name: 'Kackepumpe', benutzen: 'Abwaschen (Bad) / zurückstellen (Kompressor)' },
   rohrzange: { pos: [0.24, -0.22, -0.52], rot: [0.4, 0.3, -0.9], name: 'Rohrzange', benutzen: 'Reparieren' },
   schlauch: { pos: [0.2, -0.2, -0.55], rot: [0.1, 0.12, 0], skala: 1.2, name: 'Wasserschlauch', benutzen: 'Spritzen (halten)', nichtWerfen: true, nichtAblegen: true },
+  gurte: { pos: [0.22, -0.28, -0.5], rot: [0.2, 0.3, 0], skala: 1.4, name: 'Aufgerollte Spanngurte', nichtWerfen: true, nichtAblegen: true, ablegenHinweis: 'Die kommen unten ins Regal. Klick aufs Regal.' },
   peitsche: { pos: [0.24, -0.3, -0.55], rot: [0.5, 0.4, -0.3], skala: 1.2, name: 'Gerte', benutzen: 'Klatschen lassen' },
   eier: { pos: [0.2, -0.28, -0.55], rot: [0.35, 0.5, 0], skala: 1.0, name: 'Lühmanns Landeier (10 Stück)', benutzen: 'Dennis geben (auf Dennis klicken)', nichtWerfen: true },
   mettenden: { pos: [0.2, -0.24, -0.5], rot: [0.45, 0.4, 0], skala: 1.1, name: 'Mettenden (3 Stück)', benutzen: 'Dennis geben (auf Dennis klicken)' },

@@ -773,14 +773,15 @@ export function baueWelt(scene) {
   objekte.gurteBoden = gurteBoden;
   // aufgerollt: zwei Rollen auf dem unteren Regalbrett
   const gurteRegal = new THREE.Group();
-  for (const [z, farbe] of [[-0.09, 0xe8742a], [0.08, 0x2f6fd1]]) {
+  for (const [z, farbe] of [[-0.1, 0xe8742a], [0.09, 0x2f6fd1]]) {
     // Rolle steht hochkant (Achse quer zum Regal), oben drauf die Ratsche
     const rolle = teil(new THREE.CylinderGeometry(0.075, 0.075, 0.05, 20), farbe, { umriss: 0.002 });
-    rolle.rotation.x = Math.PI / 2;
+    rolle.rotation.z = Math.PI / 2; // runde Seite zeigt nach vorn in den Raum
     rolle.position.set(0, 0, z);
     gurteRegal.add(rolle);
-    gurteRegal.add(setze(zylinder(0.02, 0.02, 0.052, 0x1d1d1f, { umriss: false }, 10), 0, 0, z, Math.PI / 2, 0, 0));
-    gurteRegal.add(setze(ratsche(0xc8352a), 0, 0.072, z, 0, Math.PI / 2, 0));
+    gurteRegal.add(setze(zylinder(0.02, 0.02, 0.052, 0x1d1d1f, { umriss: false }, 10), 0, 0, z, 0, 0, Math.PI / 2));
+    for (const rr of [0.035, 0.055]) gurteRegal.add(setze(teil(new THREE.TorusGeometry(rr, 0.0025, 4, 24), 0x1d1d1f, { umriss: false }), 0.026, 0, z, 0, Math.PI / 2, 0));
+    gurteRegal.add(setze(ratsche(0xc8352a), 0, 0.072, z, 0, 0, 0));
   }
   setze(gurteRegal, -4.7, 0.25 + 0.015 + 0.075, -0.6);
   gurteRegal.visible = false;
