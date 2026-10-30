@@ -2472,7 +2472,9 @@ export function baueWelt(scene) {
   giebel.rotation.y = Math.PI / 4;
   giebel.position.y = 0.11;
   milch.add(giebel);
-  setze(milch, -4.6, 0.89, 3.62);
+  setze(milch, -4.32, 0.89, 3.8); // vorne rechts auf dem Tisch, nicht hinter der Kaffeemaschine
+  milch.scale.setScalar(1.5); // größer, damit man sie auf dem Kaffeetisch sieht (Paket M)
+  milch.position.y += 0.17 * 0.25;
   scene.add(milch);
   merke(milch, 'milch', 'Milch', null);
 

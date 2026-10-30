@@ -1,5 +1,5 @@
 // Minispiele als 2D-Ansicht: Schneiden mit der Flex, Schweißen, Schlacke abklopfen.
-import { dauer, klonk, blip } from './audio.js';
+import { dauer, klonk, blip, husten } from './audio.js';
 
 export const STROM_OK = [70, 100];
 
@@ -844,13 +844,13 @@ export function hulaSpiel() {
     gestartet = true;
     if (erwartet === null || taste === erwartet) {
       schlaege++;
-      halt = Math.min(100, halt + 7);
+      halt = Math.min(100, halt + 6); // etwas schwerer (Paket M)
       schwung = schwung * 0.7 + 3;
       erwartet = taste === 'a' ? 'd' : 'a';
       blip(taste === 'a' ? 520 : 620, 0.04, 0.1);
       blitz = { seite: taste, gut: true, t: 0.12 };
     } else {
-      halt -= 22;
+      halt -= 26;
       blitz = { seite: taste, gut: false, t: 0.2 };
     }
   }
@@ -891,7 +891,7 @@ export function hulaSpiel() {
       schwung = Math.max(0, schwung - dt * 2.5);
       phase += (2 + schwung * 2.2) * dt;
       // wird mit jeder Runde anstrengender
-      if (gestartet) halt -= dtEcht * (32 + runden() * 1.2);
+      if (gestartet) halt -= dtEcht * (36 + runden() * 1.5);
       if (halt <= 0) {
         gefallen = true;
         klonk(0.6);
@@ -1980,6 +1980,119 @@ export function spanngurtSpiel() {
       textMitte(ctx, api.istFertig ? (verdreht ? `Aufgerollt. ${verdreht}x verdreht, sieht krumpelig aus.` : 'Sauber aufgerollt!') : `Gurt ${gurt + 1} von 2: im Kreis ziehen, X vorher anklicken`, m.b / 2, f.y - 18, 18, '#ffe9a8');
     },
   });
+  return versprechen;
+}
+
+// Kackepumpe reinigen: blaue Tauchpumpe mit Schlauch, voller Gülle. Maus gedrückt = Wasserstrahl; frische Kleckse gehen schnell ab,
+// eingetrocknete Krusten (dunkel) brauchen länger. Dabei Luft anhalten: beim Spritzen sinkt die Luft, ist sie leer, muss man würgen
+// und kurz loslassen (Maus los = durchatmen). Wer zu oft würgt, hat es trotzdem geschafft, aber Dennis lacht.
+export function pumpeSpiel() {
+  let f, p;
+  let zeiger = null;
+  let druck = false;
+  let ton = null;
+  let luft = 1;
+  let wuergt = 0; // Sekunden Würgen
+  let gewuergt = 0;
+  const kleckse = [];
+  const tropfen = [];
+  const r = (() => { let q = 47; return () => { q = (q * 1664525 + 1013904223) >>> 0; return q / 4294967296; }; })();
+  const { api, versprechen } = spielRahmen('Kackepumpe abwaschen', 'Maus gedrückt halten = Wasserstrahl. Alle Gülle-Kleckse wegspritzen, dunkle Krusten brauchen länger. Luft anhalten! Wird die Luft knapp: Maus loslassen und durchatmen.', {
+    beiGroesse(m) {
+      f = flaeche(m);
+      // Pumpe mittig, Schlauch rechts daneben aufgerollt
+      p = { x: f.x + f.b * 0.22, y: f.y + f.h * 0.08, b: f.b * 0.26, h: f.h * 0.82, sx: f.x + f.b * 0.66, sy: f.y + f.h * 0.52, sr: Math.min(f.b * 0.17, f.h * 0.38) };
+      if (!kleckse.length) {
+        for (let i = 0; i < 26; i++) {
+          const aufSchlauch = i >= 16;
+          const kruste = r() < 0.35;
+          let u, v;
+          if (aufSchlauch) { const w = r() * Math.PI * 2, d = 0.55 + r() * 0.45; u = Math.cos(w) * d; v = Math.sin(w) * d; }
+          else { u = 0.08 + r() * 0.84; v = 0.06 + r() * 0.9; }
+          kleckse.push({ aufSchlauch, u, v, g: 10 + r() * 16, w: r() * 6, kruste, hp: kruste ? 1.6 : 0.5, voll: kruste ? 1.6 : 0.5 });
+        }
+      }
+    },
+    events: {
+      pointerdown(e) { druck = true; zeiger = zeigerPos(api.canvas, e); api.canvas.setPointerCapture?.(e.pointerId); },
+      pointermove(e) { zeiger = zeigerPos(api.canvas, e); },
+      pointerup() { druck = false; },
+      pointercancel() { druck = false; },
+    },
+    schritt(dt) {
+      if (wuergt > 0) wuergt = Math.max(0, wuergt - dt);
+      const spritzt = druck && !api.istFertig && wuergt <= 0;
+      if (spritzt && !ton) ton = dauer('wasser', 0.6);
+      if (!spritzt && ton) { ton.stopp(); ton = null; }
+      // Luft: beim Spritzen hält man sie an, losgelassen atmet man durch
+      if (spritzt) luft -= dt / 6; else luft = Math.min(1, luft + dt / 1.6);
+      if (luft <= 0 && !api.istFertig) { luft = 0.35; wuergt = 1.4; gewuergt++; husten(0.8, 2); }
+      if (spritzt && zeiger) {
+        for (const k of kleckse) {
+          if (k.hp <= 0) continue;
+          const { x, y } = lage(k);
+          if (Math.hypot(x - zeiger.x, y - zeiger.y) < 38) {
+            k.hp -= dt;
+            if (r() < dt * 14) tropfen.push({ x, y, vx: (r() - 0.5) * 260, vy: -120 - r() * 160, t: 0, farbe: k.kruste ? '#4a3418' : '#7a5a2a' });
+            if (k.hp <= 0) blip(300 + r() * 120, 0.03, 0.06);
+          }
+        }
+      }
+      for (let i = tropfen.length - 1; i >= 0; i--) { const q = tropfen[i]; q.t += dt; q.x += q.vx * dt; q.y += q.vy * dt; q.vy += 600 * dt; if (q.t > 1) tropfen.splice(i, 1); }
+      if (!api.istFertig && kleckse.every((k) => k.hp <= 0)) { if (ton) { ton.stopp(); ton = null; } api.fertig({ sauber: true, gewuergt }); }
+    },
+    zeichnen() {
+      const { ctx, m } = api;
+      ctx.fillStyle = '#2c3a40'; ctx.fillRect(0, 0, m.b, m.h);
+      // Duschwanne als Untergrund (Fliesen)
+      ctx.fillStyle = '#d9e2e6'; ctx.fillRect(f.x, f.y, f.b, f.h);
+      ctx.strokeStyle = '#b7c3c9'; ctx.lineWidth = 2;
+      for (let x = f.x; x <= f.x + f.b; x += f.b / 8) { ctx.beginPath(); ctx.moveTo(x, f.y); ctx.lineTo(x, f.y + f.h); ctx.stroke(); }
+      for (let y = f.y; y <= f.y + f.h; y += f.h / 5) { ctx.beginPath(); ctx.moveTo(f.x, y); ctx.lineTo(f.x + f.b, y); ctx.stroke(); }
+      // Schlauch: schwarze Ringe
+      ctx.strokeStyle = '#1d1d1f'; ctx.lineWidth = Math.max(10, p.sr * 0.16);
+      for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.ellipse(p.sx + i * 6, p.sy - i * 5, p.sr * (1 - i * 0.12), p.sr * 0.8 * (1 - i * 0.12), 0, 0, Math.PI * 2); ctx.stroke(); }
+      ctx.beginPath(); ctx.moveTo(p.x + p.b, p.y + p.h * 0.75); ctx.quadraticCurveTo(p.sx - p.sr * 0.8, p.y + p.h * 0.95, p.sx - p.sr, p.sy); ctx.stroke();
+      // Pumpe: blauer Körper, schwarzer Fuß, Bügelgriff
+      ctx.lineWidth = 5; ctx.strokeStyle = '#111';
+      ctx.fillStyle = '#2f5fa8'; ctx.beginPath(); ctx.roundRect(p.x, p.y + p.h * 0.12, p.b, p.h * 0.78, 18); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#4a7cc4'; ctx.fillRect(p.x + p.b * 0.12, p.y + p.h * 0.18, p.b * 0.12, p.h * 0.66);
+      ctx.fillStyle = '#1d1d1f'; ctx.beginPath(); ctx.roundRect(p.x - 10, p.y + p.h * 0.86, p.b + 20, p.h * 0.12, 8); ctx.fill();
+      ctx.strokeStyle = '#1d1d1f'; ctx.lineWidth = 12; ctx.beginPath(); ctx.arc(p.x + p.b / 2, p.y + p.h * 0.14, p.b * 0.3, Math.PI, 0); ctx.stroke();
+      // Gülle-Kleckse: frisch hellbraun und glänzend, Kruste dunkel und rissig; beim Abspritzen werden sie kleiner
+      for (const k of kleckse) {
+        if (k.hp <= 0) continue;
+        const { x, y } = lage(k);
+        const g = k.g * (0.35 + 0.65 * k.hp / k.voll);
+        ctx.fillStyle = k.kruste ? '#4a3418' : '#7a5a2a';
+        ctx.beginPath(); for (let i = 0; i < 6; i++) { const a = k.w + i * 1.05; ctx.ellipse(x + Math.cos(a) * g * 0.45, y + Math.sin(a) * g * 0.3, g * 0.55, g * 0.4, a, 0, Math.PI * 2); } ctx.fill();
+        if (k.kruste) { ctx.strokeStyle = '#2a1c0c'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x - g * 0.4, y); ctx.lineTo(x, y - g * 0.2); ctx.lineTo(x + g * 0.3, y + g * 0.15); ctx.stroke(); }
+        else { ctx.fillStyle = 'rgba(255,240,200,0.35)'; ctx.beginPath(); ctx.ellipse(x - g * 0.2, y - g * 0.15, g * 0.18, g * 0.1, 0, 0, Math.PI * 2); ctx.fill(); }
+      }
+      for (const q of tropfen) { ctx.globalAlpha = Math.max(0, 1 - q.t); ctx.fillStyle = q.farbe; ctx.beginPath(); ctx.arc(q.x, q.y, 4, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
+      // Brause am Zeiger mit Wasserstrahl
+      if (zeiger) {
+        ctx.save(); ctx.translate(zeiger.x, zeiger.y);
+        if (druck && wuergt <= 0 && !api.istFertig) for (let k = 0; k < 10; k++) { ctx.strokeStyle = 'rgba(190,225,255,0.75)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(30, -30); ctx.lineTo((Math.random() - 0.5) * 36, (Math.random() - 0.5) * 36); ctx.stroke(); }
+        ctx.fillStyle = '#c9ced3'; ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.ellipse(36, -36, 16, 11, -0.8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(46, -46); ctx.lineTo(90, -90); ctx.lineWidth = 10; ctx.strokeStyle = '#9aa1a8'; ctx.stroke();
+        ctx.restore();
+      }
+      // Gestank-Schwaden und Würgen
+      if (wuergt > 0) { ctx.fillStyle = `rgba(110,140,40,${0.25 * Math.min(1, wuergt)})`; ctx.fillRect(0, 0, m.b, m.h); textMitte(ctx, 'Würg! Erst mal durchatmen ...', m.b / 2, f.y + f.h / 2, 30, '#e8f5a0'); }
+      const rest = kleckse.filter((k) => k.hp > 0).length;
+      balken(ctx, f.x, f.y + f.h + 26, f.b * 0.62, 12, 1 - rest / kleckse.length, '#ffc81e');
+      balken(ctx, f.x + f.b * 0.68, f.y + f.h + 26, f.b * 0.32, 12, luft, luft < 0.3 ? '#e04a3a' : '#7fc8f0');
+      textMitte(ctx, 'Sauber', f.x + f.b * 0.31, f.y + f.h + 56, 15, '#ffe9a8');
+      textMitte(ctx, 'Luft', f.x + f.b * 0.84, f.y + f.h + 56, 15, '#bfe6ff');
+      textMitte(ctx, api.istFertig ? (gewuergt > 2 ? 'Sauber. Aber du bist grün im Gesicht.' : 'Blitzsauber!') : 'Wasser: Maus gedrückt halten und über die Kleckse fahren', m.b / 2, f.y - 18, 18, '#ffe9a8');
+    },
+  });
+  function lage(k) {
+    if (k.aufSchlauch) return { x: p.sx + k.u * p.sr, y: p.sy + k.v * p.sr * 0.8 };
+    return { x: p.x + k.u * p.b, y: p.y + p.h * 0.12 + k.v * p.h * 0.78 };
+  }
   return versprechen;
 }
 
