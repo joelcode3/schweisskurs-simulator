@@ -381,6 +381,14 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   'palettenSchild': zeigt den Stand). Mit dem Hoflader dort abgesetzt (Gabel-Ereignis abgesetzt) zählt fahrten.palettenGezaehlt:
   je neue Palette Wut -3, Hinweis „x von 12“, Lob beim ersten und jeder 3.; alle 12 = großes Lob, Wut -8. Note: je gestapelte
   Palette 1 Punkt, höchstens 6 (Gesamt höchstens 100). Tipp beim ersten Einsteigen in den Hoflader.
+- Paket M Minispiele (Projektchat 29.10.): Müll an den Tonnen kommt nach dem Aufheben nicht mehr komplett und gleich wieder,
+  sondern einzeln alle 1–2,5 Min. (fahrten.js muellNachschub: neue Sorte, neue Stelle). Hula-Hoop etwas schwerer (Halt +6 statt +7,
+  Abfall 36 + 1,5 je Runde, Fehltaste -26). Neues Minispiel pumpeSpiel (minispiele.js) statt Halten-Dialog: Wasserstrahl über
+  Gülle-Kleckse, Krusten brauchen länger, Luft-Balken beim Spritzen, leer = Würgen (husten), loslassen = durchatmen.
+  Zurücklegen: hand.nimm merkt sich beim ersten Aufheben den Platz (userData.platz), Taste R / Knopf „An seinen Platz“ legt es dort
+  ab (nur unter 3,2 m, nicht für Tasse, Pumpe, Flasche, Ofen, Schlauch, Kaffee, Wäsche, Sieb); Dennis sieht es: Wut -2 (max. alle 2 Min.).
+  Milch: Tüte 1,5x größer und vorne auf dem Kaffeetisch (stand hinter der Kaffeemaschine), Hinweis beim ersten Kaffee.
+  Rohrbruch-Minispiel war schon in P7.
 - Paket O Kühe (Projektchat 29.10., nach Fotos des Betreibers abgenommen): Holstein-Kuh aus wenigen geformten Teilen
   (forme(): Kugel Punkt für Punkt verformt). Rumpf mit geradem Rücken, Widerrist, Hüfthöckern, eckigem Becken, leicht hängendem
   Bauch; kurzer schlanker Hals; großer Kopf (schwarz, weiße Blesse = dieselbe Kopfform schmal und oben etwas höher, dunkles Maul,
