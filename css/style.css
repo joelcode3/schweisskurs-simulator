@@ -49,6 +49,13 @@ button { font: inherit; color: inherit; }
 }
 #welt.zieht { cursor: grabbing; }
 #welt.zeigt { cursor: pointer; }
+#welt.gefangen { cursor: none; }
+#maus-tipp {
+  position: fixed; left: 50%; top: calc(50% + 26px); transform: translateX(-50%);
+  background: rgba(20, 20, 22, 0.78); color: #fff; font: 600 14px Nunito, sans-serif;
+  padding: 6px 12px; border-radius: 8px; pointer-events: none; z-index: 5; white-space: nowrap;
+}
+#maus-tipp.versteckt { display: none; }
 
 .ico {
   width: 22px;
