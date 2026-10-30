@@ -217,9 +217,12 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Reaktionen: Werfen (Ermahnung), Dennis treffen (Ausraster), Figur anfassen/werfen, Handy (1. Mal Blase + stimme/hand.handy.mp3,
   danach Wut + stimme/hand.handyNochmal.mp3, Ton aus handy1/handy2.MOV),
   Löscher auf Dennis (Ausraster), Löscher sinnlos (Ermahnung), laufende Flex auf Dennis (sauer).
-- Umschauen am Computer: Maus an den Bildrand fahren (ohne Klicken), je näher am Rand desto schneller (steuerung.js `randDrehen`,
-  Rand 26 % links/rechts, 20 % oben/unten, bis 3,6 bzw. 2,0 rad/s, Zeiger wird zum Pfeil). Ziehen: 0,007 (Maus) / 0,0085 (Touch). Kein Pointer Lock/Einrasten (Betreiber: doof). Ziehen geht weiterhin.
-  Nicht drehen, solange ein Menü/Dialog/Minispiel/Dennis-Fenster offen ist.
+- Umschauen am Computer (Paket A, 30.10., neuer Betreiber-Wunsch I38, ersetzt das frühere Rand-Drehen): Pointer Lock. Klick ins Bild
+  fängt die Maus (dieser Klick benutzt nichts), Zeiger unsichtbar, Punkt in der Mitte; Mausbewegung dreht (0,0024 rad/px), Klick =
+  benutzen, was in der Bildmitte ist (treffer(mitte)), Name der Sache in der Mitte als Hover-Name. Öffnet sich ein Menü/Dialog/
+  Minispiel/Dennis-Fenster (fensterOffen), wird die Maus freigegeben; der nächste Klick auf einen Knopf fängt sie wieder (wiederFangen,
+  click-Listener im Capture). Esc = Maus frei (Browser), dann Hinweis #maus-tipp, Klick ins Bild fängt wieder. Touch: Wischen wie bisher.
+  In Playwright headless lässt sich Esc nicht testen (Lock bleibt).
 
 ## Jonny
 - Jonny (js/jonny.js, nach Fotos): so groß wie Dennis, etwas breiter, lange braune Haare, Vollbart, grüne Cap mit Schirm nach
