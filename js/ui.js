@@ -265,7 +265,37 @@ const WARN_SYMBOL = {
   klo: '<svg viewBox="0 0 24 24" class="ico"><path d="M6 3h7v6H6z"/><path d="M4 11h14a5 5 0 0 1-5 5h-1l1 5H8l1-5a5 5 0 0 1-5-5z"/></svg>',
   wasser: '<svg viewBox="0 0 24 24" class="ico"><path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/><path d="M9 14a3 3 0 0 0 3 3"/></svg>',
 };
+// Aufgaben-Leiste unten rechts (ersetzt die alten Warn-Kacheln): je offene Aufgabe ein Icon mit rotem Ring,
+// der sich füllt (anteil 0..1). Voll = Dennis macht es selbst. liste: [{ id, titel, anteil, dringend }]
+const AUFGABE_SYMBOL = {
+  ...WARN_SYMBOL,
+  dreck: '<svg viewBox="0 0 24 24" class="ico"><path d="M15 3l-4 9"/><path d="M7 12h8l2 9H5z"/><path d="M8 16v4M11 16v4M14 16v4"/></svg>',
+  pumpe: '<svg viewBox="0 0 24 24" class="ico"><rect x="6" y="7" width="8" height="13" rx="2"/><path d="M7 7a3 3 0 0 1 6 0"/><path d="M14 16c3 0 5 1 5 3s-2 2-4 2"/></svg>',
+  tassen: '<svg viewBox="0 0 24 24" class="ico"><path d="M4 9h11v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M15 11h2a2 2 0 0 1 0 4h-2"/><path d="M8 3v3M11 3v3"/></svg>',
+};
+export function aufgabenIcons(liste) {
+  const el = $('warnungen');
+  if (!el) return;
+  const da = new Set(liste.map((a) => a.id));
+  for (const k of [...el.querySelectorAll('.aufgabe')]) if (!da.has(k.dataset.id)) k.remove();
+  const U = 2 * Math.PI * 25;
+  for (const a of liste) {
+    let k = el.querySelector(`.aufgabe[data-id="${a.id}"]`);
+    if (!k) {
+      k = document.createElement('div');
+      k.className = `aufgabe ${a.id}`;
+      k.dataset.id = a.id;
+      k.innerHTML = `<svg viewBox="0 0 56 56" class="ring"><circle cx="28" cy="28" r="25" class="ring-hg"/><circle cx="28" cy="28" r="25" class="ring-voll" stroke-dasharray="${U}" stroke-dashoffset="${U}"/></svg>${AUFGABE_SYMBOL[a.id] || ''}<span class="aufgabe-text">${a.titel}</span>`;
+      el.appendChild(k);
+    }
+    const anteil = Math.max(0, Math.min(1, a.anteil));
+    k.querySelector('.ring-voll').setAttribute('stroke-dashoffset', String(U * (1 - anteil)));
+    k.classList.toggle('dringend', !!a.dringend);
+    k.classList.toggle('voll', anteil >= 1);
+  }
+}
 export function warnung(art, an) {
+  return; // ersetzt durch aufgabenZeigen (Paket B); bleibt, damit alte Aufrufe nichts kaputt machen
   const el = $('warnungen');
   if (!el) return;
   let w = el.querySelector(`[data-art="${art}"]`);

@@ -1027,4 +1027,16 @@ button { font: inherit; color: inherit; }
 .warnung .ico { width: 34px; height: 34px; stroke: #fff; stroke-width: 2.2; fill: none; }
 .warnung.feuer { background: #e2531e; }
 .warnung.wasser { background: #2f7fd1; }
+#warnungen { align-items: flex-end; gap: 14px; padding-bottom: 20px; }
+.aufgabe { position: relative; width: 56px; height: 56px; display: grid; place-items: center; background: #26282c; border-radius: 50%; box-shadow: 3px 3px 0 #111; }
+.aufgabe .ring { position: absolute; inset: 0; width: 56px; height: 56px; transform: rotate(-90deg); }
+.aufgabe .ring circle { fill: none; stroke-width: 5; }
+.aufgabe .ring-hg { stroke: #111; }
+.aufgabe .ring-voll { stroke: #e0392b; stroke-linecap: round; transition: stroke-dashoffset 0.25s linear; }
+.aufgabe .ico { position: relative; width: 28px; height: 28px; stroke: #fff; stroke-width: 2; fill: none; }
+.aufgabe .aufgabe-text { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); white-space: nowrap; font: 700 11px Nunito, sans-serif; color: #fff; text-shadow: 0 1px 2px #000, 0 0 3px #000; }
+.aufgabe.feuer { background: #b8401a; }
+.aufgabe.wasser { background: #23609e; }
+.aufgabe.dringend { animation: warnBlinken 0.8s infinite alternate; }
+.aufgabe.voll .ring-voll { stroke: #ff5a40; }
 @keyframes warnBlinken { from { transform: scale(1); } to { transform: scale(1.12); filter: brightness(1.25); } }
