@@ -10,34 +10,34 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Caveat:wght@500;700&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=20261030-1">
+  <link rel="stylesheet" href="css/style.css?v=20261030-4">
   <!-- Alle Module mit Versionsnummer laden, sonst nimmt der Browser alte gespeicherte Dateien (Version überall gleich hochzählen) -->
   <script type="importmap">
     { "imports": {
       "three": "./vendor/three.module.min.js",
-      "./js/audio.js": "./js/audio.js?v=20261030-1",
-      "./js/clips.js": "./js/clips.js?v=20261030-1",
-      "./js/draussen.js": "./js/draussen.js?v=20261030-1",
-      "./js/carport.js": "./js/carport.js?v=20261030-1",
-      "./js/fahrzeuge.js": "./js/fahrzeuge.js?v=20261030-1",
-      "./js/fahrten.js": "./js/fahrten.js?v=20261030-1",
-      "./js/torben.js": "./js/torben.js?v=20261030-1",
-      "./js/kumpels.js": "./js/kumpels.js?v=20261030-1",
-      "./js/segway.js": "./js/segway.js?v=20261030-1",
-      "./js/landschaft.js": "./js/landschaft.js?v=20261030-1",
-      "./js/dennis.js": "./js/dennis.js?v=20261030-1",
-      "./js/gesicht.js": "./js/gesicht.js?v=20261030-1",
-      "./js/hand.js": "./js/hand.js?v=20261030-1",
-      "./js/jonny.js": "./js/jonny.js?v=20261030-1",
-      "./js/waldo.js": "./js/waldo.js?v=20261030-1",
-      "./js/wege.js": "./js/wege.js?v=20261030-1",
-      "./js/minispiele.js": "./js/minispiele.js?v=20261030-1",
-      "./js/spiel.js": "./js/spiel.js?v=20261030-1",
-      "./js/steuerung.js": "./js/steuerung.js?v=20261030-1",
-      "./js/texte.js": "./js/texte.js?v=20261030-1",
-      "./js/toon.js": "./js/toon.js?v=20261030-1",
-      "./js/ui.js": "./js/ui.js?v=20261030-1",
-      "./js/world.js": "./js/world.js?v=20261030-1"
+      "./js/audio.js": "./js/audio.js?v=20261030-4",
+      "./js/clips.js": "./js/clips.js?v=20261030-4",
+      "./js/draussen.js": "./js/draussen.js?v=20261030-4",
+      "./js/carport.js": "./js/carport.js?v=20261030-4",
+      "./js/fahrzeuge.js": "./js/fahrzeuge.js?v=20261030-4",
+      "./js/fahrten.js": "./js/fahrten.js?v=20261030-4",
+      "./js/torben.js": "./js/torben.js?v=20261030-4",
+      "./js/kumpels.js": "./js/kumpels.js?v=20261030-4",
+      "./js/segway.js": "./js/segway.js?v=20261030-4",
+      "./js/landschaft.js": "./js/landschaft.js?v=20261030-4",
+      "./js/dennis.js": "./js/dennis.js?v=20261030-4",
+      "./js/gesicht.js": "./js/gesicht.js?v=20261030-4",
+      "./js/hand.js": "./js/hand.js?v=20261030-4",
+      "./js/jonny.js": "./js/jonny.js?v=20261030-4",
+      "./js/waldo.js": "./js/waldo.js?v=20261030-4",
+      "./js/wege.js": "./js/wege.js?v=20261030-4",
+      "./js/minispiele.js": "./js/minispiele.js?v=20261030-4",
+      "./js/spiel.js": "./js/spiel.js?v=20261030-4",
+      "./js/steuerung.js": "./js/steuerung.js?v=20261030-4",
+      "./js/texte.js": "./js/texte.js?v=20261030-4",
+      "./js/toon.js": "./js/toon.js?v=20261030-4",
+      "./js/ui.js": "./js/ui.js?v=20261030-4",
+      "./js/world.js": "./js/world.js?v=20261030-4"
     } }
   </script>
 </head>
@@ -112,7 +112,7 @@
       <p class="unterzeile">Bau einen Ofen aus einer alten Gasflasche. Mach keinen Mist. Dennis guckt zu.</p>
       <div class="start-knoepfe"><button id="start-los" class="knopf gross" type="button">Kurs starten</button></div>
       <div class="steuerung">
-        <div><b>Computer:</b> Maus an den Bildrand = umschauen, WASD = gehen, Klick = benutzen/aufheben/ablegen, E = benutzen, Q = werfen, G = fallen lassen</div>
+        <div><b>Computer:</b> Ins Bild klicken = Maus fangen, dann Maus bewegen = umschauen (Esc = Maus frei), WASD = gehen, Klick = benutzen/aufheben/ablegen, E = benutzen, Q = werfen, G = fallen lassen, R = an seinen Platz</div>
         <div><b>Handy:</b> Wischen = umschauen, Tippen = benutzen, unten Stationen wählen</div>
       </div>
       <div class="warnstreifen"></div>
@@ -153,7 +153,7 @@
     <div class="start-unten">
       <p class="schloss-tipp" id="schloss-tipp">Die Tür ist abgeschlossen. Ziffern anklicken (oben = höher, unten = niedriger), bis der Code stimmt.</p>
       <div class="steuerung">
-        <div><b>Computer:</b> Maus an den Bildrand = umschauen, WASD = gehen, Klick = benutzen/aufheben/ablegen, E = benutzen, Q = werfen, G = fallen lassen</div>
+        <div><b>Computer:</b> Ins Bild klicken = Maus fangen, dann Maus bewegen = umschauen (Esc = Maus frei), WASD = gehen, Klick = benutzen/aufheben/ablegen, E = benutzen, Q = werfen, G = fallen lassen, R = an seinen Platz</div>
         <div><b>Handy:</b> Wischen = umschauen, Tippen = benutzen, unten Stationen wählen</div>
       </div>
     </div>
@@ -161,6 +161,6 @@
 
   <div id="hochkant">Handy quer halten, dann passt die Werkstatt besser aufs Bild.</div>
 
-  <script type="module" src="js/main.js?v=20261030-1"></script>
+  <script type="module" src="js/main.js?v=20261030-4"></script>
 </body>
 </html>
