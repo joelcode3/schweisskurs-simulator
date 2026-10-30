@@ -723,6 +723,70 @@ export function baueWelt(scene) {
   scene.add(regal);
   hindernis(-5, -4.4, -1.4, 0.2);
 
+  // Spanngurte (Paket C): bei einem Ereignis liegen zwei Gurte in Schlaufen vor dem Regal auf dem Boden (anklickbar),
+  // aufgerollt kommen sie unten ins Regal
+  const gurtBand = (pts, farbe) => {
+    const pos = [], idx = [];
+    for (let i = 0; i < pts.length; i++) {
+      const a0 = pts[Math.max(0, i - 1)], a1 = pts[Math.min(pts.length - 1, i + 1)];
+      let nx = -(a1[1] - a0[1]), nz = a1[0] - a0[0];
+      const l = Math.hypot(nx, nz) || 1; nx = nx / l * 0.025; nz = nz / l * 0.025;
+      const y = 0.006 + (pts[i][2] || 0);
+      pos.push(pts[i][0] + nx, y, pts[i][1] + nz, pts[i][0] - nx, y, pts[i][1] - nz);
+      if (i) { const k = i * 2; idx.push(k - 2, k - 1, k, k - 1, k + 1, k); }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setIndex(idx);
+    g.computeVertexNormals();
+    return teil(g, farbe, { umriss: false, mat: { side: THREE.DoubleSide } });
+  };
+  const schlaufen = (x0, z0, dreh, schleifen) => {
+    const pts = [];
+    for (let i = 0; i <= 120; i++) {
+      const t = i / 120;
+      // Gurt läuft in losen Schlaufen über den Boden; wo er sich kreuzt, liegt er etwas höher
+      const x = t * 1.1 + Math.sin(t * Math.PI * schleifen) * 0.18;
+      const z = Math.cos(t * Math.PI * schleifen) * 0.22 * (1 - t * 0.4);
+      const hoch = Math.max(0, Math.cos(t * Math.PI * schleifen)) * 0.008;
+      pts.push([x0 + x * Math.cos(dreh) - z * Math.sin(dreh), z0 + x * Math.sin(dreh) + z * Math.cos(dreh), hoch]);
+    }
+    return pts;
+  };
+  const ratsche = (farbe) => {
+    const r = new THREE.Group();
+    r.add(setze(quader(0.09, 0.03, 0.06, 0x8a9096, { umriss: 0.002 }), 0, 0.018, 0));
+    r.add(setze(quader(0.07, 0.012, 0.03, farbe, { umriss: 0.001 }), 0, 0.038, 0));
+    r.add(setze(quader(0.03, 0.01, 0.05, 0x5a5d62, { umriss: 0.001 }), 0.05, 0.012, 0));
+    return r;
+  };
+  const gurteBoden = new THREE.Group();
+  for (const [x0, z0, dreh, sl, farbe] of [[-3.95, -0.25, 0.4, 5, 0xe8742a], [-3.75, 0.25, -0.5, 4, 0x2f6fd1]]) {
+    const pts = schlaufen(x0, z0, dreh, sl);
+    gurteBoden.add(gurtBand(pts, farbe));
+    const e = pts[pts.length - 1];
+    gurteBoden.add(setze(ratsche(0xc8352a), e[0], 0, e[1], 0, -dreh, 0));
+  }
+  gurteBoden.visible = false;
+  scene.add(gurteBoden);
+  merke(gurteBoden, 'spanngurte', 'Spanngurte', null);
+  objekte.gurteBoden = gurteBoden;
+  // aufgerollt: zwei Rollen auf dem unteren Regalbrett
+  const gurteRegal = new THREE.Group();
+  for (const [z, farbe] of [[-0.09, 0xe8742a], [0.08, 0x2f6fd1]]) {
+    // Rolle steht hochkant (Achse quer zum Regal), oben drauf die Ratsche
+    const rolle = teil(new THREE.CylinderGeometry(0.075, 0.075, 0.05, 20), farbe, { umriss: 0.002 });
+    rolle.rotation.x = Math.PI / 2;
+    rolle.position.set(0, 0, z);
+    gurteRegal.add(rolle);
+    gurteRegal.add(setze(zylinder(0.02, 0.02, 0.052, 0x1d1d1f, { umriss: false }, 10), 0, 0, z, Math.PI / 2, 0, 0));
+    gurteRegal.add(setze(ratsche(0xc8352a), 0, 0.072, z, 0, Math.PI / 2, 0));
+  }
+  setze(gurteRegal, -4.7, 0.25 + 0.015 + 0.075, -0.6);
+  gurteRegal.visible = false;
+  scene.add(gurteRegal);
+  objekte.gurteRegal = gurteRegal;
+
   // Bitsatz (schwarze Kassette, offen) im Regal: Bits liegen wild durcheinander, nach dem Sortieren ordentlich in Reihen
   const bitsatz = new THREE.Group();
   bitsatz.add(setze(quader(0.24, 0.025, 0.16, 0x26282c, { umriss: 0.002 }), 0, 0.0125, 0));
