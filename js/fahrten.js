@@ -7,7 +7,7 @@ import { DENNIS, JONNY, WALDO, TORBEN } from './texte.js';
 import { blip, klonk, hupe, aufprall } from './audio.js';
 import * as ui from './ui.js';
 import { TORBEN_PLATZ } from './torben.js';
-import { FELDWEG, inHindernis, muellTeil } from './draussen.js';
+import { FELDWEG, inHindernis, muellTeil, MUELL_NAMEN, MUELL_ARTEN } from './draussen.js';
 import { gelaendeHoehe } from './landschaft.js';
 
 // Vorerst steckt der Schlüssel im Hoflader (Betreiber: später gibt Dennis ihn raus, wenn man etwas damit erledigen muss)
@@ -407,6 +407,8 @@ export function baueFahrten(c) {
     }
   }
 
+  // Aufgehobener Müll kommt nicht auf einmal und gleich wieder: nach und nach taucht einzeln neuer auf
+  // (alle 1–2,5 Minuten ein Teil, andere Sorte, andere Stelle), nie mehr als vorher dalag
   function muellStueckWeg(obj) {
     obj.visible = false;
     klonk(0.2);
@@ -414,9 +416,27 @@ export function baueFahrten(c) {
     if (!rest) {
       z.wut = Math.max(0, z.wut - 2);
       lob(sag(DENNIS.muellAufgehoben));
-      const weg = T.tonnen.children.filter((c) => c.userData.liegeMuell);
-      setTimeout(() => { for (const c of weg) c.visible = true; }, (200 + Math.random() * 120) * 1000);
     } else ui.hinweis(`In die Tonne. Noch ${rest} Teil${rest > 1 ? 'e' : ''}.`, 1600);
+    muellNachschub();
+  }
+  let nachschubTimer = null;
+  function muellNachschub() {
+    if (nachschubTimer) return;
+    nachschubTimer = setTimeout(() => {
+      nachschubTimer = null;
+      const weg = T.tonnen.children.filter((c) => c.userData.liegeMuell && !c.visible);
+      if (!weg.length) return;
+      const alt = weg[Math.floor(Math.random() * weg.length)];
+      const art = MUELL_ARTEN[Math.floor(Math.random() * MUELL_ARTEN.length)];
+      const neu = muellTeil(art);
+      neu.position.set(-0.9 + Math.random() * 3.6, 0, 0.45 + Math.random() * 0.65);
+      neu.rotation.y = Math.random() * Math.PI * 2;
+      neu.userData.liegeMuell = true;
+      neu.userData.interaktiv = { id: 'muellStueck', name: MUELL_NAMEN[art] || 'Müll', station: null };
+      T.tonnen.remove(alt);
+      T.tonnen.add(neu);
+      muellNachschub();
+    }, (60 + Math.random() * 90) * 1000);
   }
   function menue(id, obj) {
     switch (id) {

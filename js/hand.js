@@ -138,6 +138,12 @@ export function baueHand(scene, kamera) {
     nimm(id, obj) {
       const cfg = HALTUNG[id];
       if (!obj.userData.ruhe) obj.userData.ruhe = { rot: obj.rotation.clone(), skala: obj.scale.clone() };
+      // ursprünglicher Platz (beim allerersten Aufheben), damit man es später genau dorthin zurücklegen kann
+      if (!obj.userData.platz && obj.parent && obj.parent !== halter) {
+        const welt = new THREE.Vector3();
+        obj.getWorldPosition(welt);
+        obj.userData.platz = { eltern: obj.parent, pos: obj.position.clone(), rot: obj.rotation.clone(), welt };
+      }
       obj.userData.versatz = undefined;
       obj.removeFromParent();
       halter.add(obj);
@@ -169,6 +175,20 @@ export function baueHand(scene, kamera) {
       return obj;
     },
     // Auf eine Fläche legen (punkt = Treffer auf der Oberseite)
+    // Wo das Ding in der Hand ursprünglich lag (Weltposition), oder null
+    get platz() { return item?.obj.userData.platz?.welt || null; },
+    // genau an den ursprünglichen Platz zurücklegen
+    zuruecklegen() {
+      if (!item || !item.obj.userData.platz) return null;
+      const pl = item.obj.userData.platz;
+      const obj = api.weg();
+      pl.eltern.add(obj);
+      obj.position.copy(pl.pos);
+      obj.rotation.copy(pl.rot);
+      obj.scale.copy(obj.userData.ruhe.skala);
+      obj.visible = true;
+      return obj;
+    },
     lege(punkt, drehungY) {
       if (!item) return null;
       const obj = api.weg();
