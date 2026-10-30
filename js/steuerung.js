@@ -1,5 +1,6 @@
-// Ich-Perspektive: Computer = Umschauen, indem man die Maus an den Bildrand fährt (ohne Klicken), Ziehen geht auch;
-// Touch = Wischen. Gehen per WASD, Stationen per Knopf, Klick = benutzen.
+// Ich-Perspektive: Computer = Mauszeiger ist gefangen (Pointer Lock) und steht fest in der Bildmitte, Umschauen durch
+// Mausbewegung ohne Klicken, Klick = benutzen, was in der Mitte ist. Menüs, Dialoge und Minispiele geben die Maus frei,
+// danach wird sie wieder gefangen; Esc = Maus frei (z. B. für die Knöpfe oben). Touch = Wischen. Gehen per WASD.
 import * as THREE from 'three';
 import { AUGENHOEHE, STATIONEN } from './world.js';
 import { inHindernis } from './draussen.js';
@@ -89,15 +90,17 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
     return null;
   }
 
-  // ---------- Umschauen mit der Maus am Bildrand ----------
-  // Mitte = Maus frei zum Anklicken, äußerer Rand = Sicht dreht sich (je näher am Rand, desto schneller)
-  const mitMaus = window.matchMedia('(pointer: fine)').matches;
-  const RAND_X = 0.26;
-  const RAND_Y = 0.2;
-  let maus = null;
-  window.addEventListener('mousemove', (e) => { maus = { x: e.clientX, y: e.clientY, aufBild: e.target === canvas }; });
-  document.addEventListener('mouseleave', () => { maus = null; });
-  window.addEventListener('blur', () => { maus = null; });
+  // ---------- Maus gefangen in der Bildmitte (Pointer Lock) ----------
+  const mitMaus = window.matchMedia('(pointer: fine)').matches && 'requestPointerLock' in canvas;
+  const EMPFINDLICH = 0.0024; // Drehung pro Pixel Mausbewegung
+  let gefangen = false;
+  let wiederFangen = false; // Maus wurde für ein Fenster freigegeben: danach automatisch wieder fangen
+  let hoverTakt = 0;
+  const tipp = document.createElement('div');
+  tipp.id = 'maus-tipp';
+  tipp.className = 'versteckt';
+  tipp.textContent = 'Ins Bild klicken: Umschauen mit der Maus. Esc: Maus wieder frei.';
+  document.body.appendChild(tipp);
   function fensterOffen() {
     for (const id of ['aktionen', 'dialog', 'minispiel', 'start-einfach', 'start']) {
       const el = document.getElementById(id);
@@ -106,39 +109,63 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
     const b = document.getElementById('dennis-buehne');
     return !!(b && !b.classList.contains('versteckt') && document.getElementById('dennis-weiter')?.offsetParent);
   }
-  function randDrehen(dt) {
-    let richtung = '';
-    if (mitMaus && maus && maus.aufBild && !gesperrt && !fahrt && !zieh && !fensterOffen()) {
-      const r = canvas.getBoundingClientRect();
-      const rx = (maus.x - r.left) / r.width;
-      const ry = (maus.y - r.top) / r.height;
-      const staerke = (w, rand) => Math.min(1, Math.max(0, (rand - w) / rand)) ** 1.2;
-      const links = staerke(rx, RAND_X);
-      const rechts = staerke(1 - rx, RAND_X);
-      const oben = staerke(ry, RAND_Y);
-      const unten = staerke(1 - ry, RAND_Y);
-      if (links || rechts) gier += (links - rechts) * 3.6 * dt;
-      if (oben || unten) nick = THREE.MathUtils.clamp(nick + (oben - unten) * 2.0 * dt, -1.25, 1.1);
-      richtung = links ? 'w' : rechts ? 'e' : '';
-      if (oben) richtung = 'n' + richtung;
-      else if (unten) richtung = 's' + richtung;
-      if (richtung) {
-        // beim Drehen wandert die Welt unter dem Zeiger durch: Name unter dem Zeiger aktualisieren
-        const t = treffer(maus.x, maus.y);
-        beiHover(t && t.info ? t : null, maus.x, maus.y);
+  function mitte() {
+    const r = canvas.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  }
+  function fangen() {
+    if (!mitMaus || gefangen || fensterOffen()) return;
+    try { const p = canvas.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch { /* Browser will nicht */ }
+  }
+  document.addEventListener('pointerlockchange', () => {
+    const jetzt = document.pointerLockElement === canvas;
+    if (gefangen && !jetzt) {
+      // losgelassen: wegen eines Fensters (dann gleich wieder fangen) oder per Esc (dann erst beim nächsten Klick ins Bild)
+      wiederFangen = fensterOffen();
+      beiHover(null, 0, 0);
+    }
+    gefangen = jetzt;
+    canvas.classList.toggle('gefangen', gefangen);
+  });
+  // Mausbewegung dreht die Sicht (nur gefangen)
+  document.addEventListener('mousemove', (e) => {
+    if (!gefangen || gesperrt || fahrt) return;
+    gier -= e.movementX * EMPFINDLICH;
+    nick = THREE.MathUtils.clamp(nick - e.movementY * EMPFINDLICH, -1.25, 1.1);
+  });
+  // nach einem Klick auf einen Fensterknopf (Menü zu, Minispiel fertig): Maus wieder fangen
+  document.addEventListener('click', () => {
+    if (!wiederFangen) return;
+    setTimeout(() => { if (wiederFangen && !fensterOffen()) { wiederFangen = false; fangen(); } }, 0);
+  }, true);
+  function mausUpdate(dt) {
+    if (!mitMaus) return;
+    const offen = fensterOffen();
+    // Fenster geht auf: Maus freigeben, damit man die Knöpfe anklicken kann
+    if (gefangen && offen) { wiederFangen = true; document.exitPointerLock(); }
+    tipp.classList.toggle('versteckt', gefangen || offen || wiederFangen);
+    // Name von dem, was in der Bildmitte ist
+    if (gefangen && !offen) {
+      hoverTakt -= dt;
+      if (hoverTakt <= 0) {
+        hoverTakt = 0.12;
+        const m = mitte();
+        const t = treffer(m.x, m.y);
+        beiHover(t && t.info ? t : null, m.x, m.y);
       }
     }
-    canvas.style.cursor = richtung ? `${richtung}-resize` : '';
   }
 
   // ---------- Zeiger ----------
   canvas.addEventListener('pointerdown', (e) => {
+    if (mitMaus && e.pointerType === 'mouse' && !gefangen) { fangen(); return; }
     if (gesperrt) return;
-    canvas.setPointerCapture(e.pointerId);
+    if (!gefangen) { try { canvas.setPointerCapture(e.pointerId); } catch { /* egal */ } }
     zeiger.set(e.pointerId, { x: e.clientX, y: e.clientY });
     zieh = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t: performance.now(), weg: 0 };
   });
   canvas.addEventListener('pointermove', (e) => {
+    if (gefangen) return;
     if (zieh && zieh.id === e.pointerId && !gesperrt) {
       const dx = e.clientX - zieh.x;
       const dy = e.clientY - zieh.y;
@@ -165,7 +192,9 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
     zieh = null;
     zeiger.delete(e.pointerId);
     if (gesperrt) return;
-    if (war.weg < 10 && performance.now() - war.t < 600) {
+    if (gefangen) {
+      if (performance.now() - war.t < 600) { const m = mitte(); beiKlick(treffer(m.x, m.y)); }
+    } else if (war.weg < 10 && performance.now() - war.t < 600) {
       beiKlick(treffer(e.clientX, e.clientY));
     }
   }
@@ -233,9 +262,11 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
       if (!ctrl) kamera.position.y = AUGENHOEHE;
     },
     get faehrt() { return !!fahrer; },
+    get gefangen() { return gefangen; },
+    fangen,
     get geht() { return geht || !!fahrt; },
     update(dt) {
-      randDrehen(dt);
+      mausUpdate(dt);
       if (fahrt && !fahrer) {
         fahrt.t += dt;
         const k = Math.min(1, fahrt.t / fahrt.d);
