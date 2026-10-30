@@ -72,4 +72,4 @@
 - KI-Stimmklon ist in dieser Umgebung nicht möglich (huggingface.co gesperrt). Stimmproben nie ins Repo (öffentlich).
 
 ## Stand der Pull Requests (29.10.2026)
-- Bis #44 (P1–P7, S, F, D, T, O) gemergt. Offen: #45 M, #46 A (Steuerung), B (Aufgaben-Icons). Danach C, G (Projektchat 30.10.). Neue Zweige von `origin/main`. Versionsnummer zuletzt `v=20261030-5`.
+- Bis #44 (P1–P7, S, F, D, T, O) gemergt. Offen: #45 M, #46 A (Steuerung), B (Aufgaben-Icons). Danach C, G (Projektchat 30.10.). Neue Zweige von `origin/main`. Versionsnummer zuletzt `v=20261030-6`.
