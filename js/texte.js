@@ -282,6 +282,10 @@ export const DENNIS = {
     zuViel: ['Jetzt reicht\'s mit dem Quatsch!', 'Ey! Zweimal war lustig. Jetzt ist Schluss!'],
     sauer: ['Leg die Gerte zurück in den Kofferraum. SOFORT.', 'Noch einmal und du fliegst. Mitsamt Gerte.'],
   },
+  paletten: {
+    danke: ['Die Paletten hinterm Haus gestapelt? Sehr gut, genau da gehören die hin!', 'Noch eine Palette auf dem Stapel. So sieht ein Hof aus!'],
+    alle: ['Alle Paletten ordentlich hinterm Haus. Ich bin beeindruckt. Wirklich.'],
+  },
   kettenhemd: ['Finger weg, das brauch ich für meine Kinky-Partys!', 'Das Kettenhemd geht dich gar nix an. Das ist für den Fetisch-Abend.'],
   muellAufgehoben: ['Oh, du räumst den Müll weg? Danke, Mann!', 'Endlich hebt mal einer den Kram auf. Sehr gut.'],
   einkauf: {

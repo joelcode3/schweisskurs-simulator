@@ -61,6 +61,7 @@ export function baueFahrten(c) {
       ? 'W/S fahren · A/D knicken · R/F Gabel hoch/runter · Leertaste hupen · E aussteigen'
       : `W/S fahren · A/D lenken · Leertaste hupen · E aussteigen${f.gedrosselt ? ' · (gedrosselt: nur Schritttempo)' : ''}`);
     blip(f.art === 'lader' ? 120 : 520, 0.25, 0.12);
+    if (f.art === 'lader' && !fz2.palettenTipp) { fz2.palettenTipp = true; setTimeout(() => ui.hinweis('Tipp: Herumliegende Paletten einsammeln und hinterm Haus beim Schild „Paletten“ stapeln. Dennis freut sich.', 6000), 1500); }
     // über die Fahrweise meckert Dennis erst, wenn der Jeep entdrosselt ist (Schritttempo ist ihm egal); Hoflader immer
     if (sekunden() > fz2.meckerAb && !(f.art === 'jeep' && f.gedrosselt)) {
       fz2.meckerAb = sekunden() + 35 + Math.random() * 15;
@@ -141,6 +142,7 @@ export function baueFahrten(c) {
         klonk(0.35);
         ui.hinweis({ aufgenommen: 'Palette auf der Gabel.', aufgenommenMehrere: `${fz.lader.last?.length || 2} Paletten auf der Gabel.`, abgesetzt: 'Palette abgesetzt.', abgesetztMehrere: 'Paletten abgesetzt.',
           jeepAuf: fz.jeep.fahrer ? 'Jeep samt Fahrer auf der Gabel!' : 'Jeep auf der Gabel.', jeepAb: 'Jeep wieder abgesetzt.' }[ereignis]);
+        if (ereignis === 'abgesetzt' || ereignis === 'abgesetztMehrere') palettenGezaehlt();
         if (ereignis === 'jeepAuf') {
           aerger(2);
           setTimeout(() => dennisSagt(sag(DENNIS.jeepHoch), true, { prio: 1 }), 800);
@@ -407,6 +409,19 @@ export function baueFahrten(c) {
     }
   }
 
+  // Paletten hinterm Haus stapeln (Paket G): jede neue Palette auf dem Platz macht Dennis froh und gibt einen Punkt für die Note
+  function palettenGezaehlt() {
+    const n = fz.palettenAmPlatz();
+    const gesamt = fz.paletten.length;
+    const neu = n - (z.palettenRekord || 0);
+    if (neu <= 0) return;
+    z.palettenRekord = n;
+    z.wut = Math.max(0, z.wut - 3 * neu);
+    ui.hinweis(`Paletten hinterm Haus: ${n} von ${gesamt}.`, 3000);
+    if (n >= gesamt) { z.wut = Math.max(0, z.wut - 8); lob(sag(DENNIS.paletten.alle)); }
+    else if (!z.palettenGelobt || n % 3 === 0) { z.palettenGelobt = true; lob(sag(DENNIS.paletten.danke)); }
+    else klonk(0.2);
+  }
   function muellStueckWeg(obj) {
     obj.visible = false;
     klonk(0.2);
@@ -440,6 +455,10 @@ export function baueFahrten(c) {
           lob(sag(DENNIS.grillDanke));
         })]];
         return null;
+      case 'palettenSchild': {
+        const n = fz.palettenAmPlatz();
+        return ['Schild: Paletten', `Hier hinterm Haus werden die Paletten gestapelt. Mit dem Hoflader einsammeln (Gabel: R hoch, F runter) und hier absetzen. Schon da: ${n} von ${fz.paletten.length}.`, []];
+      }
       case 'muellStueck': {
         // ein Teil aufheben und in die Tonne; ist alles weg, freut sich Dennis; nach ein paar Minuten liegt wieder was rum
         return [obj?.userData.interaktiv.name || 'Müll', '', [A('Aufheben und in die Tonne', 'hand', () => muellStueckWeg(obj))]];
@@ -491,6 +510,7 @@ export function baueFahrten(c) {
   }
   return {
     menue,
+    palettenGezaehlt, // auch für Tests
     update,
     einsteigenInDerNaehe,
     get faehrt() { return !!fz2.aktiv; },

@@ -376,6 +376,11 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Scherben, geschlängelte Reifenspuren von der Straße durch die Wiese. Himmel/Horizont/Nebel für die große Sichtweite (Kamera 1500).
 
 ## Paket A (Bugliste Projektchat)
+- Paket G Paletten (Projektchat 30.10., I53): 6 zusätzliche einzelne Paletten verstreut auf dem Hof (fahrzeuge.js), Palettenplatz
+  hinter der Werkstatt (PALETTEN_PLATZ x -1, z -7, ±2,0/±1,5 m) mit Schild „PALETTEN“ (Vorderseite vom Haus weg, anklickbar
+  'palettenSchild': zeigt den Stand). Mit dem Hoflader dort abgesetzt (Gabel-Ereignis abgesetzt) zählt fahrten.palettenGezaehlt:
+  je neue Palette Wut -3, Hinweis „x von 12“, Lob beim ersten und jeder 3.; alle 12 = großes Lob, Wut -8. Note: je gestapelte
+  Palette 1 Punkt, höchstens 6 (Gesamt höchstens 100). Tipp beim ersten Einsteigen in den Hoflader.
 - Paket O Kühe (Projektchat 29.10., nach Fotos des Betreibers abgenommen): Holstein-Kuh aus wenigen geformten Teilen
   (forme(): Kugel Punkt für Punkt verformt). Rumpf mit geradem Rücken, Widerrist, Hüfthöckern, eckigem Becken, leicht hängendem
   Bauch; kurzer schlanker Hals; großer Kopf (schwarz, weiße Blesse = dieselbe Kopfform schmal und oben etwas höher, dunkles Maul,
