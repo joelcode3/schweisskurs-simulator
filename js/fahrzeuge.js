@@ -3,7 +3,7 @@
 // Ein paar Europaletten stehen rum, die man mit der Gabel aufnehmen, umherfahren und wieder absetzen kann.
 // Fahren kann der Spieler (Steuerung über fahrerTasten) oder eine Figur (fahreRoute, mit eigenem Fahrstil).
 import * as THREE from 'three';
-import { quader, setze, zufall } from './toon.js';
+import { quader, setze, zufall, teil, leinwandTextur, toon } from './toon.js';
 import { inHindernis } from './draussen.js';
 import { gelaendeHoehe, RING } from './landschaft.js';
 
@@ -47,14 +47,39 @@ export function baueFahrzeuge(scene, welt) {
     const hx = 0.4 * c + 0.6 * s, hz = 0.4 * s + 0.6 * c;
     Object.assign(p.userData.hindernis, { xMin: p.position.x - hx, xMax: p.position.x + hx, zMin: p.position.z - hz, zMax: p.position.z + hz });
   }
-  // Stapel und einzelne Paletten im Hof
-  for (const [x, z, ry, n] of [[6.0, -3.0, 1.57, 3], [8.6, -3.0, 1.6, 1], [-9.8, 12.0, 1.5, 2]]) {
+  // Stapel und einzelne Paletten im Hof; dazu einzelne, die verstreut herumliegen (Paket G: einsammeln)
+  for (const [x, z, ry, n] of [[6.0, -3.0, 1.57, 3], [8.6, -3.0, 1.6, 1], [-9.8, 12.0, 1.5, 2],
+    [11, 10, 0.4, 1], [16, -6, 2.1, 1], [4, 14, 1.1, 1], [-6, 18, 2.6, 1], [20, 2, 0.9, 1], [12, -10, 1.8, 1]]) {
     for (let k = 0; k < n; k++) {
       const p = palette();
       p.position.set(x + (r() - 0.5) * 0.06, k * 0.144, z + (r() - 0.5) * 0.06);
       p.rotation.y = ry + (r() - 0.5) * 0.06;
       palettenBox(p);
     }
+  }
+  // ---------- Palettenplatz hinter der Werkstatt mit Schild „Paletten“ (Paket G) ----------
+  const PALETTEN_PLATZ = { x: -1, z: -7, hx: 2.0, hz: 1.5 };
+  {
+    const schild = new THREE.Group();
+    const tex = leinwandTextur(256, 96, (g, b, h) => {
+      g.fillStyle = '#f4efe0'; g.fillRect(0, 0, b, h);
+      g.strokeStyle = '#1d1d1f'; g.lineWidth = 6; g.strokeRect(4, 4, b - 8, h - 8);
+      g.fillStyle = '#1d1d1f'; g.font = 'bold 44px Bangers, Impact, sans-serif'; g.textAlign = 'center'; g.fillText('PALETTEN', b / 2, 64);
+    });
+    // Brett: Vorderseite mit Schrift (zeigt vom Haus weg), Rückseite einfach Holz
+    schild.add(setze(quader(1.2, 0.46, 0.03, 0x9a7a52, { umriss: 0.003 }), 0, 1.25, 0));
+    const vorn = teil(new THREE.PlaneGeometry(1.14, 0.42), 0, { material: toon(0xffffff, { map: tex }), umriss: false });
+    vorn.position.set(0, 1.25, -0.017); vorn.rotation.y = Math.PI;
+    schild.add(vorn);
+    for (const x of [-0.45, 0.45]) schild.add(setze(quader(0.07, 1.04, 0.07, 0x7a5a3a, { umriss: 0.003 }), x, 0.52, 0.05));
+    schild.position.set(PALETTEN_PLATZ.x - PALETTEN_PLATZ.hx - 0.4, 0, PALETTEN_PLATZ.z + PALETTEN_PLATZ.hz);
+    schild.userData.interaktiv = { id: 'palettenSchild', name: 'Schild: Paletten', station: null };
+    if (welt.interaktiv) welt.interaktiv.push(schild);
+    scene.add(schild);
+  }
+  // Paletten, die auf dem Platz stehen (nicht gerade an der Gabel)
+  function palettenAmPlatz() {
+    return paletten.filter((p) => p.parent === scene && Math.abs(p.position.x - PALETTEN_PLATZ.x) < PALETTEN_PLATZ.hx && Math.abs(p.position.z - PALETTEN_PLATZ.z) < PALETTEN_PLATZ.hz).length;
   }
   function stuetzHoehe(x, z, ohne) {
     // Oberkante der höchsten Palette unter (x, z), sonst Boden
@@ -426,7 +451,7 @@ export function baueFahrzeuge(scene, welt) {
   function verstecken(f, an) { f.g.visible = !an; if (an) Object.assign(f.hindernis, AUS, { boxen: null }); else anwenden(f, 0); }
 
   return {
-    jeep, lader, paletten, alle,
+    jeep, lader, paletten, alle, palettenAmPlatz, PALETTEN_PLATZ,
     // Höhe, auf der man an (x, z) steht (Paletten), für die Kamera
     bodenHoehe: (x, z) => stuetzHoehe(x, z),
     schritt, gabel, anwenden, fahreRoute, einparken, mitAnfahrt, verstecken, figurRein, figurRaus,

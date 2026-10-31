@@ -3639,8 +3639,9 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       laune: (100 - wut) * 0.25,
       fehler: -Math.min(15, z.fehler.length * 1.5),
       werkstatt: -((welt.dreck ? 4 : 0) + (z.dennisHatGefegt ? 2 : 0)),
+      paletten: Math.min(6, z.palettenRekord || 0), // Paket G: je gestapelte Palette hinterm Haus 1 Punkt, höchstens 6
     };
-    const punkte = teile.arbeit + teile.laune + teile.fehler + teile.werkstatt;
+    const punkte = Math.min(100, teile.arbeit + teile.laune + teile.fehler + teile.werkstatt + teile.paletten);
     const n = punkte >= 85 ? 1 : punkte >= 72 ? 2 : punkte >= 58 ? 3 : punkte >= 45 ? 4 : punkte >= 30 ? 5 : 6;
     return { n, qualitaet: Math.round(qualitaet), punkte: Math.round(punkte), teile, wut: Math.round(wut) };
   }
@@ -3682,6 +3683,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
         <li><span>Dennis’ Laune (Wut im Schnitt ${wut} %, max. 25)</span><b>${pkt(teile.laune)}</b></li>
         <li><span>Fehler (je 1,5, höchstens 15)</span><b>${pkt(teile.fehler)}</b></li>
         <li><span>Werkstatt</span><b>${pkt(teile.werkstatt)}</b></li>
+        <li><span>Paletten hinterm Haus (je 1, höchstens 6)</span><b>${pkt(teile.paletten)}</b></li>
       </ul>
       <p class="klein">Note 1 ab 85, 2 ab 72, 3 ab 58, 4 ab 45 Punkten (bestanden), 5 ab 30, darunter 6.</p>
       ${z.fehler.length ? `<p><b>Fehler (${z.fehler.length}):</b></p><ul class="fehler-liste">${z.fehler.map((f) => `<li>${f}</li>`).join('')}</ul>` : '<p><b>Kein einziger Fehler. Dennis ist sprachlos.</b></p>'}`,

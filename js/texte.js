@@ -288,6 +288,10 @@ export const DENNIS = {
     verdreht: ['Die sind ja verdreht aufgerollt! Na ja, besser als auf dem Boden.'],
     selbst: ['Muss ich die Spanngurte jetzt auch noch selbst aufrollen?! Unglaublich.', 'Hier räumt keiner was weg. Immer ich!'],
   },
+  paletten: {
+    danke: ['Die Paletten hinterm Haus gestapelt? Sehr gut, genau da gehören die hin!', 'Noch eine Palette auf dem Stapel. So sieht ein Hof aus!'],
+    alle: ['Alle Paletten ordentlich hinterm Haus. Ich bin beeindruckt. Wirklich.'],
+  },
   kettenhemd: ['Finger weg, das brauch ich für meine Kinky-Partys!', 'Das Kettenhemd geht dich gar nix an. Das ist für den Fetisch-Abend.'],
   muellAufgehoben: ['Oh, du räumst den Müll weg? Danke, Mann!', 'Endlich hebt mal einer den Kram auf. Sehr gut.'],
   einkauf: {
