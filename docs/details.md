@@ -384,6 +384,12 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   'palettenSchild': zeigt den Stand). Mit dem Hoflader dort abgesetzt (Gabel-Ereignis abgesetzt) zählt fahrten.palettenGezaehlt:
   je neue Palette Wut -3, Hinweis „x von 12“, Lob beim ersten und jeder 3.; alle 12 = großes Lob, Wut -8. Note: je gestapelte
   Palette 1 Punkt, höchstens 6 (Gesamt höchstens 100). Tipp beim ersten Einsteigen in den Hoflader.
+- Paket B Aufgaben-Icons (Projektchat 30.10., I36): unten rechts (#warnungen) je offene Nebenaufgabe ein rundes Icon mit rotem Ring,
+  der sich füllt (ui.aufgabenIcons, spiel.js aufgabenUpdate alle 0,2 s); voll = Dennis macht es selbst (bestehende Abläufe):
+  Feuer 16 s (dennisLoescht), Rohrbruch 22 s (dennisRepariert, z.leckSeit), Fegen 32 s (dennisFegt), Klo verstopft 70 s (dennisPoempelt),
+  Kackepumpe 120 s (dennisPumpeSelbst), Tassen: ab 3 herumstehenden Tassen 100 s (tassenFrist -> dennisRaeumtTassen, vorher Zufall).
+  Feuer/Rohr blinken (dringend). Die alten Warn-Kacheln (ui.warnung) sind damit ersetzt. Nicht dabei, weil Dennis sie nicht selbst
+  macht: Wäsche, Akkuschrauber, Bitsatz, Müll, Leiter.
 - Paket M Minispiele (Projektchat 29.10.): Müll an den Tonnen kommt nach dem Aufheben nicht mehr komplett und gleich wieder,
   sondern einzeln alle 1–2,5 Min. (fahrten.js muellNachschub: neue Sorte, neue Stelle). Hula-Hoop etwas schwerer (Halt +6 statt +7,
   Abfall 36 + 1,5 je Runde, Fehltaste -26). Neues Minispiel pumpeSpiel (minispiele.js) statt Halten-Dialog: Wasserstrahl über

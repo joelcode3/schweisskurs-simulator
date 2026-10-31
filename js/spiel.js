@@ -1693,8 +1693,35 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     z.tassenMeckerAb = t + 80 + Math.random() * 50;
     if (weitDraussenLassen()) return;
     if (welt.kuehlschrankVoll()) { aerger(2); dennisSagt(sag(DENNIS.tassenVoll), true, { prio: 0 }); }
-    else if (Math.random() < 0.5) dennisRaeumtTassen();
     else { aerger(2); dennisSagt(sag(DENNIS.tassenMecker), true, { prio: 0 }); }
+  }
+  // Tassen als Aufgabe mit Frist (Paket B): ab 3 herumstehenden Tassen läuft die Uhr, nach TASSEN_FRIST räumt Dennis selbst
+  const TASSEN_FRIST = 100;
+  function tassenFrist() {
+    const t = sekundenSeitStart();
+    const offen = offeneTassen().length;
+    if (offen < 3 || z.dennisRaeumt) { if (!z.dennisRaeumt) z.tassenSeit = null; return; }
+    if (z.tassenSeit == null) z.tassenSeit = t;
+    const dennisFrei = dennis.modus === 'normal' && dennis.wurzel.visible && !z.aufKlo && !z.hula && !z.beschaeftigt && !buehneBelegt() && z.mittag !== 'gerade' && !z.dennisFegt && !z.dennisLoescht;
+    if (t - z.tassenSeit > TASSEN_FRIST && dennisFrei && !welt.kuehlschrankVoll()) { z.tassenSeit = null; dennisRaeumtTassen(); }
+  }
+  // Aufgaben-Icons mit Ring: Zeiten wie bei den „Dennis macht es selbst“-Abläufen (Feuer 16 s, Rohr 22 s, Dreck 32 s, Klo 70 s, Pumpe 120 s)
+  let aufgabenTakt = 0;
+  function aufgabenUpdate(dt) {
+    aufgabenTakt -= dt;
+    if (aufgabenTakt > 0) return;
+    aufgabenTakt = 0.2;
+    tassenFrist();
+    const t = sekundenSeitStart();
+    const l = [];
+    const dazu = (id, titel, seit, dauer, dringend = false) => l.push({ id, titel, anteil: seit == null ? 0 : (t - seit) / dauer, dringend });
+    if (z.feuer === 'brennt' && !z.dennisLoescht) dazu('feuer', 'Feuer löschen', z.feuerSeit, 16, true);
+    if (z.leck === 'spritzt' && !z.dennisRepariert) dazu('wasser', 'Rohrbruch', z.leckSeit, 22, true);
+    if (welt.dreck && !z.dennisFegt) dazu('dreck', 'Fegen', z.dreckSeit, 32);
+    if (z.verstopft === 'ja') dazu('klo', 'Klo verstopft', z.verstopftSeit, 70);
+    if (wz.pumpe === 'imWeg' || wz.pumpe === 'sauber') dazu('pumpe', 'Kackepumpe', wz.pumpeSeit, 120);
+    if (z.tassenSeit != null && !z.dennisRaeumt) dazu('tassen', 'Tassen', z.tassenSeit, TASSEN_FRIST);
+    ui.aufgabenIcons(z.vorbei ? [] : l);
   }
   // Spüldienst: geht zum Kühlschrank, nimmt alle Tassen mit (Küche im Wohnhaus hinten), Dennis freut sich
   async function spueldienstErledigen(figur, sagt) {
@@ -2837,6 +2864,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   function leckStart() {
     z.letztesEreignis = sekundenSeitStart();
     z.leck = 'spritzt';
+    z.leckSeit = sekundenSeitStart();
     welt.leck(true);
     ui.warnung('wasser', true);
     leckTon = dauerTon('wasser', 0.35);
@@ -3695,11 +3723,12 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   return {
     zustand: z,
     klick,
-    test: { get z() { return z; }, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
+    test: { get z() { return z; }, feuerStart, leckStart, kloVerstopft, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
     stationWaehlen,
     intro,
     aktualisieren,
     update(dt) {
+      aufgabenUpdate(dt);
       beobachten();
       spritzUpdate(dt);
       loeschUpdate(dt);
