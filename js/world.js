@@ -1,7 +1,7 @@
 // Die Werkstatt: Raum, Möbel, Werkzeuge, Gasflasche.
 import * as THREE from 'three';
 import { toon, teil, quader, zylinder, kugel, setze, leinwandTextur, zufall, umriss } from './toon.js';
-import { baueDraussen } from './draussen.js';
+import { baueDraussen, BAD_FENSTER } from './draussen.js';
 import { baueCarport } from './carport.js';
 import { gelaendeHoehe } from './landschaft.js';
 
@@ -1197,11 +1197,35 @@ export function baueWelt(scene) {
 
   // ---------- Waschplatz ----------
   const becken = new THREE.Group();
-  becken.add(setze(quader(0.55, 0.75, 0.9, FARBE.stahlHell), 0, 0.375, 0));
-  becken.add(setze(quader(0.45, 0.04, 0.8, 0x6b737b, { umriss: false }), 0.02, 0.751, 0));
-  becken.add(setze(zylinder(0.02, 0.02, 0.35, FARBE.stahlHell, {}, 10), 0.24, 1.0, 0));
-  becken.add(setze(zylinder(0.018, 0.018, 0.18, FARBE.stahlHell, {}, 10), 0.16, 1.17, 0, 0, 0, Math.PI / 2));
-  becken.add(setze(zylinder(0.03, 0.03, 0.03, FARBE.rot, {}, 10), 0.24, 1.2, 0));
+  // Edelstahl-Spülbecken im Unterschrank: tiefe Wanne (Rand 4 cm breit, 22 cm tief) mit Ablauf, Überlauf und Armatur über der Mitte
+  const BOX_H = 0.45, RAND = 0.075, TIEF = 0.22, OBEN = 0.75;
+  const stahl = toon(0xb4bcc4), stahlD = toon(0x8d969e);
+  becken.add(setze(quader(0.55, BOX_H, 0.9, 0x6f7881), 0, BOX_H / 2, 0)); // Unterschrank
+  // Arbeitsplatte als Rahmen um die Wanne (vier Streifen)
+  for (const [bb, tt, x, z] of [[0.55, RAND, 0, -(0.45 - RAND / 2)], [0.55, RAND, 0, 0.45 - RAND / 2], [RAND, 0.9 - 2 * RAND, -(0.275 - RAND / 2), 0], [RAND, 0.9 - 2 * RAND, 0.275 - RAND / 2, 0]]) {
+    becken.add(setze(teil(new THREE.BoxGeometry(bb, 0.04, tt), 0, { material: stahl, umriss: 0.003 }), x, OBEN - 0.02, z));
+  }
+  const wX = 0.55 - 2 * RAND, wZ = 0.9 - 2 * RAND; // Öffnung der Wanne
+  // Wannenwände und Boden (innen sichtbar), Boden leicht zum Ablauf geneigt
+  for (const [bb, hh, x, y, z, ry] of [[wZ, TIEF, -wX / 2, OBEN - TIEF / 2 - 0.04, 0, Math.PI / 2], [wZ, TIEF, wX / 2, OBEN - TIEF / 2 - 0.04, 0, -Math.PI / 2], [wX, TIEF, 0, OBEN - TIEF / 2 - 0.04, -wZ / 2, 0], [wX, TIEF, 0, OBEN - TIEF / 2 - 0.04, wZ / 2, Math.PI]]) {
+    const w = new THREE.Mesh(new THREE.PlaneGeometry(bb, hh), new THREE.MeshBasicMaterial({ color: 0xaab3bb, side: THREE.DoubleSide }));
+    w.position.set(x, y, z); w.rotation.y = ry; w.receiveShadow = true; becken.add(w);
+  }
+  const wannenBoden = new THREE.Mesh(new THREE.PlaneGeometry(wX, wZ, 1, 1), new THREE.MeshBasicMaterial({ color: 0x8b949d, side: THREE.DoubleSide }));
+  wannenBoden.rotation.x = -Math.PI / 2; wannenBoden.position.set(0, OBEN - TIEF - 0.04, 0); wannenBoden.receiveShadow = true; becken.add(wannenBoden);
+  // Ablauf: Messingring, dunkles Loch mit Gitter
+  becken.add(setze(teil(new THREE.TorusGeometry(0.045, 0.009, 6, 18), 0xb79a3c, { umriss: 0.002 }), 0, OBEN - TIEF - 0.035, 0, Math.PI / 2, 0, 0));
+  becken.add(setze(zylinder(0.04, 0.04, 0.006, 0x1d1d1f, { umriss: false }, 16), 0, OBEN - TIEF - 0.037, 0));
+  for (let k = -1; k <= 1; k++) becken.add(setze(quader(0.07, 0.004, 0.008, 0x8a8f95, { umriss: false }), 0, OBEN - TIEF - 0.033, k * 0.02));
+  // Überlauf: Schlitz oben an der Rückwand der Wanne
+  becken.add(setze(quader(0.1, 0.012, 0.006, 0x1d1d1f, { umriss: false }), 0, OBEN - 0.075, -wZ / 2 + 0.004));
+  // Armatur: Säule hinten (an der Wand), Auslauf im Bogen über die Wannenmitte, Hebel
+  becken.add(setze(zylinder(0.022, 0.026, 0.34, 0xc9cdd2, { umriss: 0.003 }, 12), 0.225, OBEN + 0.15, 0));
+  becken.add(setze(zylinder(0.016, 0.016, 0.25, 0xc9cdd2, { umriss: 0.003 }, 10), 0.1, OBEN + 0.32, 0, 0, 0, Math.PI / 2));
+  becken.add(setze(zylinder(0.016, 0.014, 0.08, 0xc9cdd2, { umriss: 0.003 }, 10), -0.025, OBEN + 0.285, 0));
+  becken.add(setze(zylinder(0.011, 0.011, 0.14, 0x2f5fa8, { umriss: 0.002 }, 8), 0.225, OBEN + 0.2, 0.09, Math.PI / 2, 0, 0)); // kalt
+  becken.add(setze(zylinder(0.011, 0.011, 0.14, FARBE.rot, { umriss: 0.002 }, 8), 0.225, OBEN + 0.2, -0.09, Math.PI / 2, 0, 0)); // warm
+  becken.add(setze(zylinder(0.03, 0.03, 0.03, 0x3a3d42, { umriss: 0.002 }, 10), 0.225, OBEN + 0.32, 0));
   setze(becken, 4.67, 0, 1.6);
   scene.add(becken);
   // Rohr unter dem Hahn (hier platzt es bei Frost)
@@ -2067,9 +2091,13 @@ export function baueWelt(scene) {
       g.fillStyle = '#7f8a8f'; g.fillRect(0, fliesenOben - 4, b, 5);
     }
   }
-  const badWand = (b, x, z, ry, saat, hoehe = BAD.hoehe, unten = 0) => {
-    const tex = leinwandTextur(Math.round(b * PX), Math.round(hoehe * PX), (g, bb, hh) => badWandMalen(g, bb, hh, saat, unten));
-    const w = new THREE.Mesh(new THREE.PlaneGeometry(b, hoehe), toon(0xffffff, { map: tex }));
+  // loch: [u0, u1, v0, v1] in Anteilen der Wand (v von oben), dort ist die Wand ausgeschnitten (Fenster, wie bei wandStueck)
+  const badWand = (b, x, z, ry, saat, hoehe = BAD.hoehe, unten = 0, loch = null) => {
+    const tex = leinwandTextur(Math.round(b * PX), Math.round(hoehe * PX), (g, bb, hh) => {
+      badWandMalen(g, bb, hh, saat, unten);
+      if (loch) g.clearRect(loch[0] * bb, loch[2] * hh, (loch[1] - loch[0]) * bb, (loch[3] - loch[2]) * hh);
+    });
+    const w = new THREE.Mesh(new THREE.PlaneGeometry(b, hoehe), toon(0xffffff, loch ? { map: tex, alphaTest: 0.5, side: THREE.DoubleSide } : { map: tex }));
     w.position.set(x, unten + hoehe / 2, z);
     w.rotation.y = ry;
     w.receiveShadow = true;
@@ -2080,7 +2108,9 @@ export function baueWelt(scene) {
   badWand(KLO_TUER.xMax - KLO_TUER.xMin, (KLO_TUER.xMin + KLO_TUER.xMax) / 2, BAD.zMin + 0.002, 0, 33, BAD.hoehe - KLO_TUER.hoehe, KLO_TUER.hoehe);
   badWand(BAD.zMax - BAD.zMin, BAD.xMin, (BAD.zMin + BAD.zMax) / 2, Math.PI / 2, 34);
   badWand(BAD.zMax - BAD.zMin, BAD.xMax, (BAD.zMin + BAD.zMax) / 2, -Math.PI / 2, 35);
-  badWand(BAD.xMax - BAD.xMin, (BAD.xMin + BAD.xMax) / 2, BAD.zMax, Math.PI, 36);
+  // Rückwand mit echtem Fensterloch (x 1,95–2,65, y 1,45–2,05): man kann rein- und rausgucken; Außenwand in draussen.js hat dasselbe Loch
+  badWand(BAD.xMax - BAD.xMin, (BAD.xMin + BAD.xMax) / 2, BAD.zMax, Math.PI, 36, BAD.hoehe, 0,
+    [(BAD.xMax - BAD_FENSTER.x1) / (BAD.xMax - BAD.xMin), (BAD.xMax - BAD_FENSTER.x0) / (BAD.xMax - BAD.xMin), (BAD.hoehe - BAD_FENSTER.y1) / BAD.hoehe, (BAD.hoehe - BAD_FENSTER.y0) / BAD.hoehe]);
   const badDecke = new THREE.Mesh(new THREE.PlaneGeometry(BAD.xMax - BAD.xMin, BAD.zMax - BAD.zMin), toon(0xe8e4da));
   badDecke.rotation.x = Math.PI / 2;
   badDecke.position.set((BAD.xMin + BAD.xMax) / 2, BAD.hoehe, (BAD.zMin + BAD.zMax) / 2);
@@ -2090,12 +2120,22 @@ export function baueWelt(scene) {
   const badLicht = new THREE.PointLight(0xfff2dc, 4, 6, 1.6);
   badLicht.position.set(2.3, BAD.hoehe - 0.3, 5.4);
   scene.add(badLicht);
-  // Fenster (Milchglas) in der Rückwand
+  // Fenster in der Rückwand mit echtem Durchblick: Laibung durch die 10 cm dicke Wand, Rahmen, klares Glas, Sprossenkreuz, Fensterbänke
   const badFenster = new THREE.Group();
-  badFenster.add(new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.6), new THREE.MeshBasicMaterial({ color: 0xdfeef4 })));
-  for (const [bb, hh, x, y] of [[0.78, 0.06, 0, 0.32], [0.78, 0.06, 0, -0.32], [0.06, 0.7, -0.37, 0], [0.06, 0.7, 0.37, 0], [0.04, 0.6, 0, 0]]) badFenster.add(setze(quader(bb, hh, 0.05, 0xf4f4ef, { wirft: false }), x, y, 0.02));
-  badFenster.add(setze(quader(0.82, 0.04, 0.14, 0xf4f4ef, { wirft: false }), 0, -0.36, 0.06));
-  setze(badFenster, 2.3, 1.75, BAD.zMax - 0.01, 0, Math.PI, 0);
+  const FB = BAD_FENSTER.x1 - BAD_FENSTER.x0, FH = BAD_FENSTER.y1 - BAD_FENSTER.y0, TIEFE = 0.12;
+  const weiss = 0xf4f4ef;
+  // Laibung (innen auf der Wanddicke) und Rahmen in der Mitte der Wand
+  for (const [bb, hh, x, y] of [[FB + 0.08, 0.04, 0, FH / 2 + 0.02], [FB + 0.08, 0.04, 0, -FH / 2 - 0.02], [0.04, FH, -FB / 2 - 0.02, 0], [0.04, FH, FB / 2 + 0.02, 0]]) {
+    badFenster.add(setze(quader(bb, hh, TIEFE, weiss, { wirft: false, umriss: 0.002 }), x, y, 0));
+  }
+  const fensterGlas = new THREE.Mesh(new THREE.PlaneGeometry(FB, FH), new THREE.MeshBasicMaterial({ color: 0xcfe6f0, transparent: true, opacity: 0.16, depthWrite: false }));
+  fensterGlas.raycast = () => {}; // Klicks gehen durchs Glas
+  badFenster.add(fensterGlas);
+  for (const [bb, hh, x, y] of [[0.04, FH, 0, 0], [FB, 0.04, 0, 0.05]]) badFenster.add(setze(quader(bb, hh, 0.035, weiss, { wirft: false, umriss: 0.002 }), x, y, 0));
+  badFenster.add(setze(quader(0.05, 0.012, 0.03, 0xc9cdd2, { umriss: 0.001 }), FB / 2 - 0.08, -0.04, -0.04)); // Griff
+  // Fensterbank innen
+  badFenster.add(setze(quader(FB + 0.16, 0.035, 0.14, weiss, { wirft: false, umriss: 0.002 }), 0, -FH / 2 - 0.05, -TIEFE / 2 - 0.05));
+  setze(badFenster, (BAD_FENSTER.x0 + BAD_FENSTER.x1) / 2, (BAD_FENSTER.y0 + BAD_FENSTER.y1) / 2, BAD.zMax + 0.05, 0, Math.PI, 0);
   scene.add(badFenster);
 
   // Toilette in der hinteren linken Ecke, schaut zur Tür
@@ -2281,14 +2321,21 @@ export function baueWelt(scene) {
 
   // Waschbecken an der linken Wand mit Spiegel und Hahn
   const becken2 = new THREE.Group();
-  const beckenSchale = setze(zylinder(0.24, 0.18, 0.16, porzellan, {}, 22), 0, 0.82, 0);
+  // Schale mit echter Tiefe: Drehkörper mit Wandstärke (Außenseite, Rand, Innenseite), Ablauf unten und Überlauf-Loch an der Rückseite
+  const schalenProfil = [[0.0, 0.74], [0.07, 0.742], [0.15, 0.775], [0.215, 0.835], [0.248, 0.905], [0.25, 0.925], [0.232, 0.93], [0.218, 0.915], [0.19, 0.835], [0.13, 0.79], [0.06, 0.773], [0.0, 0.77]].map(([r, y]) => new THREE.Vector2(r, y));
+  const beckenSchale = new THREE.Mesh(new THREE.LatheGeometry(schalenProfil, 28), new THREE.MeshToonMaterial({ color: porzellan, side: THREE.DoubleSide }));
   beckenSchale.scale.set(1, 1, 0.8);
+  beckenSchale.castShadow = true; beckenSchale.receiveShadow = true;
   becken2.add(beckenSchale);
-  const beckenGrund = new THREE.Mesh(new THREE.CircleGeometry(0.2, 20), new THREE.MeshBasicMaterial({ color: 0xdde4e6 }));
-  beckenGrund.rotation.x = -Math.PI / 2;
-  beckenGrund.scale.set(1, 0.8, 1);
-  beckenGrund.position.y = 0.901;
-  becken2.add(beckenGrund);
+  umriss(beckenSchale, 0.004);
+  // Ablauf: Chromring mit dunklem Loch und Kreuz
+  becken2.add(setze(teil(new THREE.TorusGeometry(0.032, 0.007, 6, 16), 0xc9cdd2, { umriss: 0.002 }), 0, 0.773, 0, Math.PI / 2, 0, 0));
+  becken2.add(setze(zylinder(0.028, 0.028, 0.004, 0x1d1d1f, { umriss: false }, 14), 0, 0.771, 0));
+  becken2.add(setze(quader(0.056, 0.003, 0.006, 0xc9cdd2, { umriss: false }), 0, 0.775, 0));
+  becken2.add(setze(quader(0.006, 0.003, 0.056, 0xc9cdd2, { umriss: false }), 0, 0.775, 0));
+  // Überlauf-Loch hinten im Beckenrand
+  const ueberlauf = setze(zylinder(0.012, 0.012, 0.01, 0x1d1d1f, { umriss: false }, 10), 0, 0.89, -0.168, Math.PI / 2, 0, 0);
+  becken2.add(ueberlauf);
   becken2.add(setze(zylinder(0.05, 0.07, 0.72, porzellan, {}, 14), 0, 0.37, -0.06));
   becken2.add(setze(zylinder(0.015, 0.015, 0.14, 0xc9cdd2, { umriss: 0.002 }, 8), 0, 0.97, -0.15));
   becken2.add(setze(zylinder(0.012, 0.012, 0.1, 0xc9cdd2, { umriss: 0.002 }, 8), 0, 1.03, -0.1, Math.PI / 2, 0, 0));

@@ -8,6 +8,8 @@ import { FELDWEG, baueLandschaft, imKreis } from './landschaft.js';
 // Begehbare Flächen draußen (Rechtecke): rund um die Werkstatt, Carport, Wohnwagen und Benz. Das Bad-Häuschen vorne
 // rechts ist ausgespart, die Werkstatt selbst sowieso.
 export { GELAENDE, FELDWEG } from './landschaft.js';
+// Fenster in der Rückwand des Bads (x/y der Öffnung): world.js schneidet dasselbe Loch in die Innenwand
+export const BAD_FENSTER = { x0: 1.95, x1: 2.65, y0: 1.45, y1: 2.05 };
 const BAD_HAUS = { xMin: 0.55, xMax: 4.05, zMin: 3.9, zMax: 6.95 };
 const DURCHGANG = { xMin: -0.68, xMax: -0.02, zMin: 3.4, zMax: 4.7 }; // Schlupftür im Tor
 const WEG_BREITE = 2.4;
@@ -325,13 +327,22 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   };
   badWand(BAD_HAUS.zMax - 4.0, BAD_HAUS.xMin + 0.07, (4.0 + BAD_HAUS.zMax) / 2, -Math.PI / 2);
   badWand(BAD_HAUS.zMax - 4.0, BAD_HAUS.xMax - 0.07, (4.0 + BAD_HAUS.zMax) / 2, Math.PI / 2);
-  badWand(BAD_HAUS.xMax - BAD_HAUS.xMin - 0.14, (BAD_HAUS.xMin + BAD_HAUS.xMax) / 2, BAD_HAUS.zMax - 0.05, 0);
+  // Rückwand in vier Stücken um das Fensterloch (BAD_FENSTER), damit man durchs Fenster sieht
+  {
+    const zW = BAD_HAUS.zMax - 0.05, x0 = BAD_HAUS.xMin + 0.07, x1 = BAD_HAUS.xMax - 0.07, F = BAD_FENSTER;
+    const stueck = (xa, xb, ya, yb) => {
+      const b = xb - xa, h = yb - ya;
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(b, h), steinMat);
+      m.geometry.attributes.uv.array.forEach((v, i, a) => { a[i] = v * (i % 2 ? h : b); });
+      m.position.set((xa + xb) / 2, (ya + yb) / 2, zW);
+      scene.add(m);
+    };
+    stueck(x0, F.x0, 0, BADH); stueck(F.x1, x1, 0, BADH);
+    stueck(F.x0, F.x1, 0, F.y0); stueck(F.x0, F.x1, F.y1, BADH);
+    // Fensterbank außen
+    scene.add(setze(quader(F.x1 - F.x0 + 0.16, 0.04, 0.16, 0xe9e5da, { umriss: 0.002 }), (F.x0 + F.x1) / 2, F.y0 - 0.02, zW + 0.07));
+  }
   scene.add(setze(quader(BAD_HAUS.xMax - BAD_HAUS.xMin + 0.2, 0.12, BAD_HAUS.zMax - 4.0 + 0.2, 0x26282c, { umriss: 0.004 }), (BAD_HAUS.xMin + BAD_HAUS.xMax) / 2, BADH + 0.06, (4.0 + BAD_HAUS.zMax) / 2));
-  // kleines Milchglasfenster am Anbau
-  scene.add(setze(quader(0.6, 0.45, 0.05, 0xf0f0ea, { umriss: 0.002 }), BAD_HAUS.xMax - 1.1, 1.85, BAD_HAUS.zMax - 0.03));
-  const milch = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.36), new THREE.MeshBasicMaterial({ color: 0xdfe8ee }));
-  milch.position.set(BAD_HAUS.xMax - 1.1, 1.85, BAD_HAUS.zMax + 0.0);
-  scene.add(milch);
 
   // ---------- Dach: flaches Satteldach aus schwarzem Wellblech ----------
   const wellTex = leinwandTextur(128, 32, (g, b, h) => {
