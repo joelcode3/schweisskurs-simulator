@@ -384,6 +384,12 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   'palettenSchild': zeigt den Stand). Mit dem Hoflader dort abgesetzt (Gabel-Ereignis abgesetzt) zählt fahrten.palettenGezaehlt:
   je neue Palette Wut -3, Hinweis „x von 12“, Lob beim ersten und jeder 3.; alle 12 = großes Lob, Wut -8. Note: je gestapelte
   Palette 1 Punkt, höchstens 6 (Gesamt höchstens 100). Tipp beim ersten Einsteigen in den Hoflader.
+- Paket H Hintergrundgeräusche (Projektchat 30.10., I55): audio.js `umweltUpdate(dt, s)` (5x pro Sekunde aus main.js): alles live erzeugt,
+  nach Entfernung und Richtung (Stereo-Panner nach Blickrichtung) geregelt, in der Werkstatt auf 30 %, im Bad 15 %. Vögel: überall,
+  vier Rufe (tschilp, Triller, Amsel-Pfiff, Meise), alle 0,6–4 s. Diesel: tuckernder Sägezahn mit Zylindertakt am Hoflader, hörbar bis 16 m,
+  im Hoflader selbst konstant, Drehzahl steigt mit der Geschwindigkeit. E-Motor: Heulton des Jeeps, nur in Bewegung, Tonhöhe nach Tempo.
+  Hühner: Gluck-Folgen und gelegentliches „Gaaack“ vom Hühnermobil (bis 40 m). Kühe: Muh bei Peter (bis 55 m, alle 9–23 s).
+  Lautstärkeregler (Master) gilt für alles. Im Test nur gemessen (Pegel), nicht gehört.
 - Paket C Spanngurte (Projektchat 30.10., I33, aufgesetzt auf B): ab ca. 3–5 Min., nur wenn Spieler und Dennis in der Werkstatt sind
   und Jonny oder Waldo da ist: der schmeißt zwei Spanngurte vor das Regal (world.js gurteBoden, anklickbar 'spanngurte'), Dennis
   meckert (DENNIS.spanngurt.boden, Wut +3). Aufrollen = Minispiel spanngurtSpiel (im Kreis ziehen, der Gurt wird entlang seiner

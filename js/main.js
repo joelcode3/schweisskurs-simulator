@@ -8,13 +8,13 @@ import { baueTorben } from './torben.js';
 import { baueKumpels } from './kumpels.js';
 import { baueSegway } from './segway.js';
 import { baueFahrzeuge } from './fahrzeuge.js';
-import { setzeDynamisch, setzeFiguren } from './wege.js';
+import { setzeDynamisch, setzeFiguren, bereich } from './wege.js';
 import { gelaendeHoehe } from './landschaft.js';
 import { baueSteuerung } from './steuerung.js';
 import { baueSpiel } from './spiel.js';
 import { baueHand } from './hand.js';
 import { ladeClips, videoFreischalten } from './clips.js';
-import { audioStart, setzeLautstaerke, klick, jingle } from './audio.js';
+import { audioStart, setzeLautstaerke, klick, jingle, umweltUpdate } from './audio.js';
 import { setzeVideoLautstaerke } from './clips.js';
 import { dennisMini } from './gesicht.js';
 import * as ui from './ui.js';
@@ -135,6 +135,8 @@ renderer.shadowMap.autoUpdate = false;
 let schattenTakt = 0;
 
 let letzte = performance.now();
+let umweltTakt = 0;
+const _uw = new THREE.Vector3();
 let stationAlt = null;
 // Hauptschleife: das nächste Bild wird ZUERST angefordert und jeder Schritt einzeln abgesichert –
 // ein Fehler in einem Teil (z. B. beim Fahren) darf nie das ganze Spiel einfrieren
@@ -165,6 +167,22 @@ function schleife(jetzt) {
   });
   sicher('fahrzeuge', () => { fz.update(dt); segway.update(dt); });
   sicher('welt', () => welt.update(dt));
+  // Umgebungsgeräusche: Vögel, Diesel (Hoflader), E-Motor (Jeep), Hühner, Kühe (5x pro Sekunde reicht)
+  umweltTakt -= dt;
+  if (umweltTakt <= 0) {
+    umweltTakt = 0.2;
+    sicher('umwelt', () => {
+      const pos = (o) => { o.getWorldPosition(_uw); return { x: _uw.x, z: _uw.z }; };
+      const blick = kamera.getWorldDirection(_uw);
+      const l = welt.draussen.landschaft;
+      umweltUpdate(0.2, {
+        p: { x: kamera.position.x, z: kamera.position.z }, f: { x: blick.x, z: blick.z }, bereich: bereich(kamera.position.x, kamera.position.z),
+        lader: { x: fz.lader.x, z: fz.lader.z, v: fz.lader.v, fahrer: fz.lader.fahrer },
+        jeep: { x: fz.jeep.x, z: fz.jeep.z, v: fz.jeep.v, fahrer: fz.jeep.fahrer },
+        huehner: l.huehner.map((h) => pos(h.g)), kuehe: l.kuehe.map((k) => pos(k.g)),
+      });
+    });
+  }
   if (spiel) {
     sicher('spiel', () => spiel.update(dt));
     sicher('stationen', () => {

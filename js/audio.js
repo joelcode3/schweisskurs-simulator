@@ -633,3 +633,148 @@ export function aufprall(staerke = 0.6) {
   // Scheppern: ein paar kurze Metalltöne hinterher
   for (let i = 0; i < 3; i++) setTimeout(() => klonk(0.25 * v * (1 - i * 0.25)), 40 + i * 70 + Math.random() * 40);
 }
+
+// ---------- Umgebungsgeräusche draußen (Paket H): Vögel, Diesel am Hoflader, E-Motor vom Jeep, Hühner, Kühe ----------
+// Alles live erzeugt und nach Entfernung und Richtung (links/rechts) geregelt; in der Werkstatt gedämpft.
+// umweltUpdate wird mehrmals pro Sekunde aus main.js aufgerufen.
+let umw = null;
+function umweltBauen() {
+  const u = { vogel: 1.5, huhn: 3, kuh: 7 };
+  // Diesel: tiefes Tuckern (Sägezahn mit Zylinder-Takt) plus dumpfes Klappern aus Rauschen
+  u.dOsc = ctx.createOscillator(); u.dOsc.type = 'sawtooth'; u.dOsc.frequency.value = 40;
+  u.dLfo = ctx.createOscillator(); u.dLfo.frequency.value = 12;
+  const dLfoG = ctx.createGain(); dLfoG.gain.value = 0.45;
+  const dAm = ctx.createGain(); dAm.gain.value = 0.55;
+  u.dLfo.connect(dLfoG).connect(dAm.gain);
+  const dLp = ctx.createBiquadFilter(); dLp.type = 'lowpass'; dLp.frequency.value = 260;
+  u.dGain = ctx.createGain(); u.dGain.gain.value = 0;
+  u.dPan = ctx.createStereoPanner();
+  u.dOsc.connect(dLp).connect(dAm);
+  const dN = rauschQuelle(), dNf = ctx.createBiquadFilter(), dNg = ctx.createGain();
+  dNf.type = 'bandpass'; dNf.frequency.value = 650; dNf.Q.value = 0.9; dNg.gain.value = 0.07;
+  dN.connect(dNf).connect(dNg).connect(dAm);
+  dAm.connect(u.dGain).connect(u.dPan).connect(master);
+  // E-Motor vom Jeep: Heulton, der mit der Geschwindigkeit steigt
+  u.eOsc = ctx.createOscillator(); u.eOsc.type = 'triangle'; u.eOsc.frequency.value = 200;
+  u.eOsc2 = ctx.createOscillator(); u.eOsc2.type = 'sine'; u.eOsc2.frequency.value = 400;
+  const eG2 = ctx.createGain(); eG2.gain.value = 0.35;
+  u.eGain = ctx.createGain(); u.eGain.gain.value = 0;
+  u.ePan = ctx.createStereoPanner();
+  u.eOsc.connect(u.eGain); u.eOsc2.connect(eG2).connect(u.eGain);
+  u.eGain.connect(u.ePan).connect(master);
+  for (const o of [u.dOsc, u.dLfo, dN, u.eOsc, u.eOsc2]) o.start();
+  return u;
+}
+// einzelner kurzer Ton mit Tonhöhenverlauf (Vogelruf, Gackern, Muh)
+function umweltTon(art, f0, f1, dauer, gain, pan, opt = {}) {
+  const t = ctx.currentTime + (opt.verzoeger || 0);
+  const o = ctx.createOscillator();
+  o.type = art;
+  o.frequency.setValueAtTime(f0, t);
+  o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dauer);
+  let kette = o;
+  if (opt.vibrato) {
+    const l = ctx.createOscillator(), lg = ctx.createGain();
+    l.frequency.value = opt.vibrato[0]; lg.gain.value = opt.vibrato[1];
+    l.connect(lg).connect(o.frequency); l.start(t); l.stop(t + dauer + 0.1);
+  }
+  if (opt.filter) {
+    for (const [typ, fr, q] of opt.filter) { const b = ctx.createBiquadFilter(); b.type = typ; b.frequency.value = fr; b.Q.value = q || 1; kette.connect(b); kette = b; }
+  }
+  const g = ctx.createGain();
+  huelle(g, t, opt.attack ?? 0.01, Math.max(0.001, dauer * 0.35), dauer * 0.6, gain);
+  const p = ctx.createStereoPanner(); p.pan.value = pan;
+  kette.connect(g).connect(p).connect(master);
+  o.start(t); o.stop(t + dauer + 0.15);
+}
+function umweltRausch(f, q, dauer, gain, pan, verzoeger = 0) {
+  const t = ctx.currentTime + verzoeger;
+  const n = rauschQuelle(), b = ctx.createBiquadFilter(), g = ctx.createGain(), p = ctx.createStereoPanner();
+  b.type = 'bandpass'; b.frequency.value = f; b.Q.value = q; p.pan.value = pan;
+  huelle(g, t, 0.004, dauer * 0.3, dauer * 0.7, gain);
+  n.connect(b).connect(g).connect(p).connect(master);
+  n.start(t); n.stop(t + dauer + 0.1);
+}
+function vogelRuf(gain, pan) {
+  const art = Math.floor(Math.random() * 4);
+  if (art === 0) { // tschilp-tschilp
+    const n = 2 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < n; i++) umweltTon('sine', 3000 + Math.random() * 500, 4300 + Math.random() * 600, 0.07, gain, pan, { verzoeger: i * 0.13 });
+  } else if (art === 1) { // Triller
+    umweltTon('sine', 3300, 3300, 0.55, gain * 0.8, pan, { vibrato: [38, 700] });
+  } else if (art === 2) { // zwei Pfiffe (Amsel)
+    umweltTon('sine', 2200, 1700, 0.28, gain, pan);
+    umweltTon('sine', 1900, 2500, 0.32, gain, pan, { verzoeger: 0.36 });
+  } else { // Meise: zi-zi-zi-bää
+    for (let i = 0; i < 3; i++) umweltTon('sine', 5200, 4700, 0.05, gain * 0.8, pan, { verzoeger: i * 0.1 });
+    umweltTon('triangle', 2400, 1900, 0.16, gain * 0.7, pan, { verzoeger: 0.38 });
+  }
+}
+function huhnRuf(gain, pan) {
+  if (Math.random() < 0.25) { // langes „Gaaaack“
+    umweltTon('sawtooth', 700, 420, 0.42, gain * 0.5, pan, { vibrato: [24, 40], filter: [['bandpass', 1100, 1.3]] });
+    umweltRausch(1400, 1.2, 0.4, gain * 0.3, pan);
+    return;
+  }
+  const n = 2 + Math.floor(Math.random() * 4);
+  for (let i = 0; i < n; i++) {
+    umweltTon('square', 560 + Math.random() * 80, 380, 0.07, gain * 0.35, pan, { verzoeger: i * 0.14, filter: [['bandpass', 900, 1.5]] });
+    umweltRausch(1000, 2, 0.05, gain * 0.25, pan, i * 0.14);
+  }
+}
+function kuhRuf(gain, pan) {
+  umweltTon('sawtooth', 108, 82, 1.5, gain, pan, { attack: 0.18, vibrato: [5.5, 4], filter: [['lowpass', 900, 0.7], ['bandpass', 520, 1.4]] });
+  umweltTon('sawtooth', 216, 164, 1.4, gain * 0.35, pan, { attack: 0.2, filter: [['bandpass', 1100, 2]] });
+}
+// s: { p:{x,z} Spieler, f:{x,z} Blickrichtung, bereich: 'draussen'|'werkstatt'|'bad', lader:{x,z,v,fahrer}, jeep:{x,z,v,fahrer}, huehner:[{x,z}], kuehe:[{x,z}] }
+export function umweltUpdate(dt, s) {
+  if (!ctx || ctx.state !== 'running') return;
+  if (!umw) umw = umweltBauen();
+  const t = ctx.currentTime;
+  const innen = s.bereich === 'draussen' ? 1 : s.bereich === 'werkstatt' ? 0.3 : 0.15;
+  const rechts = { x: -s.f.z, z: s.f.x };
+  const dist = (a) => Math.hypot(a.x - s.p.x, a.z - s.p.z);
+  const pan = (a) => { const d = dist(a) || 1; return Math.max(-0.9, Math.min(0.9, ((a.x - s.p.x) * rechts.x + (a.z - s.p.z) * rechts.z) / d)); };
+  const nah = (a, max) => Math.pow(Math.max(0, 1 - dist(a) / max), 1.5);
+  // Diesel am Hoflader
+  if (s.lader) {
+    const l = s.lader, fahrt = l.fahrer === 'spieler';
+    const g = fahrt ? 0.28 : 0.2 * nah(l, 16) * innen;
+    umw.dGain.gain.setTargetAtTime(g, t, 0.15);
+    umw.dPan.pan.setTargetAtTime(fahrt ? 0 : pan(l), t, 0.15);
+    const v = Math.abs(l.v || 0);
+    umw.dOsc.frequency.setTargetAtTime(40 + v * 9, t, 0.2);
+    umw.dLfo.frequency.setTargetAtTime(12 + v * 2.2, t, 0.2);
+  }
+  // E-Motor vom Jeep (nur in Bewegung)
+  if (s.jeep) {
+    const j = s.jeep, v = Math.abs(j.v || 0), fahrt = j.fahrer === 'spieler';
+    const g = v < 0.08 ? 0 : (fahrt ? 0.07 : 0.14 * nah(j, 40) * innen);
+    umw.eGain.gain.setTargetAtTime(g, t, 0.1);
+    umw.ePan.pan.setTargetAtTime(fahrt ? 0 : pan(j), t, 0.1);
+    const fr = Math.min(1400, 170 + v * 60);
+    umw.eOsc.frequency.setTargetAtTime(fr, t, 0.08);
+    umw.eOsc2.frequency.setTargetAtTime(fr * 2.01, t, 0.08);
+  }
+  // Vögel: überall draußen (Bäume, Wiese), in der Werkstatt kaum
+  umw.vogel -= dt;
+  if (umw.vogel < 0) {
+    umw.vogel = 0.6 + Math.random() * 3.4;
+    const w = Math.random() * Math.PI * 2;
+    vogelRuf(0.07 * innen, Math.sin(w) * 0.8);
+  }
+  // Hühner am Hühnermobil
+  umw.huhn -= dt;
+  if (umw.huhn < 0) {
+    umw.huhn = 1 + Math.random() * 4.5;
+    const h = (s.huehner || [])[Math.floor(Math.random() * ((s.huehner || []).length || 1))];
+    if (h && nah(h, 40) > 0.02) huhnRuf(0.75 * nah(h, 40) * innen, pan(h));
+  }
+  // Kühe bei Peter
+  umw.kuh -= dt;
+  if (umw.kuh < 0) {
+    umw.kuh = 9 + Math.random() * 14;
+    const k = (s.kuehe || [])[Math.floor(Math.random() * ((s.kuehe || []).length || 1))];
+    if (k && nah(k, 55) > 0.02) kuhRuf(0.35 * nah(k, 55) * innen, pan(k));
+  }
+}
