@@ -282,6 +282,12 @@ export const DENNIS = {
     zuViel: ['Jetzt reicht\'s mit dem Quatsch!', 'Ey! Zweimal war lustig. Jetzt ist Schluss!'],
     sauer: ['Leg die Gerte zurück in den Kofferraum. SOFORT.', 'Noch einmal und du fliegst. Mitsamt Gerte.'],
   },
+  spanngurt: {
+    boden: ['Wer schmeißt denn hier die Spanngurte auf den Boden?! Aufrollen, aber ordentlich!', 'Spanngurte gehören aufgerollt ins Regal, nicht auf den Boden!'],
+    danke: ['Ordentlich aufgerollt und im Regal. So mag ich das!', 'Endlich mal einer, der Spanngurte richtig aufrollt. Danke!'],
+    verdreht: ['Die sind ja verdreht aufgerollt! Na ja, besser als auf dem Boden.'],
+    selbst: ['Muss ich die Spanngurte jetzt auch noch selbst aufrollen?! Unglaublich.', 'Hier räumt keiner was weg. Immer ich!'],
+  },
   paletten: {
     danke: ['Die Paletten hinterm Haus gestapelt? Sehr gut, genau da gehören die hin!', 'Noch eine Palette auf dem Stapel. So sieht ein Hof aus!'],
     alle: ['Alle Paletten ordentlich hinterm Haus. Ich bin beeindruckt. Wirklich.'],
@@ -384,6 +390,7 @@ export const JONNY = {
   leiterKnall: ['Uff! Hätte man auch leiser machen können.', 'Ach du Scheiße. Ist sie noch ganz?'],
   raeuberleiter: ['Komm, ich mach dir die Räuberleiter. Rauf mit dir!', 'Fuß in meine Hände. Ich halt dich. Glaub ich.'],
   raeuberFall: ['Haha, beim zweiten Mal wird’s. Danke!', 'Wackelig, aber geschafft. Danke!'],
+  spanngurt: ['Hier, die Spanngurte vom Anhänger. Wohin damit? Ach, Boden passt.'],
   feuer: ['Upsi. War ich das?', 'Die Kippe war doch aus! Glaub ich.'],
   hallo: ['Moin moin! Na, wird hier geschweißt? Ich guck nur mal.', 'Tach zusammen! Ich bin nur kurz hier. Ehrlich.'],
   bierNochNicht: ['Nee, ich bin doch gerade erst gekommen. Später vielleicht.', 'Jetzt noch nicht. Erst mal ankommen.'],
@@ -419,6 +426,7 @@ export const TORBEN = {
   angehoben: ['Haha! Höher! Höher!', 'Okay, okay, das ist sogar für mich zu viel.'],
   hallo: ['Moin! Ich bin nur kurz da. Wo steht der Hoflader?', 'Na, ihr Schweißer? Ich dreh nur mal ne Runde.'],
   tschuess: ['So, ich bin wieder weg. Bis die Tage!', 'Tschö! Die Träger mach ich nächste Woche.'],
+  spanngurt: ['Die Gurte vom Hänger leg ich mal hier hin.'],
   quatschen: ['Stahlträger? Ja, die mach ich. Bald.', 'Der Jeep geht ab, wenn man ihn lässt. Glaub mir.', 'Ich fahr nie irgendwo gegen. Fast nie.'],
   entdrosseln: ['Weil du so lieb fragst: zwei Kabel umstecken, fertig. Jetzt geht der richtig ab!', 'Na gut. Aber du hast das nicht von mir. So, jetzt fährt der richtig!'],
   schonEntdrosselt: ['Der ist schon offen. Schneller geht nicht, sonst brennt der Motor durch.', 'Mehr geht nicht. Der ist schon entdrosselt.'],

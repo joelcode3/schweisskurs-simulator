@@ -384,6 +384,13 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   'palettenSchild': zeigt den Stand). Mit dem Hoflader dort abgesetzt (Gabel-Ereignis abgesetzt) zählt fahrten.palettenGezaehlt:
   je neue Palette Wut -3, Hinweis „x von 12“, Lob beim ersten und jeder 3.; alle 12 = großes Lob, Wut -8. Note: je gestapelte
   Palette 1 Punkt, höchstens 6 (Gesamt höchstens 100). Tipp beim ersten Einsteigen in den Hoflader.
+- Paket C Spanngurte (Projektchat 30.10., I33, aufgesetzt auf B): ab ca. 3–5 Min., nur wenn Spieler und Dennis in der Werkstatt sind
+  und Jonny oder Waldo da ist: der schmeißt zwei Spanngurte vor das Regal (world.js gurteBoden, anklickbar 'spanngurte'), Dennis
+  meckert (DENNIS.spanngurt.boden, Wut +3). Aufrollen = Minispiel spanngurtSpiel (im Kreis ziehen, der Gurt wird entlang seiner
+  Schlaufen eingezogen; verdrehte Stellen vorher anklicken), zwei Gurte. Dann hat man die Rollen in der Hand (HALTUNG gurte) und
+  klickt aufs Regal (unter 1 m um REGAL): Rollen liegen unten im Regal (gurteRegal), Dennis freut sich (Wut -6, bei mehr als 1
+  Verdreher nur -2 und Spruch). Icon mit Ring 90 s (GURT_FRIST), dann rollt Dennis selbst (dennisRolltGurte, Wut +6).
+  Nach 4 Min. sind die Gurte wieder „unterwegs“, nächstes Mal nach 5–8 Min.
 - Paket B Aufgaben-Icons (Projektchat 30.10., I36): unten rechts (#warnungen) je offene Nebenaufgabe ein rundes Icon mit rotem Ring,
   der sich füllt (ui.aufgabenIcons, spiel.js aufgabenUpdate alle 0,2 s); voll = Dennis macht es selbst (bestehende Abläufe):
   Feuer 16 s (dennisLoescht), Rohrbruch 22 s (dennisRepariert, z.leckSeit), Fegen 32 s (dennisFegt), Klo verstopft 70 s (dennisPoempelt),
