@@ -467,6 +467,9 @@ export function baueWaldo(scene) {
   // Arme fürs Handy: rechte Hand hält von unten rechts, linke stützt von links (per Suche bestimmt)
   const HANDY_R = { s: [-0.65, 0.08, -0.18], e: [-1.49, 0, -0.8] };
   const HANDY_L = { s: [-0.65, -0.08, 0.18], e: [-1.49, 0, 0.8] };
+  // Hände am Segway-Lenker (Lenker 0,22 m seitlich, 0,9 m über dem Trittbrett; per Suche eingepasst)
+  const FAHREN_R = { s: [-0.55, 0.0, -0.1], e: [-0.1, 0, 0] };
+  const FAHREN_L = { s: [-0.55, 0.0, 0.1], e: [-0.1, 0, 0] };
   const _v = new THREE.Vector3(), _a = new THREE.Vector3(), _b = new THREE.Vector3();
   // die Kackepumpe (Tauchpumpe mit Schlauch), wenn er sie gefunden hat
   const pumpeInHand = new THREE.Group();
@@ -524,7 +527,7 @@ export function baueWaldo(scene) {
       getragen = obj;
       if (obj) { links.hand.add(obj); obj.position.set(0, -0.08, 0.04); obj.rotation.set(0, Math.PI / 2, -0.3); obj.scale.setScalar(1 / 0.85); obj.visible = true; }
     },
-    _test: { HANDY_R, HANDY_L, rechts, links, handy, kopf, wurzel },
+    _test: { HANDY_R, HANDY_L, FAHREN_R, FAHREN_L, rechts, links, handy, kopf, wurzel },
     update(dt) {
       if (!wurzel.visible) return;
       zeit += dt;
@@ -574,6 +577,14 @@ export function baueWaldo(scene) {
         links.ellbogen.rotation.set(-1.0, 0, 0);
         kopf.rotation.x = haltung === 'suchen' ? 0.25 + Math.sin(zeit * 3) * 0.15 : 0;
         kopf.rotation.y = haltung === 'suchen' ? Math.sin(zeit * 2.2) * 0.7 : 0;
+      } else if (haltung === 'fahren') {
+        // auf dem Segway: beide Hände am Lenker, leicht gebückt, Blick nach vorn
+        rechts.schulter.rotation.set(...FAHREN_R.s);
+        rechts.ellbogen.rotation.set(...FAHREN_R.e);
+        links.schulter.rotation.set(...FAHREN_L.s);
+        links.ellbogen.rotation.set(...FAHREN_L.e);
+        kopf.rotation.x *= 0.9;
+        kopf.rotation.y *= 0.9;
       } else if (handy.visible) {
         // Handy mit beiden Händen vor der Brust, Kopf gesenkt, Blick aufs Display, Daumen wischt
         rechts.schulter.rotation.set(...HANDY_R.s);

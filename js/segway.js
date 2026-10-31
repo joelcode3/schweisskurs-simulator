@@ -6,8 +6,9 @@ export function baueSegway(scene) {
   const GRUEN = 0x3f9a3a, SCHW = 0x1d1d1f;
   const g = new THREE.Group();
   // Trittbrett mit grünen Kotflügeln über den Rädern
-  g.add(setze(quader(0.5, 0.07, 0.24, SCHW, { umriss: 0.003 }), 0, 0.17, 0));
-  g.add(setze(quader(0.46, 0.012, 0.2, 0x3a3c40, { umriss: false }), 0, 0.21, 0));
+  // Trittbrett tief genug, dass man hinter der Lenksäule steht (Füße hinten, Säule vorn)
+  g.add(setze(quader(0.5, 0.07, 0.36, SCHW, { umriss: 0.003 }), 0, 0.17, 0.02));
+  g.add(setze(quader(0.46, 0.012, 0.32, 0x3a3c40, { umriss: false }), 0, 0.21, 0.02));
   const raeder = [];
   for (const sx of [-1, 1]) {
     const r = new THREE.Group();
@@ -23,13 +24,13 @@ export function baueSegway(scene) {
     g.add(kot);
   }
   // Lenkstange und Lenker
-  g.add(setze(zylinder(0.025, 0.03, 0.9, GRUEN, { umriss: 0.002 }, 10), 0, 0.66, 0.08, -0.08, 0, 0));
-  g.add(setze(zylinder(0.02, 0.02, 0.5, SCHW, { umriss: 0.002 }, 8), 0, 1.1, 0.12, 0, 0, Math.PI / 2));
-  for (const sx of [-1, 1]) g.add(setze(zylinder(0.026, 0.026, 0.1, 0x2a2a2e, { umriss: false }, 8), sx * 0.22, 1.1, 0.12, 0, 0, Math.PI / 2));
-  g.add(setze(quader(0.08, 0.05, 0.03, 0x9ad94a, { umriss: false }), 0, 1.06, 0.14));
-  // Waldo steht drauf (Füße auf dem Trittbrett)
+  g.add(setze(zylinder(0.025, 0.03, 1.0, GRUEN, { umriss: 0.002 }, 10), 0, 0.7, 0.2, -0.1, 0, 0));
+  g.add(setze(zylinder(0.02, 0.02, 0.5, SCHW, { umriss: 0.002 }, 8), 0, 1.12, 0.16, 0, 0, Math.PI / 2));
+  for (const sx of [-1, 1]) g.add(setze(zylinder(0.026, 0.026, 0.1, 0x2a2a2e, { umriss: false }, 8), sx * 0.22, 1.12, 0.16, 0, 0, Math.PI / 2));
+  g.add(setze(quader(0.08, 0.05, 0.03, 0x9ad94a, { umriss: false }), 0, 1.08, 0.18));
+  // Waldo steht drauf (Füße hinten auf dem Trittbrett, hinter der Lenksäule)
   const anker = new THREE.Group();
-  anker.position.set(0, 0.21, -0.02);
+  anker.position.set(0, 0.21, -0.1);
   g.add(anker);
   g.visible = false;
   scene.add(g);

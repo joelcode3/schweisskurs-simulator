@@ -486,6 +486,8 @@ export function baueJonny(scene, opts = {}) {
   let kitzelt = false;
   let trinkt = false;
   let sitzHoehe = null; // null = steht, sonst Sitzhöhe über dem Boden (z. B. im Fahrzeug)
+  // der Arm auf der Leiterseite (links = x -0,27, die Leiter liegt bei x -0,2) hält sie fest (per Suche eingepasst)
+  const LEITER_L = { s: [-1.1, 0.3, -0.3], e: [-1.8, 0, 0] };
   const api = {
     wurzel,
     get position() { return wurzel.position; },
@@ -517,8 +519,18 @@ export function baueJonny(scene, opts = {}) {
     dreheZu(p) { wurzel.rotation.y = Math.atan2(p.x - wurzel.position.x, p.z - wurzel.position.z); },
     sichtbar(an) { wurzel.visible = an; for (const r of rauch) r.visible = an && raucht; },
     bier(an) { bier.visible = an; links.finger.visible = !an; if (an) haendeGerade(); if (!an) { kopf.rotation.x = 0; trinkPhase = 0; if (!kitzelt) armeVerschraenkt(); } },
-    _test: { bierFlasche: () => bier, mund: () => mund, kopf: () => kopf, BIER_MUND, BIER_UNTEN, fix(k) { fixPhase = k; } },
+    _test: { rechts, links, LEITER_L, bierFlasche: () => bier, mund: () => mund, kopf: () => kopf, BIER_MUND, BIER_UNTEN, fix(k) { fixPhase = k; } },
     trinken(an) { trinkt = an; },
+    // Leiter auf der Schulter tragen: ein Arm greift an die Leiter, der andere hängt locker
+    leiterHalten(an) {
+      if (an) {
+        haendeGerade();
+        links.schulter.rotation.set(...LEITER_L.s);
+        links.ellbogen.rotation.set(...LEITER_L.e);
+        rechts.schulter.rotation.set(0.05, 0, 0.12);
+        rechts.ellbogen.rotation.set(-0.15, 0, 0);
+      } else armeVerschraenkt();
+    },
     kitzeln(an) {
       kitzelt = an;
       if (an) haendeGerade(); else armeVerschraenkt();
