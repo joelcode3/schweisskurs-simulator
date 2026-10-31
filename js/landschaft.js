@@ -55,7 +55,7 @@ export function imKreis(x, z, rand = 0) { return Math.hypot(x - RING.x, z - RING
 
 // ---------- Eierkarton und Mettenden (Laden und in der Hand gleich): detailliert ----------
 let eierEtikett = null, mettEtikett = null;
-export function eierKartonModell() {
+export function eierKartonModell(ohneEier = false) {
   const k = new THREE.Group();
   const pappe = 0xb9ab8e, pappeD = 0xa59777;
   // Unterteil: Pappschale mit 10 Mulden (2 x 5), Rand oben
@@ -64,6 +64,7 @@ export function eierKartonModell() {
   for (let i = 0; i < 10; i++) {
     const x = -0.12 + (i % 5) * 0.06, z = -0.03 + Math.floor(i / 5) * 0.06;
     k.add(setze(zylinder(0.027, 0.02, 0.03, pappeD, { umriss: false }, 10), x, 0.04, z)); // Mulde
+    if (ohneEier) continue;
     const ei = kugel(0.021, [0xd9b48a, 0xe8cfa8, 0xf2ead8, 0xcfa478][i % 4], { umriss: 0.001 }, 10);
     ei.scale.set(1, 1.3, 1); ei.position.set(x, 0.072, z);
     k.add(ei);
@@ -80,27 +81,108 @@ export function eierKartonModell() {
   k.add(deckel);
   return k;
 }
+// Eine Mettwurst (Mettende): leicht gebogen, Pelle mit Falten und Rauchstreifen, helle Fettpünktchen, abgebundene Enden mit Bindfaden.
+// Wird einzeln benutzt (nach dem Hinfallen) und von mettendenModell dreimal in die Packung gelegt.
+let wurstTex = null;
+function wurstTextur() {
+  if (wurstTex) return wurstTex;
+  const rr = zufall(7);
+  wurstTex = leinwandTextur(128, 64, (g, b, h) => {
+    const grad = g.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, '#c04a2c'); grad.addColorStop(0.5, '#a83a20'); grad.addColorStop(1, '#8a2c18');
+    g.fillStyle = grad; g.fillRect(0, 0, b, h);
+    for (let i = 0; i < 8; i++) { g.fillStyle = `rgba(60,20,10,${0.06 + rr() * 0.1})`; g.fillRect(rr() * b, 0, 4 + rr() * 12, h); }
+    for (let i = 0; i < 18; i++) { g.fillStyle = `rgba(240,200,180,${0.25 + rr() * 0.3})`; g.beginPath(); g.arc(rr() * b, rr() * h, 0.8 + rr() * 1.2, 0, Math.PI * 2); g.fill(); }
+    g.fillStyle = 'rgba(255,230,210,0.2)'; g.fillRect(0, h * 0.22, b, h * 0.1);
+  });
+  return wurstTex;
+}
+export function wurstModell() {
+  const w = new THREE.Group();
+  // einfach eine dicke, rötliche, gebogene Wurst mit runden Enden (keine Bindfäden, keine Zipfel)
+  const kurve = new THREE.CatmullRomCurve3([new THREE.Vector3(-0.1, 0.0, -0.02), new THREE.Vector3(-0.05, 0.0, 0.012), new THREE.Vector3(0.05, 0.0, 0.012), new THREE.Vector3(0.1, 0.0, -0.02)]);
+  const N = 36, R = 16, RAD = 0.024;
+  const geo = new THREE.TubeGeometry(kurve, N, RAD, R, false);
+  const pos = geo.attributes.position;
+  for (let i = 0; i <= N; i++) {
+    const c = kurve.getPointAt(i / N), t = i / N;
+    const rund = Math.sqrt(Math.max(0.0001, 1 - Math.pow(1 - Math.min(1, Math.min(t, 1 - t) / 0.14), 2))); // Kuppe an den Enden
+    for (let j = 0; j <= R; j++) {
+      const k = i * (R + 1) + j;
+      const f = rund * (1 + 0.012 * Math.sin(t * 30));
+      pos.setXYZ(k, c.x + (pos.getX(k) - c.x) * f, c.y + (pos.getY(k) - c.y) * f, c.z + (pos.getZ(k) - c.z) * f);
+    }
+  }
+  geo.computeVertexNormals();
+  w.add(teil(geo, 0, { material: toon(0xffffff, { map: wurstTextur() }), umriss: 0.0018 }));
+  return w;
+}
 export function mettendenModell() {
   const p = new THREE.Group();
-  // Pappschale, darüber Folie, drei gebogene Mettenden mit abgebundenen Enden, Etikett
+  // Pappschale mit aufgedrucktem Rand, darauf drei Mettenden, darüber verschweißte Folie mit Falten, Etikett mit Preis
   p.add(setze(quader(0.14, 0.012, 0.24, 0xe8dcb8, { umriss: 0.001 }), 0, 0.006, 0));
+  p.add(setze(quader(0.146, 0.006, 0.006, 0xc8352a, { umriss: false }), 0, 0.013, 0.114));
+  p.add(setze(quader(0.146, 0.006, 0.006, 0xc8352a, { umriss: false }), 0, 0.013, -0.114));
   for (let j = 0; j < 3; j++) {
-    const x = -0.043 + j * 0.043;
-    const kurve = new THREE.CatmullRomCurve3([new THREE.Vector3(x - 0.006, 0, -0.1), new THREE.Vector3(x + 0.006, 0.006, -0.03), new THREE.Vector3(x + 0.006, 0.006, 0.03), new THREE.Vector3(x - 0.006, 0, 0.1)]);
-    const w = teil(new THREE.TubeGeometry(kurve, 14, 0.017, 10, false), 0x7a2618, { umriss: 0.0015 });
-    w.position.y = 0.03;
-    p.add(w);
-    for (const zz of [-0.1, 0.1]) {
-      p.add(setze(kugel(0.012, 0x5a1a10, { umriss: false }, 6), x - 0.006, 0.03, zz));
-      p.add(setze(zylinder(0.004, 0.004, 0.012, 0xe8e0c8, { umriss: false }, 4), x - 0.006, 0.03, zz + Math.sign(zz) * 0.014, Math.PI / 2, 0, 0)); // Bindfaden
-    }
-    // Fettsprenkel
-    for (let k = 0; k < 5; k++) p.add(setze(kugel(0.003, 0xd8a090, { umriss: false }, 4), x + 0.006 * Math.sin(k), 0.046, -0.07 + k * 0.035));
+    const wst = wurstModell();
+    wst.rotation.y = Math.PI / 2; // längs der Schale
+    wst.position.set(-0.047 + j * 0.047, 0.034, 0);
+    wst.scale.set(0.98, 0.95, 0.9);
+    p.add(wst);
   }
-  p.add(setze(quader(0.145, 0.05, 0.245, 0xe8f4f8, { umriss: 0.001, mat: { transparent: true, opacity: 0.22 } }), 0, 0.028, 0)); // Folie
-  if (!mettEtikett) mettEtikett = leinwandTextur(96, 48, (g, b, h) => { g.fillStyle = '#f4efe0'; g.fillRect(0, 0, b, h); g.fillStyle = '#c8352a'; g.fillRect(0, 0, b, 12); g.fillStyle = '#1d1d1f'; g.font = '800 13px Arial'; g.textAlign = 'center'; g.fillText('Mettenden', b / 2, 28); g.font = '600 10px Arial'; g.fillText('3 St. · geräuchert', b / 2, 42); });
-  p.add(setze(new THREE.Mesh(new THREE.PlaneGeometry(0.08, 0.04), new THREE.MeshBasicMaterial({ map: mettEtikett })), 0.02, 0.054, 0.05, -Math.PI / 2, 0, 0));
+  // Folie: leicht gewölbte, durchsichtige Haube, Schweißnaht rundherum
+  const folie = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, 0.17, 4, 12), new THREE.MeshToonMaterial({ color: 0xe8f4f8, transparent: true, opacity: 0.2, depthWrite: false }));
+  folie.rotation.x = Math.PI / 2; folie.scale.set(1, 1, 0.38); folie.position.set(0, 0.03, 0);
+  folie.raycast = () => {};
+  p.add(folie);
+  for (const z of [-0.116, 0.116]) p.add(setze(quader(0.15, 0.003, 0.006, 0xdfeff3, { umriss: false, mat: { transparent: true, opacity: 0.6 } }), 0, 0.017, z));
+  if (!mettEtikett) mettEtikett = leinwandTextur(128, 64, (g, b, h) => {
+    g.fillStyle = '#f4efe0'; g.fillRect(0, 0, b, h);
+    g.fillStyle = '#c8352a'; g.fillRect(0, 0, b, 15);
+    g.fillStyle = '#fff'; g.font = '800 11px Arial'; g.textAlign = 'center'; g.fillText('LÜHMANN · HOF', b / 2, 11);
+    g.fillStyle = '#1d1d1f'; g.font = '800 17px Arial'; g.fillText('Mettenden', b / 2, 35);
+    g.font = '600 11px Arial'; g.fillText('3 St. · geräuchert · 240 g', b / 2, 50);
+    g.fillStyle = '#c8352a'; g.font = '800 12px Arial'; g.fillText('3,49 €', b - 26, 62);
+  });
+  p.add(setze(new THREE.Mesh(new THREE.PlaneGeometry(0.09, 0.045), new THREE.MeshBasicMaterial({ map: mettEtikett })), 0.0, 0.0535, 0.05, -Math.PI / 2, 0, 0));
   return p;
+}
+
+// Stück Käse (Emmentaler-Keil mit Löchern, Rinde, Wachsrand): in der Hand und im Kühlschrank
+export function kaeseModell() {
+  const k = new THREE.Group();
+  const GELB = 0xf0c23a, RINDE = 0xc98a1f;
+  // Keil: Dreiecksprisma (Tortenstück), leicht gedreht
+  const form = new THREE.Shape(); form.moveTo(0, 0); form.lineTo(0.16, -0.045); form.lineTo(0.16, 0.045); form.closePath();
+  const keil = teil(new THREE.ExtrudeGeometry(form, { depth: 0.07, bevelEnabled: true, bevelSize: 0.003, bevelThickness: 0.003, bevelSegments: 1 }), GELB, { umriss: 0.0018 });
+  keil.rotation.x = -Math.PI / 2; keil.position.y = 0;
+  k.add(keil);
+  // Rindenstreifen am runden Ende und unten
+  k.add(setze(quader(0.012, 0.074, 0.092, RINDE, { umriss: false }), 0.162, 0.037, 0));
+  // Löcher: dunklere Mulden an Ober- und Schnittflächen
+  for (const [x, z, r] of [[0.06, 0.012, 0.011], [0.1, -0.018, 0.009], [0.125, 0.02, 0.012], [0.08, -0.002, 0.007], [0.145, -0.012, 0.007]]) {
+    const loch = kugel(r, 0xd9a21c, { umriss: false }, 7); loch.scale.set(1, 0.35, 1); loch.position.set(x, 0.0745, z); k.add(loch);
+  }
+  for (const [x, y, r] of [[0.07, 0.03, 0.009], [0.11, 0.045, 0.008], [0.135, 0.02, 0.01]]) {
+    const loch = kugel(r, 0xd9a21c, { umriss: false }, 7); loch.scale.set(1, 1, 0.35); loch.position.set(x, y, 0.045 - 0.0005 + (0.16 - x) * 0.28 * 0 + 0.0); k.add(loch);
+  }
+  return k;
+}
+
+// Kaputte Eier: leerer Karton, die Eier liegen aufgeplatzt auf dem Boden (Dotter, Eiweiß, Schalenstücke)
+export function eierKaputtModell() {
+  const g = new THREE.Group();
+  const leer = eierKartonModell(true);
+  g.add(leer);
+  for (let i = 0; i < 7; i++) {
+    const a = i * 2.4 + 0.5, d = 0.16 + (i % 3) * 0.07;
+    const x = Math.cos(a) * d, z = Math.sin(a) * d * 0.8;
+    const weiss = new THREE.Mesh(new THREE.CircleGeometry(0.05 + (i % 2) * 0.025, 12), new THREE.MeshToonMaterial({ color: 0xf2efe0, transparent: true, opacity: 0.8, side: THREE.DoubleSide }));
+    weiss.rotation.x = -Math.PI / 2; weiss.position.set(x, 0.004 + i * 0.0004, z); g.add(weiss);
+    const dotter = kugel(0.017, 0xf2b21b, { umriss: false }, 8); dotter.scale.set(1, 0.35, 1); dotter.position.set(x + 0.008, 0.012 + i * 0.0004, z); g.add(dotter);
+    for (let j = 0; j < 2; j++) { const sch = quader(0.02, 0.003, 0.014, 0xe2c9a0, { umriss: false }); sch.position.set(x + (j ? 0.04 : -0.035), 0.008, z + (j ? 0.03 : -0.02)); sch.rotation.y = i + j; g.add(sch); }
+  }
+  return g;
 }
 
 export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
@@ -430,22 +512,61 @@ export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
   regal.position.set(-0.9, 0, LT / 2 - 0.35);
   laden.add(regal);
   merke(regal, 'sb_eier', 'Lühmanns Landeier');
-  // Kühlschrank (Glastür) mit Mettenden
+  // Kühlschrank mit Tür zum Öffnen (Klick): innen vier Gitterregale wie in der Werkstatt, Mettenden und Käse; Licht geht an, wenn die Tür auf ist
   const kuehl = new THREE.Group();
-  kuehl.add(setze(quader(0.7, 1.7, 0.6, 0xe8e8e2, { umriss: 0.003 }), 0, 0.85, 0));
-  kuehl.add(setze(new THREE.Mesh(new THREE.PlaneGeometry(0.58, 1.4), new THREE.MeshBasicMaterial({ color: 0xbfe3f2, transparent: true, opacity: 0.3 })), 0, 0.9, -0.305));
-  for (const y of [0.4, 0.8, 1.2]) {
-    kuehl.add(setze(quader(0.6, 0.02, 0.5, 0xd0d4d8, { umriss: false }), 0, y, 0));
-    for (let i = 0; i < 4; i++) {
-      const p = mettendenModell();
-      p.position.set(-0.21 + i * 0.14, y + 0.01, 0);
-      kuehl.add(p);
-    }
+  const KW = 0.7, KH = 1.7, KT = 0.6, WAND = 0.04;
+  const kInnen = 0xeef3f5;
+  kuehl.add(setze(quader(KW, KH, WAND, 0xe8e8e2, { umriss: 0.003 }), 0, KH / 2, KT / 2 - WAND / 2)); // Rückwand
+  for (const sx of [-1, 1]) kuehl.add(setze(quader(WAND, KH, KT, 0xe8e8e2, { umriss: 0.003 }), sx * (KW / 2 - WAND / 2), KH / 2, 0));
+  kuehl.add(setze(quader(KW, WAND, KT, 0xe8e8e2, { umriss: 0.003 }), 0, KH - WAND / 2, 0));
+  kuehl.add(setze(quader(KW, WAND, KT, 0xe8e8e2, { umriss: 0.003 }), 0, WAND / 2, 0));
+  // Innenverkleidung hell (leuchtet), damit der Innenraum nicht im Schatten absäuft
+  const innenMat = new THREE.MeshBasicMaterial({ color: kInnen, side: THREE.DoubleSide });
+  for (const [bb, hh, x, y, zz, ry] of [[KT - 0.02, KH - 2 * WAND, -(KW / 2 - WAND) + 0.001, KH / 2, 0, Math.PI / 2], [KT - 0.02, KH - 2 * WAND, KW / 2 - WAND - 0.001, KH / 2, 0, -Math.PI / 2], [KW - 2 * WAND, KH - 2 * WAND, 0, KH / 2, KT / 2 - WAND - 0.001, Math.PI]]) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(bb, hh), innenMat); m.position.set(x, y, zz); m.rotation.y = ry; kuehl.add(m);
   }
-  kuehl.add(setze(quader(0.6, 0.1, 0.01, 0xc8352a, { umriss: false }), 0, 1.6, -0.305));
+  // Regalböden: Rahmen mit Gitterstäben
+  const regalY = [0.36, 0.76, 1.16, 1.52];
+  for (const y of regalY) {
+    kuehl.add(setze(quader(KW - 2 * WAND - 0.01, 0.012, KT - 0.08, 0xd0d4d8, { umriss: false }), 0, y, 0.02));
+    for (let i = -5; i <= 5; i++) kuehl.add(setze(quader(0.006, 0.014, KT - 0.08, 0xaeb4ba, { umriss: false }), i * 0.055, y, 0.02));
+    kuehl.add(setze(quader(KW - 2 * WAND - 0.01, 0.03, 0.012, 0xc8352a, { umriss: false }), 0, y + 0.012, -KT / 2 + 0.07)); // Vorderleiste
+  }
+  // Inhalt: unten Käse (Keile und ein ganzer Laib im roten Wachs), mittig und oben Mettenden
+  const kaeseListe = [];
+  for (let i = 0; i < 4; i++) { const kk = kaeseModell(); kk.position.set(-0.24 + (i % 2) * 0.24, regalY[0] + 0.008, -0.12 + Math.floor(i / 2) * 0.17); kk.rotation.y = (i % 2 ? 0.4 : -0.3); kuehl.add(kk); kaeseListe.push(kk); }
+  const laib = new THREE.Group();
+  laib.add(setze(zylinder(0.1, 0.1, 0.07, 0xc8352a, { umriss: 0.002 }, 18), 0, 0.035, 0));
+  laib.add(setze(zylinder(0.07, 0.07, 0.072, 0xf0c23a, { umriss: false }, 16), 0, 0.037, 0));
+  laib.position.set(0.0, regalY[0] + 0.008, 0.2); kuehl.add(laib);
+  for (const y of [regalY[1], regalY[2]]) for (let i = 0; i < 4; i++) {
+    const m = mettendenModell();
+    m.position.set(-0.21 + i * 0.14, y + 0.008, 0.02);
+    kuehl.add(m);
+  }
+  for (let i = 0; i < 3; i++) { const m = mettendenModell(); m.position.set(-0.14 + i * 0.14, regalY[3] + 0.008, 0.02); kuehl.add(m); }
+  // Tür: sitzt an der linken Kante (von vorn gesehen), Glasfenster, Griff, rotes Mettenden-Schild
+  const kTuer = new THREE.Group();
+  kTuer.add(setze(quader(KW, KH - 0.02, 0.05, 0xe8e8e2, { umriss: 0.003 }), -KW / 2, 0, 0)); // Türblatt (später ausgespart: Glasstreifen davor)
+  const glasTuer = new THREE.Mesh(new THREE.PlaneGeometry(KW - 0.12, KH - 0.34), new THREE.MeshBasicMaterial({ color: 0xbfe3f2, transparent: true, opacity: 0.32, depthWrite: false }));
+  glasTuer.position.set(-KW / 2, -0.02, -0.027); glasTuer.rotation.y = Math.PI; glasTuer.raycast = () => {};
+  kTuer.add(glasTuer);
+  kTuer.add(setze(quader(KW - 0.04, 0.12, 0.01, 0xc8352a, { umriss: false }), -KW / 2, KH / 2 - 0.1, -0.03));
+  kTuer.add(setze(quader(0.035, 0.5, 0.035, 0xb9bec4, { umriss: 0.002 }), -KW + 0.06, 0, -0.045)); // Griff
+  kTuer.position.set(KW / 2, KH / 2, -KT / 2 - 0.025);
+  kuehl.add(kTuer);
+  kuehl.add(setze(new THREE.PointLight(0xfff4e0, 0, 3), 0, 1.2, 0)); // Innenlicht
   kuehl.position.set(LB / 2 - 0.5, 0, LT / 2 - 0.45);
   laden.add(kuehl);
-  merke(kuehl, 'sb_mettenden', 'Kühlschrank mit Mettenden');
+  merke(kuehl, 'sb_mettenden', 'Kühlschrank mit Mettenden und Käse');
+  let kuehlAuf = false;
+  const kuehlLicht = kuehl.children[kuehl.children.length - 1];
+  const kuehlAnim = (dt) => {
+    const ziel = kuehlAuf ? -1.75 : 0;
+    kTuer.rotation.y += (ziel - kTuer.rotation.y) * Math.min(1, dt * 6);
+    kuehlLicht.intensity = kuehlAuf ? 2 : 0;
+  };
+  const kuehlschrank = { auf(an) { kuehlAuf = an; }, get istAuf() { return kuehlAuf; } };
   // Tisch mit Anschreibeliste (Klemmbrett mit Stift an der Schnur) und Vertrauenskasse
   const tisch = new THREE.Group();
   tisch.add(setze(quader(1.0, 0.04, 0.5, 0xa8844e, { umriss: 0.002 }), 0, 0.85, 0));
@@ -814,6 +935,7 @@ export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
   // ---------- Animation: Kühe grasen und laufen langsam, Hühner picken und trippeln ----------
   const _v = new THREE.Vector3();
   function update(dt) {
+    kuehlAnim(dt);
     for (const k of kuehe) {
       k.t += dt;
       if (!k.ziel) {
@@ -851,7 +973,7 @@ export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
     }
   }
 
-  return { update, hof, laden, t5: t5Gruppe, kuehe, huehner, ende };
+  return { update, hof, laden, t5: t5Gruppe, kuehe, huehner, ende, kuehlschrank };
 }
 
 // VW T5 Doppelkabine mit Pritsche (nach Fotos vom Betreiber: Kabine hellgrau, Alu-Bordwände mit Sicken und VW-Logo hinten,

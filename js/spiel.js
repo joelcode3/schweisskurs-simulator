@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { STATIONEN, AUGENHOEHE } from './world.js';
 import { FELDWEG, inHindernis } from './draussen.js';
 import { bereich } from './wege.js';
-import { eierKartonModell, mettendenModell } from './landschaft.js';
+import { eierKartonModell, mettendenModell, kaeseModell } from './landschaft.js';
 import { setze } from './toon.js';
 import { auftritt, hatClip, buehneBelegt } from './clips.js';
 import { pfadSpiel, schlackeSpiel, hulaSpiel, DENNIS_HULA_REKORD, ventilSpiel, spuelSpiel, anzeichnenSpiel, lackierSpiel, bitsatzSpiel, akkuschrauberSpiel, siebSpiel, kaffeeSpiel, rohrSpiel, leiterSpiel, spanngurtSpiel, pumpeSpiel } from './minispiele.js';
@@ -935,11 +935,11 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   function einkaufen(art) {
     if (hand.item) { ui.hinweis(`Du hast schon ${hand.item.cfg.name} in der Hand.`); return; }
     // dieselben detaillierten Modelle wie im Laden (landschaft.js)
-    const obj = art === 'eier' ? eierKartonModell() : mettendenModell();
-    obj.userData.interaktiv = { id: art, name: art === 'eier' ? 'Landeier' : 'Mettenden', station: null };
+    const obj = art === 'eier' ? eierKartonModell() : art === 'kaese' ? kaeseModell() : mettendenModell();
+    obj.userData.interaktiv = { id: art, name: art === 'eier' ? 'Landeier' : art === 'kaese' ? 'Käse' : 'Mettenden', station: null };
     hand.nimm(art, obj);
     handleisteZeigen();
-    const eintrag = art === 'eier' ? '10 Eier' : '3 Mettenden';
+    const eintrag = art === 'eier' ? '10 Eier' : art === 'kaese' ? '1 Stück Käse' : '3 Mettenden';
     z.angeschrieben = z.angeschrieben ? `${z.angeschrieben}, ${eintrag}` : eintrag;
     blip(660, 0.06);
     ui.hinweis(`Angeschrieben: ${eintrag}. Lühmann kennt uns.`, 3000);
@@ -3165,22 +3165,22 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       }
       if (it.id === 'peitsche' && ziel === 'dennis') { dennisJagen(); return true; }
       if (it.id === 'besen' && ziel === 'leiter' && jz.leiter === 'wartet') { await leiterRunterreichen('besen'); return true; }
-      if ((it.id === 'eier' || it.id === 'mettenden') && ziel === 'minijeep') {
+      if ((it.id === 'eier' || it.id === 'mettenden' || it.id === 'kaese' || it.id === 'wurst') && ziel === 'minijeep') {
         const o = hand.item.obj;
         hand.weg();
         if (!fahrten.aufLadeflaeche(o)) hand.nimm(it.id, o);
         handleisteZeigen();
         return true;
       }
-      if ((it.id === 'eier' || it.id === 'mettenden') && ziel === 'dennis') {
+      if ((it.id === 'eier' || it.id === 'mettenden' || it.id === 'kaese' || it.id === 'wurst') && ziel === 'dennis') {
         if (dennis.modus !== 'normal' || z.aufKlo) { ui.hinweis('Dennis hat gerade keine Hand frei.'); return true; }
         await hinZu(info, treffer.obj);
         hand.weg();
         handleisteZeigen();
         const zuOft = sekundenSeitStart() - (z.einkaufZuletzt ?? -999) < 90;
         z.einkaufZuletzt = sekundenSeitStart();
-        if (!zuOft) { z.wut = Math.max(0, z.wut - 8); aktualisieren(); }
-        dennisSagt(sag(it.id === 'eier' ? DENNIS.einkauf.eier : DENNIS.einkauf.mettenden), false, { prio: 2 });
+        if (!zuOft) { z.wut = Math.max(0, z.wut - (it.id === 'wurst' ? 3 : 8)); aktualisieren(); }
+        dennisSagt(sag(it.id === 'eier' ? DENNIS.einkauf.eier : it.id === 'kaese' ? DENNIS.einkauf.kaese : it.id === 'wurst' ? DENNIS.einkauf.wurst : DENNIS.einkauf.mettenden), false, { prio: 2 });
         return true;
       }
       if (it.id === 'creme' && ziel === 'dennis') {
@@ -3456,6 +3456,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       case 'eier':
       case 'mettenden':
         return [id === 'eier' ? 'Lühmanns Landeier' : 'Mettenden', 'Für Dennis. Oder hinten auf den Jeep laden.', [A('In die Hand nehmen', 'hand', () => aufnehmen(id, obj))]];
+      case 'wurst':
+        return ['Mettwurst', 'Einzeln auf den Boden gepurzelt, aber noch heil. Dennis würde sie trotzdem nehmen.', [A('In die Hand nehmen', 'hand', () => aufnehmen('wurst', obj))]];
       case 'eierKaputt':
         return ['Kaputte Eier', 'Gelber Matsch. Die kann Dennis nicht mehr gebrauchen.', [A('Wegräumen', 'hand', () => { obj.removeFromParent(); klonk(0.1); ui.hinweis('Weggeräumt. Neue gibt’s bei Lühmann.'); })]];
       case 'creme':
@@ -3508,8 +3510,15 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       // ---------- Landschaft: Lühmanns Hof, Schilder, Briefkasten, umgekippter T5 ----------
       case 'sb_eier':
         return ['Lühmanns Landeier', 'Frische Eier vom Hof. Wir dürfen anschreiben.', [A('10 Eier nehmen und anschreiben', 'hand', () => einkaufen('eier'))]];
-      case 'sb_mettenden':
-        return ['Kühlschrank', 'Mettenden, geräuchert. Dennis liebt die.', [A('Mettenden nehmen und anschreiben', 'hand', () => einkaufen('mettenden'))]];
+      case 'sb_mettenden': {
+        const ks = welt.draussen.landschaft.kuehlschrank;
+        if (!ks.istAuf) return ['Peters Kühlschrank', 'Hier gibt es Mettenden und Käse. Tür aufmachen und nachsehen.', [A('Tür öffnen', 'hand', () => { ks.auf(true); klonk(0.25); })]];
+        return ['Peters Kühlschrank', 'Offen. Innen leuchtet es: Mettenden, geräuchert, und Käse. Dennis liebt beides.', [
+          A('Mettenden nehmen und anschreiben', 'hand', () => einkaufen('mettenden')),
+          A('Käse nehmen und anschreiben', 'hand', () => einkaufen('kaese')),
+          A('Tür zumachen', 'hand', () => { ks.auf(false); klonk(0.2); }),
+        ]];
+      }
       case 'sb_liste':
         return ['Anschreibeliste', `Auf der Liste stehen schon: Dennis 10 Eier, Dennis 4 Mettenden, Waldo 2 Mettenden, Jonny 6 Eier${z.angeschrieben ? `, und von dir: ${z.angeschrieben}` : ''}.`, []];
       case 'sb_kasse':

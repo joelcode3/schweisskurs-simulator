@@ -384,6 +384,14 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   'palettenSchild': zeigt den Stand). Mit dem Hoflader dort abgesetzt (Gabel-Ereignis abgesetzt) zählt fahrten.palettenGezaehlt:
   je neue Palette Wut -3, Hinweis „x von 12“, Lob beim ersten und jeder 3.; alle 12 = großes Lob, Wut -8. Note: je gestapelte
   Palette 1 Punkt, höchstens 6 (Gesamt höchstens 100). Tipp beim ersten Einsteigen in den Hoflader.
+- Paket F Hofladen und Essen (Projektchat 30.10., I46/I48/I54, Vorschau): Peters Kühlschrank im SB-Laden (landschaft.js) hat eine Tür (Klick:
+  „Tür öffnen“, schwenkt auf, Innenlicht), vier Gitterregale wie in der Werkstatt, unten Käse (4 Keile + Laib im roten Wachs), darüber
+  Mettenden; offen: „Mettenden nehmen“, „Käse nehmen“, „Tür zumachen“ (landschaft.kuehlschrank.auf/istAuf, spiel.js Menü 'sb_mettenden').
+  Neues Hand-Ding 'kaese' (kaeseModell: Emmentaler-Keil mit Löchern). Mettenden neu (wurstModell): dicke, rötliche, gebogene Wurst mit
+  runden Enden, die Packung (mettendenModell) hat drei davon, Folienhaube, Schweißnaht, Etikett mit Preis. Kollision/Ladung fällt
+  (fahrten.js ladungFaellt): Eier -> leerer Karton plus aufgeplatzte Eier am Boden (eierKaputtModell, nicht aufhebbar, „Wegräumen“);
+  Mettenden -> drei einzelne Würste (id 'wurst'), aufhebbar, Dennis gegeben nur Wut -3 (Hand 'wurst'). Neue Sätze dennis479–482
+  (einkauf.kaese/wurst).
 - Paket C Spanngurte (Projektchat 30.10., I33, aufgesetzt auf B): ab ca. 3–5 Min., nur wenn Spieler und Dennis in der Werkstatt sind
   und Jonny oder Waldo da ist: der schmeißt zwei Spanngurte vor das Regal (world.js gurteBoden, anklickbar 'spanngurte'), Dennis
   meckert (DENNIS.spanngurt.boden, Wut +3). Aufrollen = Minispiel spanngurtSpiel (im Kreis ziehen, der Gurt wird entlang seiner
