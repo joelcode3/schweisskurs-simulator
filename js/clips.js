@@ -1,6 +1,6 @@
 // Dennis-Auftritte: echte Videoclips aus clips/clips.json, sonst gezeichneter Platzhalter mit Brummelstimme.
 import { dennisPortrait } from './gesicht.js';
-import { brummeln, rumms, stimmeAbspielen } from './audio.js';
+import { brummeln, rumms, stimmeAbspielen, spielTonStumm } from './audio.js';
 import { satzId } from './texte.js';
 
 // Alle Clip-Arten. Reihenfolge = Reihenfolge im Dennis-Archiv.
@@ -170,10 +170,12 @@ export function auftritt({ schluessel, text, stufe = 'mittel', stimmung = 'sauer
     let mundTimer = null;
     let tippTimer = null;
     let sprecher = null;
+    let stumm = false;
     // ersetzt = ein neuer Auftritt übernimmt die Bühne: dann nichts ausblenden oder anhalten
     function schliessen(ersetzt = false) {
       if (aus) return;
       aus = true;
+      if (stumm) spielTonStumm(false);
       if (sprecher) sprecher.stopp();
       clearTimeout(timer);
       clearInterval(mundTimer);
@@ -188,6 +190,8 @@ export function auftritt({ schluessel, text, stufe = 'mittel', stimmung = 'sauer
     }
     if (laufend) laufend(true);
     laufend = schliessen;
+    // Ausraster-Video: kein Gebrabbel, keine Spielgeräusche, nur der Ton des Videos
+    if (clip && stufe === 'voll') { stumm = true; spielTonStumm(true); }
     weiter.onclick = () => schliessen();
     weiter.textContent = stufe === 'voll' ? 'Ja, Dennis ...' : 'Weiter';
 

@@ -393,6 +393,14 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   im Hoflader selbst konstant, Drehzahl steigt mit der Geschwindigkeit. E-Motor: Heulton des Jeeps, nur in Bewegung, Tonhöhe nach Tempo.
   Hühner: Gluck-Folgen und gelegentliches „Gaaack“ vom Hühnermobil (bis 40 m). Kühe: Muh bei Peter (bis 55 m, alle 9–23 s).
   Lautstärkeregler (Master) gilt für alles. Im Test nur gemessen (Pegel), nicht gehört.
+  P2 (1.11.): Werkstattgeräusche (Flex, Schweißen, Techno-Musik, Klospülung) laufen über den Bus `werk` (audio.js, `werkLautstaerke` aus
+  `umweltUpdate`): draußen ab 3 m leiser (quadratisch), über 12 m Entfernung von der Werkstatt stumm; Klonken (spiel.js `werkstattLaut`) gleich.
+  Während eines Ausraster-Videos (auftritt mit Clip, Stufe voll) sind alle Spielgeräusche aus (`spielTonStumm`), nur der Videoton läuft;
+  laufende Dennis-Sätze werden vorher ausgeblendet. Dennis spricht nie zwei Aufnahmen gleichzeitig: `stimmeAbspielen` blendet eine alte
+  Dennis-Stimme aus, Gemurmel (`ortsTon`, `nurWennStill`) startet nur, wenn niemand spricht; Klospülung ist Gruppe 'effekt'.
+  Nicht abgedeckt: Gebrabbel (`brummeln`) ohne Aufnahme überlappt nicht geprüft.
+  B3 (Tanzen macht nicht wütender): so gewollt/dokumentiert, Tanzen hat keinen Wut-Effekt (Wut sinkt normal); Ärger gibt es nur,
+  wenn Musik in der Mittagspause angeht oder er sie ausgemacht hat und man sie wieder anmacht. Nicht geändert, Entscheidung beim Betreiber.
 - Paket F Hofladen und Essen (Projektchat 30.10., I46/I48/I54, Vorschau): Peters Kühlschrank im SB-Laden (landschaft.js) hat eine Tür (Klick:
   „Tür öffnen“, schwenkt auf, Innenlicht), vier Gitterregale wie in der Werkstatt, unten Käse (4 Keile + Laib im roten Wachs), darüber
   Mettenden; offen: „Mettenden nehmen“, „Käse nehmen“, „Tür zumachen“ (landschaft.kuehlschrank.auf/istAuf, spiel.js Menü 'sb_mettenden').

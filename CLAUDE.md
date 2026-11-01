@@ -22,6 +22,8 @@
   - Ehrlich melden, was nicht getestet oder weggelassen wurde.
   - iPhone/Touch komplett außen vor, nur Computer-Ansicht testen.
   - „todo …“ und „bug …“ gehen über den Projektchat (er pflegt die Projektliste), nicht selbst umsetzen ohne Go.
+- Anzeige „version_NN“ unten links neben der Lautstärke (`#versionsnr` in index.html): NN = Nummer des eigenen PR. Bei JEDEM PR setzen
+  (Nummer erst nach dem Anlegen bekannt: kurzer Folge-Commit). Die technische Version `?v=JJJJMMTT-n` bleibt davon unabhängig.
 - Vor jedem PR im Browser testen (nur Computer-Ansicht, Web hat Prio; iPhone erstmal nicht, Betreiber 24.10.), Playwright mit vorinstalliertem Chromium.
 - Optisches: erst Vorschau (Screenshot) an den Betreiber, PR erst nach Abnahme (Projektchat 24.10.).
 
@@ -83,7 +85,7 @@
 
 ## Stand der Pull Requests (1.11.2026)
 - Alles bis #54 gemergt (zuletzt #54 Hotfix Ausraster-Videos). Nichts offen. Neue Zweige immer von `origin/main`.
-- Versionsnummer zuletzt `v=20261101-5`.
+- Versionsnummer zuletzt `v=20261101-8`.
 - Nächste freie Satz-Nummern (aus stimme/zuordnung.csv): dennis485, jonny58, waldo43, torben20, kumpel8.
 - Projektchat-Session: `session_0136ircvAvU3aCzRamNp3F96` (1.11.; die alte ID `session_01KZ18oujuEFnsAskwuMiw8Y` oben ist veraltet).
 - Offene Fäden und Ungetestetes: `docs/details.md`, Abschnitt „Offene Fäden und Ungetestetes“ (zuerst lesen, wenn ein neuer Chat startet).

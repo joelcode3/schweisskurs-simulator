@@ -390,6 +390,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     if (f.nebensache || f.stufe !== 'voll') await Promise.race([Promise.all([kommt, dennisSagt(text, f.stufe !== 'leicht', { ton })]), notAus]);
     else {
       nebenbeiStoppen();
+      if (hatClip(f.clip) && stimmeJetzt) stimmeJetzt.stopp(0.15); // beim Ausraster-Video spricht sonst niemand dazwischen
       await Promise.race([notAus, Promise.all([kommt, auftritt({ schluessel: f.nurZeichnung ? [f.clip] : [f.clip, STUFEN_CLIP[f.stufe]], text, stufe: f.stufe, stimmung: STUFEN_STIMMUNG[f.stufe], seite: true })])]);
     }
     if (z.wut >= 100) {
@@ -1040,7 +1041,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     const ok = await ui.haltenDialog({ titel: 'Klo frei pömpeln', text: 'Pömpel fest aufs Abflussloch drücken und kräftig pumpen. Nicht spritzen!', knopf: 'Pumpen (halten)', sekunden: 3, geraeusch: 'wasser' });
     if (!ok || z.verstopft !== 'ja') return;
     verstopfungWeg();
-    const sp = await stimmeAbspielen('assets/klospuelung.mp3', 0.8);
+    const sp = await stimmeAbspielen('assets/klospuelung.mp3', 0.8, { gruppe: 'effekt' });
     if (!sp) klospuelung(0.8);
     z.wut = Math.max(0, z.wut - 10);
     aktualisieren();
@@ -1071,7 +1072,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     ui.hinweis('Hände gewaschen. Dennis wäre stolz.');
   }
   async function kloSpuelen() {
-    const sp = await stimmeAbspielen('assets/klospuelung.mp3', 0.8);
+    const sp = await stimmeAbspielen('assets/klospuelung.mp3', 0.8, { gruppe: 'effekt' });
     if (!sp) klospuelung(0.8);
   }
 
@@ -2193,7 +2194,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   function werkstattLaut() {
     const p = kamera.position;
     if (bereich(p.x, p.z) !== 'draussen') return 1;
-    return Math.max(0, Math.min(1, 1 - (Math.hypot(p.x, p.z) - 6) / 14));
+    return Math.pow(Math.max(0, Math.min(1, 1 - (Math.hypot(p.x, p.z) - 3) / 9)), 2);
   }
   function klonk(lautst = 0.6) {
     const l = lautst * werkstattLaut();
@@ -2379,7 +2380,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     return Math.max(boden, Math.min(1.15, 1.6 / (d + 0.4)));
   }
   async function ortsTon(url, reichweite = 5.5) {
-    const t = await stimmeAbspielen(url, lautstaerkeNachAbstand(reichweite));
+    const t = await stimmeAbspielen(url, lautstaerkeNachAbstand(reichweite), { nurWennStill: true });
     if (!t) return null;
     t.reichweite = reichweite;
     murmelTon = t;
@@ -2428,7 +2429,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     await warte(3500 + Math.random() * 4000);
     if (!dennis.wurzel.visible) {
       // Spülung als Aufnahme (assets/klospuelung.mp3), sonst live erzeugt
-      const sp = await stimmeAbspielen('assets/klospuelung.mp3', Math.max(0.35, lautstaerkeNachAbstand()));
+      const sp = await stimmeAbspielen('assets/klospuelung.mp3', Math.max(0.35, lautstaerkeNachAbstand()), { gruppe: 'effekt' });
       if (!sp) klospuelung(Math.max(0.35, lautstaerkeNachAbstand()));
       await warte(2500);
     }
