@@ -6,7 +6,7 @@ import { bereich } from './wege.js';
 import { eierKartonModell, mettendenModell, kaeseModell } from './landschaft.js';
 import { setze } from './toon.js';
 import { auftritt, hatClip, buehneBelegt } from './clips.js';
-import { pfadSpiel, schlackeSpiel, hulaSpiel, DENNIS_HULA_REKORD, ventilSpiel, spuelSpiel, anzeichnenSpiel, lackierSpiel, bitsatzSpiel, akkuschrauberSpiel, siebSpiel, kaffeeSpiel, rohrSpiel, leiterSpiel, spanngurtSpiel, pumpeSpiel, fingerSpiel } from './minispiele.js';
+import { pfadSpiel, schlackeSpiel, hulaSpiel, DENNIS_HULA_REKORD, ventilSpiel, spuelSpiel, anzeichnenSpiel, lackierSpiel, bitsatzSpiel, akkuschrauberSpiel, siebSpiel, kaffeeSpiel, rohrSpiel, leiterSpiel, spanngurtSpiel, pumpeSpiel, poempelSpiel, fingerSpiel } from './minispiele.js';
 import { bierAuf, blip, kratzen, jingle, klonk as klonkRoh, brummeln, dauer as dauerTon, technoAn, technoAus, technoBeat, klospuelung, mampfen, klick as schalterKlick, stimmeAbspielen, stimmenVorladen, husten, gertenKlatsch } from './audio.js';
 import * as ui from './ui.js';
 import { DENNIS, JONNY, WALDO, TORBEN, KUMPEL, satzId } from './texte.js';
@@ -1262,8 +1262,12 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   }
   async function poempeln() {
     if (z.verstopft !== 'ja') { ui.hinweis('Das Klo läuft. Nichts zu pömpeln.'); return; }
-    const ok = await ui.haltenDialog({ titel: 'Klo frei pömpeln', text: 'Pömpel fest aufs Abflussloch drücken und kräftig pumpen. Nicht spritzen!', knopf: 'Pumpen (halten)', sekunden: 3, geraeusch: 'wasser' });
-    if (!ok || z.verstopft !== 'ja') return;
+    z.beschaeftigt = true;
+    steuerung.sperre(true);
+    const e = await poempelSpiel();
+    steuerung.sperre(false);
+    z.beschaeftigt = false;
+    if (!e || e.abgebrochen || z.verstopft !== 'ja') return;
     verstopfungWeg();
     const sp = await stimmeAbspielen('assets/klospuelung.mp3', 0.8, { gruppe: 'effekt' });
     if (!sp) klospuelung(0.8);
@@ -1271,7 +1275,9 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     aktualisieren();
     jingle(true);
     dennis.stimmung('froh');
-    dennisSagt(sag(DENNIS.verstopft.danke), false, { prio: 1, minMs: 4000 });
+    // zu hektisch gepömpelt: es hat gespritzt, Dennis ekelt sich (aber das Klo läuft)
+    if (e.spritzer > 2 && dennisSiehts()) { z.wut = Math.min(100, z.wut + 3); aktualisieren(); dennisSagt(sag(DENNIS.verstopft.gespritzt), true, { prio: 1 }); }
+    else dennisSagt(sag(DENNIS.verstopft.danke), false, { prio: 1, minMs: 4000 });
   }
   async function dennisPoempelt() {
     z.verstopft = 'dennis';
@@ -1768,7 +1774,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     wz.pumpeSeit = sekundenSeitStart();
     wz.pumpeGemeckert = false;
     ui.waldoSagt(sag(WALDO.pumpeZurueck), 4000);
-    ui.hinweis('Waldo hat die Kackepumpe dreckig mitten in den Weg gestellt. Im Bad abwaschen (Dusche oder Waschbecken), dann zurück hinter den Kompressor.', 6000);
+    ui.hinweis('Waldo hat die Kackepumpe dreckig mitten in den Weg gestellt. Abwaschen (Dusche, Waschbecken im Bad oder Spüle am Waschplatz), dann zurück hinter den Kompressor.', 6000);
     await warte(1800);
     if (dennisSiehts() && !z.vorbei) { aerger(3); dennisSagt(sag(DENNIS.pumpeIstDa), true, { prio: 1 }); }
     // setzt sich danach aufs Sofa (wie bei einem normalen Besuch), statt gleich wieder hinter die Werkstatt zu rennen
@@ -1801,7 +1807,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   function pumpeZurueckstellen() {
     if (welt.pumpeIstDreckig) {
       if (dennisSiehts()) dennisSagt(sag(DENNIS.pumpeDreckigZurueck), true, { prio: 2 });
-      else ui.hinweis('Die ist noch voller Gülle. Erst im Bad abwaschen (Dusche oder Waschbecken).', 3500);
+      else ui.hinweis('Die ist noch voller Gülle. Erst abwaschen (Dusche, Waschbecken im Bad oder Spüle am Waschplatz).', 3500);
       return;
     }
     const p = hand.weg();
@@ -3130,9 +3136,9 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     }
     if (id === 'kackpumpe') {
       const nah = (o) => Math.hypot(kamera.position.x - o.position.x, kamera.position.z - o.position.z) < 2.2;
-      if (nah(welt.objekte.dusche) || nah(welt.objekte.waschbecken)) return pumpeWaschen();
+      if (nah(welt.objekte.dusche) || nah(welt.objekte.waschbecken) || nah(welt.objekte.spuele)) return pumpeWaschen();
       if (nah(welt.objekte.kompressor)) return pumpeZurueckstellen();
-      ui.hinweis(welt.pumpeIstDreckig ? 'Ab ins Bad: in der Dusche oder am Waschbecken abwaschen.' : 'Zurück hinter den Kompressor (auf den Kompressor klicken).', 3500);
+      ui.hinweis(welt.pumpeIstDreckig ? 'Abwaschen: in der Dusche, am Waschbecken im Bad oder an der Spüle am Waschplatz.' : 'Zurück hinter den Kompressor (auf den Kompressor klicken).', 3500);
       return;
     }
     if (id === 'poempel') {
@@ -3480,7 +3486,9 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       else ui.hinweis('Die kommen unten ins Regal (links an der Wand). Klick aufs Regal.', 3000);
       return true;
     }
-    if (it.obj?.userData.wand && treffer.punkt && treffer.punkt.distanceTo(it.obj.userData.wand.pos) < 0.6 && (!info || info.id === it.id)) {
+    // Pömpel: irgendwo aufs Regal klicken reicht, er kommt an seinen Platz oben im Regal
+    const aufsRegal = it.id === 'poempel' && treffer.punkt && treffer.punkt.x < -4.25 && treffer.punkt.z > -1.5 && treffer.punkt.z < 0.3 && treffer.abstand < 3.5;
+    if (it.obj?.userData.wand && treffer.punkt && (aufsRegal || (treffer.punkt.distanceTo(it.obj.userData.wand.pos) < 0.6 && (!info || info.id === it.id)))) {
       const o = hand.weg();
       welt.zurueckAnDieWand(o);
       klonk(0.3);
@@ -3527,7 +3535,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       if (it.id === 'verbandskasten' && ziel === 'torben' && TU.zustand === 'liegt') { await hinZu(info, treffer.obj); await torbenVerarzten(); return true; }
       if (it.id === 'bierflasche' && ziel === 'bierkasten') { await hinZu(info, treffer.obj); flascheInKasten(); return true; }
       if (it.id === 'tasse' && ziel === 'kuehlschrank') { await hinZu(info, treffer.obj); tasseWegraeumen(); return true; }
-      if (it.id === 'kackpumpe' && (ziel === 'dusche' || ziel === 'waschbecken')) { await hinZu(info, treffer.obj); await pumpeWaschen(); return true; }
+      if (it.id === 'kackpumpe' && (ziel === 'dusche' || ziel === 'waschbecken' || ziel === 'spuele')) { await hinZu(info, treffer.obj); await pumpeWaschen(); return true; }
       if (it.id === 'kackpumpe' && ziel === 'kompressor') { await hinZu(info, treffer.obj); pumpeZurueckstellen(); return true; }
       if (it.id === 'poempel' && ziel === 'toilette') { await hinZu(info, treffer.obj); await poempeln(); return true; }
       if (it.id === 'sieb' && ziel === 'kompressor') { await hinZu(info, treffer.obj); await siebAusblasen(); return true; }
@@ -3772,6 +3780,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
           blip(520, 0.05);
           handleisteZeigen();
         })]];
+      case 'spuele':
+        return ['Spüle am Waschplatz', 'Edelstahlbecken mit Kalt- und Warmwasser. Hier kann man auch die Kackepumpe abwaschen.', []];
       case 'bierkasten':
         return ['Bierkasten', `Hier kommen Jonnys leere Flaschen rein. ${welt.kastenAnzahl()} von 20 Fächern belegt.`, []];
       case 'leiter':

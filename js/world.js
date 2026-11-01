@@ -1303,6 +1303,8 @@ export function baueWelt(scene) {
   becken.add(setze(zylinder(0.03, 0.03, 0.03, 0x3a3d42, { umriss: 0.002 }, 10), 0.225, OBEN + 0.32, 0));
   setze(becken, 4.67, 0, 1.6);
   scene.add(becken);
+  merke(becken, 'spuele', 'Spüle (Waschplatz)', null);
+  objekte.spuele = becken;
   // Rohr unter dem Hahn (hier platzt es bei Frost)
   const hahnRohr = new THREE.Group();
   hahnRohr.add(zylinder(0.025, 0.025, 0.5, FARBE.stahlHell, {}, 10));

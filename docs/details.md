@@ -576,6 +576,10 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Minispiel neu (`spanngurtSpiel({ verknotet })`): Knoten in Pfeilrichtung aufziehen (falsche Richtung = fester), verdrehte Stellen
   anklicken, dann im Kreis aufrollen mit Tempo-Anzeige (zu schnell = verdreht). Verknotet: 3 Knoten je Gurt, sonst 2 bzw. 1.
 
+- P7 Klo und Pömpel (1.11., Vorschau): Minispiel `poempelSpiel` (Querschnitt Klo + S-Rohr mit Pfropfen): Pömpel über das gelbe
+  Abflussloch, Maus drücken = dicht, gedrückt runter/hoch = ein Hub schiebt den Pfropfen; zu hektisch = Spritzer, seitlich = abgerutscht.
+  Ab 3 Spritzern ekelt sich Dennis (DENNIS.verstopft.gespritzt = dennis489/490, Wut +3). Pömpel zurück: irgendwo aufs Regal klicken.
+  Spüle am Waschplatz ist anklickbar (world.js `objekte.spuele`), dort kann man die Kackepumpe auch abwaschen.
 - E1 Torben und der Stahlträger (1.11., Vorschau), spiel.js Abschnitt „E1“ (`TU`, `torbenUnfall`, `torbenVerarzten`): einmal pro Spiel
   nach 6–10 min, nur wenn der Spieler in der Werkstatt ist und alles ruhig ist. Torben fragt Dennis, beide tragen den oberen Träger
   (world.js `objekte.traegerOben`) Richtung Tor, Dennis lässt los (Hüfte), der Träger landet auf Torbens Hand, Torben liegt. Dennis rennt
@@ -586,7 +590,7 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
 - Testmenü (1.11.): `?test` an die Adresse hängen (https://joelcode3.github.io/schweisskurs-simulator/?test), nach „Kurs starten“
   erscheint rechts das Menü (einklappbar, Gruppen aufklappbar). Unter Pointer-Lock erst Rechtsklick (Cursor), dann klicken.
   Jeder Eintrag hat eine FESTE Nummer (T01 …), die sich nie verschiebt; neue Einträge bekommen die nächste freie Nummer (zuletzt T79).
-  T17 erscheint erst, wenn das Pömpel-Minispiel (#62) in main ist. Ofen-Bau „Stand springen“ setzt den Stand VOR dem Schritt
+  Ofen-Bau „Stand springen“ setzt den Stand VOR dem Schritt
   (alles davor erledigt, Flasche am Platz, man steht dort); der Schritt wird dann normal im Spiel gemacht.
   Nr | Gruppe | Eintrag
   T01 | Minispiele (direkt) | Anzeichnen
