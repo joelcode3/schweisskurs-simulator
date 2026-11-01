@@ -1091,13 +1091,13 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     const p0 = beam.position.clone();
     for (let k = 0; k <= 20; k++) { const t = k / 20; beam.position.set(p0.x + (3.45 - p0.x) * t, p0.y + (traegerY - p0.y) * t * (2 - t), p0.z + (z0 + seitlich - p0.z) * t); beam.rotation.set(0, 0, 0); await warte(20); }
     klonk(0.4);
-    // Hände an den Träger: rechte Hand oben auf dem Träger über der Schulter, linke greift vorne quer davor
+    // rechte Hand oben auf dem Träger über der Schulter (Arm wird passend gestellt)
     const greifen = (fig, arme) => {
       fig.wurzel.updateMatrixWorld(true);
       const p = fig.position;
       const r = armAnpassen(arme.rechts, new THREE.Vector3(p.x + 0.05, traegerY + 0.06, z0 + seitlich + 0.02));
-      const l = armAnpassen(arme.links, new THREE.Vector3(p.x - 0.3, traegerY + 0.03, z0 + seitlich - 0.04));
-      return { rs: r.s, re: r.e, ls: l.s, le: l.e };
+      // linker Arm hängt leicht abgespreizt zum Ausbalancieren (schwer!)
+      return { rs: r.s, re: r.e, ls: [0.1, 0, -0.38], le: [-0.35, 0, 0] };
     };
     const tPose = greifen(torben, torben._test);
     const dPose = greifen(dennis, dennis._test);
