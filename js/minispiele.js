@@ -2543,3 +2543,143 @@ export function leiterSpiel() {
   });
   return versprechen;
 }
+
+// Klo pömpeln (P7): Querschnitt durch das Klo, das Wasser steht bis oben, im Rohr steckt der Pfropfen.
+// 1. Ansetzen: Pömpel mit der Maus genau über das Abflussloch bringen und Maus drücken = Glocke sitzt dicht.
+// 2. Pumpen: Maus gedrückt halten und hoch und runter ziehen. Jeder volle Hub (runter, dann hoch) schiebt den Pfropfen weiter.
+//    Zu schnell runtergedrückt = es spritzt (Spritzer zählen). Zu weit seitlich = Glocke rutscht ab, neu ansetzen.
+// Nach genug guten Hüben rutscht der Pfropfen durch und das Wasser läuft gurgelnd ab.
+export function poempelSpiel() {
+  let f, ablaufX, ablaufY, wasserY;
+  let px = 0, py = 0; // Mausposition
+  let sitzt = false, startY = 0, tief = 0; // tief 0 (oben) .. 1 (ganz gedrückt)
+  let unten = false, runterZeit = 0, letzteY = 0, tempo = 0;
+  let pfropfen = 0; // 0..1 entlang des Rohrs
+  let spritzer = 0, abgerutscht = 0, huebe = 0;
+  let ablaufen = 0; // 0..1 nach dem Durchbruch
+  const tropfen = [];
+  let meldung = '', meldungZeit = 0;
+  const meld = (t) => { meldung = t; meldungZeit = 2; };
+  function spritzen(n) {
+    for (let i = 0; i < n; i++) tropfen.push({ x: ablaufX + (Math.random() - 0.5) * 60, y: wasserY, vx: (Math.random() - 0.5) * 260, vy: -220 - Math.random() * 260, t: 0 });
+  }
+  // Rohr (S-Bogen) vom Abfluss nach rechts unten
+  function rohrPunkt(s) {
+    const x0 = ablaufX, y0 = ablaufY;
+    if (s < 0.35) { const t = s / 0.35; return [x0 + t * 30, y0 + t * f.h * 0.18]; }
+    if (s < 0.65) { const t = (s - 0.35) / 0.3; return [x0 + 30 + t * f.b * 0.18, y0 + f.h * 0.18 - Math.sin(t * Math.PI) * f.h * 0.1]; }
+    const t = (s - 0.65) / 0.35; return [x0 + 30 + f.b * 0.18 + t * f.b * 0.2, y0 + f.h * 0.18 + t * f.h * 0.12];
+  }
+  const { api, versprechen } = spielRahmen('Klo pömpeln', 'Pömpel genau über das Abflussloch bringen und Maus drücken (dicht ansetzen). Dann mit gedrückter Maus hoch und runter pumpen. Nicht zu hektisch, sonst spritzt es!', {
+    beiGroesse(m) {
+      f = flaeche(m);
+      ablaufX = f.x + f.b * 0.38; ablaufY = f.y + f.h * 0.72; wasserY = f.y + f.h * 0.22;
+      if (!px) { px = f.x + f.b * 0.15; py = wasserY - 40; }
+    },
+    events: {
+      pointermove(e) {
+        const p = zeigerPos(api.canvas, e);
+        px = p.x; py = p.y;
+        if (!sitzt || api.istFertig) return;
+        if (Math.abs(px - ablaufX) > 45) { sitzt = false; abgerutscht++; spritzen(6); klonk(0.2); meld('Abgerutscht! Wieder genau über dem Loch ansetzen.'); return; }
+        const neu = Math.max(0, Math.min(1, (py - startY) / 120));
+        tempo = Math.max(tempo, Math.abs(p.y - letzteY));
+        letzteY = p.y;
+        if (!unten && neu > 0.8) {
+          unten = true;
+          const dauer = performance.now() - runterZeit;
+          if (dauer < 170 || tempo > 40) { spritzer++; spritzen(14); klonk(0.3); meld('Zu hektisch! Es spritzt ...'); }
+        }
+        if (unten && neu < 0.2) {
+          unten = false; huebe++;
+          pfropfen = Math.min(1, pfropfen + 0.11 + Math.random() * 0.05);
+          blip(220 + pfropfen * 160, 0.06, 0.2);
+          runterZeit = performance.now(); tempo = 0;
+          if (pfropfen >= 1) { ablaufen = 0.001; meld('Er rutscht durch!'); }
+        }
+        tief = neu;
+      },
+      pointerdown(e) {
+        if (api.istFertig || ablaufen) return;
+        const p = zeigerPos(api.canvas, e);
+        if (Math.abs(p.x - ablaufX) < 26 && p.y > wasserY - 80) {
+          sitzt = true; startY = p.y; letzteY = p.y; tief = 0; unten = false; runterZeit = performance.now(); tempo = 0;
+          blip(320, 0.05);
+          meld('Sitzt dicht. Jetzt pumpen: runter und wieder hoch.');
+        } else { spritzen(3); meld('Daneben. Genau über das Abflussloch!'); }
+        api.canvas.setPointerCapture?.(e.pointerId);
+      },
+      pointerup() { sitzt = false; tief = 0; },
+      pointercancel() { sitzt = false; tief = 0; },
+    },
+    schritt(dt) {
+      meldungZeit = Math.max(0, meldungZeit - dt);
+      tempo = Math.max(0, tempo - dt * 200);
+      for (let i = tropfen.length - 1; i >= 0; i--) { const d = tropfen[i]; d.t += dt; d.vy += 900 * dt; d.x += d.vx * dt; d.y += d.vy * dt; if (d.t > 1.2) tropfen.splice(i, 1); }
+      if (ablaufen && !api.istFertig) {
+        ablaufen = Math.min(1, ablaufen + dt * 0.45);
+        if (ablaufen >= 1) api.fertig({ spritzer, abgerutscht, huebe });
+      }
+    },
+    zeichnen() {
+      const { ctx, m } = api;
+      ctx.fillStyle = '#2a2c30'; ctx.fillRect(0, 0, m.b, m.h);
+      // Fliesen
+      ctx.fillStyle = '#e8e4da'; ctx.fillRect(f.x, f.y, f.b, f.h);
+      ctx.strokeStyle = 'rgba(0,0,0,0.08)'; ctx.lineWidth = 2;
+      for (let x = f.x; x < f.x + f.b; x += 48) { ctx.beginPath(); ctx.moveTo(x, f.y); ctx.lineTo(x, f.y + f.h); ctx.stroke(); }
+      for (let y = f.y; y < f.y + f.h; y += 48) { ctx.beginPath(); ctx.moveTo(f.x, y); ctx.lineTo(f.x + f.b, y); ctx.stroke(); }
+      // Klo-Schüssel (Querschnitt): weißes Porzellan, innen die Mulde
+      const bx = ablaufX, bb = f.b * 0.42, top = f.y + f.h * 0.12;
+      ctx.fillStyle = '#fbfbf8'; ctx.strokeStyle = '#111'; ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(bx - bb / 2 - 20, top); ctx.lineTo(bx + bb / 2 + 20, top);
+      ctx.quadraticCurveTo(bx + bb / 2 + 10, ablaufY + 30, bx + 40, ablaufY + 50);
+      ctx.lineTo(bx - 40, ablaufY + 50);
+      ctx.quadraticCurveTo(bx - bb / 2 - 10, ablaufY + 30, bx - bb / 2 - 20, top);
+      ctx.fill(); ctx.stroke();
+      // Wasser (trüb, sinkt beim Ablaufen)
+      const wy = wasserY + (ablaufY - wasserY) * Math.min(1, ablaufen * 1.1);
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(bx - bb / 2 - 4, top + 6); ctx.lineTo(bx + bb / 2 + 4, top + 6);
+      ctx.quadraticCurveTo(bx + bb / 2 - 4, ablaufY + 22, bx + 30, ablaufY + 36);
+      ctx.lineTo(bx - 30, ablaufY + 36);
+      ctx.quadraticCurveTo(bx - bb / 2 - 4, ablaufY + 22, bx - bb / 2 - 4, top + 6);
+      ctx.clip();
+      ctx.fillStyle = 'rgba(150,130,80,0.75)';
+      ctx.fillRect(bx - bb, wy + Math.sin(performance.now() / 300) * 2, bb * 2, ablaufY + 60 - wy);
+      // Strudel beim Ablaufen
+      if (ablaufen) { ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 3; for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.arc(bx, wy + 30, 20 + k * 14, performance.now() / 200 + k, performance.now() / 200 + k + 2); ctx.stroke(); } }
+      ctx.restore();
+      // Rohr (S-Bogen) mit Pfropfen
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      const rohr = (b, farbe) => { ctx.strokeStyle = farbe; ctx.lineWidth = b; ctx.beginPath(); for (let i = 0; i <= 40; i++) { const [x, y] = rohrPunkt(i / 40); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); } ctx.stroke(); };
+      rohr(40, '#111'); rohr(32, '#d9d6cc'); rohr(20, ablaufen ? '#8a7a50' : 'rgba(150,130,80,0.75)');
+      if (!ablaufen || ablaufen < 0.4) {
+        const [kx, ky] = rohrPunkt(Math.min(0.98, 0.3 + pfropfen * 0.6 + ablaufen));
+        ctx.fillStyle = '#6b4a24'; ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.ellipse(kx, ky, 18, 13, 0.4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#f2efe4'; ctx.beginPath(); ctx.ellipse(kx - 5, ky - 3, 7, 4, 0.2, 0, Math.PI * 2); ctx.fill(); // Klopapier
+      }
+      // Abflussloch-Markierung
+      if (!sitzt && !ablaufen) { ctx.strokeStyle = 'rgba(255,200,30,0.9)'; ctx.setLineDash([6, 5]); ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(ablaufX, ablaufY + 34, 26, 8, 0, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); }
+      // Pömpel: folgt der Maus, sitzt er, steht er über dem Loch und geht mit dem Hub runter
+      const gx = sitzt ? ablaufX : px;
+      const gy = sitzt ? ablaufY + 6 + tief * 18 : Math.min(py, ablaufY + 6);
+      const quetsch = sitzt ? 1 - tief * 0.35 : 1;
+      ctx.strokeStyle = '#111'; ctx.lineWidth = 4;
+      ctx.fillStyle = '#b27a42'; ctx.fillRect(gx - 7, gy - 230, 14, 210); ctx.strokeRect(gx - 7, gy - 230, 14, 210);
+      ctx.fillStyle = '#c8352a';
+      ctx.beginPath(); ctx.ellipse(gx, gy, 38 / quetsch, 30 * quetsch, 0, Math.PI, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
+      // Spritzer
+      ctx.fillStyle = 'rgba(150,130,80,0.9)';
+      for (const d of tropfen) { ctx.beginPath(); ctx.arc(d.x, d.y, 5, 0, Math.PI * 2); ctx.fill(); }
+      balken(ctx, f.x, f.y + f.h + 26, f.b, 12, ablaufen ? 1 : pfropfen, '#ffc81e');
+      const kopf = api.istFertig ? (spritzer ? `Frei! ${spritzer}x gespritzt. Bäh.` : 'Frei! Sauber gepömpelt.') : ablaufen ? 'Es gurgelt ...' : sitzt ? 'Pumpen: Maus runter und wieder hoch ziehen (gleichmäßig)' : 'Pömpel über das gelbe Loch, dann Maus drücken';
+      textMitte(ctx, kopf, m.b / 2, f.y - 18, 18, '#ffe9a8');
+      if (meldungZeit > 0) textMitte(ctx, meldung, m.b / 2, f.y + f.h - 20, 20, '#ffb0a0');
+    },
+  });
+  return versprechen;
+}
