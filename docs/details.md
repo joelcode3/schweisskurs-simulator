@@ -539,3 +539,23 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
 - Hotfix Ausraster-Videos (v20261101-4): `auftritt()` in clips.js nimmt pro Auftritt ein frisches `<video>`-Element (kein
   wiederverwendetes vorgeladenes mehr), bis zu 6 Abspielversuche (ab dem 2. stumm, Ton beim nächsten Klick/Taste), Start auch bei `canplay`;
   erst danach der gezeichnete Dennis. `vorladen()` wärmt nur noch den Zwischenspeicher.
+
+## Offene Fäden und Ungetestetes (Übergabe 1.11.2026)
+- Ausraster-Videos: #54 (frisches Video-Element, bis zu 6 Versuche, canplay) ist nur eine Absicherung. Die Ursache ist unklar, im Test lief
+  alles (WebM statt H.264, Chromium kann hier kein H.264). Der Betreiber prüft im echten Browser (Browser und Anzeige erfragen: schwarz,
+  gezeichneter Dennis oder nichts). Das Problem besteht laut Betreiber schon länger. Brotdose und „Dennis abgeworfen“ sind stufe voll,
+  aber nebensache (nur Sprechblase, seit Commit 72a4e0a): gewollt? Der Betreiber muss entscheiden. Pages-Abruf ist von hier gesperrt.
+- Esc/Pointer-Lock (Paket A) ist im echten Browser ungetestet (Playwright kann Esc nicht ausprobieren).
+- Hoflader-Fahrt zum Palettenplatz ist nicht komplett getestet.
+- Hintergrundgeräusche (Paket H): nur Pegel gemessen, nicht nach Gehör beurteilt.
+- Jonnys Hand ist an der Leiter noch offen (greift nicht richtig).
+- Wasserhahn ohne Wasser (kein Strahl).
+- Die Gerte sieht noch wie eine Peitsche aus.
+- Aufgaben-Icons (Paket B) nur teilweise: Wäsche, Akkuschrauber, Bitsatz, Müll und Leiter fehlen noch.
+- Geänderte Satzwortlaute ohne Neuaufnahme: dennis434–436 und dennis442–446 (die Aufnahmen passen nicht mehr zum Text).
+- Test-Tricks: Waldos/Jonnys Timer stören Tests (`wz.beschaeftigt = true; wz.naechsterBesuch = 1e9`); kleine Teile in der Ferne
+  erscheinen erst nach ca. 9 s (`fernUpdate`); `setPointerCapture` unter Pointer-Lock in try/catch; JS-Syntax prüfen mit
+  `node --input-type=module --check < datei.js`.
+- Bekannt, aber (noch) nicht in der Projektliste: Betreiber-Wunsch Hotfix-Rückmeldung zu den Videos; Unsicherheit bei den
+  Zuordnungen der Clips (siehe „Clips“, Ton nicht transkribierbar).
+
