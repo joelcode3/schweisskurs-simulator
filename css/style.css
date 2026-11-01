@@ -1036,7 +1036,7 @@ button { font: inherit; color: inherit; }
 .warnung.feuer { background: #e2531e; }
 .warnung.wasser { background: #2f7fd1; }
 #warnungen { flex-direction: column-reverse; align-items: flex-end; gap: 10px; }
-.aufgabe { position: relative; width: 56px; height: 56px; display: grid; place-items: center; background: #26282c; border-radius: 50%; box-shadow: 3px 3px 0 #111; }
+.aufgabe { position: relative; width: 56px; height: 56px; display: grid; place-items: center; background: #26282c; border-radius: 50%; }
 .aufgabe .ring { position: absolute; inset: 0; width: 56px; height: 56px; transform: rotate(-90deg); }
 .aufgabe .ring circle { fill: none; stroke-width: 5; }
 .aufgabe .ring-hg { stroke: #111; }

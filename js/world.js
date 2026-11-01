@@ -357,15 +357,26 @@ export function baueWelt(scene) {
       tuerDreh.rotation.y = Math.PI * 0.47;
       fluegel.add(tuerDreh);
       // kleines handgeschriebenes Schild, mit einem Nagel neben die Tür gehauen (Außenseite)
-      const handTex = leinwandTextur(256, 160, (g, b, h) => {
+      // Text wird immer so verkleinert, dass er mit Rand ins Schild passt (egal welche Schrift gerade geladen ist);
+      // nach dem Laden der Schrift (Caveat) wird neu gemalt
+      const malHandSchild = (g, b, h) => {
         g.fillStyle = '#d8c39a'; g.fillRect(0, 0, b, h);
         const r = zufall(77);
         for (let y = 0; y < h; y += 5) { g.fillStyle = `rgba(110,80,45,${0.06 + r() * 0.08})`; g.fillRect(0, y, b, 2); }
         g.fillStyle = '#1d1d1f'; g.textAlign = 'center';
-        g.font = 'bold 46px Caveat, "Comic Sans MS", cursive';
-        g.save(); g.translate(b / 2, 66); g.rotate(-0.05); g.fillText('Schweisskurs,', 0, 0); g.restore();
-        g.save(); g.translate(b / 2 + 6, 122); g.rotate(-0.03); g.fillText('nicht stören!', 0, 0); g.restore();
-      });
+        const zeile = (text, y, drehung) => {
+          let px = 46;
+          g.font = `bold ${px}px Caveat, "Comic Sans MS", cursive`;
+          while (px > 16 && g.measureText(text).width > b - 44) { px -= 2; g.font = `bold ${px}px Caveat, "Comic Sans MS", cursive`; }
+          g.save(); g.translate(b / 2, y); g.rotate(drehung); g.fillText(text, 0, 0); g.restore();
+        };
+        zeile('Schweisskurs,', 66, -0.05);
+        zeile('nicht stören!', 122, -0.03);
+      };
+      const handTex = leinwandTextur(256, 160, malHandSchild);
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(() => { malHandSchild(handTex.image.getContext('2d'), 256, 160); handTex.needsUpdate = true; });
+      }
       const handSchild = new THREE.Group();
       handSchild.add(setze(quader(0.3, 0.19, 0.012, 0xc9b087, { umriss: 0.002 }), 0, 0, 0));
       const hsBild = new THREE.Mesh(new THREE.PlaneGeometry(0.29, 0.18), new THREE.MeshBasicMaterial({ map: handTex }));

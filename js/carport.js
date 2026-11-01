@@ -535,14 +535,14 @@ export function baueCarport(scene, { merke, hindernis }) {
   kettenhemd.position.set(0.25, 0.518, -1.78);
   kettenhemd.rotation.y = 0.2;
   benz.add(kettenhemd);
-  // Peitsche: Griff mit Lederwicklung und Knauf, lange geflochtene Schnur in Schlaufen
+  // Gerte (Reitgerte, Schlüssel intern weiter „peitsche“): kurzer Griff mit Lederwicklung und Knauf, langer dünner steifer Stab,
+  // am Ende eine kleine flache Lederklatsche. Keine Schnur.
   const peitsche = new THREE.Group();
-  peitsche.add(setze(zylinder(0.016, 0.02, 0.28, 0x2a1a10, { umriss: 0.0015 }, 8), 0, 0, 0, 0, 0, Math.PI / 2));
-  for (let k = 0; k < 6; k++) peitsche.add(setze(teil(new THREE.TorusGeometry(0.019, 0.004, 4, 10), 0x4a2a18, { umriss: false }), -0.1 + k * 0.035, 0, 0, 0, Math.PI / 2, 0));
-  peitsche.add(setze(kugel(0.024, 0x1d1d1f, { umriss: 0.0015 }, 8), -0.15, 0, 0));
-  const schnur = [];
-  for (let k = 0; k <= 60; k++) { const t = k / 60; const w = t * Math.PI * 3.2; const rr = 0.16 - t * 0.05; schnur.push(new THREE.Vector3(0.14 + rr + Math.cos(w + Math.PI) * rr, 0.004 + t * 0.012, Math.sin(w + Math.PI) * rr)); }
-  peitsche.add(teil(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(schnur), 100, 0.007, 5, false), 0x1d1d1f, { umriss: 0.001 }));
+  peitsche.add(setze(zylinder(0.014, 0.017, 0.14, 0x2a1a10, { umriss: 0.0015 }, 8), 0.07, 0, 0, 0, 0, Math.PI / 2));
+  for (let k = 0; k < 4; k++) peitsche.add(setze(teil(new THREE.TorusGeometry(0.016, 0.003, 4, 10), 0x4a2a18, { umriss: false }), 0.03 + k * 0.03, 0, 0, 0, Math.PI / 2, 0));
+  peitsche.add(setze(kugel(0.021, 0x1d1d1f, { umriss: 0.0015 }, 8), 0.0, 0, 0));
+  peitsche.add(setze(zylinder(0.003, 0.008, 0.58, 0x6b4a2a, { umriss: 0.001 }, 6), 0.43, 0.003, 0, 0, 0, Math.PI / 2 - 0.02));
+  peitsche.add(setze(quader(0.06, 0.004, 0.02, 0x1d1d1f, { umriss: 0.001 }), 0.73, 0.012, 0));
   peitsche.position.set(-0.32, 0.53, -2.12);
   peitsche.rotation.y = -0.4;
   benz.add(peitsche);
