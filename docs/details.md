@@ -576,6 +576,13 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Minispiel neu (`spanngurtSpiel({ verknotet })`): Knoten in Pfeilrichtung aufziehen (falsche Richtung = fester), verdrehte Stellen
   anklicken, dann im Kreis aufrollen mit Tempo-Anzeige (zu schnell = verdreht). Verknotet: 3 Knoten je Gurt, sonst 2 bzw. 1.
 
+- E1 Torben und der Stahlträger (1.11., Vorschau), spiel.js Abschnitt „E1“ (`TU`, `torbenUnfall`, `torbenVerarzten`): einmal pro Spiel
+  nach 6–10 min, nur wenn der Spieler in der Werkstatt ist und alles ruhig ist. Torben fragt Dennis, beide tragen den oberen Träger
+  (world.js `objekte.traegerOben`) Richtung Tor, Dennis lässt los (Hüfte), der Träger landet auf Torbens Hand, Torben liegt. Dennis rennt
+  panisch herum (z.dennisRaeumt = true, damit nichts anderes passiert). Aufgabe „Torben verarzten“ (90 s): Erste-Hilfe-Kasten nehmen
+  (Menü), auf Torben klicken, Minispiel `fingerSpiel` (abtupfen, drücken, Verband wickeln). Sonst verbindet Dennis ihn (Wut +10).
+  Danach 70 s Torben auf dem Sofa, ab dann dauerhaft weißer Verband an der rechten Hand (`torbenVerbandAn`). Der Träger bleibt liegen.
+
 ## Offene Fäden und Ungetestetes (Übergabe 1.11.2026)
 - Ausraster-Videos: #54 (frisches Video-Element, bis zu 6 Versuche, canplay) ist nur eine Absicherung. Die Ursache ist unklar, im Test lief
   alles (WebM statt H.264, Chromium kann hier kein H.264). Der Betreiber prüft im echten Browser (Browser und Anzeige erfragen: schwarz,
