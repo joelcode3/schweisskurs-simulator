@@ -2543,3 +2543,124 @@ export function leiterSpiel() {
   });
   return versprechen;
 }
+
+// Torbens Finger verarzten (E1): Hand von oben, der Zeigefinger blutet.
+// 1. Abtupfen: mit gedrückter Maus über das Blut wischen (Kompresse), es kommt immer etwas nach, also zügig.
+// 2. Druck: Maus auf der Wunde gedrückt halten, bis die Blutung steht (zu früh loslassen = blutet wieder).
+// 3. Verband: im Kreis um den Finger ziehen, vier Lagen. Zu schnell = Verband sitzt locker.
+export function fingerSpiel() {
+  let f, fx, fy; // Wunde (Fingermitte)
+  let phase = 'tupfen';
+  let px = 0, py = 0, maus = false;
+  const blut = [];
+  let nachTakt = 0, druck = 0, nachgeblutet = 0;
+  let lagen = 0, zieht = null, tempo = 0, locker = 0, lockerSperre = 0;
+  let meldung = '', meldungZeit = 0;
+  const meld = (t) => { meldung = t; meldungZeit = 2; };
+  const LAGEN = 4;
+  function neuesBlut(n = 1) {
+    for (let i = 0; i < n; i++) blut.push({ x: fx + (Math.random() - 0.5) * 70, y: fy + (Math.random() - 0.2) * 90, r: 10 + Math.random() * 12, hp: 1 });
+  }
+  const { api, versprechen } = spielRahmen('Torbens Finger verarzten', 'Erst das Blut mit der Kompresse abtupfen (Maus gedrückt drüberwischen), dann auf die Wunde drücken (Maus halten), dann den Verband im Kreis herumwickeln. Nicht hetzen!', {
+    beiGroesse(m) {
+      f = flaeche(m);
+      fx = f.x + f.b * 0.5; fy = f.y + f.h * 0.38;
+      if (!blut.length && phase === 'tupfen') neuesBlut(7);
+    },
+    events: {
+      pointerdown(e) {
+        if (api.istFertig) return;
+        const p = zeigerPos(api.canvas, e); px = p.x; py = p.y; maus = true;
+        if (phase === 'wickeln') zieht = Math.atan2(p.y - fy, p.x - fx);
+        if (phase === 'druecken' && Math.hypot(p.x - fx, p.y - fy) > 60) meld('Genau auf die Wunde drücken!');
+        api.canvas.setPointerCapture?.(e.pointerId);
+      },
+      pointermove(e) {
+        const p = zeigerPos(api.canvas, e); px = p.x; py = p.y;
+        if (phase === 'wickeln' && maus && zieht !== null && !api.istFertig) {
+          const a = Math.atan2(p.y - fy, p.x - fx);
+          let d = a - zieht;
+          while (d > Math.PI) d -= Math.PI * 2;
+          while (d < -Math.PI) d += Math.PI * 2;
+          zieht = a;
+          tempo += Math.abs(d) * 4;
+          lagen = Math.min(LAGEN, lagen + Math.abs(d) / (Math.PI * 2));
+          if (lagen >= LAGEN) { blip(760, 0.1); api.fertig({ locker, nachgeblutet }); }
+        }
+      },
+      pointerup() {
+        maus = false; zieht = null;
+        if (phase === 'druecken' && druck > 0 && druck < 1) { druck = 0; nachgeblutet++; neuesBlut(2); phase = 'tupfen'; meld('Zu früh losgelassen! Es blutet wieder.'); }
+      },
+      pointercancel() { maus = false; zieht = null; },
+    },
+    schritt(dt) {
+      meldungZeit = Math.max(0, meldungZeit - dt);
+      lockerSperre = Math.max(0, lockerSperre - dt);
+      if (phase === 'tupfen') {
+        nachTakt -= dt;
+        if (nachTakt <= 0) { nachTakt = 1.3; if (blut.length < 12) neuesBlut(1); }
+        if (maus) for (const b of blut) if (Math.hypot(px - b.x, py - b.y) < b.r + 26) b.hp -= dt * 2.4;
+        for (let i = blut.length - 1; i >= 0; i--) if (blut[i].hp <= 0) { blut.splice(i, 1); if (Math.random() < 0.3) blip(500, 0.03, 0.05); }
+        if (!blut.length) { phase = 'druecken'; meld('Sauber! Jetzt fest auf die Wunde drücken und halten.'); }
+      } else if (phase === 'druecken') {
+        if (maus && Math.hypot(px - fx, py - fy) < 60) druck = Math.min(1, druck + dt / 2.5);
+        if (druck >= 1) { phase = 'wickeln'; maus = false; meld('Blutung steht. Jetzt den Verband im Kreis herumwickeln.'); blip(660, 0.08); }
+      } else if (phase === 'wickeln') {
+        tempo *= Math.pow(0.02, dt);
+        const radS = tempo / 4 * 3.9;
+        if (maus && radS > 9 && lockerSperre <= 0) { locker++; lockerSperre = 1.5; klonk(0.2); meld('Zu schnell! Der Verband sitzt locker.'); }
+      }
+    },
+    zeichnen() {
+      const { ctx, m } = api;
+      ctx.fillStyle = '#2a2c30'; ctx.fillRect(0, 0, m.b, m.h);
+      // Werkstattboden als Unterlage
+      ctx.fillStyle = '#9a968c'; ctx.fillRect(f.x, f.y, f.b, f.h);
+      // Hand von oben: Handfläche unten, vier Finger nach oben, Daumen links; Zeigefinger (Mitte-links) verletzt
+      const HAUT = '#efc3a6';
+      ctx.fillStyle = HAUT; ctx.strokeStyle = '#111'; ctx.lineWidth = 4; ctx.lineJoin = 'round';
+      ctx.beginPath(); ctx.ellipse(fx + 30, f.y + f.h * 0.82, 120, 95, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      const finger = (x, y0, lang, w, dreh) => { ctx.save(); ctx.translate(x, y0); ctx.rotate(dreh); ctx.beginPath(); ctx.roundRect(-w / 2, -lang, w, lang + 20, w / 2); ctx.fill(); ctx.stroke(); ctx.restore(); };
+      finger(fx, f.y + f.h * 0.72, f.h * 0.5, 46, 0); // Zeigefinger (verletzt), Spitze bei fy
+      finger(fx + 55, f.y + f.h * 0.72, f.h * 0.54, 46, 0.05);
+      finger(fx + 108, f.y + f.h * 0.74, f.h * 0.48, 44, 0.12);
+      finger(fx + 152, f.y + f.h * 0.78, f.h * 0.38, 40, 0.22);
+      finger(fx - 95, f.y + f.h * 0.86, f.h * 0.34, 50, -0.9); // Daumen
+      // Quetschung: blau-lila am Fingernagel, Schnitt
+      ctx.fillStyle = '#7a5a8e'; ctx.beginPath(); ctx.ellipse(fx, fy - 30, 16, 12, 0, 0, Math.PI * 2); ctx.fill();
+      if (phase !== 'wickeln' || lagen < 1) { ctx.strokeStyle = '#8a1010'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(fx - 16, fy + 4); ctx.lineTo(fx + 14, fy - 4); ctx.stroke(); }
+      // Blut
+      for (const b of blut) { ctx.fillStyle = `rgba(178,20,20,${0.4 + b.hp * 0.55})`; ctx.beginPath(); ctx.arc(b.x, b.y, b.r * (0.6 + b.hp * 0.4), 0, Math.PI * 2); ctx.fill(); }
+      // Verbandlagen
+      if (lagen > 0) {
+        ctx.fillStyle = '#fbfbf8'; ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
+        const hoch = 30 + Math.min(lagen, LAGEN) * 18;
+        ctx.beginPath(); ctx.roundRect(fx - 27 - lagen * 1.5, fy - hoch / 2, 54 + lagen * 3, hoch, 12); ctx.fill(); ctx.stroke();
+        ctx.strokeStyle = 'rgba(0,0,0,0.18)'; ctx.lineWidth = 2;
+        for (let k = 0; k < Math.floor(lagen * 3); k++) { const y = fy - hoch / 2 + 8 + k * (hoch - 16) / Math.max(1, Math.floor(lagen * 3) - 1); ctx.beginPath(); ctx.moveTo(fx - 26, y); ctx.lineTo(fx + 26, y + 6); ctx.stroke(); }
+        if (locker) { ctx.strokeStyle = '#fbfbf8'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(fx + 30, fy + 10); ctx.quadraticCurveTo(fx + 70, fy + 30, fx + 60, fy + 70); ctx.stroke(); }
+      }
+      // Werkzeug am Mauszeiger: Kompresse (Tupfen/Drücken) oder Verbandrolle (Wickeln)
+      if (!api.istFertig) {
+        if (phase === 'wickeln') {
+          ctx.strokeStyle = 'rgba(255,233,168,0.85)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(fx, fy, 70, -0.4, Math.PI * 1.3); ctx.stroke();
+          ctx.fillStyle = '#fbfbf8'; ctx.strokeStyle = '#111'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(px, py, 16, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+          ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2); ctx.stroke();
+        } else {
+          ctx.fillStyle = maus ? '#f4f0e6' : 'rgba(250,250,245,0.85)'; ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.roundRect(px - 24, py - 24, 48, 48, 6); ctx.fill(); ctx.stroke();
+        }
+      }
+      if (phase === 'druecken') balken(ctx, fx - 100, f.y + 16, 200, 12, druck, '#5ac85a');
+      const anteil = phase === 'tupfen' ? 0.05 : phase === 'druecken' ? 0.33 + druck * 0.33 : 0.66 + lagen / LAGEN * 0.34;
+      balken(ctx, f.x, f.y + f.h + 26, f.b, 12, api.istFertig ? 1 : anteil, '#ffc81e');
+      ctx.lineJoin = 'round'; ctx.miterLimit = 2;
+      const kopf = api.istFertig ? (locker ? 'Verbunden. Sitzt ein bisschen locker.' : 'Sauber verbunden!')
+        : phase === 'tupfen' ? `Blut abtupfen: Maus gedrückt drüberwischen (${blut.length} Flecken)` : phase === 'druecken' ? 'Auf die Wunde drücken und halten' : `Verband wickeln: im Kreis ziehen (${Math.floor(lagen)} von ${LAGEN} Lagen)`;
+      textMitte(ctx, kopf, m.b / 2, f.y - 18, 18, '#ffe9a8');
+      if (meldungZeit > 0) textMitte(ctx, meldung, m.b / 2, f.y + f.h - 20, 20, '#ffb0a0');
+    },
+  });
+  return versprechen;
+}

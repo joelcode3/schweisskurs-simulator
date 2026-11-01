@@ -6,10 +6,10 @@ import { bereich } from './wege.js';
 import { eierKartonModell, mettendenModell, kaeseModell } from './landschaft.js';
 import { setze } from './toon.js';
 import { auftritt, hatClip, buehneBelegt } from './clips.js';
-import { pfadSpiel, schlackeSpiel, hulaSpiel, DENNIS_HULA_REKORD, ventilSpiel, spuelSpiel, anzeichnenSpiel, lackierSpiel, bitsatzSpiel, akkuschrauberSpiel, siebSpiel, kaffeeSpiel, rohrSpiel, leiterSpiel, spanngurtSpiel, pumpeSpiel } from './minispiele.js';
+import { pfadSpiel, schlackeSpiel, hulaSpiel, DENNIS_HULA_REKORD, ventilSpiel, spuelSpiel, anzeichnenSpiel, lackierSpiel, bitsatzSpiel, akkuschrauberSpiel, siebSpiel, kaffeeSpiel, rohrSpiel, leiterSpiel, spanngurtSpiel, pumpeSpiel, fingerSpiel } from './minispiele.js';
 import { bierAuf, blip, kratzen, jingle, klonk as klonkRoh, brummeln, dauer as dauerTon, technoAn, technoAus, technoBeat, klospuelung, mampfen, klick as schalterKlick, stimmeAbspielen, stimmenVorladen, husten, gertenKlatsch } from './audio.js';
 import * as ui from './ui.js';
-import { DENNIS, JONNY, WALDO, KUMPEL, satzId } from './texte.js';
+import { DENNIS, JONNY, WALDO, TORBEN, KUMPEL, satzId } from './texte.js';
 import { SYMBOL } from './gesicht.js';
 import { baueFahrten } from './fahrten.js';
 
@@ -1021,6 +1021,153 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     dennisSagt(sag(DENNIS.traeger), true, { prio: 2 });
   }
 
+  // ---------- E1: Torben und der Stahlträger ----------
+  // Torben kommt (nur wenn der Spieler in der Werkstatt ist), Dennis hilft einen Träger raustragen, lässt nach ein paar Metern los,
+  // der Träger fällt Torben auf den Finger. Torben liegt, Dennis rennt panisch rum. Spieler: Erste-Hilfe-Kasten holen, auf Torben
+  // klicken, Minispiel. Danach liegt Torben eine Weile auf dem Sofa und hat ab dann dauerhaft einen weißen Verband.
+  const TU = { zustand: null, ab: 360 + Math.random() * 240, seit: 0 }; // null | laeuft | liegt | verarztet | sofa | fertig
+  const TORBEN_FRIST = 90;
+  let torbenVerband = null;
+  function torbenVerbandAn() {
+    if (torbenVerband) return;
+    const hand = torben._test.rechts.hand;
+    torbenVerband = new THREE.Group();
+    const weiss = new THREE.MeshToonMaterial({ color: 0xfbfbf8 });
+    const wickel = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.05, 0.1, 12), weiss);
+    wickel.position.set(0, -0.05, 0);
+    torbenVerband.add(wickel);
+    const finger = new THREE.Mesh(new THREE.CapsuleGeometry(0.022, 0.07, 4, 8), weiss);
+    finger.position.set(-0.02, -0.13, 0.01);
+    torbenVerband.add(finger);
+    for (const y of [-0.02, -0.07]) { const band = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.005, 4, 14), new THREE.MeshToonMaterial({ color: 0xd8d4c8 })); band.rotation.x = Math.PI / 2; band.position.y = y; torbenVerband.add(band); }
+    hand.add(torbenVerband);
+  }
+  const TU_SZENE = () => dennis.wurzel.parent;
+  function torbenLiegt(an, x, zz, drehung = 0, hoehe = 0.12) {
+    const w = torben.wurzel;
+    w.rotation.order = 'YXZ';
+    if (an) { torben.halt(); w.position.set(x, hoehe, zz); w.rotation.set(-Math.PI / 2, drehung, 0); }
+    else { w.rotation.set(0, drehung, 0); w.position.set(x, 0, zz); }
+  }
+  async function torbenUnfall() {
+    if (TU.zustand) return;
+    const tb = fahrten.zustand.torben;
+    TU.zustand = 'laeuft';
+    tb.unterwegs = true;
+    z.beschaeftigt = true;
+    torben.sitzen(null);
+    if (!torben.wurzel.visible) { torben.wurzel.position.set(-0.35, 0, 5.8); torben.sichtbar(true); }
+    await Promise.race([torben.gehZu(dennis.position.x + 0.8, dennis.position.z + 0.5, 1.4), warte(15000)]);
+    torben.dreheZu(dennis.position);
+    dennis.wurzel.rotation.y = Math.atan2(torben.position.x - dennis.position.x, torben.position.z - dennis.position.z);
+    ui.torbenSagt(sag(TORBEN.traegerHilfe), 4000);
+    await warte(2600);
+    await dennisSagt(sag(DENNIS.traegerUnfall.helfen), false, { prio: 2 });
+    // zu den Trägern: Dennis links, Torben rechts davor
+    await Promise.all([Promise.race([dennis.gehZu(2.45, 2.72, 1.3), warte(9000)]), Promise.race([torben.gehZu(4.45, 2.72, 1.3), warte(9000)])]);
+    const beam = welt.objekte.traegerOben;
+    TU_SZENE().attach(beam);
+    dennis.wurzel.rotation.y = 0; torben.dreheZu(new THREE.Vector3(4.45, 0, 4));
+    await warte(500);
+    // tragen: Träger hängt zwischen beiden auf Hüfthöhe
+    let tragen = true;
+    const folgen = async () => {
+      while (tragen) {
+        const a = dennis.position, b = torben.position;
+        beam.position.set((a.x + b.x) / 2, 0.78, (a.z + b.z) / 2 + 0.25);
+        beam.rotation.set(0, -Math.atan2(b.z - a.z, b.x - a.x), 0);
+        await warte(16);
+      }
+    };
+    folgen();
+    klonk(0.4);
+    // ein paar Meter Richtung Tor, dann lässt Dennis los
+    const d1 = dennis.gehZu(0.6, 2.72, 0.7), t1 = torben.gehZu(2.6, 2.72, 0.7);
+    await warte(2600);
+    dennis.halt?.(); torben.halt();
+    dennis.platziere(dennis.position.x, 0, dennis.position.z, -Math.PI / 2);
+    void d1; void t1;
+    await dennisSagt(sag(DENNIS.traegerUnfall.loslassen), true, { prio: 2, minMs: 1500 });
+    tragen = false;
+    // Dennis' Ende knallt runter, dann rutscht der ganze Träger auf Torbens Hand
+    const a = dennis.position.clone(), b = torben.position.clone();
+    const start = beam.position.clone(), r0 = beam.rotation.y;
+    for (let k = 0; k <= 20; k++) {
+      const t = k / 20;
+      beam.position.set(start.x + (b.x - start.x) * 0.35 * t, 0.78 - 0.66 * t * t, start.z);
+      beam.rotation.set(0, r0, (t < 0.5 ? t * 0.5 : (1 - t) * 0.5) * (a.x < b.x ? 1 : -1));
+      await warte(16);
+    }
+    klonk(0.9); setTimeout(() => klonk(0.6), 120);
+    ui.torbenSagt(sag(TORBEN.aua), 4000);
+    torbenLiegt(true, b.x + 0.2, b.z - 0.35, -Math.PI / 2);
+    TU.zustand = 'liegt';
+    TU.seit = sekundenSeitStart();
+    z.beschaeftigt = false;
+    ui.hinweis('Torben liegt am Boden! Schnell den Erste-Hilfe-Kasten holen (rechte Wand) und Torben verarzten.', 6000);
+    dennisPanik();
+  }
+  async function dennisPanik() {
+    const PUNKTE = [[-2, 0], [1, 1.2], [2.5, -1], [-1, -1.5], [0, 2], [3, 1.4], [-3, 1.6], [1.8, 0.2]];
+    let n = 0;
+    while (TU.zustand === 'liegt' && !z.vorbei) {
+      const [x, zz] = PUNKTE[Math.floor(Math.random() * PUNKTE.length)];
+      if (n++ % 2 === 0) dennisSagt(sag(DENNIS.traegerUnfall.panik), true, { prio: 1 });
+      dennis.stimmung('wut');
+      await Promise.race([dennis.gehZu(x, zz, 3.4), warte(3500)]);
+    }
+  }
+  async function torbenVerarzten(durchDennis = false) {
+    if (TU.zustand !== 'liegt') return;
+    TU.zustand = 'verarztet';
+    z.beschaeftigt = true;
+    if (durchDennis) {
+      await Promise.race([dennis.gehZu(torben.position.x - 0.6, torben.position.z, 1.6), warte(8000)]);
+      await warte(3500);
+      torbenVerbandAn();
+      aerger(10);
+      dennisSagt(sag(DENNIS.traegerUnfall.selbst), true, { prio: 2 });
+    } else {
+      steuerung.sperre(true);
+      const e = await fingerSpiel();
+      steuerung.sperre(false);
+      if (!e || e.abgebrochen) { TU.zustand = 'liegt'; z.beschaeftigt = false; dennisPanik(); return; }
+      const box = hand.weg();
+      if (box) welt.zurueckAnDieWand(box);
+      handleisteZeigen();
+      torbenVerbandAn();
+      z.wut = Math.max(0, z.wut - (e.locker ? 6 : 12));
+      aktualisieren();
+      jingle(true);
+      dennis.stimmung('froh');
+      dennisSagt(sag(DENNIS.traegerUnfall.erleichtert), false, { prio: 2 });
+    }
+    ui.torbenSagt(sag(TORBEN.danke), 3500);
+    // Träger liegt jetzt halt da, wo er hingefallen ist; Torben steht auf und legt sich aufs Sofa
+    const p = torben.position.clone();
+    torbenLiegt(false, p.x, p.z, -Math.PI / 2);
+    z.beschaeftigt = false;
+    dennis.heim();
+    await Promise.race([torben.gehZu(-3.2, 2.6, 0.8), warte(15000)]);
+    torbenLiegt(true, -3.95, 3.45, -Math.PI / 2, 0.5);
+    TU.zustand = 'sofa';
+    await warte(70000);
+    torbenLiegt(false, -3.2, 2.6, Math.PI);
+    ui.torbenSagt(sag(TORBEN.verband), 4000);
+    TU.zustand = 'fertig';
+    const tb = fahrten.zustand.torben;
+    tb.da = true; tb.unterwegs = false; tb.bisWeg = sekundenSeitStart() + 30;
+  }
+  function torbenUnfallUpdate() {
+    const t = sekundenSeitStart();
+    if (TU.zustand === 'liegt' && t - TU.seit > TORBEN_FRIST) { torbenVerarzten(true); return; }
+    if (TU.zustand || t < TU.ab || z.vorbei) return;
+    const tb = fahrten.zustand.torben, p = kamera.position;
+    if (bereich(p.x, p.z) !== 'werkstatt' || tb.unterwegs || fahrten.faehrt || fahrten.zustand.npc) return;
+    if (z.beschaeftigt || !ruhig() || buehneBelegt() || dennis.modus !== 'normal' || !dennis.istDaheim() || z.aufKlo || z.mittag === 'gerade' || z.hula || z.dennisFegt || z.dennisLoescht || z.dennisRaeumt) return;
+    torbenUnfall();
+  }
+
   // ---------- Verstopftes Klo: Pömpel oben aus dem Regal holen ----------
   async function kloVerstopft() {
     z.verstopft = 'ja';
@@ -1911,6 +2058,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     if (z.verstopft === 'ja') dazu('klo', 'Klo verstopft', z.verstopftSeit, 70);
     if (wz.pumpe === 'imWeg' || wz.pumpe === 'sauber') dazu('pumpe', 'Kackepumpe', wz.pumpeSeit, 120);
     if (z.tassenSeit != null && !z.dennisRaeumt) dazu('tassen', 'Tassen', z.tassenSeit, TASSEN_FRIST);
+    if (TU.zustand === 'liegt') dazu('erstehilfe', 'Torben verarzten', TU.seit, TORBEN_FRIST, true);
     if (z.flaschenSeit != null && !z.dennisRaeumt) dazu('flaschen', 'Flaschen', z.flaschenSeit, FLASCHEN_FRIST);
     if (z.gurte === 'boden') dazu('gurte', 'Spanngurte', z.gurteSeit, GURT_FRIST);
     ui.aufgabenIcons(z.vorbei ? [] : l);
@@ -2137,6 +2285,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   function waldoUpdate() {
     akkuUpdate();
     tassenUpdate();
+    torbenUnfallUpdate();
     telefonUpdate();
     if (dennis.telefoniert && (dennis.modus !== 'normal' || z.beschaeftigt)) telefonAuflegen();
     pumpeUpdate();
@@ -3299,6 +3448,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
         await cremeGeben();
         return true;
       }
+      if (it.id === 'verbandskasten' && ziel === 'torben' && TU.zustand === 'liegt') { await hinZu(info, treffer.obj); await torbenVerarzten(); return true; }
       if (it.id === 'bierflasche' && ziel === 'bierkasten') { await hinZu(info, treffer.obj); flascheInKasten(); return true; }
       if (it.id === 'tasse' && ziel === 'kuehlschrank') { await hinZu(info, treffer.obj); tasseWegraeumen(); return true; }
       if (it.id === 'kackpumpe' && (ziel === 'dusche' || ziel === 'waschbecken')) { await hinZu(info, treffer.obj); await pumpeWaschen(); return true; }
@@ -3370,6 +3520,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
 
   function menueFuer(id, obj = null) {
     const A = (text, symbol, tun) => ({ text, symbol, tun });
+    if (id === 'torben' && TU.zustand === 'liegt') return ['Torben', 'Liegt am Boden und hält sich den Finger. Erste-Hilfe-Kasten holen (rechte Wand)!', []];
+    if (id === 'torben' && TU.zustand === 'sofa') return ['Torben', 'Liegt auf dem Sofa, den Finger hoch. Lass ihn mal.', []];
     const ausFahrten = fahrten.menue(id, obj);
     if (ausFahrten) return ausFahrten;
     // Platzhalter-Kumpels (noch ohne Aufgabe)
@@ -3584,6 +3736,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       case 'poempel':
         return ['Pömpel', 'Saugglocke mit Holzstiel. Für alles, was nicht abläuft.', [A('In die Hand nehmen', 'hand', () => aufnehmen('poempel', welt.objekte.poempel))]];
       case 'ersteHilfe':
+        if (TU.zustand === 'liegt' && !hand.item) return ['Erste-Hilfe-Kasten', 'Schnell!', [A('Kasten nehmen', 'hand', () => { hand.nimm('verbandskasten', welt.objekte.ersteHilfe); blip(520, 0.05); handleisteZeigen(); ui.hinweis('Jetzt auf Torben klicken.', 2500); })]];
         return ['Erste-Hilfe-Kasten', 'Pflaster, Verband, Brandgel. Hoffentlich brauchst du den nicht.', []];
       case 'handy':
         return ['Dein Handy', '3 neue Nachrichten.', [A('In die Hand nehmen', 'hand', () => aufnehmen('handy', welt.objekte.handy))]];
@@ -3934,7 +4087,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   return {
     zustand: z,
     klick,
-    test: { get z() { return z; }, spanngurtEreignis, gurteHinwerfen, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
+    test: { get z() { return z; }, TU, torbenUnfall, torbenVerarzten, torbenVerbandAn, spanngurtEreignis, gurteHinwerfen, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
     stationWaehlen,
     intro,
     aktualisieren,

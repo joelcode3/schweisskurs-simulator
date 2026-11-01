@@ -29,6 +29,7 @@ const HALTUNG = {
   hulahup: { pos: [0.3, -0.5, -1.05], rot: [0.35, 1.1, 0], skala: 0.85, name: 'Hula-Hoop-Reifen', benutzen: 'Dennis bringen' },
   creme: { pos: [0.18, -0.16, -0.42], rot: [0.2, 0.4, 0], skala: 1.5, name: 'Lockencreme', benutzen: 'Dennis geben (auf Dennis klicken)' },
   bierflasche: { pos: [0.2, -0.22, -0.5], rot: [0.3, 0, 0], skala: 1.6, name: 'Leere Bierflasche', benutzen: null },
+  verbandskasten: { pos: [0.22, -0.3, -0.55], rot: [0.1, -1.2, 0], skala: 1.0, name: 'Erste-Hilfe-Kasten', nichtWerfen: true, benutzen: 'Torben verarzten (auf Torben klicken)' },
   poempel: { pos: [0.22, -0.45, -0.62], rot: [0.35, 0, -0.25], name: 'Pömpel', benutzen: 'Pömpeln' },
   tasse: { pos: [0.2, -0.2, -0.45], rot: [0.1, 2.0, 0], skala: 1.3, name: 'Benutzte Kaffeetasse', benutzen: 'Auf den Kühlschrank stellen' },
   kackpumpe: { pos: [0.3, -0.5, -0.85], rot: [0.15, 0.6, 0], skala: 0.85, name: 'Kackepumpe', benutzen: 'Abwaschen (Bad) / zurückstellen (Kompressor)' },

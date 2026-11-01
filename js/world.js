@@ -471,6 +471,8 @@ export function baueWelt(scene) {
   setze(ersteHilfe, RAUM.xMax - 0.06, 1.45, -1.55, 0, -Math.PI / 2, 0);
   scene.add(ersteHilfe);
   merke(ersteHilfe, 'ersteHilfe', 'Erste-Hilfe-Kasten', null);
+  objekte.ersteHilfe = ersteHilfe;
+  ersteHilfe.userData.wand = { pos: ersteHilfe.position.clone(), rot: ersteHilfe.rotation.clone() };
 
   // Hula-Hoop-Reifen an der Rückwand zwischen Regal und Werkbank
   const reifen = baueReifen();
@@ -935,6 +937,7 @@ export function baueWelt(scene) {
   oben.position.set(0.1, 0.3, -0.12);
   oben.rotation.y = 0.06;
   traeger.add(oben);
+  objekte.traegerOben = oben; // den tragen Torben und Dennis raus (E1)
   // Kreide-Markierung
   const kreide = leinwandTextur(128, 32, (g) => { g.fillStyle = '#4b4f55'; g.fillRect(0, 0, 128, 32); g.fillStyle = '#f2f0ea'; g.font = 'bold 22px Arial'; g.fillText('HEB 200', 8, 24); });
   const kreideSchild = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.1), new THREE.MeshBasicMaterial({ map: kreide }));
