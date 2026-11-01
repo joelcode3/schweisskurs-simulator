@@ -1309,6 +1309,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     L.scale.setScalar(1 / 0.95);
     L.visible = true;
     L.userData.interaktiv = null;
+    jonny.leiterHalten(true);
     await warte(1200);
     ui.jonnySagt(sag(JONNY.leiterRaus));
     jz.da = false;
@@ -1316,6 +1317,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     jz.draussenOrt = 'feldweg';
     await rausgehen(jonny, 'feldweg');
     L.removeFromParent();
+    jonny.leiterHalten(false);
     jz.zurueckAb = sekundenSeitStart() + 70 + Math.random() * 60;
     jz.beschaeftigt = false;
   }
@@ -1430,11 +1432,13 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       segway.anker.add(waldo.wurzel);
       waldo.wurzel.position.set(0, 0, 0);
       waldo.wurzel.rotation.set(0, 0, 0);
+      waldo.haltung('fahren');
       waldo.sichtbar(true);
       for (const p of [...FELDWEG.slice(0, 7).reverse(), { x: 2.0, z: 9.6 }, SEGWAY_PARK]) await Promise.race([segway.fahreZu(p.x, p.z, 3.2), warte(15000)]);
       dennis.wurzel.parent.attach(waldo.wurzel);
       waldo.wurzel.position.y = 0;
       waldo.wurzel.rotation.set(0, waldo.wurzel.rotation.y, 0);
+      waldo.haltung('handy');
       await lauf(waldo, [DRAUSSEN.tuerAussen, DRAUSSEN.tuerInnen], tempo);
       return;
     }
@@ -1450,6 +1454,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       segway.anker.add(waldo.wurzel);
       waldo.wurzel.position.set(0, 0, 0);
       waldo.wurzel.rotation.set(0, 0, 0);
+      waldo.haltung('fahren');
       for (const p of [{ x: 2.0, z: 9.6 }, ...FELDWEG.slice(0, 8)]) await Promise.race([segway.fahreZu(p.x, p.z, 3.2), warte(15000)]);
       segway.sichtbar(false);
       dennis.wurzel.parent.attach(waldo.wurzel);
