@@ -1069,7 +1069,11 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     TU_SZENE().attach(beam);
     dennis.wurzel.rotation.y = 0; torben.dreheZu(new THREE.Vector3(4.45, 0, 4));
     await warte(500);
-    // tragen: Träger hängt zwischen beiden auf Hüfthöhe
+    // tragen: Träger hängt zwischen beiden auf Hüfthöhe; beide greifen mit der rechten Hand seitlich zu
+    const tArme = torben._test;
+    tArme.rechts.schulter.rotation.set(0.15, 0, 0.32); tArme.rechts.ellbogen.rotation.set(-0.35, 0, 0);
+    tArme.links.schulter.rotation.set(0.1, 0, -0.08); tArme.links.ellbogen.rotation.set(-0.1, 0, 0);
+    dennis.trage(new THREE.Group());
     let tragen = true;
     const folgen = async () => {
       while (tragen) {
@@ -1089,6 +1093,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     void d1; void t1;
     await dennisSagt(sag(DENNIS.traegerUnfall.loslassen), true, { prio: 2, minMs: 1500 });
     tragen = false;
+    dennis.trage(null);
+    torben.leiterHalten(false);
     // Dennis' Ende knallt runter, dann rutscht der ganze Träger auf Torbens Hand
     const a = dennis.position.clone(), b = torben.position.clone();
     const start = beam.position.clone(), r0 = beam.rotation.y;
