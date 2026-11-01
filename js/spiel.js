@@ -1043,6 +1043,21 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     hand.add(torbenVerband);
   }
   const TU_SZENE = () => dennis.wurzel.parent;
+  // Arm so stellen, dass die Hand möglichst genau an ziel (Welt) liegt: grobe Suche, dann fein (Schulter x/z, Ellbogen x)
+  function armAnpassen(arm, ziel) {
+    const v = new THREE.Vector3();
+    const probe = (sx, sz, ex) => { arm.schulter.rotation.set(sx, 0, sz); arm.ellbogen.rotation.set(ex, 0, 0); arm.schulter.updateMatrixWorld(true); arm.hand.getWorldPosition(v); return v.distanceTo(ziel); };
+    let best = [0, 0, 0], bd = Infinity;
+    for (let sx = -3.1; sx <= 0.6; sx += 0.15) for (let sz = -1.3; sz <= 1.4; sz += 0.15) for (let ex = -2.5; ex <= 0.1; ex += 0.15) {
+      const d = probe(sx, sz, ex); if (d < bd) { bd = d; best = [sx, sz, ex]; }
+    }
+    const [bx, bz, be] = best;
+    for (let sx = bx - 0.15; sx <= bx + 0.15; sx += 0.03) for (let sz = bz - 0.15; sz <= bz + 0.15; sz += 0.03) for (let ex = be - 0.15; ex <= be + 0.15; ex += 0.03) {
+      const d = probe(sx, sz, ex); if (d < bd) { bd = d; best = [sx, sz, ex]; }
+    }
+    probe(...best);
+    return { s: [best[0], 0, best[1]], e: [best[2], 0, 0], fehler: bd };
+  }
   function torbenLiegt(an, x, zz, drehung = 0, hoehe = 0.12) {
     const w = torben.wurzel;
     w.rotation.order = 'YXZ';
@@ -1067,24 +1082,43 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     await Promise.all([Promise.race([dennis.gehZu(2.45, 2.72, 1.3), warte(9000)]), Promise.race([torben.gehZu(4.45, 2.72, 1.3), warte(9000)])]);
     const beam = welt.objekte.traegerOben;
     TU_SZENE().attach(beam);
-    dennis.wurzel.rotation.y = 0; torben.dreheZu(new THREE.Vector3(4.45, 0, 4));
-    await warte(500);
-    // tragen: Träger hängt zwischen beiden auf Hüfthöhe; beide greifen mit der rechten Hand seitlich zu
+    // beide drehen sich Richtung Tor (−x) und nehmen den Träger auf die rechte Schulter
+    dennis.platziere(dennis.position.x, 0, dennis.position.z, -Math.PI / 2);
+    torben.wurzel.rotation.y = -Math.PI / 2;
+    await warte(300);
+    const traegerY = 1.44, seitlich = 0.2; // rechts = +z, wenn man nach −x schaut
+    const z0 = (dennis.position.z + torben.position.z) / 2;
+    const p0 = beam.position.clone();
+    for (let k = 0; k <= 20; k++) { const t = k / 20; beam.position.set(p0.x + (3.45 - p0.x) * t, p0.y + (traegerY - p0.y) * t * (2 - t), p0.z + (z0 + seitlich - p0.z) * t); beam.rotation.set(0, 0, 0); await warte(20); }
+    klonk(0.4);
+    // Hände an den Träger: rechte Hand oben auf dem Träger über der Schulter, linke greift vorne quer davor
+    const greifen = (fig, arme) => {
+      fig.wurzel.updateMatrixWorld(true);
+      const p = fig.position;
+      const r = armAnpassen(arme.rechts, new THREE.Vector3(p.x + 0.05, traegerY + 0.06, z0 + seitlich + 0.02));
+      const l = armAnpassen(arme.links, new THREE.Vector3(p.x - 0.3, traegerY + 0.03, z0 + seitlich - 0.04));
+      return { rs: r.s, re: r.e, ls: l.s, le: l.e };
+    };
+    const tPose = greifen(torben, torben._test);
+    const dPose = greifen(dennis, dennis._test);
+    dennis.armPose(dPose);
     const tArme = torben._test;
-    tArme.rechts.schulter.rotation.set(0.15, 0, 0.32); tArme.rechts.ellbogen.rotation.set(-0.35, 0, 0);
-    tArme.links.schulter.rotation.set(0.1, 0, -0.08); tArme.links.ellbogen.rotation.set(-0.1, 0, 0);
-    dennis.trage(new THREE.Group());
+    const torbenHalten = () => { tArme.rechts.schulter.rotation.set(...tPose.rs); tArme.rechts.ellbogen.rotation.set(...tPose.re); tArme.links.schulter.rotation.set(...tPose.ls); tArme.links.ellbogen.rotation.set(...tPose.le); };
+    torbenHalten();
     let tragen = true;
+    // Träger liegt beiden auf der Schulter; schwer: beide neigen sich etwas weg, er wippt bei jedem Schritt
     const folgen = async () => {
       while (tragen) {
         const a = dennis.position, b = torben.position;
-        beam.position.set((a.x + b.x) / 2, 0.78, (a.z + b.z) / 2 + 0.25);
-        beam.rotation.set(0, -Math.atan2(b.z - a.z, b.x - a.x), 0);
+        beam.position.set((a.x + b.x) / 2, traegerY + Math.sin(performance.now() / 160) * 0.015, z0 + seitlich);
+        beam.rotation.set(0, 0, 0);
+        dennis.wurzel.rotation.z = -0.07; torben.wurzel.rotation.z = -0.07;
+        torbenHalten();
         await warte(16);
       }
+      dennis.wurzel.rotation.z = 0; torben.wurzel.rotation.z = 0;
     };
     folgen();
-    klonk(0.4);
     // ein paar Meter Richtung Tor, dann lässt Dennis los
     const d1 = dennis.gehZu(0.6, 2.72, 0.7), t1 = torben.gehZu(2.6, 2.72, 0.7);
     await warte(2600);
@@ -1093,7 +1127,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     void d1; void t1;
     await dennisSagt(sag(DENNIS.traegerUnfall.loslassen), true, { prio: 2, minMs: 1500 });
     tragen = false;
-    dennis.trage(null);
+    dennis.armPose(null);
     torben.leiterHalten(false);
     // Dennis' Ende knallt runter, dann rutscht der ganze Träger auf Torbens Hand
     const a = dennis.position.clone(), b = torben.position.clone();
@@ -1163,7 +1197,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     z.beschaeftigt = false;
     dennis.heim();
     await Promise.race([torben.gehZu(-3.2, 2.6, 0.8), warte(15000)]);
-    torbenLiegt(true, -3.95, 3.45, -Math.PI / 2, 0.5);
+    // Kopf auf dem Polster an der linken Lehne, Füße hängen über die rechte Armlehne (Torben ist länger als die Sitzfläche)
+    torbenLiegt(true, -2.12, 3.42, Math.PI / 2, 0.6);
     TU.zustand = 'sofa';
     await warte(70000);
     torbenLiegt(false, -3.2, 2.6, Math.PI);

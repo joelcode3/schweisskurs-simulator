@@ -302,6 +302,7 @@ export function baueDennis(scene) {
   let telefoniert = false;
   let geste = null;
   let getragen = null;
+  let armPose = null; // feste Armhaltung von außen (z. B. Träger auf der Schulter tragen), überschreibt alles andere
   const TELEFON = { s: [-2.0, -0.47, 0.3], e: [-1.82, 0, 0.8] }; // per Suche bestimmt: Handy am linken Ohr
 
   // Hula-Hoop-Reifen (nur beim Hula-Hoop sichtbar), kreist um die Hüfte
@@ -569,7 +570,9 @@ export function baueDennis(scene) {
     geste(name, dauer = 3) { geste = { name, start: zeit, dauer }; },
     get aktuelleGeste() { return geste && zeit - geste.start < geste.dauer ? geste.name : null; },
     get telefoniert() { return telefoniert; },
-    _test: { links, kopf, TELEFON, telefonHandy },
+    _test: { links, rechts, kopf, TELEFON, telefonHandy },
+    // feste Armhaltung { ls, le, rs, re } (Euler-Arrays für Schultern/Ellbogen) oder null
+    armPose(p) { armPose = p; },
     mittagspause(an) { dose.visible = an; tomate.visible = an; essen = an; },
     // Löst mit true auf, wenn er ankommt, mit false, wenn ein neues Ziel dazwischenkommt
     gehZu(x, z, schnell = 1.3) {
@@ -876,6 +879,11 @@ export function baueDennis(scene) {
         const heben = schluck > 0 ? Math.sin((schluck / 2.2) * Math.PI) : 0;
         rechts.schulter.rotation.set(-0.25 - heben * 0.9 + schwing, heben * 0.3, 0.12 - heben * 0.2);
         rechts.ellbogen.rotation.set(-0.9 - heben * 1.3, 0, 0);
+      }
+      if (armPose) {
+        becher.visible = false;
+        links.schulter.rotation.set(...armPose.ls); links.ellbogen.rotation.set(...armPose.le);
+        rechts.schulter.rotation.set(...armPose.rs); rechts.ellbogen.rotation.set(...armPose.re);
       }
       // telefoniert: linke Hand mit Handy am Ohr – immer, auch wenn er beim Gespräch sauer wird oder läuft
       if (telefoniert) {
