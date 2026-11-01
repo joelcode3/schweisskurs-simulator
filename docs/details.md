@@ -560,6 +560,15 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   mehr. Waldo setzt sich nach dem Zurückbringen der dreckigen Pumpe aufs Sofa (`waldoPlatzNehmen`), statt sofort hinter die Werkstatt zu gehen.
   WALDO.spanngurt (waldo42) war in texte.js nicht angelegt: ergänzt.
 
+- P5 Fahrzeuge und Paletten (1.11.), fahrzeuge.js: Paletten haben Schwerkraft (`palettenSetzen`: von unten nach oben auf Boden oder
+  Palette darunter, Auflage über Ecken und Mitte, nichts schwebt oder steckt halb in einer anderen). Aufnehmen nimmt den ganzen Stapel
+  darüber mit (`stapelUeber`, beliebig hoch, alle 12 gehen). Absetzen auf eine Palette (unter 0,35 m und Winkel passt): der Stapel rutscht
+  genau auf sie, sonst stehen die getragenen genau übereinander. Kollision: andere Fahrzeuge als gedrehte Kästen mit Trennachsen-Test
+  (`boxenVon`, `obbTiefe`, `fahrzeugTiefe`): nie tiefer hinein, wer schon drinsteckt, darf nur heraus. Hoflader schiebt den Jeep in
+  Fahrtrichtung des Vorderwagens, nur so weit, dass nichts überlappt. Paletten: Jeep fährt über keine, Hoflader über eine einzelne
+  (Räder steigen darauf, `anwenden` nimmt die Palettenhöhe), Stapel ab 2 blockieren (auch die Kabine vorne; die Gabel fährt hinein).
+  Für E2 (Pritsche): weiteres Fahrzeug in `alle` mit `art`, `boxenVon`-Fall und Punkten ergänzen.
+
 ## Offene Fäden und Ungetestetes (Übergabe 1.11.2026)
 - Ausraster-Videos: #54 (frisches Video-Element, bis zu 6 Versuche, canplay) ist nur eine Absicherung. Die Ursache ist unklar, im Test lief
   alles (WebM statt H.264, Chromium kann hier kein H.264). Der Betreiber prüft im echten Browser (Browser und Anzeige erfragen: schwarz,

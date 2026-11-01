@@ -85,7 +85,7 @@
 
 ## Stand der Pull Requests (1.11.2026)
 - Alles bis #54 gemergt (zuletzt #54 Hotfix Ausraster-Videos). Nichts offen. Neue Zweige immer von `origin/main`.
-- Versionsnummer zuletzt `v=20261101-11`.
+- Versionsnummer zuletzt `v=20261101-12`.
 - Nächste freie Satz-Nummern (aus stimme/zuordnung.csv): dennis487, jonny58, waldo43, torben20, kumpel8.
 - Projektchat-Session: `session_0136ircvAvU3aCzRamNp3F96` (1.11.; die alte ID `session_01KZ18oujuEFnsAskwuMiw8Y` oben ist veraltet).
 - Offene Fäden und Ungetestetes: `docs/details.md`, Abschnitt „Offene Fäden und Ungetestetes“ (zuerst lesen, wenn ein neuer Chat startet).
