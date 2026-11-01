@@ -384,6 +384,12 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   'palettenSchild': zeigt den Stand). Mit dem Hoflader dort abgesetzt (Gabel-Ereignis abgesetzt) zählt fahrten.palettenGezaehlt:
   je neue Palette Wut -3, Hinweis „x von 12“, Lob beim ersten und jeder 3.; alle 12 = großes Lob, Wut -8. Note: je gestapelte
   Palette 1 Punkt, höchstens 6 (Gesamt höchstens 100). Tipp beim ersten Einsteigen in den Hoflader.
+- Paket D Haltung Figuren (Projektchat 30.10., I40/I41, Vorschau): Segway (segway.js): Trittbrett tiefer (0,36 m), Lenksäule und Lenker
+  weiter vorn (z 0,2 / 0,16, Lenker 1,12 m hoch); Waldo steht hinten (anker z -0,1) hinter der Säule. Neue Waldo-Haltung 'fahren'
+  (FAHREN_R/L: beide Hände am Lenker, Winkel per Suche eingepasst, Abstand unter 5 cm); spiel.js setzt sie beim Kommen und Wegfahren
+  mit dem Segway und danach wieder 'handy'. Jonny (jonny.js leiterHalten(an), LEITER_L): beim Leitertragen greift der Arm auf der Leiterseite
+  (x -0,27) an die Leiter, der andere hängt locker; danach wieder verschränkt. Testen: wz.beschaeftigt/naechsterBesuch setzen,
+  sonst überschreibt der Spielablauf Waldos Haltung.
 - Paket C Spanngurte (Projektchat 30.10., I33, aufgesetzt auf B): ab ca. 3–5 Min., nur wenn Spieler und Dennis in der Werkstatt sind
   und Jonny oder Waldo da ist: der schmeißt zwei Spanngurte vor das Regal (world.js gurteBoden, anklickbar 'spanngurte'), Dennis
   meckert (DENNIS.spanngurt.boden, Wut +3). Aufrollen = Minispiel spanngurtSpiel (im Kreis ziehen, der Gurt wird entlang seiner
