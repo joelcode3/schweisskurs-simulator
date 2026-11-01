@@ -583,6 +583,15 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   (Menü), auf Torben klicken, Minispiel `fingerSpiel` (abtupfen, drücken, Verband wickeln). Sonst verbindet Dennis ihn (Wut +10).
   Danach 70 s Torben auf dem Sofa, ab dann dauerhaft weißer Verband an der rechten Hand (`torbenVerbandAn`). Der Träger bleibt liegen.
 
+- Testmenü (1.11.): `?test` an die Adresse hängen (z. B. https://joelcode3.github.io/schweisskurs-simulator/?test), nach „Kurs starten“
+  erscheint rechts das Menü (einklappbar, Gruppen aufklappbar). Unter Pointer-Lock erst Rechtsklick (Cursor), dann klicken.
+  Gruppen: Minispiele direkt (Anzeichnen, Schneiden, Schweißen, Schlacke, Lackieren, Ventil, Spülen, Bitsatz, Akkuschrauber, Sieb,
+  Kaffee, Rohrbruch, Räuberleiter, Hula, Kackepumpe putzen, Spanngurte entknoten, Klo pömpeln (sobald #62 drin), Finger verarzten),
+  Nebenaufgaben (Klo verstopft, Feuer, Rohrbruch, Wäsche, Akkuschrauber, Bitsatz, Tassen, Spüldienst, Kackepumpe hin/zurück,
+  Mülltonnen, Grill, Jonnys Leiter, Spanngurte hinwerfen/aufrollen, Jonnys Bier, Flaschen, Ladung vom Jeep, Hofladen Eier/Mettenden,
+  Torben-Unfall), Ereignisse (Telefonat, Klo-Pause, Mittag, Hüfte, Kaffee, Hula, Torben kommt, Kumpel, Waldo, Sofa-Streit,
+  Jonny rein/raus/kitzelt/stört/Sodbrennen, Kiwi), Wut und Zeit (Wut 0/30/60/90, Zeit +5/+15 min). Neue Ereignisse immer ergänzen.
+
 ## Offene Fäden und Ungetestetes (Übergabe 1.11.2026)
 - Ausraster-Videos: #54 (frisches Video-Element, bis zu 6 Versuche, canplay) ist nur eine Absicherung. Die Ursache ist unklar, im Test lief
   alles (WebM statt H.264, Chromium kann hier kein H.264). Der Betreiber prüft im echten Browser (Browser und Anzeige erfragen: schwarz,

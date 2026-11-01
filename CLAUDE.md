@@ -24,6 +24,9 @@
   - „todo …“ und „bug …“ gehen über den Projektchat (er pflegt die Projektliste), nicht selbst umsetzen ohne Go.
 - Anzeige „version_NN“ unten links neben der Lautstärke (`#versionsnr` in index.html): NN = Nummer des eigenen PR. Bei JEDEM PR setzen
   (Nummer erst nach dem Anlegen bekannt: kurzer Folge-Commit). Die technische Version `?v=JJJJMMTT-n` bleibt davon unabhängig.
+- Testmenü für den Betreiber: Adresse mit `?test` (https://joelcode3.github.io/schweisskurs-simulator/?test), rechts ein einklappbares
+  Menü (js/testmenue.js) mit Direktstart aller Minispiele, Nebenaufgaben und Ereignisse sowie Wut/Zeit. JEDES neue Minispiel und
+  Ereignis bekommt dort einen Knopf (Betreiber-Wunsch 1.11.).
 - Vor jedem PR im Browser testen (nur Computer-Ansicht, Web hat Prio; iPhone erstmal nicht, Betreiber 24.10.), Playwright mit vorinstalliertem Chromium.
 - Optisches: erst Vorschau (Screenshot) an den Betreiber, PR erst nach Abnahme (Projektchat 24.10.).
 
@@ -54,7 +57,7 @@
 - `js/main.js` Einstieg · `js/world.js` Werkstatt + Gasflasche · `js/draussen.js` Hof · `js/carport.js` Wohnwagen/Benz · `js/fahrzeuge.js` + `js/fahrten.js` Fahren · `js/landschaft.js` Landschaft · `js/jonny.js` Jonny · `js/waldo.js` Waldo · `js/torben.js` Torben · `js/kumpels.js` Platzhalter-Kumpels · `js/dennis.js` 3D-Dennis · `js/wege.js` Wegfindung der Figuren (Türen, um Werkstatt/Bad herum; in jedem gehZu)
 - `js/steuerung.js` Kamera/Gehen/Klicks · `js/spiel.js` Ablauf, Fehler, Texte, Note
 - `js/minispiele.js` Schneiden, Schweißen, Schlacke · `js/clips.js` Dennis-Auftritte + Archiv
-- `js/hand.js` Dinge in der Hand (Haltung, Ablegen, Werfen mit Physik) · `js/ui.js` HUD/Dialoge · `js/audio.js` Geräusche (live erzeugt) · `js/gesicht.js` Comic-Gesicht + Icons
+- `js/testmenue.js` Testmenü (`?test`) · `js/hand.js` Dinge in der Hand (Haltung, Ablegen, Werfen mit Physik) · `js/ui.js` HUD/Dialoge · `js/audio.js` Geräusche (live erzeugt) · `js/gesicht.js` Comic-Gesicht + Icons
 - `vendor/three.module.min.js` (Three.js r170, lokal, keine CDN-Abhängigkeit)
 - `clips/clips.json` + `clips/*.mp4` – Dennis-Videos, siehe `clips/LIESMICH.md`
 - `tools/clip_schneiden.sh` – Rohvideo zuschneiden, verkleinern, iPhone-HDR umrechnen und Comic-Look anwenden (ffmpeg)
