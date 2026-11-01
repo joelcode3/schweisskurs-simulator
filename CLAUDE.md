@@ -71,5 +71,5 @@
   nur DENNIS und löst verschachtelte Listen wie telefon nicht auf).
 - KI-Stimmklon ist in dieser Umgebung nicht möglich (huggingface.co gesperrt). Stimmproben nie ins Repo (öffentlich).
 
-## Stand der Pull Requests (31.10.2026)
-- Bis #49 (P1–P7, S, F, D, T, O, M, A, B, C) gemergt, #48 G offen. Projektchat-Runde 31.10.: D Haltung Figuren (Vorschau), dann E, F, H. Neue Zweige von `origin/main`. Versionsnummer zuletzt `v=20261031-2`.
+## Stand der Pull Requests (1.11.2026)
+- Bis #51 (P1–P7, S, F, D, T, O, M, A, B, C, G, D-Haltung) gemergt. Offen: #52 E Bad, #53 F Hofladen (auf E), #50 H Geräusche (auf F). Reihenfolge #52, #53, #50. Neue Zweige von `origin/main`. Versionsnummer zuletzt `v=20261101-1`.

@@ -384,6 +384,12 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   'palettenSchild': zeigt den Stand). Mit dem Hoflader dort abgesetzt (Gabel-Ereignis abgesetzt) zählt fahrten.palettenGezaehlt:
   je neue Palette Wut -3, Hinweis „x von 12“, Lob beim ersten und jeder 3.; alle 12 = großes Lob, Wut -8. Note: je gestapelte
   Palette 1 Punkt, höchstens 6 (Gesamt höchstens 100). Tipp beim ersten Einsteigen in den Hoflader.
+- Paket E Bad (Projektchat 30.10., I42–I44, Vorschau): Badfenster mit echtem Durchblick: Loch in der Bad-Innenwand (badWand mit loch)
+  und in der Außenwand (draussen.js, vier Wandstücke um BAD_FENSTER x 1,95–2,65, y 1,45–2,05), Rahmen/Laibung/Sprossenkreuz/Griff,
+  klares Glas (Klicks gehen durch), Fensterbänke innen und außen; das alte Milchglasfenster ist weg. Waschplatz in der Werkstatt:
+  Edelstahl-Wanne 22 cm tief im Unterschrank (Rahmenplatte, Wände, geneigt wirkender Boden, Ablauf mit Messingring und Gitter,
+  Überlauf-Schlitz), Armatur mit Bogen-Auslauf über der Wannenmitte, Hebel rot/blau. Bad-Waschbecken: Drehkörper mit Wandstärke
+  (echte Innenseite), Ablauf mit Chromring und Kreuz, Überlauf-Loch.
 - Paket D Haltung Figuren (Projektchat 30.10., I40/I41, Vorschau): Segway (segway.js): Trittbrett tiefer (0,36 m), Lenksäule und Lenker
   weiter vorn (z 0,2 / 0,16, Lenker 1,12 m hoch); Waldo steht hinten (anker z -0,1) hinter der Säule. Neue Waldo-Haltung 'fahren'
   (FAHREN_R/L: beide Hände am Lenker, Winkel per Suche eingepasst, Abstand unter 5 cm); spiel.js setzt sie beim Kommen und Wegfahren
