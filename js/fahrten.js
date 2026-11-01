@@ -8,7 +8,7 @@ import { blip, klonk, hupe, aufprall } from './audio.js';
 import * as ui from './ui.js';
 import { TORBEN_PLATZ } from './torben.js';
 import { FELDWEG, inHindernis, muellTeil, MUELL_NAMEN, MUELL_ARTEN } from './draussen.js';
-import { gelaendeHoehe } from './landschaft.js';
+import { gelaendeHoehe, eierKaputtModell, wurstModell } from './landschaft.js';
 
 // Vorerst steckt der Schlüssel im Hoflader (Betreiber: später gibt Dennis ihn raus, wenn man etwas damit erledigen muss)
 export const LADER_SCHLUESSEL_STECKT = true;
@@ -122,10 +122,25 @@ export function baueFahrten(c) {
       const p = f.g.localToWorld(new THREE.Vector3(sx, 0, sz));
       o.position.set(p.x, gelaendeHoehe(p.x, p.z) + 0.04, p.z);
       o.rotation.set(0, Math.random() * 6, (Math.random() - 0.5) * 0.4);
-      // Eier gehen kaputt: gelber Matsch, nicht mehr zu gebrauchen
+      // Eier gehen kaputt: leerer Karton, die Eier liegen aufgeplatzt auf dem Boden (nicht mehr zu gebrauchen)
       if (o.userData.interaktiv?.id === 'eier') {
-        o.children.forEach((c, i) => { if (i > 0) c.scale.set(1.4, 0.25, 1.4); if (i > 0 && i % 2) c.material = new THREE.MeshToonMaterial({ color: 0xf2c21b }); });
-        o.userData.interaktiv = { id: 'eierKaputt', name: 'Kaputte Eier', station: null };
+        const k = eierKaputtModell();
+        k.position.copy(o.position); k.rotation.y = o.rotation.y;
+        k.userData.interaktiv = { id: 'eierKaputt', name: 'Kaputte Eier', station: null };
+        o.removeFromParent();
+        scene.add(k);
+      }
+      // Mettenden: die Packung platzt, die drei Würste rollen einzeln durcheinander, sind aber noch heil und aufhebbar
+      else if (o.userData.interaktiv?.id === 'mettenden') {
+        o.removeFromParent();
+        for (let i = 0; i < 3; i++) {
+          const w = wurstModell();
+          w.position.set(p.x + (Math.random() - 0.5) * 1.2, gelaendeHoehe(p.x, p.z) + 0.02, p.z + (Math.random() - 0.5) * 1.2);
+          w.rotation.set(0, Math.random() * 6, 0);
+          w.scale.setScalar(1.0);
+          w.userData.interaktiv = { id: 'wurst', name: 'Mettwurst', station: null };
+          scene.add(w);
+        }
       }
     }
     klonk(0.4); blip(300, 0.1, 0.06);

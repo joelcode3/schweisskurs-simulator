@@ -390,6 +390,20 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   im Hoflader selbst konstant, Drehzahl steigt mit der Geschwindigkeit. E-Motor: Heulton des Jeeps, nur in Bewegung, Tonhöhe nach Tempo.
   Hühner: Gluck-Folgen und gelegentliches „Gaaack“ vom Hühnermobil (bis 40 m). Kühe: Muh bei Peter (bis 55 m, alle 9–23 s).
   Lautstärkeregler (Master) gilt für alles. Im Test nur gemessen (Pegel), nicht gehört.
+- Paket F Hofladen und Essen (Projektchat 30.10., I46/I48/I54, Vorschau): Peters Kühlschrank im SB-Laden (landschaft.js) hat eine Tür (Klick:
+  „Tür öffnen“, schwenkt auf, Innenlicht), vier Gitterregale wie in der Werkstatt, unten Käse (4 Keile + Laib im roten Wachs), darüber
+  Mettenden; offen: „Mettenden nehmen“, „Käse nehmen“, „Tür zumachen“ (landschaft.kuehlschrank.auf/istAuf, spiel.js Menü 'sb_mettenden').
+  Neues Hand-Ding 'kaese' (kaeseModell: Emmentaler-Keil mit Löchern). Mettenden neu (wurstModell): dicke, rötliche, gebogene Wurst mit
+  runden Enden, die Packung (mettendenModell) hat drei davon, Folienhaube, Schweißnaht, Etikett mit Preis. Kollision/Ladung fällt
+  (fahrten.js ladungFaellt): Eier -> leerer Karton plus aufgeplatzte Eier am Boden (eierKaputtModell, nicht aufhebbar, „Wegräumen“);
+  Mettenden -> drei einzelne Würste (id 'wurst'), aufhebbar, Dennis gegeben nur Wut -3 (Hand 'wurst'). Neue Sätze dennis479–482
+  (einkauf.kaese/wurst).
+- Paket E Bad (Projektchat 30.10., I42–I44, Vorschau): Badfenster mit echtem Durchblick: Loch in der Bad-Innenwand (badWand mit loch)
+  und in der Außenwand (draussen.js, vier Wandstücke um BAD_FENSTER x 1,95–2,65, y 1,45–2,05), Rahmen/Laibung/Sprossenkreuz/Griff,
+  klares Glas (Klicks gehen durch), Fensterbänke innen und außen; das alte Milchglasfenster ist weg. Waschplatz in der Werkstatt:
+  Edelstahl-Wanne 22 cm tief im Unterschrank (Rahmenplatte, Wände, geneigt wirkender Boden, Ablauf mit Messingring und Gitter,
+  Überlauf-Schlitz), Armatur mit Bogen-Auslauf über der Wannenmitte, Hebel rot/blau. Bad-Waschbecken: Drehkörper mit Wandstärke
+  (echte Innenseite), Ablauf mit Chromring und Kreuz, Überlauf-Loch.
 - Paket D Haltung Figuren (Projektchat 30.10., I40/I41, Vorschau): Segway (segway.js): Trittbrett tiefer (0,36 m), Lenksäule und Lenker
   weiter vorn (z 0,2 / 0,16, Lenker 1,12 m hoch); Waldo steht hinten (anker z -0,1) hinter der Säule. Neue Waldo-Haltung 'fahren'
   (FAHREN_R/L: beide Hände am Lenker, Winkel per Suche eingepasst, Abstand unter 5 cm); spiel.js setzt sie beim Kommen und Wegfahren

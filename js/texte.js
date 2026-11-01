@@ -296,6 +296,8 @@ export const DENNIS = {
   muellAufgehoben: ['Oh, du räumst den Müll weg? Danke, Mann!', 'Endlich hebt mal einer den Kram auf. Sehr gut.'],
   einkauf: {
     eier: ['Lühmanns Landeier! Du bist ein Schatz. Morgen gibt es Rührei.', 'Oh, frische Eier! Hast du angeschrieben? Gut so.'],
+    kaese: ['Käse! Und dann auch noch richtig gelb und mit Löchern. Du verwöhnst mich.', 'Ein Stück Käse? Aus Peters Kühlschrank? Du bist mein Held.'],
+    wurst: ['Eine einzelne Mettwurst? Vom Boden? Na gut, zehn Sekunden Regel gilt noch.', 'Die Wurst hat schon bessere Tage gesehen. Her damit!'],
     mettenden: ['Mettenden! Jetzt ist der Tag gerettet.', 'Für mich? Mettenden? Ich könnt dich knutschen. Mach ich aber nicht.'],
   },
   jeepHoch: ['Bist du wahnsinnig?! Lass sofort den Jeep runter!', 'Der Jeep ist doch keine Palette! Runter damit!'],
