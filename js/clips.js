@@ -193,17 +193,17 @@ export function auftritt({ schluessel, text, stufe = 'mittel', stimmung = 'sauer
 
     const anzeigeText = clip?.text || text || '';
     if (clip) {
-      // fertig gepuffertes Element nehmen (startet sofort, kein Standbild)
-      const fertigGeladen = vorgeladen.get(clip.datei);
-      if (fertigGeladen && fertigGeladen.readyState >= 3) {
-        if (video && video !== fertigGeladen) video.pause();
-        video = fertigGeladen;
-        video.volume = Math.min(1, videoLautstaerke);
-      }
-      // Altes Bild nicht kurz aufblitzen lassen: Video erst zeigen, wenn es wirklich läuft
+      // Jedes Mal ein frisches <video>-Element (kein wiederverwendetes mit altem Zustand, hängenden play()-Versprechen
+      // oder Pause vom vorigen Auftritt); die Datei kommt aus dem Zwischenspeicher, weil vorladen() sie schon geholt hat.
+      if (video) { video.pause(); video.onended = null; video.onerror = null; video.onloadedmetadata = null; }
+      video = document.createElement('video');
+      video.playsInline = true;
+      video.setAttribute('playsinline', '');
+      video.setAttribute('webkit-playsinline', '');
+      video.preload = 'auto';
+      video.autoplay = true;
+      video.volume = Math.min(1, videoLautstaerke);
       if (clip.hochkant !== undefined) el.classList.toggle('hochkant', clip.hochkant);
-      // kein Standbild mehr (Betreiber): das Video startet sofort
-      video.removeAttribute('poster');
       video.onloadedmetadata = () => el.classList.toggle('hochkant', video.videoHeight > video.videoWidth);
       // Kann das Gerät den Clip nicht abspielen, zeigt es den gezeichneten Dennis
       video.onerror = () => {
@@ -212,30 +212,38 @@ export function auftritt({ schluessel, text, stufe = 'mittel', stimmung = 'sauer
         medien.innerHTML = dennisPortrait(stimmung);
         if (automatisch) timer = setTimeout(schliessen, Math.max(2600, anzeigeText.length * 55 + 1200));
       };
-      if (!video.src.endsWith(`clips/${clip.datei}`)) video.src = `clips/${clip.datei}`;
-      video.currentTime = clip.start || 0;
-      video.muted = false;
-      medien.appendChild(video);
+      const meinVideo = video;
+      meinVideo.src = `clips/${clip.datei}`;
+      if (clip.start) meinVideo.currentTime = clip.start;
+      meinVideo.muted = false;
+      medien.appendChild(meinVideo);
       const raster = document.createElement('div');
       raster.className = 'raster';
       medien.appendChild(raster);
       blase.textContent = anzeigeText;
-      // Sofort abspielen, nie ein Abspiel-Knopf (Betreiber): klappt es nicht, noch zweimal versuchen (beim ersten Mal
-      // nötigenfalls stumm, der Ton kommt mit dem nächsten Klick), danach der gezeichnete Dennis statt Standbild
+      // Sofort abspielen, nie ein Abspiel-Knopf (Betreiber). Klappt es nicht (Browser will keinen Ton ohne Klick,
+      // oder das Video ist noch nicht bereit): bis zu 6 Versuche, ab dem zweiten stumm; der Ton kommt beim nächsten Klick/Tastendruck.
+      // Erst danach der gezeichnete Dennis statt Standbild.
       const spielen = (versuch) => {
-        const p = video.play();
+        if (aus || video !== meinVideo) return;
+        let p;
+        try { p = meinVideo.play(); } catch { p = null; }
         if (!p || !p.catch) return;
         p.catch((err) => {
-          if (aus) return;
-          if (versuch >= 3) { el.classList.remove('hochkant'); medien.innerHTML = dennisPortrait(stimmung); return; }
-          if (err && err.name === 'NotAllowedError' && !video.muted) {
-            video.muted = true;
-            document.addEventListener('pointerdown', () => { video.muted = false; }, { once: true });
+          if (aus || video !== meinVideo) return;
+          if (versuch >= 6) { el.classList.remove('hochkant'); medien.innerHTML = dennisPortrait(stimmung); return; }
+          if (!meinVideo.muted && (versuch >= 2 || (err && err.name === 'NotAllowedError'))) {
+            meinVideo.muted = true;
+            const laut = () => { meinVideo.muted = false; };
+            document.addEventListener('pointerdown', laut, { once: true });
+            document.addEventListener('keydown', laut, { once: true });
           }
-          setTimeout(() => { if (!aus) spielen(versuch + 1); }, 150);
+          setTimeout(() => spielen(versuch + 1), 200);
         });
       };
       spielen(1);
+      // ist das Video erst später bereit, dann spätestens jetzt starten
+      meinVideo.addEventListener('canplay', () => { if (!aus && meinVideo.paused) spielen(2); }, { once: true });
       // Sicherheitsnetz, falls das Video hängt
       if (automatisch) timer = setTimeout(schliessen, Math.max(9000, (clip.ende ? clip.ende - (clip.start || 0) : 8) * 1000 + 2000));
       video.onended = () => {
@@ -244,7 +252,7 @@ export function auftritt({ schluessel, text, stufe = 'mittel', stimmung = 'sauer
       };
       if (clip.ende) {
         const pruefen = () => {
-          if (aus) return;
+          if (aus || video !== meinVideo) return;
           if (video.currentTime >= clip.ende) { video.pause(); video.onended && video.onended(); return; }
           requestAnimationFrame(pruefen);
         };

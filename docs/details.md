@@ -535,3 +535,7 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
 - Handy-Video von Dennis einbauen (Betreiber hat Video), sobald geschickt.
 - Weitere Clips von Dennis (Begrüßung, Lob, Tipps, Ende, spezielle Fehler).
 - Weitere Projekte (Grill, Werkzeugwagen), weitere Fehler, ggf. MAG-Schweißen.
+
+- Hotfix Ausraster-Videos (v20261101-4): `auftritt()` in clips.js nimmt pro Auftritt ein frisches `<video>`-Element (kein
+  wiederverwendetes vorgeladenes mehr), bis zu 6 Abspielversuche (ab dem 2. stumm, Ton beim nächsten Klick/Taste), Start auch bei `canplay`;
+  erst danach der gezeichnete Dennis. `vorladen()` wärmt nur noch den Zwischenspeicher.
