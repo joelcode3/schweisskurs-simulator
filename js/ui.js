@@ -273,6 +273,7 @@ const AUFGABE_SYMBOL = {
   pumpe: '<svg viewBox="0 0 24 24" class="ico"><rect x="6" y="7" width="8" height="13" rx="2"/><path d="M7 7a3 3 0 0 1 6 0"/><path d="M14 16c3 0 5 1 5 3s-2 2-4 2"/></svg>',
   gurte: '<svg viewBox="0 0 24 24" class="ico"><circle cx="8" cy="12" r="5"/><circle cx="8" cy="12" r="2"/><path d="M13 12c3 0 3 4 6 4h2"/><rect x="17" y="14" width="5" height="4" rx="1"/></svg>',
   flaschen: '<svg viewBox="0 0 24 24" class="ico"><path d="M10 3h4v4l2 3v10a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V10l2-3z"/><path d="M8 13h8"/></svg>',
+  erstehilfe: '<svg viewBox="0 0 24 24" class="ico"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M9 6V4h6v2"/><path d="M12 10v6M9 13h6"/></svg>',
   tassen: '<svg viewBox="0 0 24 24" class="ico"><path d="M4 9h11v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M15 11h2a2 2 0 0 1 0 4h-2"/><path d="M8 3v3M11 3v3"/></svg>',
 };
 export function aufgabenIcons(liste) {

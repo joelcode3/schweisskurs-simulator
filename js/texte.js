@@ -358,6 +358,13 @@ export const DENNIS = {
     schlecht: 'Was soll das sein? Ein Ofen? Das ist eine Gefahr für die Allgemeinheit. Nochmal von vorne!',
   },
   rausgeflogen: 'DAS REICHT! RAUS! Raus aus meiner Werkstatt! Komm wieder, wenn du gelernt hast, wie man sich benimmt!',
+  traegerUnfall: {
+    helfen: ['Na gut. Aber nur einen, und dann ist Ruhe!'],
+    loslassen: ['Ah, meine Hüfte! Ich muss loslassen! Achtung!'],
+    panik: ['Oh Gott, oh Gott! Blut! Ich kann kein Blut sehen!', 'Was mach ich denn jetzt?! Erste Hilfe! ERSTE HILFE!', 'Torben! Bleib liegen! Nicht bewegen! Oder doch?!'],
+    erleichtert: ['Puh. Gut gemacht. Ich hätte das nicht gekonnt.'],
+    selbst: ['Na gut, dann verbinde ich ihn eben. Mit zitternden Händen. Danke für nix!'],
+  },
 };
 
 // Alle Sätze flach mit ID, z. B. { id: 'fehler.brille.1', text: '...' }
@@ -439,6 +446,10 @@ export const TORBEN = {
   schonEntdrosselt: ['Der ist schon offen. Schneller geht nicht, sonst brennt der Motor durch.', 'Mehr geht nicht. Der ist schon entdrosselt.'],
   rums: ['Ups.', 'Das war vorher schon so.', 'Hat keiner gesehen, oder?'],
   fahren: ['Ich dreh mal ne Runde!', 'Mal gucken, was der Jeep heute schafft.', 'Ich stell mal den Hoflader um.'],
+  traegerHilfe: ['Dennis, hilfst du mir kurz? Ich will einen von den Trägern rausbringen.'],
+  aua: ['AAAH! MEIN FINGER!', 'Aua aua aua ... der ist platt!'],
+  danke: ['Danke dir. Ich leg mich kurz aufs Sofa ...'],
+  verband: ['Der Verband bleibt jetzt dran. Ehrenzeichen.'],
 };
 
 // Kumpels mit Spüldienst (Jonas, David, Joel): vorläufige Sätze, bis die Figuren eine eigene Rolle bekommen
