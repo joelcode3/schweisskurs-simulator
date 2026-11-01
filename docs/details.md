@@ -569,6 +569,13 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   (Räder steigen darauf, `anwenden` nimmt die Palettenhöhe), Stapel ab 2 blockieren (auch die Kabine vorne; die Gabel fährt hinein).
   Für E2 (Pritsche): weiteres Fahrzeug in `alle` mit `art`, `boxenVon`-Fall und Punkten ergänzen.
 
+- P6 Spanngurte (1.11., Vorschau): Gurte am Boden detaillierter (world.js: unregelmäßige, sich kreuzende Schlaufen, zwei
+  hochkant verdrehte Stellen, J-Haken an beiden Enden, Ratsche mit Welle und Hebel, kurzes Gurtstück; Knoten nur „verknotet“).
+  Jonny/Waldo gehen zum Regal und werfen ein Knäuel sichtbar hin (spiel.js `gurteHinwerfen`, `gurtKnaeuelFliegt`). Aufgerollte Gurte
+  sind werfbar (Q): landen verknotet dort, wo sie aufschlagen (`gurteWerfen`, DENNIS.spanngurt.geworfen = dennis487/488).
+  Minispiel neu (`spanngurtSpiel({ verknotet })`): Knoten in Pfeilrichtung aufziehen (falsche Richtung = fester), verdrehte Stellen
+  anklicken, dann im Kreis aufrollen mit Tempo-Anzeige (zu schnell = verdreht). Verknotet: 3 Knoten je Gurt, sonst 2 bzw. 1.
+
 ## Offene Fäden und Ungetestetes (Übergabe 1.11.2026)
 - Ausraster-Videos: #54 (frisches Video-Element, bis zu 6 Versuche, canplay) ist nur eine Absicherung. Die Ursache ist unklar, im Test lief
   alles (WebM statt H.264, Chromium kann hier kein H.264). Der Betreiber prüft im echten Browser (Browser und Anzeige erfragen: schwarz,
