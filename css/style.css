@@ -896,6 +896,7 @@ button { font: inherit; color: inherit; }
   gap: 8px;
   padding: 6px 10px;
 }
+#versionsnr { font-size: 11px; opacity: 0.55; letter-spacing: 0.04em; user-select: none; pointer-events: none; }
 #ton button {
   width: 34px;
   height: 34px;
