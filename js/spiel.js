@@ -1021,6 +1021,33 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     dennisSagt(sag(DENNIS.traeger), true, { prio: 2 });
   }
 
+  // nur für das Testmenü: Ofen-Bau auf den Stand VOR Schritt n (1–15) setzen, damit man jeden Schritt einzeln spielen kann
+  const OFEN_SCHRITTE = ['Flasche nach draußen tragen', 'Restgas ablassen (Ventil)', 'Zurück zum Waschplatz', 'Flasche spülen', 'Zur Werkbank tragen',
+    'Ofentür anzeichnen', 'Ofentür ausschneiden', 'Zum Schweißplatz tragen', 'Schweißgerät einstellen', 'Scharniere und Griffe schweißen',
+    'Beine schweißen', 'Ofenrohr schweißen', 'Schlacke abklopfen', 'Ofen lackieren', 'Ofen bei Dennis abgeben'];
+  function ofenStand(n) {
+    if (hand.item && (hand.item.id === 'flasche' || hand.item.id === 'ofen')) hand.loslassen();
+    Object.assign(z, { ventilAuf: n > 2, gespuelt: n > 4, angezeichnet: n > 6, geschnitten: n > 7, stromGesetzt: n > 9, masse: n > 9,
+      schlackeWeg: n > 13, lackiert: n > 14, beschaeftigt: false });
+    if (n > 9) z.strom = 90;
+    if (n > 6) z.anzeichnenQ = z.anzeichnenQ ?? 0.9;
+    if (n > 7) z.schnittQ = z.schnittQ ?? 0.9;
+    if (n > 14) z.lackQ = z.lackQ ?? 0.9;
+    z.naehte = { scharniere: n > 10 ? 0.9 : null, beine: n > 11 ? 0.9 : null, rohr: n > 12 ? 0.9 : null };
+    const ort = n <= 1 ? 'wasch' : n <= 3 ? 'draussen' : n <= 5 ? 'wasch' : n <= 8 ? 'werkbank' : 'schweiss';
+    z.ort = ort;
+    if (ort === 'draussen') welt.flaschePlatz('draussen', { x: -0.4, y: 0, z: 6.6 });
+    aktualisieren();
+    const station = { wasch: 'wasch', werkbank: 'werkbank', schweiss: 'schweiss' }[ort];
+    if (station) steuerung.zuStation(station);
+    else steuerung.setze([-0.4, AUGENHOEHE, 8.0], [-0.4, 0.5, 6.6]);
+    ui.hinweis(`Testmenü: Ofen-Bau steht vor Schritt ${n}: ${OFEN_SCHRITTE[n - 1]}.`, 3500);
+  }
+  function schutzAn() {
+    for (const id of ['brille', 'handschuhe', 'helm', 'maske']) { if (!z.ppe[id]) { z.ppe[id] = true; welt.objekte[id]?.removeFromParent(); } }
+    aktualisieren();
+  }
+
   // ---------- E1: Torben und der Stahlträger ----------
   // Torben kommt (nur wenn der Spieler in der Werkstatt ist), Dennis hilft einen Träger raustragen, lässt nach ein paar Metern los,
   // der Träger fällt Torben auf den Finger. Torben liegt, Dennis rennt panisch rum. Spieler: Erste-Hilfe-Kasten holen, auf Torben
@@ -4136,7 +4163,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   return {
     zustand: z,
     klick,
-    test: { get z() { return z; }, armAnpassen, setzeWut(w) { z.wut = w; aktualisieren(); }, zeitVor(sek) { z.start -= sek * 1000; }, waescheUebernehmen, kaffeeKochen, hulaHoop, einkaufen, kiwiEssen, TU, torbenUnfall, torbenVerarzten, torbenVerbandAn, spanngurtEreignis, gurteHinwerfen, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
+    test: { get z() { return z; }, OFEN_SCHRITTE, ofenStand, schutzAn, armAnpassen, setzeWut(w) { z.wut = w; aktualisieren(); }, zeitVor(sek) { z.start -= sek * 1000; }, waescheUebernehmen, kaffeeKochen, hulaHoop, einkaufen, kiwiEssen, TU, torbenUnfall, torbenVerarzten, torbenVerbandAn, spanngurtEreignis, gurteHinwerfen, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
     stationWaehlen,
     intro,
     aktualisieren,

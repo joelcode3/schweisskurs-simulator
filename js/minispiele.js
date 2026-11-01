@@ -2628,18 +2628,19 @@ export function fingerSpiel() {
       const basisY = f.y + f.h * 0.66;
       // Finger: [x, Basis-y, Länge, Breite, Drehung, verletzt]; Basis liegt tief im Handrücken
       const FINGER = [
-        [fx + 150, basisY + 30, f.h * 0.27, 52, 0.22, false], // kleiner Finger
+        [fx + 136, basisY + 40, f.h * 0.27, 52, 0.2, false], // kleiner Finger
         [fx + 102, basisY + 8, f.h * 0.35, 56, 0.1, false], // Ringfinger
         [fx + 52, basisY, f.h * 0.4, 58, 0.03, false], // Mittelfinger
         [fx, basisY + 6, f.h * 0.36, 58, 0, true], // Zeigefinger (verletzt, geschwollen), Wunde bei fy
       ];
-      const DAUMEN = [fx - 66, f.y + f.h * 0.86, f.h * 0.27, 60, -1.0];
+      const DAUMEN = [fx - 30, f.y + f.h * 0.84, f.h * 0.3, 60, -1.05];
       const fingerPfad = (x, y0, lang, w) => {
         ctx.beginPath();
-        ctx.moveTo(-w / 2, 0);
+        // der Ansatz reicht 50 px in den Handrücken hinein (wird dort von der Handfläche überdeckt): keine Kante am Übergang
+        ctx.moveTo(-w / 2, 50);
         ctx.lineTo(-w / 2, -lang + w / 2);
         ctx.arc(0, -lang + w / 2, w / 2, Math.PI, 0);
-        ctx.lineTo(w / 2, 0);
+        ctx.lineTo(w / 2, 50);
         ctx.closePath();
       };
       const handPfad = () => { ctx.beginPath(); ctx.ellipse(fx + 45, f.y + f.h * 0.8, 120, 88, 0, 0, Math.PI * 2); };

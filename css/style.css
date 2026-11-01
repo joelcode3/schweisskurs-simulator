@@ -1058,3 +1058,4 @@ button { font: inherit; color: inherit; }
 #testmenue summary { cursor: pointer; padding: 3px 2px; color: #ffc81e; }
 #testmenue button { font: inherit; color: #eee; background: #34373d; border: 1px solid #111; border-radius: 6px; padding: 4px 6px; text-align: left; cursor: pointer; }
 #testmenue button:hover { background: #4a4e56; }
+#testmenue .tm-nr { color: #ffc81e; font-variant-numeric: tabular-nums; margin-right: 4px; }

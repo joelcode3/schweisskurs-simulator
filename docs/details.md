@@ -583,14 +583,91 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   (Menü), auf Torben klicken, Minispiel `fingerSpiel` (abtupfen, drücken, Verband wickeln). Sonst verbindet Dennis ihn (Wut +10).
   Danach 70 s Torben auf dem Sofa, ab dann dauerhaft weißer Verband an der rechten Hand (`torbenVerbandAn`). Der Träger bleibt liegen.
 
-- Testmenü (1.11.): `?test` an die Adresse hängen (z. B. https://joelcode3.github.io/schweisskurs-simulator/?test), nach „Kurs starten“
+- Testmenü (1.11.): `?test` an die Adresse hängen (https://joelcode3.github.io/schweisskurs-simulator/?test), nach „Kurs starten“
   erscheint rechts das Menü (einklappbar, Gruppen aufklappbar). Unter Pointer-Lock erst Rechtsklick (Cursor), dann klicken.
-  Gruppen: Minispiele direkt (Anzeichnen, Schneiden, Schweißen, Schlacke, Lackieren, Ventil, Spülen, Bitsatz, Akkuschrauber, Sieb,
-  Kaffee, Rohrbruch, Räuberleiter, Hula, Kackepumpe putzen, Spanngurte entknoten, Klo pömpeln (sobald #62 drin), Finger verarzten),
-  Nebenaufgaben (Klo verstopft, Feuer, Rohrbruch, Wäsche, Akkuschrauber, Bitsatz, Tassen, Spüldienst, Kackepumpe hin/zurück,
-  Mülltonnen, Grill, Jonnys Leiter, Spanngurte hinwerfen/aufrollen, Jonnys Bier, Flaschen, Ladung vom Jeep, Hofladen Eier/Mettenden,
-  Torben-Unfall), Ereignisse (Telefonat, Klo-Pause, Mittag, Hüfte, Kaffee, Hula, Torben kommt, Kumpel, Waldo, Sofa-Streit,
-  Jonny rein/raus/kitzelt/stört/Sodbrennen, Kiwi), Wut und Zeit (Wut 0/30/60/90, Zeit +5/+15 min). Neue Ereignisse immer ergänzen.
+  Jeder Eintrag hat eine FESTE Nummer (T01 …), die sich nie verschiebt; neue Einträge bekommen die nächste freie Nummer (zuletzt T79).
+  T17 erscheint erst, wenn das Pömpel-Minispiel (#62) in main ist. Ofen-Bau „Stand springen“ setzt den Stand VOR dem Schritt
+  (alles davor erledigt, Flasche am Platz, man steht dort); der Schritt wird dann normal im Spiel gemacht.
+  Nr | Gruppe | Eintrag
+  T01 | Minispiele (direkt) | Anzeichnen
+  T02 | Minispiele (direkt) | Schneiden (Flex)
+  T03 | Minispiele (direkt) | Schweißen
+  T04 | Minispiele (direkt) | Schlacke klopfen
+  T05 | Minispiele (direkt) | Lackieren
+  T06 | Minispiele (direkt) | Restgas ablassen (Ventil)
+  T07 | Minispiele (direkt) | Flasche spülen
+  T08 | Minispiele (direkt) | Bitsatz sortieren
+  T09 | Minispiele (direkt) | Akkuschrauber reparieren
+  T10 | Minispiele (direkt) | Flusensieb ausblasen
+  T11 | Minispiele (direkt) | Kaffee kochen
+  T12 | Minispiele (direkt) | Rohrbruch reparieren
+  T13 | Minispiele (direkt) | Räuberleiter (Jonnys Leiter)
+  T14 | Minispiele (direkt) | Hula-Hoop
+  T15 | Minispiele (direkt) | Kackepumpe putzen
+  T16 | Minispiele (direkt) | Spanngurte entknoten
+  T17 | Minispiele (direkt) | Klo pömpeln
+  T18 | Minispiele (direkt) | Finger verarzten (Torben)
+  T19 | Nebenaufgaben | Klo verstopft
+  T20 | Nebenaufgaben | Feuer
+  T21 | Nebenaufgaben | Wasserrohrbruch
+  T22 | Nebenaufgaben | Wäsche übernehmen
+  T23 | Nebenaufgaben | Akkuschrauber (Waldo bringt ihn)
+  T24 | Nebenaufgaben | Bitsatz sortieren
+  T25 | Nebenaufgaben | Tassen verteilen
+  T26 | Nebenaufgaben | Spüldienst (Kumpel-Besuch)
+  T27 | Nebenaufgaben | Kackepumpe (Waldo sucht sie)
+  T28 | Nebenaufgaben | Kackepumpe dreckig zurück
+  T29 | Nebenaufgaben | Mülltonnen umfahren
+  T30 | Nebenaufgaben | Grill umfahren
+  T31 | Nebenaufgaben | Jonnys Leiter
+  T32 | Nebenaufgaben | Spanngurte hinwerfen
+  T33 | Nebenaufgaben | Spanngurte aufrollen (im Spiel)
+  T34 | Nebenaufgaben | Jonnys Bier (leere Flasche)
+  T35 | Nebenaufgaben | Leere Flaschen hinlegen (3)
+  T36 | Nebenaufgaben | Ladung fällt vom Jeep
+  T37 | Nebenaufgaben | Hofladen: Eier nehmen
+  T38 | Nebenaufgaben | Hofladen: Mettenden nehmen
+  T39 | Nebenaufgaben | Torben-Unfall (Träger, Finger)
+  T40 | Ereignisse | Dennis telefoniert
+  T41 | Ereignisse | Dennis Klo-Pause
+  T42 | Ereignisse | Mittagspause
+  T43 | Ereignisse | Hüfte (Dennis liegt)
+  T44 | Ereignisse | Kaffee kochen (im Spiel)
+  T45 | Ereignisse | Dennis Hula-Hoop
+  T46 | Ereignisse | Torben kommt
+  T47 | Ereignisse | Kumpel-Besuch
+  T48 | Ereignisse | Waldo-Besuch
+  T49 | Ereignisse | Sofa-Streit (Waldo)
+  T50 | Ereignisse | Jonny kommt rein
+  T51 | Ereignisse | Jonny geht raus
+  T52 | Ereignisse | Jonny kitzelt Dennis
+  T53 | Ereignisse | Jonny stört
+  T54 | Ereignisse | Jonny Sodbrennen
+  T55 | Ereignisse | Kiwi essen
+  T56 | Wut und Zeit | Wut auf 0
+  T57 | Wut und Zeit | Wut auf 30
+  T58 | Wut und Zeit | Wut auf 60
+  T59 | Wut und Zeit | Wut auf 90
+  T60 | Wut und Zeit | Zeit + 5 Minuten
+  T61 | Wut und Zeit | Zeit + 15 Minuten
+  T62 | Ofen-Bau: Stand springen | Schritt 1: Flasche nach draußen tragen
+  T63 | Ofen-Bau: Stand springen | Schritt 2: Restgas ablassen (Ventil)
+  T64 | Ofen-Bau: Stand springen | Schritt 3: Zurück zum Waschplatz
+  T65 | Ofen-Bau: Stand springen | Schritt 4: Flasche spülen
+  T66 | Ofen-Bau: Stand springen | Schritt 5: Zur Werkbank tragen
+  T67 | Ofen-Bau: Stand springen | Schritt 6: Ofentür anzeichnen
+  T68 | Ofen-Bau: Stand springen | Schritt 7: Ofentür ausschneiden
+  T69 | Ofen-Bau: Stand springen | Schritt 8: Zum Schweißplatz tragen
+  T70 | Ofen-Bau: Stand springen | Schritt 9: Schweißgerät einstellen
+  T71 | Ofen-Bau: Stand springen | Schritt 10: Scharniere und Griffe schweißen
+  T72 | Ofen-Bau: Stand springen | Schritt 11: Beine schweißen
+  T73 | Ofen-Bau: Stand springen | Schritt 12: Ofenrohr schweißen
+  T74 | Ofen-Bau: Stand springen | Schritt 13: Schlacke abklopfen
+  T75 | Ofen-Bau: Stand springen | Schritt 14: Ofen lackieren
+  T76 | Ofen-Bau: Stand springen | Schritt 15: Ofen bei Dennis abgeben
+  T77 | Ofen-Bau: Stand springen | Schutzausrüstung anziehen (alles)
+  T78 | Fahrzeuge | Jeep entdrosseln (Torben)
+  T79 | Fahrzeuge | Jeep wieder drosseln
 
 ## Offene Fäden und Ungetestetes (Übergabe 1.11.2026)
 - Ausraster-Videos: #54 (frisches Video-Element, bis zu 6 Versuche, canplay) ist nur eine Absicherung. Die Ursache ist unklar, im Test lief
