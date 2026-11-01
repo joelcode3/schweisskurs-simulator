@@ -399,7 +399,9 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   laufende Dennis-Sätze werden vorher ausgeblendet. Dennis spricht nie zwei Aufnahmen gleichzeitig: `stimmeAbspielen` blendet eine alte
   Dennis-Stimme aus, Gemurmel (`ortsTon`, `nurWennStill`) startet nur, wenn niemand spricht; Klospülung ist Gruppe 'effekt'.
   Nicht abgedeckt: Gebrabbel (`brummeln`) ohne Aufnahme überlappt nicht geprüft.
-  B3 (Tanzen macht nicht wütender): so gewollt/dokumentiert, Tanzen hat keinen Wut-Effekt (Wut sinkt normal); Ärger gibt es nur,
+  B3 (Entscheidung Betreiber 1.11.): Tanzen macht nicht automatisch wütender, ist aber kein Schlupfloch: `normalOderTanzt()` (spiel.js)
+  für Wut-Quellen mit Zustandsabfrage (Jonnys Bier, Akkuschrauber-Mecker, Waldo-Mecker, Dreck/Fegen), und beim Tanzen unterbricht jeder
+  Satz mit prio > 0 das Tanzen (statt wegzufallen). Früher (Doku): Tanzen hatte keinen Wut-Effekt, Tanzen hat keinen Wut-Effekt (Wut sinkt normal); Ärger gibt es nur,
   wenn Musik in der Mittagspause angeht oder er sie ausgemacht hat und man sie wieder anmacht. Nicht geändert, Entscheidung beim Betreiber.
 - Paket F Hofladen und Essen (Projektchat 30.10., I46/I48/I54, Vorschau): Peters Kühlschrank im SB-Laden (landschaft.js) hat eine Tür (Klick:
   „Tür öffnen“, schwenkt auf, Innenlicht), vier Gitterregale wie in der Werkstatt, unten Käse (4 Keile + Laib im roten Wachs), darüber
