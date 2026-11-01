@@ -2564,7 +2564,7 @@ export function fingerSpiel() {
   const { api, versprechen } = spielRahmen('Torbens Finger verarzten', 'Erst das Blut mit der Kompresse abtupfen (Maus gedrückt drüberwischen), dann auf die Wunde drücken (Maus halten), dann den Verband im Kreis herumwickeln. Nicht hetzen!', {
     beiGroesse(m) {
       f = flaeche(m);
-      fx = f.x + f.b * 0.5; fy = f.y + f.h * 0.38;
+      fx = f.x + f.b * 0.5; fy = f.y + f.h * 0.43;
       if (!blut.length && phase === 'tupfen') neuesBlut(7);
     },
     events: {
@@ -2618,55 +2618,73 @@ export function fingerSpiel() {
       ctx.fillStyle = '#2a2c30'; ctx.fillRect(0, 0, m.b, m.h);
       // Werkstattboden als Unterlage
       ctx.fillStyle = '#9a968c'; ctx.fillRect(f.x, f.y, f.b, f.h);
-      // Hand von oben (Handrücken): Ärmel und Handgelenk unten, vier Finger nach oben, Daumen links; Zeigefinger verletzt
-      const HAUT = '#efc3a6', HAUT_D = '#d9a184', HAUT_H = '#f7d6bf';
+      // Hand von oben (Handrücken). Erst alle Umrisse dick in Schwarz, dann alle Flächen in Hautfarbe darüber:
+      // so ist die Hand eine zusammenhängende Form, die Finger gehen ohne Linie in den Handrücken über.
+      const HAUT = '#efc3a6', HAUT_D = '#d9a184', HAUT_H = '#f7d6bf', ROT = '#f0b39a';
       ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-      // Ärmel (dunkelgraues Shirt) und Handgelenk
+      // Ärmel (dunkelgraues Shirt)
       ctx.fillStyle = '#45484e'; ctx.strokeStyle = '#111'; ctx.lineWidth = 4;
-      ctx.beginPath(); ctx.roundRect(fx - 60, f.y + f.h * 0.93, 210, 60, 10); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = HAUT; ctx.beginPath(); ctx.roundRect(fx - 40, f.y + f.h * 0.84, 170, 50, 16); ctx.fill(); ctx.stroke();
-      // ein Finger: drei Glieder, Knöchel, Falten an den Gelenken, Nagel; geschwollen = dicker und rötlich
-      const finger = (x, y0, lang, w, dreh, verletzt = false) => {
-        ctx.save(); ctx.translate(x, y0); ctx.rotate(dreh);
-        const ww = verletzt ? w * 1.18 : w;
-        ctx.fillStyle = verletzt ? '#f0b39a' : HAUT; ctx.strokeStyle = '#111'; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.roundRect(fx - 70, f.y + f.h * 0.95, 230, 60, 10); ctx.fill(); ctx.stroke();
+      const basisY = f.y + f.h * 0.66;
+      // Finger: [x, Basis-y, Länge, Breite, Drehung, verletzt]; Basis liegt tief im Handrücken
+      const FINGER = [
+        [fx + 150, basisY + 30, f.h * 0.27, 52, 0.22, false], // kleiner Finger
+        [fx + 102, basisY + 8, f.h * 0.35, 56, 0.1, false], // Ringfinger
+        [fx + 52, basisY, f.h * 0.4, 58, 0.03, false], // Mittelfinger
+        [fx, basisY + 6, f.h * 0.36, 58, 0, true], // Zeigefinger (verletzt, geschwollen), Wunde bei fy
+      ];
+      const DAUMEN = [fx - 66, f.y + f.h * 0.86, f.h * 0.27, 60, -1.0];
+      const fingerPfad = (x, y0, lang, w) => {
         ctx.beginPath();
-        ctx.moveTo(-ww / 2, 20);
-        ctx.lineTo(-ww / 2 * 0.92, -lang + ww * 0.45);
-        ctx.quadraticCurveTo(-ww / 2 * 0.9, -lang, 0, -lang);
-        ctx.quadraticCurveTo(ww / 2 * 0.9, -lang, ww / 2 * 0.92, -lang + ww * 0.45);
-        ctx.lineTo(ww / 2, 20);
-        ctx.closePath(); ctx.fill(); ctx.stroke();
-        // Schatten an einer Seite, Licht an der anderen
-        ctx.strokeStyle = HAUT_D; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(ww / 2 - 5, 10); ctx.lineTo(ww / 2 * 0.92 - 5, -lang + ww * 0.5); ctx.stroke();
-        ctx.strokeStyle = HAUT_H; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(-ww / 2 + 7, 0); ctx.lineTo(-ww / 2 * 0.92 + 7, -lang + ww * 0.7); ctx.stroke();
-        // Gelenkfalten (Mittel- und Endgelenk) und Knöchel unten
-        ctx.strokeStyle = 'rgba(120,70,50,0.75)'; ctx.lineWidth = 2;
-        for (const [q, n] of [[0.38, 3], [0.66, 2]]) {
-          const y = -lang * q;
-          for (let i = 0; i < n; i++) { ctx.beginPath(); ctx.moveTo(-ww * 0.28, y - i * 5); ctx.quadraticCurveTo(0, y - i * 5 - 4, ww * 0.28, y - i * 5); ctx.stroke(); }
-        }
-        ctx.fillStyle = 'rgba(200,130,105,0.45)'; ctx.beginPath(); ctx.ellipse(0, 4, ww * 0.32, 8, 0, 0, Math.PI * 2); ctx.fill();
-        // Nagel mit hellem Rand; verletzt: blau-schwarz gequetscht
-        const ny = -lang + ww * 0.62;
-        ctx.fillStyle = verletzt ? '#4a2f5e' : '#f7d9cc'; ctx.strokeStyle = '#111'; ctx.lineWidth = 2.5;
-        ctx.beginPath(); ctx.roundRect(-ww * 0.28, ny - ww * 0.42, ww * 0.56, ww * 0.62, [ww * 0.25, ww * 0.25, 6, 6]); ctx.fill(); ctx.stroke();
-        if (!verletzt) { ctx.fillStyle = '#fff7f2'; ctx.fillRect(-ww * 0.22, ny - ww * 0.4, ww * 0.44, 5); }
-        else { ctx.fillStyle = 'rgba(130,60,150,0.45)'; ctx.beginPath(); ctx.ellipse(0, ny + 6, ww * 0.55, ww * 0.6, 0, 0, Math.PI * 2); ctx.fill(); }
-        ctx.restore();
+        ctx.moveTo(-w / 2, 0);
+        ctx.lineTo(-w / 2, -lang + w / 2);
+        ctx.arc(0, -lang + w / 2, w / 2, Math.PI, 0);
+        ctx.lineTo(w / 2, 0);
+        ctx.closePath();
       };
-      // Handrücken mit Sehnen und Adern
-      ctx.fillStyle = HAUT; ctx.strokeStyle = '#111'; ctx.lineWidth = 4;
-      ctx.beginPath(); ctx.ellipse(fx + 40, f.y + f.h * 0.8, 125, 92, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-      finger(fx - 92, f.y + f.h * 0.86, f.h * 0.34, 52, -0.9); // Daumen
-      finger(fx + 162, f.y + f.h * 0.78, f.h * 0.38, 40, 0.22); // kleiner Finger
-      finger(fx + 112, f.y + f.h * 0.74, f.h * 0.48, 44, 0.12); // Ringfinger
-      finger(fx + 57, f.y + f.h * 0.72, f.h * 0.54, 46, 0.05); // Mittelfinger
-      finger(fx, f.y + f.h * 0.72, f.h * 0.5, 46, 0, true); // Zeigefinger (verletzt), Spitze bei fy
-      ctx.strokeStyle = 'rgba(150,95,75,0.5)'; ctx.lineWidth = 3;
-      for (const dx of [0, 57, 112]) { ctx.beginPath(); ctx.moveTo(fx + dx + 4, f.y + f.h * 0.74); ctx.quadraticCurveTo(fx + dx + 14, f.y + f.h * 0.84, fx + 40 + dx * 0.4, f.y + f.h * 0.92); ctx.stroke(); }
+      const handPfad = () => { ctx.beginPath(); ctx.ellipse(fx + 45, f.y + f.h * 0.8, 120, 88, 0, 0, Math.PI * 2); };
+      const gelenkPfad = () => { ctx.beginPath(); ctx.roundRect(fx - 30, f.y + f.h * 0.84, 160, 70, 18); };
+      const alleFormen = (je) => {
+        je(gelenkPfad, null);
+        je(handPfad, null);
+        for (const [x, y0, lang, w, dreh, verletzt] of [...FINGER, [...DAUMEN, false]]) {
+          const ww = verletzt ? w * 1.12 : w;
+          je(() => fingerPfad(x, y0, lang, ww), [x, y0 + 30, dreh], verletzt);
+        }
+      };
+      const mitLage = (lage, tun) => { ctx.save(); if (lage) { ctx.translate(lage[0], lage[1]); ctx.rotate(lage[2]); ctx.translate(0, -30); } tun(); ctx.restore(); };
+      // 1. Umrisse
+      ctx.strokeStyle = '#111'; ctx.lineWidth = 9;
+      alleFormen((pfad, lage) => mitLage(lage, () => { pfad(); ctx.stroke(); }));
+      // 2. Flächen (überdecken die inneren Umrisse): erst die Finger, dann Handrücken und Gelenk darüber (Fingeransätze verschwinden darunter)
+      const flaechen = [];
+      alleFormen((pfad, lage, verletzt) => flaechen.push([pfad, lage, verletzt]));
+      for (const [pfad, lage, verletzt] of [...flaechen.slice(2), ...flaechen.slice(0, 2)]) mitLage(lage, () => { pfad(); ctx.fillStyle = verletzt ? ROT : HAUT; ctx.fill(); });
+      // 3. Einzelheiten je Finger: Schatten, Licht, Gelenkfalten, Nagel
+      for (const [x, y0, lang, w, dreh, verletzt] of [...FINGER, [...DAUMEN, false]]) {
+        const ww = verletzt ? w * 1.12 : w;
+        mitLage([x, y0 + 30, dreh], () => {
+          ctx.strokeStyle = HAUT_D; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(ww / 2 - 7, -10); ctx.lineTo(ww / 2 - 7, -lang + ww * 0.6); ctx.stroke();
+          ctx.strokeStyle = HAUT_H; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(-ww / 2 + 9, -20); ctx.lineTo(-ww / 2 + 9, -lang + ww * 0.7); ctx.stroke();
+          ctx.strokeStyle = 'rgba(120,70,50,0.7)'; ctx.lineWidth = 2.2;
+          for (const [q, n] of [[0.42, 3], [0.7, 2]]) {
+            const y = -lang * q;
+            for (let i = 0; i < n; i++) { ctx.beginPath(); ctx.moveTo(-ww * 0.3, y - i * 5); ctx.quadraticCurveTo(0, y - i * 5 - 4, ww * 0.3, y - i * 5); ctx.stroke(); }
+          }
+          const ny = -lang + ww * 0.58;
+          ctx.fillStyle = verletzt ? '#4a2f5e' : '#f7d9cc'; ctx.strokeStyle = '#111'; ctx.lineWidth = 2.5;
+          ctx.beginPath(); ctx.roundRect(-ww * 0.28, ny - ww * 0.36, ww * 0.56, ww * 0.56, [ww * 0.25, ww * 0.25, 6, 6]); ctx.fill(); ctx.stroke();
+          if (!verletzt) { ctx.fillStyle = '#fff7f2'; ctx.fillRect(-ww * 0.22, ny - ww * 0.34, ww * 0.44, 5); }
+          else { ctx.fillStyle = 'rgba(130,60,150,0.4)'; ctx.beginPath(); ctx.ellipse(0, ny + 8, ww * 0.55, ww * 0.55, 0, 0, Math.PI * 2); ctx.fill(); }
+        });
+      }
+      // Knöchel auf dem Handrücken, Sehnen, Ader
+      ctx.fillStyle = 'rgba(200,130,105,0.45)';
+      for (const [x, y0, , , dreh] of FINGER) { ctx.beginPath(); ctx.ellipse(x + Math.sin(dreh) * 10, y0 + 22, 18, 9, dreh, 0, Math.PI * 2); ctx.fill(); }
+      ctx.strokeStyle = 'rgba(150,95,75,0.45)'; ctx.lineWidth = 3;
+      for (const [x, y0] of FINGER) { ctx.beginPath(); ctx.moveTo(x, y0 + 40); ctx.quadraticCurveTo(x + 8, f.y + f.h * 0.84, fx + 45 + (x - fx - 45) * 0.4, f.y + f.h * 0.93); ctx.stroke(); }
       ctx.strokeStyle = 'rgba(90,120,170,0.35)'; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(fx + 20, f.y + f.h * 0.95); ctx.quadraticCurveTo(fx + 50, f.y + f.h * 0.85, fx + 90, f.y + f.h * 0.82); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(fx + 20, f.y + f.h * 0.97); ctx.quadraticCurveTo(fx + 50, f.y + f.h * 0.86, fx + 95, f.y + f.h * 0.83); ctx.stroke();
       // Schnitt an der Fingerkuppe
       if (phase !== 'wickeln' || lagen < 1) { ctx.strokeStyle = '#8a1010'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(fx - 18, fy + 6); ctx.quadraticCurveTo(fx, fy - 4, fx + 16, fy - 2); ctx.stroke(); }
       // Blut
