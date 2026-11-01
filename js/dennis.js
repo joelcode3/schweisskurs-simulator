@@ -280,12 +280,6 @@ export function baueDennis(scene) {
   }
   const links = arm(-1);
   const rechts = arm(1);
-  // Armbanduhr am linken Handgelenk (für den Blick auf die Uhr vor der Mittagspause)
-  const uhr = new THREE.Group();
-  uhr.add(zylinder(0.047, 0.047, 0.03, 0x1d1d1f, { umriss: false }, 12));
-  uhr.add(setze(zylinder(0.022, 0.022, 0.012, 0xc9cdd2, { umriss: 0.001 }, 12), 0, 0, 0.045, Math.PI / 2, 0, 0));
-  uhr.position.set(0, -0.02, 0);
-  links.hand.add(uhr);
   links.schulter.rotation.z = -0.1;
   rechts.schulter.rotation.z = 0.1;
 
@@ -402,7 +396,7 @@ export function baueDennis(scene) {
     brauen.push(b);
   }
   const mund = quader(0.05, 0.014, 0.02, 0x5a1a14, { umriss: false });
-  mund.position.set(0, 0.035, 0.158);
+  mund.position.set(0, 0.035, 0.153);
   kopf.add(mund);
   // Schnauzer (Hufeisen)
   const schnauzer = teil(new THREE.TorusGeometry(0.048, 0.02, 8, 18, Math.PI), 0xc9904f, { umriss: 0.004 });
@@ -410,9 +404,9 @@ export function baueDennis(scene) {
   schnauzer.scale.set(1.1, 0.95, 0.8);
   kopf.add(schnauzer);
   // Dreitagebart am Kinn
-  const stoppeln = kugel(0.072, 0xd9a48a, { umriss: false }, 12);
-  stoppeln.position.set(0, 0.0, 0.085);
-  stoppeln.scale.set(1.02, 0.78, 1.0);
+  const stoppeln = kugel(0.072, 0xb98d57, { umriss: false }, 12); // Bartfarbe wie Haare, nicht hautrosa (sonst wirkt es bei erhobenem Kopf wie eine Zunge)
+  stoppeln.position.set(0, 0.0, 0.078);
+  stoppeln.scale.set(1.02, 0.7, 0.9);
   kopf.add(stoppeln);
   // Goldene Pilotenbrille
   const brille = new THREE.Group();
@@ -911,7 +905,8 @@ export function baueDennis(scene) {
         : tanzt ? 0.025
           : wuetend ? 0.03 + Math.abs(Math.sin(zeit * 14)) * 0.035 : stimmung === 'sauer' ? 0.02 + Math.abs(Math.sin(zeit * 10)) * 0.02 : 0.014;
       const gaehnt = g && g.name === 'gaehnen' ? gk : 0;
-      mund.scale.set(stimmung === 'froh' || tanzt ? 1.3 : 1 + gaehnt * 0.4, (mundAuf + gaehnt * 0.06) / 0.014, 1);
+      mund.scale.set(stimmung === 'froh' || tanzt ? 1.3 : 1 + gaehnt * 0.25, Math.min(3.2, (mundAuf + gaehnt * 0.03) / 0.014), 0.6);
+      mund.position.y = 0.035 - Math.max(0, mund.scale.y - 1) * 0.004; // wächst nach unten, bleibt im Gesicht
       hautFarbe.lerp(zielFarbe, Math.min(1, dt * 4));
       for (const m of hautMats) m.color.copy(hautFarbe);
       kopf.position.x = wuetend ? Math.sin(zeit * 40) * 0.008 : 0;

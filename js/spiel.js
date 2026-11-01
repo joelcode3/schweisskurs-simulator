@@ -458,7 +458,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   async function sprechen(e) {
     const { text, sauer } = e;
     const { minMs = 0, beimTanzen = false, ton = null } = e.optionen;
-    if (dennis.modus === 'tanzen' && !beimTanzen) return;
+    // Beim Tanzen sagt er nur Nebensächliches nicht; alles Wichtige (Ärger, Ereignisse) unterbricht das Tanzen
+    if (dennis.modus === 'tanzen' && !beimTanzen) { if (e.prio > 0) dennis.setzeModus('normal'); else return; }
     // Beim Hula-Hoop nur „hello fresh“: Nebensächliches fällt weg, Wichtiges wartet
     if (z.hula) {
       if (e.prio < 2) return;
@@ -1176,7 +1177,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     await warte(500);
     welt.kuehlschrank(false);
     jz.biere++;
-    if (dennisSiehts() && dennis.modus === 'normal') {
+    if (dennisSiehts() && normalOderTanzt()) {
       aerger(3);
       dennisSagt(sag(DENNIS.jonnyBier), true, { prio: 1 });
     }
@@ -2024,7 +2025,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     if (z.akku !== 'liegt' || z.vorbei || z.akkuMecker >= 2) return;
     const t = sekundenSeitStart();
     if (t - z.akkuSeit < 60 + z.akkuMecker * 70) return;
-    if (dennis.modus !== 'normal' || z.aufKlo || z.beschaeftigt || !ruhig() || !dennisSiehts()) return;
+    if (!normalOderTanzt() || z.aufKlo || z.beschaeftigt || !ruhig() || !dennisSiehts()) return;
     if (weitDraussenLassen()) { z.akkuSeit += 40; return; }
     z.akkuMecker++;
     aerger(2);
@@ -2052,7 +2053,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       return;
     }
     if (t > wz.bleibtBis) { waldoGeht(sag(WALDO.tschuess)); return; }
-    if (t > wz.naechsterMecker && dennisSiehts() && ruhig() && !z.beschaeftigt && dennis.modus === 'normal') {
+    if (t > wz.naechsterMecker && dennisSiehts() && ruhig() && !z.beschaeftigt && normalOderTanzt()) {
       wz.naechsterMecker = t + 30 + Math.random() * 20;
       if (weitDraussenLassen()) return;
       aerger(2);
@@ -2180,6 +2181,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
 
   // Ist der Spieler nah genug bei Dennis, dass der etwas mitbekommt? Weit weg (über 14 m) nie, durch die Wand
   // (einer drinnen, einer draußen) nur auf kurze Entfernung (unter 5 m, z. B. am Tor)
+  // Normal oder gerade am Tanzen: beim Tanzen gelten Wut-Quellen genauso wie sonst (kein Schlupfloch)
+  const normalOderTanzt = () => dennis.modus === 'normal' || dennis.modus === 'tanzen';
   function spielerNah() {
     const p = kamera.position, d = dennis.position;
     const ab = Math.hypot(p.x - d.x, p.z - d.z);
@@ -2332,6 +2335,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       return;
     }
     z.dennisFegt = true;
+    if (dennis.modus === 'tanzen') dennis.setzeModus('normal');
     const abbruch = () => {
       dennis.besen(false);
       dennis.setzeModus('normal');
@@ -3874,7 +3878,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
         dennisSagt(sag(DENNIS.dreck.meckern), true, { prio: 1 });
       }
       if (!welt.dreck) z.dreckGemeckert = false;
-      if (welt.dreck && !z.dennisFegt && !z.dennisLoescht && sekundenSeitStart() - z.dreckSeit > 32 && !z.beschaeftigt && dennis.modus === 'normal' && dennis.istDaheim() && !buehneBelegt()) {
+      if (welt.dreck && !z.dennisFegt && !z.dennisLoescht && sekundenSeitStart() - z.dreckSeit > 32 && !z.beschaeftigt && normalOderTanzt() && dennis.istDaheim() && !buehneBelegt()) {
         dennisFegt();
       }
       // Murmeln in der Nähe (nicht während Dennis spricht oder weg ist)
