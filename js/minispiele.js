@@ -2553,7 +2553,7 @@ export function fingerSpiel() {
   let phase = 'tupfen';
   let px = 0, py = 0, maus = false;
   const blut = [];
-  let nachTakt = 0, druck = 0, nachgeblutet = 0;
+  let nachTakt = 0, druck = 0, nachgeblutet = 0, druckGriff = false; // druckGriff: Maus wurde in der Druck-Phase neu gedrückt
   let lagen = 0, zieht = null, tempo = 0, locker = 0, lockerSperre = 0;
   let meldung = '', meldungZeit = 0;
   const meld = (t) => { meldung = t; meldungZeit = 2; };
@@ -2572,7 +2572,7 @@ export function fingerSpiel() {
         if (api.istFertig) return;
         const p = zeigerPos(api.canvas, e); px = p.x; py = p.y; maus = true;
         if (phase === 'wickeln') zieht = Math.atan2(p.y - fy, p.x - fx);
-        if (phase === 'druecken' && Math.hypot(p.x - fx, p.y - fy) > 60) meld('Genau auf die Wunde drücken!');
+        if (phase === 'druecken') { druckGriff = true; if (Math.hypot(p.x - fx, p.y - fy) > 60) meld('Genau auf die Wunde drücken!'); }
         api.canvas.setPointerCapture?.(e.pointerId);
       },
       pointermove(e) {
@@ -2590,7 +2590,8 @@ export function fingerSpiel() {
       },
       pointerup() {
         maus = false; zieht = null;
-        if (phase === 'druecken' && druck > 0 && druck < 1) { druck = 0; nachgeblutet++; neuesBlut(2); phase = 'tupfen'; meld('Zu früh losgelassen! Es blutet wieder.'); }
+        if (phase === 'druecken' && druckGriff && druck > 0 && druck < 1) { druck = 0; nachgeblutet++; neuesBlut(2); phase = 'tupfen'; meld('Zu früh losgelassen! Es blutet wieder.'); }
+        druckGriff = false;
       },
       pointercancel() { maus = false; zieht = null; },
     },
@@ -2602,9 +2603,9 @@ export function fingerSpiel() {
         if (nachTakt <= 0) { nachTakt = 1.3; if (blut.length < 12) neuesBlut(1); }
         if (maus) for (const b of blut) if (Math.hypot(px - b.x, py - b.y) < b.r + 26) b.hp -= dt * 2.4;
         for (let i = blut.length - 1; i >= 0; i--) if (blut[i].hp <= 0) { blut.splice(i, 1); if (Math.random() < 0.3) blip(500, 0.03, 0.05); }
-        if (!blut.length) { phase = 'druecken'; meld('Sauber! Jetzt fest auf die Wunde drücken und halten.'); }
+        if (!blut.length) { phase = 'druecken'; druckGriff = false; meld('Sauber! Maus los, dann neu fest auf die Wunde drücken und halten.'); }
       } else if (phase === 'druecken') {
-        if (maus && Math.hypot(px - fx, py - fy) < 60) druck = Math.min(1, druck + dt / 2.5);
+        if (maus && druckGriff && Math.hypot(px - fx, py - fy) < 60) druck = Math.min(1, druck + dt / 2.5);
         if (druck >= 1) { phase = 'wickeln'; maus = false; meld('Blutung steht. Jetzt den Verband im Kreis herumwickeln.'); blip(660, 0.08); }
       } else if (phase === 'wickeln') {
         tempo *= Math.pow(0.02, dt);
