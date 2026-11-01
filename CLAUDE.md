@@ -7,7 +7,7 @@
   (Betreiber-Wunsch): ist der letzte PR noch offen, einen neuen Zweig (Name vom Arbeitszweig abgeleitet, z. B. `…-draussen`)
   von `origin/main` anlegen. Nur kleine Nachbesserungen zum offenen PR kommen in diesen PR.
   Hängt ein neues Update vom noch offenen PR ab, den neuen Zweig auf dessen Stand aufsetzen und im PR vermerken: erst den alten mergen.
-- Projektchat (Session session_01KZ18oujuEFnsAskwuMiw8Y, pflegt die Projektliste) schickt To-dos: OHNE Go des Betreibers umsetzen
+- Projektchat (Session session_0136ircvAvU3aCzRamNp3F96, pflegt die Projektliste) schickt To-dos: OHNE Go des Betreibers umsetzen
   (Betreiber-Wunsch). Nach jedem erstellten Pull Request dem Projektchat per send_message Bescheid geben (Link + was drin ist).
 - Immer nur EIN Paket auf einmal (Betreiber-Wunsch, Limit sparen): nach jedem Paket (PR gemeldet bzw. Vorschau geschickt)
   stoppen und warten, bis der Projektchat „weiter <Paketname>“ schickt. Nie selbst das nächste Paket anfangen.
@@ -72,7 +72,7 @@
 - Alle Dennis-Sätze stehen in `js/texte.js` (IDs = Dateinamen der Aufnahmen), `spiel.js` nutzt nur diese.
 - `stimme/stimme.json` + `stimme/<id>.mp3`: Aufnahmen pro Satz, Mund bewegt sich nach Lautstärke.
   Pflege mit `node tools/stimme.mjs liste|eintragen`, siehe `stimme/LIESMICH.md`.
-- Die Jungs sprechen ALLE Sätze ein. Dateinamen kurz: dennis1 … dennis482 (469–475 Spanngurt, 476–478 Paletten, 479–482 Hofladen), jonny1 … jonny56, waldo1 … waldo41, torben1 … torben19, kumpel1 … kumpel7 (KUMPEL) (Endung
+- Die Jungs sprechen ALLE Sätze ein. Dateinamen kurz: dennis1 … dennis484 (483–484 Bierflasche werfen, 469–475 Spanngurt, 476–478 Paletten, 479–482 Hofladen), jonny1 … jonny56, waldo1 … waldo41, torben1 … torben19, kumpel1 … kumpel7 (KUMPEL) (Endung
   .mp3/.m4a/.wav, Groß-/Kleinschreibung egal). Zuordnung Kurzname -> Satz-ID steht in stimme/zuordnung.csv (vom Projektchat).
   Nummern sind fest und verschieben sich NIE; neue Sätze bekommen die nächste freie Nummer (dennis367 …) und eine neue Zeile.
   Schlüssel in texte.js NIE umbenennen, neue Sätze nur ergänzen. IDs: Dennis wie alleSaetze(), telefon.G.Z = Gespräch G,
@@ -83,8 +83,7 @@
 
 ## Stand der Pull Requests (1.11.2026)
 - Alles bis #54 gemergt (zuletzt #54 Hotfix Ausraster-Videos). Nichts offen. Neue Zweige immer von `origin/main`.
-- Versionsnummer zuletzt `v=20261101-4`.
-- Nächste freie Satz-Nummern (aus stimme/zuordnung.csv): dennis483, jonny58, waldo43, torben20, kumpel8.
-- Projektchat-Session: `PLATZHALTER_NEUE_PROJEKTCHAT_ID` (aktuell noch `session_012U3BQmPuiyZpwhAoLyJrFQ`, der Betreiber setzt beide Chats neu auf;
-  die alte ID `session_01KZ18oujuEFnsAskwuMiw8Y` oben ist veraltet). Neue ID hier und in „Zusammenarbeit“ eintragen, sobald bekannt.
+- Versionsnummer zuletzt `v=20261101-5`.
+- Nächste freie Satz-Nummern (aus stimme/zuordnung.csv): dennis485, jonny58, waldo43, torben20, kumpel8.
+- Projektchat-Session: `session_0136ircvAvU3aCzRamNp3F96` (1.11.; die alte ID `session_01KZ18oujuEFnsAskwuMiw8Y` oben ist veraltet).
 - Offene Fäden und Ungetestetes: `docs/details.md`, Abschnitt „Offene Fäden und Ungetestetes“ (zuerst lesen, wenn ein neuer Chat startet).

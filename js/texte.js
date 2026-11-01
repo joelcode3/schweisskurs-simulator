@@ -40,6 +40,7 @@ export const DENNIS = {
     reifen: ['Mein Hula-Hoop-Reifen! Der ist fürs Training, nicht zum Werfen!', 'Ey, mein Reifen! Der ist heilig!'],
     notizen: ['Ey man, meine Notizen! Ohne die kann ich nicht leben!', 'Mein Klemmbrett! Da steht alles drauf, was ich heute noch muss!', 'Nicht meine Notizen! Wo soll ich mir denn sonst Lydia aufschreiben?!'],
     besen: ['Den Besen nimmt man zum Fegen, nicht als Speer!', 'Besen werfen? Das ist hier kein Hexentreffen!'],
+    bierflasche: ['Ey! Wirf nicht mit Glas! Da latsch ich nachher in die Scherben!', 'Flaschen werden nicht geworfen! Das ist kein Wurfgeschoss, das ist Pfand!'],
     loescher: ['Den Feuerlöscher wirft man nicht! Und wenn’s dann brennt, was dann?!', 'Der Löscher fliegt nicht! Der rettet hier Leben!'],
   },
   musikPause: [
