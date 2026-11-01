@@ -1,12 +1,20 @@
 // Alle Geräusche werden live erzeugt (keine Audiodateien nötig).
 let ctx = null;
 let master = null;
+let werk = null;
 let rausch = null;
 let lautstaerke = 0.8;
+let spielTonAus = false; // während eines Ausraster-Videos: alle Spielgeräusche aus (nur der Videoton läuft)
 export function setzeLautstaerke(v) {
   lautstaerke = v;
-  if (master) master.gain.setTargetAtTime(v * 0.875, ctx.currentTime, 0.03);
+  if (master) master.gain.setTargetAtTime(spielTonAus ? 0 : v * 0.875, ctx.currentTime, 0.03);
 }
+export function spielTonStumm(an) {
+  spielTonAus = an;
+  if (master) master.gain.setTargetAtTime(an ? 0 : lautstaerke * 0.875, ctx.currentTime, 0.05);
+}
+
+export function werkLautstaerke(v) { if (werk) werk.gain.setTargetAtTime(v, ctx.currentTime, 0.15); }
 
 export function audioStart() {
   if (!ctx) {
@@ -16,6 +24,8 @@ export function audioStart() {
     master = ctx.createGain();
     master.gain.value = lautstaerke * 0.875;
     master.connect(ctx.destination);
+    werk = ctx.createGain(); // Geräusche aus der Werkstatt: draußen mit Abstand leiser (werkLautstaerke)
+    werk.connect(master);
     const len = ctx.sampleRate * 2;
     rausch = ctx.createBuffer(1, len, ctx.sampleRate);
     const d = rausch.getChannelData(0);
@@ -102,7 +112,7 @@ export function dauer(art, lautst = 1) {
   // sofort da (sehr kurzes Einblenden, kein Verzögerungsgefühl)
   aus.gain.setValueAtTime(0, t);
   aus.gain.linearRampToValueAtTime(lautst, t + 0.02);
-  aus.connect(master);
+  aus.connect(art === 'flex' || art === 'schweissen' ? werk : master); // Werkstattgeräusche draußen leiser, eigene Geräte nicht
   const knoten = [];
   let staerkeGain = null;
 
@@ -284,14 +294,22 @@ async function ladeStimme(url) {
   }
   return stimmPuffer.get(url);
 }
-export async function stimmeAbspielen(url, lautst = 1.1) {
+// Dennis spricht nie zwei Sätze gleichzeitig: eine neue Dennis-Stimme blendet die alte aus.
+// opt.nurWennStill (Gemurmel): spricht gerade jemand, wird nichts abgespielt. opt.gruppe 'effekt' = kein Sprechen (Klospülung).
+const dennisStimmen = new Set();
+export async function stimmeAbspielen(url, lautst = 1.1, opt = {}) {
   if (!ctx) return null;
+  const gruppe = opt.gruppe || 'dennis';
   let puffer;
   try {
     puffer = await ladeStimme(url);
   } catch {
     stimmPuffer.delete(url);
     return null;
+  }
+  if (gruppe === 'dennis') {
+    if (opt.nurWennStill && dennisStimmen.size) return null;
+    for (const alt of [...dennisStimmen]) alt.stopp(0.1);
   }
   const quelle = ctx.createBufferSource();
   quelle.buffer = puffer;
@@ -303,7 +321,7 @@ export async function stimmeAbspielen(url, lautst = 1.1) {
   const daten = new Uint8Array(analyse.fftSize);
   const fertig = new Promise((res) => { quelle.onended = res; });
   quelle.start();
-  return {
+  const stimme = {
     dauer: puffer.duration,
     fertig,
     lautstaerke(v) { g.gain.setTargetAtTime(v, ctx.currentTime, 0.02); },
@@ -319,8 +337,14 @@ export async function stimmeAbspielen(url, lautst = 1.1) {
       g.gain.setValueAtTime(g.gain.value, j);
       g.gain.linearRampToValueAtTime(0, j + ausblenden);
       try { quelle.stop(j + ausblenden + 0.02); } catch { /* schon zu Ende */ }
+      dennisStimmen.delete(stimme);
     },
   };
+  if (gruppe === 'dennis') {
+    dennisStimmen.add(stimme);
+    fertig.then(() => dennisStimmen.delete(stimme));
+  }
+  return stimme;
 }
 // Aufnahmen vorab laden, damit Ton und Sprechblase gleichzeitig kommen
 export function stimmenVorladen(urls) {
@@ -335,7 +359,7 @@ export function technoAn() {
   const spb = 60 / 128;
   const bus = ctx.createGain();
   bus.gain.value = 0.5;
-  bus.connect(master);
+  bus.connect(werk);
   const start = ctx.currentTime + 0.05;
   let naechste = start;
   let schritt = 0;
@@ -409,7 +433,7 @@ export function klospuelung(lautst = 1) {
   const t = ctx.currentTime + 0.02;
   const bus = ctx.createGain();
   bus.gain.value = 0.5 * lautst;
-  bus.connect(master);
+  bus.connect(werk);
   // Hebel: kurzes Klacken
   const k = rauschQuelle();
   const kf = ctx.createBiquadFilter();
@@ -732,6 +756,8 @@ export function umweltUpdate(dt, s) {
   if (!umw) umw = umweltBauen();
   const t = ctx.currentTime;
   const innen = s.bereich === 'draussen' ? 1 : s.bereich === 'werkstatt' ? 0.3 : 0.15;
+  // Werkstattgeräusche (Klonken, Flex, Schweißen, Musik) draußen: ab 3 m leiser, über 12 m nicht mehr zu hören
+  werkLautstaerke(s.bereich === 'draussen' ? Math.pow(Math.max(0, 1 - (Math.hypot(s.p.x, s.p.z) - 3) / 9), 2) : 1);
   const rechts = { x: -s.f.z, z: s.f.x };
   const dist = (a) => Math.hypot(a.x - s.p.x, a.z - s.p.z);
   const pan = (a) => { const d = dist(a) || 1; return Math.max(-0.9, Math.min(0.9, ((a.x - s.p.x) * rechts.x + (a.z - s.p.z) * rechts.z) / d)); };
