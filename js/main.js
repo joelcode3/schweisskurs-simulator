@@ -12,6 +12,7 @@ import { setzeDynamisch, setzeFiguren, setzeInnen, bereich } from './wege.js';
 import { gelaendeHoehe } from './landschaft.js';
 import { baueSteuerung } from './steuerung.js';
 import { baueSpiel } from './spiel.js';
+import { baueTestMenue } from './testmenue.js';
 import { baueHand } from './hand.js';
 import { ladeClips, videoFreischalten } from './clips.js';
 import { audioStart, setzeLautstaerke, klick, jingle, umweltUpdate } from './audio.js';
@@ -221,6 +222,7 @@ async function spielStarten() {
   ui.zeigeHud(true);
   stationAlt = undefined;
   spiel.intro();
+  baueTestMenue({ spiel, welt, kamera, fahrten: spiel.test.fahrten });
 }
 
 // Aktuell: einfacher Start per Knopf

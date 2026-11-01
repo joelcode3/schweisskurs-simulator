@@ -1048,3 +1048,11 @@ button { font: inherit; color: inherit; }
 .aufgabe.dringend { animation: warnBlinken 0.8s infinite alternate; }
 .aufgabe.voll .ring-voll { stroke: #ff5a40; }
 @keyframes warnBlinken { from { transform: scale(1); } to { transform: scale(1.12); filter: brightness(1.25); } }
+
+/* Testmenü (nur mit ?test in der Adresse) */
+#testmenue { position: absolute; right: 10px; top: 160px; z-index: 50; width: 210px; background: rgba(20,22,26,0.88); border: 2px solid #111; border-radius: 10px; padding: 6px; font: 600 12px Nunito, sans-serif; color: #ddd; }
+#testmenue .tm-kopf { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+#testmenue .tm-knoepfe { display: flex; flex-direction: column; gap: 3px; }
+#testmenue .tm-knoepfe.versteckt { display: none; }
+#testmenue button { font: inherit; color: #eee; background: #34373d; border: 1px solid #111; border-radius: 6px; padding: 4px 6px; text-align: left; cursor: pointer; }
+#testmenue button:hover { background: #4a4e56; }
