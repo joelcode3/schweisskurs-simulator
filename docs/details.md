@@ -576,6 +576,11 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Minispiel neu (`spanngurtSpiel({ verknotet })`): Knoten in Pfeilrichtung aufziehen (falsche Richtung = fester), verdrehte Stellen
   anklicken, dann im Kreis aufrollen mit Tempo-Anzeige (zu schnell = verdreht). Verknotet: 3 Knoten je Gurt, sonst 2 bzw. 1.
 
+- P7 Klo und Pömpel (1.11., Vorschau): Minispiel `poempelSpiel` (Querschnitt Klo + S-Rohr mit Pfropfen): Pömpel über das gelbe
+  Abflussloch, Maus drücken = dicht, gedrückt runter/hoch = ein Hub schiebt den Pfropfen; zu hektisch = Spritzer, seitlich = abgerutscht.
+  Ab 3 Spritzern ekelt sich Dennis (DENNIS.verstopft.gespritzt = dennis489/490, Wut +3). Pömpel zurück: irgendwo aufs Regal klicken.
+  Spüle am Waschplatz ist anklickbar (world.js `objekte.spuele`), dort kann man die Kackepumpe auch abwaschen.
+
 ## Offene Fäden und Ungetestetes (Übergabe 1.11.2026)
 - Ausraster-Videos: #54 (frisches Video-Element, bis zu 6 Versuche, canplay) ist nur eine Absicherung. Die Ursache ist unklar, im Test lief
   alles (WebM statt H.264, Chromium kann hier kein H.264). Der Betreiber prüft im echten Browser (Browser und Anzeige erfragen: schwarz,

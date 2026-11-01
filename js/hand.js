@@ -31,7 +31,7 @@ const HALTUNG = {
   bierflasche: { pos: [0.2, -0.22, -0.5], rot: [0.3, 0, 0], skala: 1.6, name: 'Leere Bierflasche', benutzen: null },
   poempel: { pos: [0.22, -0.45, -0.62], rot: [0.35, 0, -0.25], name: 'Pömpel', benutzen: 'Pömpeln' },
   tasse: { pos: [0.2, -0.2, -0.45], rot: [0.1, 2.0, 0], skala: 1.3, name: 'Benutzte Kaffeetasse', benutzen: 'Auf den Kühlschrank stellen' },
-  kackpumpe: { pos: [0.3, -0.5, -0.85], rot: [0.15, 0.6, 0], skala: 0.85, name: 'Kackepumpe', benutzen: 'Abwaschen (Bad) / zurückstellen (Kompressor)' },
+  kackpumpe: { pos: [0.3, -0.5, -0.85], rot: [0.15, 0.6, 0], skala: 0.85, name: 'Kackepumpe', benutzen: 'Abwaschen (Bad oder Spüle) / zurückstellen (Kompressor)' },
   rohrzange: { pos: [0.24, -0.22, -0.52], rot: [0.4, 0.3, -0.9], name: 'Rohrzange', benutzen: 'Reparieren' },
   schlauch: { pos: [0.2, -0.2, -0.55], rot: [0.1, 0.12, 0], skala: 1.2, name: 'Wasserschlauch', benutzen: 'Spritzen (halten)', nichtWerfen: true, nichtAblegen: true },
   gurte: { pos: [0.22, -0.28, -0.5], rot: [0.2, 0.3, 0], skala: 1.4, name: 'Aufgerollte Spanngurte', nichtAblegen: true, ablegenHinweis: 'Die kommen unten ins Regal. Klick aufs Regal.' },

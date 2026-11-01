@@ -347,6 +347,7 @@ export const DENNIS = {
     danke: ['Läuft wieder! Danke, du bist ein Held.', 'Respekt. Das macht nicht jeder. Danke!'],
     selbst: ['Na super. Dann mach ich das halt selbst.', 'Keiner hilft mir. Dann pömpel ich eben selber.'],
     sauer: ['Nächstes Mal holst du den Pömpel, klar?!', 'Das war ekelhaft. Und du hast nur zugeguckt!'],
+    gespritzt: ['Läuft wieder, aber guck dir die Sauerei an! Wer pömpelt denn so wild?!', 'Danke. Aber die Spritzer an der Wand machst du auch weg!'],
   },
   ofenBringen: ['Schön! Dann bring ihn mal her, ich will ihn in die Hand nehmen.', 'Na dann her damit! Hochheben und zu mir bringen.', 'Bring ihn rüber, dann gucken wir.'],
   nichtLackiert: ['Und lackieren? So rostet der dir doch weg. Ofenlack drauf, dann reden wir.', 'Ohne Lack nehm ich den nicht. Schwarz muss er sein!', 'Lackieren fehlt noch. Ofenlack, mattschwarz!'],
