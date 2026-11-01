@@ -275,6 +275,7 @@ export const DENNIS = {
   akkuMecker: ['Der nasse Akkuschrauber liegt immer noch auf meiner Werkbank ...', 'Wann holt Waldo endlich seinen Schrott hier ab?!'],
   akkuLob: ['Du hast den Akkuschrauber wieder hingekriegt? Na guck mal an. Dann ist er wenigstens weg von meiner Werkbank.', 'Der surrt ja wieder! Nicht schlecht. Waldo schuldet dir ein Bier.'],
   tassenMecker: ['Wem gehören die ganzen Tassen hier?! Das ist doch kein Café!', 'Überall Tassen! Ab auf den Kühlschrank damit!', 'Ich hab gleich keine Tasse mehr, weil alle hier rumstehen!'],
+  flaschenSelbst: ['Jonnys Flaschen. Immer ich. Immer ich räum das weg!', 'Flaschen, Flaschen, überall Flaschen. Dann mach ich das eben selbst. Super.'],
   tassenSelbst: ['Muss ich die Tassen jetzt auch noch wegräumen?! Unglaublich.', 'Na toll. Tassen-Dienst. Ich mach das ja gern. NICHT.'],
   peitsche: {
     flucht: ['Hihi! Nicht die Gerte! Hahaha!', 'Oh jaaa! Äh, ich meine: Neiiin! Hahaha!', 'Ich war ein böser Junge! Hihi!'],
@@ -404,6 +405,7 @@ export const JONNY = {
 
 // Waldo (Kumpel, isst eigentlich immer)
 export const WALDO = {
+  spanngurt: ['Die Spanngurte vom Anhänger? Lieg ich einfach hier hin. Passt schon.'],
   angehoben: ['Äh. Hallo? Ich bin hier noch drin.', 'Ey, mein Handy! Fast runtergefallen!'],
   spueldienst: ['Hm? Spülen? Okay, okay. Ich nehm die mit.', 'Ich? Schon wieder? ... Na gut.'],
   quatschen: ['Mmh. Willst du auch was? Nee, ist meins.', 'Ich hab Hunger. Ich hab immer Hunger.', 'Feine Sahne live, das war so gut. Warst du dabei?', 'Schweißen macht hungrig. Auch vom Zugucken.'],

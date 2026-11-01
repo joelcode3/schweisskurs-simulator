@@ -2518,6 +2518,24 @@ export function baueWelt(scene) {
   scene.add(sofa);
   hindernis(-4.05, -2.35, 3.15, 4.0);
 
+  // Bierkasten für Jonnys leere Flaschen: links neben dem Sofa, grüner Kunststoff mit 4 x 5 Fächern. Leere Flaschen kommen aufrecht hinein.
+  const bierKastenWelt = { x: -1.95, z: 3.62 };
+  const bierKasten = new THREE.Group();
+  {
+    const KG = 0x2f6b3a, KG_D = 0x24552d, KH = 0.31, KL = 0.41, KB = 0.31;
+    bierKasten.add(setze(quader(KL, 0.02, KB, KG_D, { umriss: 0.002 }), 0, 0.01, 0));
+    for (const sz of [-1, 1]) bierKasten.add(setze(quader(KL, KH, 0.016, KG, { umriss: 0.003 }), 0, KH / 2, sz * (KB / 2 - 0.008)));
+    for (const sx of [-1, 1]) bierKasten.add(setze(quader(0.016, KH, KB, KG, { umriss: 0.003 }), sx * (KL / 2 - 0.008), KH / 2, 0));
+    for (let k = 1; k < 4; k++) bierKasten.add(setze(quader(0.006, 0.12, KB - 0.03, KG_D, { umriss: false }), -KL / 2 + k * KL / 4, KH - 0.07, 0));
+    for (const sx of [-1, 1]) bierKasten.add(setze(quader(0.012, 0.05, 0.14, 0x0b160a, { umriss: false }), sx * (KL / 2 + 0.001), KH - 0.06, 0));
+  }
+  setze(bierKasten, bierKastenWelt.x, 0, bierKastenWelt.z, 0, 0.1, 0);
+  scene.add(bierKasten);
+  merke(bierKasten, 'bierkasten', 'Bierkasten (leere Flaschen)', null);
+  hindernis(bierKastenWelt.x - 0.26, bierKastenWelt.x + 0.26, bierKastenWelt.z - 0.2, bierKastenWelt.z + 0.2);
+  const KASTEN_PLAETZE = 20;
+  const kastenFlaschen = [];
+
   // Milchtüte auf dem Kaffeetisch
   const milchTex = leinwandTextur(64, 128, (g, b, h) => {
     g.fillStyle = '#ffffff'; g.fillRect(0, 0, b, h);
@@ -3202,6 +3220,29 @@ export function baueWelt(scene) {
     kloTuerMitte(x, z) { return kloOffen && x > KLO_TUER.xMin - 0.5 && x < KLO_TUER.xMax + 0.5 && z > RAUM.zMax - 1.0 && z < BAD.zMin + 1.0 ? (KLO_TUER.xMin + KLO_TUER.xMax) / 2 : null; },
     kuehlschrank(auf) { kuehlAuf = auf; },
     leereFlasche,
+    get leereFlaschenListe() { return leereFlaschen; },
+    bierKasten,
+    bierKastenPos: bierKastenWelt,
+    kastenVoll: () => kastenFlaschen.length >= KASTEN_PLAETZE,
+    kastenAnzahl: () => kastenFlaschen.length,
+    // Flasche aufrecht in das nächste freie Fach stellen (f kommt aus der Hand oder vom Boden)
+    flascheInKasten(f) {
+      if (kastenFlaschen.length >= KASTEN_PLAETZE) return false;
+      const i = kastenFlaschen.length;
+      const j = leereFlaschen.indexOf(f);
+      if (j >= 0) leereFlaschen.splice(j, 1);
+      const k = interaktiv.indexOf(f);
+      if (k >= 0) interaktiv.splice(k, 1);
+      f.removeFromParent();
+      f.rotation.set(0, 0, 0);
+      f.scale.set(1, 1, 1);
+      f.position.set(-0.41 / 2 + 0.05 + (i % 5) * 0.077, 0.2, -0.31 / 2 + 0.045 + Math.floor(i / 5) * 0.074);
+      f.visible = true;
+      f.userData.interaktiv = undefined;
+      bierKasten.add(f);
+      kastenFlaschen.push(f);
+      return true;
+    },
     flascheWeg(f) {
       scene.remove(f);
       const i = leereFlaschen.indexOf(f);

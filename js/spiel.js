@@ -1394,6 +1394,15 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     { ort: 'sofa', x: -3.58, z: 3.42, haltung: 'sitzen', hoehe: 0.52, rot: Math.PI },
     { ort: 'mitte', x: -1.2, z: -0.4, haltung: 'handy' },
   ];
+  // Sitzplätze vorne anlaufen, dann genau hinsetzen (nie seitlich oder mit den Beinen im Polster)
+  async function waldoPlatzNehmen(o) {
+    const vorne = o.haltung === 'sitzen' ? { x: o.x, z: o.z - 0.6 } : o;
+    await Promise.race([waldo.gehZu(vorne.x, vorne.z, 1.0), warte(20000)]);
+    waldo.halt();
+    if (o.haltung === 'sitzen' || Math.hypot(waldo.position.x - o.x, waldo.position.z - o.z) > 0.6) waldo.wurzel.position.set(o.x, 0, o.z);
+    waldo.wurzel.rotation.y = o.rot ?? Math.PI * 1.1;
+    waldo.haltung(o.haltung, o.hoehe);
+  }
   async function waldoBesuch() {
     if (waldoDa() || wz.beschaeftigt) return;
     wz.beschaeftigt = true;
@@ -1401,13 +1410,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     const o = moeglich[Math.floor(Math.random() * moeglich.length)];
     waldo.haltung('handy');
     await waldoKommt();
-    // Sitzplätze vorne anlaufen, dann genau hinsetzen (nie seitlich oder mit den Beinen im Polster)
-    const vorne = o.haltung === 'sitzen' ? { x: o.x, z: o.z - 0.6 } : o;
-    await Promise.race([waldo.gehZu(vorne.x, vorne.z, 1.0), warte(20000)]);
-    waldo.halt();
-    if (o.haltung === 'sitzen' || Math.hypot(waldo.position.x - o.x, waldo.position.z - o.z) > 0.6) waldo.wurzel.position.set(o.x, 0, o.z);
-    waldo.wurzel.rotation.y = o.rot ?? Math.PI * 1.1;
-    waldo.haltung(o.haltung, o.hoehe);
+    await waldoPlatzNehmen(o);
     besuchBringtTasse(waldo);
     wz.ort = o.ort;
     wz.bleibtBis = sekundenSeitStart() + 50 + Math.random() * 40;
@@ -1545,8 +1548,18 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     ui.hinweis('Waldo hat die Kackepumpe dreckig mitten in den Weg gestellt. Im Bad abwaschen (Dusche oder Waschbecken), dann zurück hinter den Kompressor.', 6000);
     await warte(1800);
     if (dennisSiehts() && !z.vorbei) { aerger(3); dennisSagt(sag(DENNIS.pumpeIstDa), true, { prio: 1 }); }
-    await waldoWeg(1.3);
-    waldo.haltung('handy');
+    // setzt sich danach aufs Sofa (wie bei einem normalen Besuch), statt gleich wieder hinter die Werkstatt zu rennen
+    const sofaFrei = z.mittag !== 'gerade' && dennis.modus !== 'sitzen' && dennis.modus !== 'schlafen';
+    if (sofaFrei && !z.vorbei) {
+      const sofa = WALDO_ORTE.find((x) => x.ort === 'sofa');
+      await waldoPlatzNehmen(sofa);
+      wz.ort = 'sofa';
+      wz.bleibtBis = sekundenSeitStart() + 40 + Math.random() * 30;
+      wz.naechsterMecker = sekundenSeitStart() + 40;
+    } else {
+      await waldoWeg(1.3);
+      waldo.haltung('handy');
+    }
     wz.naechsterBesuch = Math.max(wz.naechsterBesuch, sekundenSeitStart() + 90);
     wz.beschaeftigt = false;
   }
@@ -1636,6 +1649,45 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       waldoGeht(sag(WALDO.sofaRaus));
     }
     await warte(2200);
+  }
+  // ---------- Jonnys leere Flaschen: gehören in den Bierkasten links neben dem Sofa (wie die Tassen auf den Kühlschrank) ----------
+  function offeneFlaschen() { return welt.leereFlaschenListe.filter((f) => f.parent && f.visible && hand.item?.obj !== f); }
+  function flascheInKasten() {
+    if (hand.item?.id !== 'bierflasche') return;
+    if (welt.kastenVoll()) { ui.hinweis('Der Bierkasten ist voll.', 3000); return; }
+    const f = hand.weg();
+    if (!welt.flascheInKasten(f)) { hand.nimm('bierflasche', f); return; }
+    klonk(0.15);
+    handleisteZeigen();
+    z.wut = Math.max(0, z.wut - 1);
+    aktualisieren();
+    ui.hinweis('Flasche im Bierkasten.', 1800);
+  }
+  // Dennis räumt selbst ein paar Flaschen weg und ist genervt
+  async function dennisRaeumtFlaschen() {
+    z.dennisRaeumt = true;
+    dennis.stimmung('sauer');
+    dennisSagt(sag(DENNIS.flaschenSelbst), true, { prio: 1 });
+    const k = welt.bierKastenPos;
+    for (let n = 0; n < 2; n++) {
+      const liste = offeneFlaschen().filter((f) => !welt.istDraussen(f.position.x, f.position.z));
+      if (!liste.length || dennis.modus !== 'normal' || z.vorbei || welt.kastenVoll()) break;
+      const d = dennis.position;
+      liste.sort((a, b) => Math.hypot(a.position.x - d.x, a.position.z - d.z) - Math.hypot(b.position.x - d.x, b.position.z - d.z));
+      const f = liste[0];
+      await Promise.race([dennis.gehZu(f.position.x + 0.35, f.position.z + 0.2, 1.4), warte(9000)]);
+      if (!f.parent || hand.item?.obj === f) continue;
+      f.visible = false;
+      klonk(0.12);
+      await Promise.race([dennis.gehZu(k.x + 0.5, k.z - 0.3, 1.4), warte(9000)]);
+      f.visible = true;
+      welt.flascheInKasten(f);
+      klonk(0.15);
+    }
+    aerger(3);
+    z.dennisRaeumt = false;
+    dennis.stimmung('ruhig');
+    dennis.heim();
   }
   // ---------- Kaffeetassen: stehen überall rum, gehören auf den Kühlschrank ----------
   function offeneTassen() { return welt.tassen.filter((t) => !t.userData.aufgeraeumt && t.parent && t.visible && hand.item?.obj !== t); }
@@ -1792,6 +1844,15 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     const dennisFrei = dennis.modus === 'normal' && dennis.wurzel.visible && !z.aufKlo && !z.hula && !z.beschaeftigt && !buehneBelegt() && z.mittag !== 'gerade' && !z.dennisFegt && !z.dennisLoescht;
     if (t - z.tassenSeit > TASSEN_FRIST && dennisFrei && !welt.kuehlschrankVoll()) { z.tassenSeit = null; dennisRaeumtTassen(); }
   }
+  const FLASCHEN_FRIST = 110;
+  function flaschenFrist() {
+    const t = sekundenSeitStart();
+    const offen = offeneFlaschen().length;
+    if (offen < 3 || z.dennisRaeumt) { if (!z.dennisRaeumt) z.flaschenSeit = null; return; }
+    if (z.flaschenSeit == null) z.flaschenSeit = t;
+    const dennisFrei = dennis.modus === 'normal' && dennis.wurzel.visible && !z.aufKlo && !z.hula && !z.beschaeftigt && !buehneBelegt() && z.mittag !== 'gerade' && !z.dennisFegt && !z.dennisLoescht;
+    if (t - z.flaschenSeit > FLASCHEN_FRIST && dennisFrei && !welt.kastenVoll()) { z.flaschenSeit = null; dennisRaeumtFlaschen(); }
+  }
   // Aufgaben-Icons mit Ring: Zeiten wie bei den „Dennis macht es selbst“-Abläufen (Feuer 16 s, Rohr 22 s, Dreck 32 s, Klo 70 s, Pumpe 120 s)
   let aufgabenTakt = 0;
   function aufgabenUpdate(dt) {
@@ -1799,6 +1860,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     if (aufgabenTakt > 0) return;
     aufgabenTakt = 0.2;
     tassenFrist();
+    flaschenFrist();
     gurteUpdate();
     const t = sekundenSeitStart();
     const l = [];
@@ -1809,6 +1871,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     if (z.verstopft === 'ja') dazu('klo', 'Klo verstopft', z.verstopftSeit, 70);
     if (wz.pumpe === 'imWeg' || wz.pumpe === 'sauber') dazu('pumpe', 'Kackepumpe', wz.pumpeSeit, 120);
     if (z.tassenSeit != null && !z.dennisRaeumt) dazu('tassen', 'Tassen', z.tassenSeit, TASSEN_FRIST);
+    if (z.flaschenSeit != null && !z.dennisRaeumt) dazu('flaschen', 'Flaschen', z.flaschenSeit, FLASCHEN_FRIST);
     if (z.gurte === 'boden') dazu('gurte', 'Spanngurte', z.gurteSeit, GURT_FRIST);
     ui.aufgabenIcons(z.vorbei ? [] : l);
   }
@@ -3178,6 +3241,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
         await cremeGeben();
         return true;
       }
+      if (it.id === 'bierflasche' && ziel === 'bierkasten') { await hinZu(info, treffer.obj); flascheInKasten(); return true; }
       if (it.id === 'tasse' && ziel === 'kuehlschrank') { await hinZu(info, treffer.obj); tasseWegraeumen(); return true; }
       if (it.id === 'kackpumpe' && (ziel === 'dusche' || ziel === 'waschbecken')) { await hinZu(info, treffer.obj); await pumpeWaschen(); return true; }
       if (it.id === 'kackpumpe' && ziel === 'kompressor') { await hinZu(info, treffer.obj); pumpeZurueckstellen(); return true; }
@@ -3416,18 +3480,14 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
         return ['Kaffeetasse', 'Benutzt, mit eingetrocknetem Kaffeerest. Gehört auf den Kühlschrank.', [A('In die Hand nehmen', 'hand', () => aufnehmen('tasse', obj))]];
       case 'leereflasche':
         if (hand.item) return ['Leere Bierflasche', `Du hast schon ${hand.item.cfg.name} in der Hand. Immer nur eine Sache.`, []];
-        return ['Leere Bierflasche', 'Von Jonny. Natürlich.', [A('In die Hand nehmen (werfen mit Q)', 'hand', () => {
+        return ['Leere Bierflasche', 'Von Jonny. Natürlich. Gehört in den Bierkasten links neben dem Sofa.', [A('In die Hand nehmen (werfen mit Q)', 'hand', () => {
           if (!obj.userData.ruhe) { obj.rotation.set(0, 0, 0); obj.userData.liegend = true; }
           hand.nimm('bierflasche', obj);
           blip(520, 0.05);
           handleisteZeigen();
-        }), A('Wegräumen', 'hand', () => {
-          welt.flascheWeg(obj);
-          klonk(0.2);
-          z.wut = Math.max(0, z.wut - 2);
-          aktualisieren();
-          ui.hinweis('Weggeräumt. Dennis nickt anerkennend.');
         })]];
+      case 'bierkasten':
+        return ['Bierkasten', `Hier kommen Jonnys leere Flaschen rein. ${welt.kastenAnzahl()} von 20 Fächern belegt.`, []];
       case 'leiter':
         if (jz.leiter === 'wartet') return ['Johnnys Leiter', 'Jonny steht drunter und kommt nicht ran. Wie holst du sie runter?', [
           A('Räuberleiter mit Jonny (Minispiel)', 'hand', () => leiterRunterreichen('raeuber')),
