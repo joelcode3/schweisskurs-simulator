@@ -1844,22 +1844,26 @@ export function siebSpiel() {
   return versprechen;
 }
 
-// Spanngurte aufrollen: zwei Gurte liegen in Schlaufen auf dem Boden. Im Kreis um die Rolle ziehen = aufrollen (der Gurt wird
-// eingezogen, die Ratsche kommt näher). Verdrehte Stellen (dunkles X) vorher anklicken = glattziehen, sonst wird die Rolle verdreht.
-export function spanngurtSpiel() {
+// Spanngurte (P6): zwei Gurte liegen verheddert auf dem Boden. Erst die Knoten lösen: Knoten anklicken und in Pfeilrichtung
+// ziehen (falsche Richtung zieht ihn fester). Verdrehte Stellen (hochkant, gelbes X) anklicken = glattstreichen.
+// Dann straff aufrollen: im Kreis um die Rolle ziehen, Tempo im grünen Bereich halten (zu schnell = Gurt rutscht und verdreht).
+// Nach dem Hinwerfen der aufgerollten Gurte (verknotet) gibt es mehr Knoten.
+export function spanngurtSpiel({ verknotet = false } = {}) {
   let f, mx, my;
   let gurt = 0; // 0 oder 1
   let w = 0; // aufgerollt 0..1
   let zieht = null;
-  let verdreht = 0;
+  let verdreht = 0, knotenFehler = 0;
   let blitz = 0;
+  let tempo = 0, zuSchnellZeit = 0, rutschSperre = 0;
+  let meldung = '', meldungZeit = 0;
+  const meld = (t) => { meldung = t; meldungZeit = 2; };
   const UMDREHUNGEN = 5;
-  const r = (() => { let q = 31; return () => { q = (q * 1664525 + 1013904223) >>> 0; return q / 4294967296; }; })();
-  let bahn = [];
-  let laenge = 0;
-  let dreher = [];
+  const GRUEN = [2.2, 8.5]; // rad/s
+  const r = (() => { let q = verknotet ? 77 : 31; return () => { q = (q * 1664525 + 1013904223) >>> 0; return q / 4294967296; }; })();
+  let bahn = [], laenge = 0, dreher = [], knoten = [], greift = null;
   function neuerGurt() {
-    // Gurt liegt in losen Schlaufen von der Rolle bis zur Ratsche
+    // Gurt liegt in unregelmäßigen Schlaufen von der Rolle bis zur Ratsche
     const schleifen = gurt === 0 ? 5 : 4;
     const phase = r() * Math.PI;
     bahn = [];
@@ -1869,22 +1873,25 @@ export function spanngurtSpiel() {
       const y = my + Math.cos(t * Math.PI * schleifen + phase) * f.h * 0.3 * (0.4 + 0.6 * t) * Math.min(1, t * 6) + Math.sin(t * 9) * 10;
       bahn.push([x, y]);
     }
-    // Bogenlänge je Punkt
     laenge = 0;
     bahn[0][2] = 0;
     for (let i = 1; i < bahn.length; i++) { laenge += Math.hypot(bahn[i][0] - bahn[i - 1][0], bahn[i][1] - bahn[i - 1][1]); bahn[i][2] = laenge; }
-    dreher = [0.3, 0.55, 0.8].map((q) => ({ s: q + (r() - 0.5) * 0.08, glatt: false, weg: false }));
+    dreher = [0.3, 0.6].map((q) => ({ s: q + (r() - 0.5) * 0.08, glatt: false, weg: false }));
+    const nK = verknotet ? 3 : 1 + (gurt === 0 ? 1 : 0);
+    knoten = [];
+    for (let k = 0; k < nK; k++) knoten.push({ s: 0.2 + (k + 0.5) * 0.7 / nK + (r() - 0.5) * 0.05, richtung: r() * Math.PI * 2, fest: 1, offen: false, wackel: 0 });
     w = 0;
   }
   function punktBei(s) {
-    const ziel = s * laenge;
+    const ziel = Math.max(0, s) * laenge;
     for (let i = 1; i < bahn.length; i++) if (bahn[i][2] >= ziel) {
       const a = bahn[i - 1], b = bahn[i], t = (ziel - a[2]) / Math.max(1e-6, b[2] - a[2]);
       return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
     }
     return bahn[bahn.length - 1];
   }
-  const { api, versprechen } = spielRahmen('Spanngurte aufrollen', 'Im Kreis um die Rolle ziehen = aufrollen. Verdrehte Stellen (dunkles X) vorher anklicken, damit sie glatt auf die Rolle gehen. Zwei Gurte.', {
+  const knotenOffen = () => knoten.every((k) => k.offen);
+  const { api, versprechen } = spielRahmen('Spanngurte entknoten und aufrollen', 'Erst die Knoten lösen: Knoten anklicken und in Pfeilrichtung ziehen. Verdrehte Stellen (gelbes X) anklicken. Dann im Kreis um die Rolle ziehen, Tempo im grünen Bereich halten.', {
     beiGroesse(m) {
       f = flaeche(m); mx = f.x + f.b * 0.2; my = f.y + f.h * 0.5;
       if (!bahn.length) neuerGurt();
@@ -1893,36 +1900,75 @@ export function spanngurtSpiel() {
       pointerdown(e) {
         if (api.istFertig) return;
         const p = zeigerPos(api.canvas, e);
-        // verdrehte Stelle angeklickt?
+        // Knoten greifen
+        for (const k of knoten) {
+          if (k.offen) continue;
+          const [x, y] = punktBei(k.s - w);
+          if (Math.hypot(p.x - x, p.y - y) < 32) { greift = { k, x0: p.x, y0: p.y }; api.canvas.setPointerCapture?.(e.pointerId); return; }
+        }
+        // verdrehte Stelle glattstreichen
         for (const d of dreher) {
           if (d.glatt || d.weg) continue;
           const [x, y] = punktBei(d.s - w);
           if (Math.hypot(p.x - x, p.y - y) < 30) { d.glatt = true; blip(760, 0.05); return; }
         }
+        if (!knotenOffen()) { meld('Erst die Knoten lösen! So geht der Gurt nicht auf die Rolle.'); return; }
         zieht = Math.atan2(p.y - my, p.x - mx); api.canvas.setPointerCapture?.(e.pointerId);
       },
       pointermove(e) {
-        if (zieht === null || api.istFertig) return;
+        if (api.istFertig) return;
         const p = zeigerPos(api.canvas, e);
+        if (greift) {
+          const dx = p.x - greift.x0, dy = p.y - greift.y0;
+          if (Math.hypot(dx, dy) < 70) return;
+          const k = greift.k;
+          let dw = Math.atan2(dy, dx) - k.richtung;
+          while (dw > Math.PI) dw -= Math.PI * 2;
+          while (dw < -Math.PI) dw += Math.PI * 2;
+          if (Math.abs(dw) < 0.9) {
+            k.fest--;
+            if (k.fest <= 0) { k.offen = true; blip(820, 0.07); meld(knotenOffen() ? 'Alle Knoten los. Jetzt aufrollen!' : 'Knoten auf!'); }
+            else { blip(600, 0.05); meld('Lockerer. Nochmal ziehen!'); }
+          } else {
+            k.fest = Math.min(3, k.fest + 1); knotenFehler++; k.wackel = 0.5; klonk(0.3);
+            meld('Falsche Richtung! Jetzt sitzt er noch fester.');
+          }
+          greift = null;
+          return;
+        }
+        if (zieht === null) return;
         const a = Math.atan2(p.y - my, p.x - mx);
         let d = a - zieht;
         while (d > Math.PI) d -= Math.PI * 2;
         while (d < -Math.PI) d += Math.PI * 2;
         zieht = a;
+        tempo += Math.abs(d) * 4; // wird in schritt() geglättet und abgebaut
         w = Math.min(1, w + Math.abs(d) / (Math.PI * 2 * UMDREHUNGEN));
         if (Math.random() < 0.1) blip(420 + Math.random() * 80, 0.02, 0.03);
-        for (const dr of dreher) if (!dr.weg && w >= dr.s) { dr.weg = true; if (!dr.glatt) { verdreht++; blitz = 0.5; klonk(0.35); } }
+        for (const dr of dreher) if (!dr.weg && w >= dr.s) { dr.weg = true; if (!dr.glatt) { verdreht++; blitz = 0.5; klonk(0.35); meld('Verdreht aufgerollt.'); } }
         if (w >= 1) {
           klonk(0.5);
           zieht = null;
-          if (gurt === 0) { gurt = 1; neuerGurt(); blip(660, 0.08); }
-          else api.fertig({ verdreht });
+          if (gurt === 0) { gurt = 1; neuerGurt(); blip(660, 0.08); meld('Gurt 1 fertig. Jetzt der blaue.'); }
+          else api.fertig({ verdreht, knotenFehler });
         }
       },
-      pointerup() { zieht = null; },
-      pointercancel() { zieht = null; },
+      pointerup() { zieht = null; greift = null; },
+      pointercancel() { zieht = null; greift = null; },
     },
-    schritt(dt) { blitz = Math.max(0, blitz - dt); },
+    schritt(dt) {
+      blitz = Math.max(0, blitz - dt);
+      meldungZeit = Math.max(0, meldungZeit - dt);
+      rutschSperre = Math.max(0, rutschSperre - dt);
+      for (const k of knoten) k.wackel = Math.max(0, k.wackel - dt);
+      // Tempo (rad/s) glätten: tempo sammelt Winkel * 4 je Bewegung, hier in rad/s umgerechnet
+      tempo *= Math.pow(0.02, dt);
+      const radS = tempo / 4 * 3.9;
+      if (zieht !== null && radS > GRUEN[1]) {
+        zuSchnellZeit += dt;
+        if (zuSchnellZeit > 0.5 && rutschSperre <= 0) { verdreht++; blitz = 0.5; klonk(0.3); rutschSperre = 1.6; zuSchnellZeit = 0; meld('Zu schnell! Der Gurt rutscht und verdreht sich.'); }
+      } else zuSchnellZeit = 0;
+    },
     zeichnen() {
       const { ctx, m } = api;
       ctx.fillStyle = '#2a2c30'; ctx.fillRect(0, 0, m.b, m.h);
@@ -1930,36 +1976,56 @@ export function spanngurtSpiel() {
       ctx.fillStyle = '#9a968c'; ctx.fillRect(f.x, f.y, f.b, f.h);
       ctx.fillStyle = 'rgba(70,64,56,0.18)';
       for (let i = 0; i < 14; i++) { ctx.beginPath(); ctx.ellipse(f.x + ((i * 97) % f.b), f.y + ((i * 53) % f.h), 30 + (i % 4) * 12, 14 + (i % 3) * 8, i, 0, Math.PI * 2); ctx.fill(); }
+      const farbe = gurt === 0 ? '#e8742a' : '#2f6fd1';
       if (!api.istFertig) {
-        // restlicher Gurt: wird entlang seiner Schlaufen in die Rolle gezogen (der Rest rutscht nach)
         const rest = 1 - w;
         const breite = 16;
         ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-        const zug = (farbe, b) => {
-          ctx.strokeStyle = farbe; ctx.lineWidth = b; ctx.beginPath();
+        const zug = (fb, b) => {
+          ctx.strokeStyle = fb; ctx.lineWidth = b; ctx.beginPath();
           ctx.moveTo(mx, my);
           for (const q of bahn) { if (q[2] > rest * laenge) break; ctx.lineTo(q[0], q[1]); }
           const e = punktBei(rest); ctx.lineTo(e[0], e[1]);
           ctx.stroke();
         };
         zug('#111', breite + 5);
-        zug(gurt === 0 ? '#e8742a' : '#2f6fd1', breite);
-        // Mittelnaht
+        zug(farbe, breite);
         ctx.setLineDash([6, 6]); zug('rgba(255,255,255,0.35)', 2); ctx.setLineDash([]);
-        // verdrehte Stellen wandern mit
+        // verdrehte Stellen: Band steht hochkant (schmaler, dunkler Streifen) mit gelbem X
         for (const d of dreher) {
           if (d.weg || d.s < w) continue;
           const [x, y] = punktBei(d.s - w);
           if (d.glatt) { ctx.strokeStyle = '#ffe9a8'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 12, 0, Math.PI * 2); ctx.stroke(); continue; }
-          ctx.fillStyle = '#3a2410'; ctx.beginPath(); ctx.ellipse(x, y, 16, 11, 0.6, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#3a2410'; ctx.beginPath(); ctx.ellipse(x, y, 16, 6, 0.6, 0, Math.PI * 2); ctx.fill();
           ctx.strokeStyle = '#ffd36a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x - 8, y - 8); ctx.lineTo(x + 8, y + 8); ctx.moveTo(x + 8, y - 8); ctx.lineTo(x - 8, y + 8); ctx.stroke();
         }
-        // Ratsche am Ende
+        // Knoten: dicker Wulst mit Schlaufen, Pfeil zeigt die Zugrichtung; je fester, desto röter
+        for (const k of knoten) {
+          if (k.offen) continue;
+          const [x0, y0] = punktBei(k.s - w);
+          const x = x0 + Math.sin(k.wackel * 40) * 4, y = y0;
+          ctx.save(); ctx.translate(x, y);
+          ctx.fillStyle = farbe; ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.ellipse(0, 0, 24, 18, 0.3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+          ctx.lineWidth = 2.5;
+          ctx.beginPath(); ctx.ellipse(-6, -2, 12, 7, -0.6, 0, Math.PI * 2); ctx.stroke();
+          ctx.beginPath(); ctx.ellipse(7, 3, 11, 7, 0.9, 0, Math.PI * 2); ctx.stroke();
+          if (k.fest > 1) { ctx.strokeStyle = `rgba(224,57,43,${0.4 + k.fest * 0.2})`; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0, 0, 28, 0, Math.PI * 2); ctx.stroke(); }
+          // Pfeil
+          ctx.rotate(k.richtung);
+          ctx.strokeStyle = '#ffe9a8'; ctx.fillStyle = '#ffe9a8'; ctx.lineWidth = 4;
+          ctx.beginPath(); ctx.moveTo(30, 0); ctx.lineTo(70, 0); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(80, 0); ctx.lineTo(66, -9); ctx.lineTo(66, 9); ctx.closePath(); ctx.fill();
+          ctx.restore();
+        }
+        // Ratsche am Ende: Rahmen, Welle, Hebel mit rotem Griff; dahinter der Haken
         const e = punktBei(1 - w), e0 = punktBei(Math.max(0, 1 - w - 0.01));
         ctx.save(); ctx.translate(e[0], e[1]); ctx.rotate(Math.atan2(e[1] - e0[1], e[0] - e0[0]));
         ctx.fillStyle = '#8a9096'; ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
         ctx.beginPath(); ctx.roundRect(-26, -16, 52, 32, 6); ctx.fill(); ctx.stroke();
-        ctx.fillStyle = '#c8352a'; ctx.fillRect(-20, -7, 30, 14); ctx.strokeRect(-20, -7, 30, 14);
+        ctx.fillStyle = '#5a5d62'; ctx.beginPath(); ctx.arc(-10, 0, 9, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#c8352a'; ctx.fillRect(4, -7, 30, 14); ctx.strokeRect(4, -7, 30, 14);
+        ctx.strokeStyle = '#7f858c'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(30, 0); ctx.lineTo(54, 0); ctx.arc(54, 10, 10, -Math.PI / 2, Math.PI / 2); ctx.stroke();
         ctx.restore();
       }
       // Rolle: wächst mit, Spirale
@@ -1971,13 +2037,26 @@ export function spanngurtSpiel() {
       for (let k = 10; k < rr; k += 5) { ctx.beginPath(); ctx.arc(mx, my, k, 0, Math.PI * 2); ctx.stroke(); }
       if (blitz > 0) { ctx.strokeStyle = `rgba(224,57,43,${blitz * 2})`; ctx.lineWidth = 8; ctx.beginPath(); ctx.arc(mx, my, rr + 8, 0, Math.PI * 2); ctx.stroke(); }
       ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(mx, my, 9, 0, Math.PI * 2); ctx.fill();
-      // Kurbel-Hinweis: Pfeil im Kreis
-      if (!api.istFertig) {
+      if (!api.istFertig && knotenOffen()) {
         ctx.strokeStyle = 'rgba(255,233,168,0.8)'; ctx.lineWidth = 3;
         ctx.beginPath(); ctx.arc(mx, my, rr + 22, -0.4, Math.PI * 1.3); ctx.stroke();
       }
+      // Tempo-Anzeige (Spannung) unter der Rolle: grüner Bereich = straff und sauber
+      if (!api.istFertig) {
+        const bx = mx - 70, by = my + 110, bb = 140, MAXV = 12;
+        const radS = tempo / 4 * 3.9;
+        ctx.fillStyle = '#26282c'; ctx.fillRect(bx, by, bb, 12);
+        ctx.fillStyle = 'rgba(80,190,90,0.7)'; ctx.fillRect(bx + bb * GRUEN[0] / MAXV, by, bb * (GRUEN[1] - GRUEN[0]) / MAXV, 12);
+        ctx.fillStyle = '#ffe9a8'; ctx.fillRect(bx + Math.min(bb, bb * radS / MAXV) - 2, by - 4, 4, 20);
+        ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.strokeRect(bx, by, bb, 12);
+        textMitte(ctx, 'Tempo', mx, by + 30, 13, '#ffe9a8');
+      }
       balken(ctx, f.x, f.y + f.h + 26, f.b, 12, (gurt + (api.istFertig ? 1 : w)) / 2, '#ffc81e');
-      textMitte(ctx, api.istFertig ? (verdreht ? `Aufgerollt. ${verdreht}x verdreht, sieht krumpelig aus.` : 'Sauber aufgerollt!') : `Gurt ${gurt + 1} von 2: im Kreis ziehen, X vorher anklicken`, m.b / 2, f.y - 18, 18, '#ffe9a8');
+      const offenN = knoten.filter((k) => !k.offen).length;
+      const kopf = api.istFertig ? (verdreht ? `Aufgerollt. ${verdreht}x verdreht, sieht krumpelig aus.` : 'Sauber aufgerollt!')
+        : offenN ? `Gurt ${gurt + 1} von 2: ${offenN} ${offenN === 1 ? 'Knoten' : 'Knoten'} lösen (anklicken, in Pfeilrichtung ziehen)` : `Gurt ${gurt + 1} von 2: im Kreis ziehen, Tempo im grünen Bereich`;
+      textMitte(ctx, kopf, m.b / 2, f.y - 18, 18, '#ffe9a8');
+      if (meldungZeit > 0) textMitte(ctx, meldung, m.b / 2, f.y + f.h - 20, 20, '#ffb0a0');
     },
   });
   return versprechen;

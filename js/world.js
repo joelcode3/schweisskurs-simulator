@@ -736,14 +736,16 @@ export function baueWelt(scene) {
 
   // Spanngurte (Paket C): bei einem Ereignis liegen zwei Gurte in Schlaufen vor dem Regal auf dem Boden (anklickbar),
   // aufgerollt kommen sie unten ins Regal
-  const gurtBand = (pts, farbe) => {
+  // Band: pts = [x, z, hoch, drall]; drall dreht das Band um seine Laufrichtung (verdrehte Stellen stehen hochkant)
+  const gurtBand = (pts, farbe, breite = 0.025) => {
     const pos = [], idx = [];
     for (let i = 0; i < pts.length; i++) {
       const a0 = pts[Math.max(0, i - 1)], a1 = pts[Math.min(pts.length - 1, i + 1)];
       let nx = -(a1[1] - a0[1]), nz = a1[0] - a0[0];
-      const l = Math.hypot(nx, nz) || 1; nx = nx / l * 0.025; nz = nz / l * 0.025;
-      const y = 0.006 + (pts[i][2] || 0);
-      pos.push(pts[i][0] + nx, y, pts[i][1] + nz, pts[i][0] - nx, y, pts[i][1] - nz);
+      const l = Math.hypot(nx, nz) || 1; nx /= l; nz /= l;
+      const d = pts[i][3] || 0, c = Math.cos(d) * breite, hy = Math.sin(d) * breite;
+      const y = 0.006 + (pts[i][2] || 0) + Math.abs(hy);
+      pos.push(pts[i][0] + nx * c, y + hy, pts[i][1] + nz * c, pts[i][0] - nx * c, y - hy, pts[i][1] - nz * c);
       if (i) { const k = i * 2; idx.push(k - 2, k - 1, k, k - 1, k + 1, k); }
     }
     const g = new THREE.BufferGeometry();
@@ -752,15 +754,26 @@ export function baueWelt(scene) {
     g.computeVertexNormals();
     return teil(g, farbe, { umriss: false, mat: { side: THREE.DoubleSide } });
   };
-  const schlaufen = (x0, z0, dreh, schleifen) => {
+  // so liegt ein hingeschmissener Gurt: unregelmäßige, sich überkreuzende Schlaufen um eine Mitte, zwei verdrehte Stellen;
+  // wo er über sich selbst läuft, liegt er höher
+  const schlaufen = (x0, z0, start, saat) => {
+    let q = saat;
+    const rnd = () => { q = (q * 1664525 + 1013904223) >>> 0; return q / 4294967296; };
     const pts = [];
-    for (let i = 0; i <= 120; i++) {
-      const t = i / 120;
-      // Gurt läuft in losen Schlaufen über den Boden; wo er sich kreuzt, liegt er etwas höher
-      const x = t * 1.1 + Math.sin(t * Math.PI * schleifen) * 0.18;
-      const z = Math.cos(t * Math.PI * schleifen) * 0.22 * (1 - t * 0.4);
-      const hoch = Math.max(0, Math.cos(t * Math.PI * schleifen)) * 0.008;
-      pts.push([x0 + x * Math.cos(dreh) - z * Math.sin(dreh), z0 + x * Math.sin(dreh) + z * Math.cos(dreh), hoch]);
+    let x = 0, z = 0, w = start;
+    const f1 = 0.6 + rnd() * 0.5, f2 = 1.7 + rnd() * 0.8, ph = rnd() * 6;
+    for (let i = 0; i < 170; i++) {
+      w += 0.11 * Math.sin(i * 0.05 * f1 + ph) + 0.07 * Math.sin(i * 0.05 * f2) + 0.045;
+      const zur = Math.hypot(x, z) > 0.42 ? 0.18 * Math.sign(Math.sin(Math.atan2(-z, -x) - w)) : 0;
+      w += zur;
+      x += Math.cos(w) * 0.013; z += Math.sin(w) * 0.013;
+      let hoch = 0;
+      for (let k = 0; k < pts.length - 8; k++) if (Math.hypot(pts[k][0] - x0 - x, pts[k][1] - z0 - z) < 0.05) hoch = Math.max(hoch, pts[k][2] + 0.009);
+      pts.push([x0 + x, z0 + z, hoch, 0]);
+    }
+    for (const m of [0.3 + rnd() * 0.1, 0.65 + rnd() * 0.1]) {
+      const k0 = Math.floor(m * pts.length);
+      for (let k = -9; k <= 9; k++) if (pts[k0 + k]) pts[k0 + k][3] = Math.PI * (k + 9) / 18;
     }
     return pts;
   };
@@ -771,17 +784,65 @@ export function baueWelt(scene) {
     r.add(setze(quader(0.03, 0.01, 0.05, 0x5a5d62, { umriss: 0.001 }), 0.05, 0.012, 0));
     return r;
   };
+  // Ratsche am Boden: Rahmen, Wickelwelle mit Zahnrädern, Hebel mit rotem Griff
+  const ratscheBoden = () => {
+    const r = new THREE.Group();
+    for (const sz of [-1, 1]) r.add(setze(quader(0.12, 0.022, 0.006, 0x9aa1a8, { umriss: 0.0015 }), 0, 0.016, sz * 0.026));
+    r.add(setze(zylinder(0.011, 0.011, 0.058, 0x6a6f75, { umriss: 0.001 }, 10), -0.02, 0.018, 0, Math.PI / 2, 0, 0));
+    for (const sz of [-1, 1]) r.add(setze(zylinder(0.02, 0.02, 0.004, 0x5a5d62, { umriss: 0.001 }, 12), -0.02, 0.02, sz * 0.031, Math.PI / 2, 0, 0));
+    r.add(setze(quader(0.11, 0.008, 0.05, 0x9aa1a8, { umriss: 0.0015 }), 0.06, 0.03, 0, 0, 0, 0.22));
+    r.add(setze(quader(0.05, 0.016, 0.044, 0xc8352a, { umriss: 0.001 }), 0.11, 0.042, 0, 0, 0, 0.22));
+    return r;
+  };
+  // Spitzhaken (J-Haken) am Gurtende
+  const gurtHaken = () => {
+    const h = new THREE.Group();
+    h.add(setze(quader(0.05, 0.006, 0.03, 0x7f858c, { umriss: 0.001 }), 0, 0.006, 0));
+    h.add(setze(teil(new THREE.TorusGeometry(0.018, 0.004, 5, 10, Math.PI), 0x7f858c, { umriss: 0.001 }), 0.028, 0.02, 0, 0, 0, -Math.PI / 2));
+    return h;
+  };
+  const GURT_MITTE = { x: -3.85, z: 0 };
   const gurteBoden = new THREE.Group();
-  for (const [x0, z0, dreh, sl, farbe] of [[-3.95, -0.25, 0.4, 5, 0xe8742a], [-3.75, 0.25, -0.5, 4, 0x2f6fd1]]) {
-    const pts = schlaufen(x0, z0, dreh, sl);
+  const gurtKnoten = [];
+  for (const [x0, z0, start, saat, farbe] of [[-3.95, -0.22, 0.4, 7, 0xe8742a], [-3.7, 0.24, 2.3, 19, 0x2f6fd1]]) {
+    const pts = schlaufen(x0, z0, start, saat);
     gurteBoden.add(gurtBand(pts, farbe));
-    const e = pts[pts.length - 1];
-    gurteBoden.add(setze(ratsche(0xc8352a), e[0], 0, e[1], 0, -dreh, 0));
+    // Ende mit Haken, anderes Ende mit Ratsche und kurzem Gurtstück mit Haken
+    const a = pts[0], a1 = pts[3];
+    gurteBoden.add(setze(gurtHaken(), a[0], a[2], a[1], 0, -Math.atan2(a[1] - a1[1], a[0] - a1[0]), 0));
+    const e = pts[pts.length - 1], e0 = pts[pts.length - 4];
+    const w = Math.atan2(e[1] - e0[1], e[0] - e0[0]);
+    gurteBoden.add(setze(ratscheBoden(), e[0] + Math.cos(w) * 0.06, e[2], e[1] + Math.sin(w) * 0.06, 0, -w, 0));
+    const kurz = [];
+    for (let k = 0; k <= 20; k++) kurz.push([e[0] + Math.cos(w) * (0.13 + k * 0.012) + Math.sin(k * 0.4) * 0.01, e[1] + Math.sin(w) * (0.13 + k * 0.012), 0, 0]);
+    gurteBoden.add(gurtBand(kurz, farbe));
+    const k2 = kurz[kurz.length - 1];
+    gurteBoden.add(setze(gurtHaken(), k2[0] + Math.cos(w) * 0.03, 0, k2[1] + Math.sin(w) * 0.03, 0, -w, 0));
+    // Knoten (nur nach dem Hinwerfen der aufgerollten Gurte: dann liegen sie verknotet)
+    const m = pts[Math.floor(pts.length * 0.5)];
+    const knoten = teil(new THREE.TorusKnotGeometry(0.03, 0.011, 48, 6), farbe, { umriss: 0.0015 });
+    knoten.position.set(m[0], 0.03 + m[2], m[1]);
+    knoten.rotation.x = Math.PI / 2;
+    knoten.visible = false;
+    gurteBoden.add(knoten);
+    gurtKnoten.push(knoten);
   }
   gurteBoden.visible = false;
   scene.add(gurteBoden);
   merke(gurteBoden, 'spanngurte', 'Spanngurte', null);
   objekte.gurteBoden = gurteBoden;
+  // liegen die Gurte woanders (geworfen), wird das Ganze dorthin verschoben; verknotet = mit Knoten
+  objekte.gurteBodenAn = (x, z) => gurteBoden.position.set(x - GURT_MITTE.x, 0, z - GURT_MITTE.z);
+  objekte.gurteBodenMitte = () => ({ x: GURT_MITTE.x + gurteBoden.position.x, z: GURT_MITTE.z + gurteBoden.position.z });
+  objekte.gurteVerknotet = (an) => { for (const k of gurtKnoten) k.visible = an; };
+  // Knäuel, das beim Hinwerfen durch die Luft fliegt
+  const gurtKnaeuel = new THREE.Group();
+  gurtKnaeuel.add(teil(new THREE.TorusKnotGeometry(0.07, 0.022, 64, 8, 2, 5), 0xe8742a, { umriss: 0.002 }));
+  gurtKnaeuel.add(setze(teil(new THREE.TorusKnotGeometry(0.06, 0.02, 64, 8, 3, 4), 0x2f6fd1, { umriss: 0.002 }), 0.03, 0.02, 0.02, 0.8, 0.4, 0));
+  gurtKnaeuel.add(setze(ratsche(0xc8352a), 0.07, -0.02, 0, 0.5, 0.2, 0.3));
+  gurtKnaeuel.visible = false;
+  scene.add(gurtKnaeuel);
+  objekte.gurtKnaeuel = gurtKnaeuel;
   // aufgerollt: zwei Rollen auf dem unteren Regalbrett
   const gurteRegal = new THREE.Group();
   for (const [z, farbe] of [[-0.1, 0xe8742a], [0.09, 0x2f6fd1]]) {

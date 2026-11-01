@@ -74,7 +74,7 @@
 - Alle Dennis-Sätze stehen in `js/texte.js` (IDs = Dateinamen der Aufnahmen), `spiel.js` nutzt nur diese.
 - `stimme/stimme.json` + `stimme/<id>.mp3`: Aufnahmen pro Satz, Mund bewegt sich nach Lautstärke.
   Pflege mit `node tools/stimme.mjs liste|eintragen`, siehe `stimme/LIESMICH.md`.
-- Die Jungs sprechen ALLE Sätze ein. Dateinamen kurz: dennis1 … dennis486 (485–486 Flaschen räumen, 483–484 Bierflasche werfen, 469–475 Spanngurt, 476–478 Paletten, 479–482 Hofladen), jonny1 … jonny56, waldo1 … waldo41, torben1 … torben19, kumpel1 … kumpel7 (KUMPEL) (Endung
+- Die Jungs sprechen ALLE Sätze ein. Dateinamen kurz: dennis1 … dennis488 (487–488 Gurte geworfen, 485–486 Flaschen räumen, 483–484 Bierflasche werfen, 469–475 Spanngurt, 476–478 Paletten, 479–482 Hofladen), jonny1 … jonny56, waldo1 … waldo41, torben1 … torben19, kumpel1 … kumpel7 (KUMPEL) (Endung
   .mp3/.m4a/.wav, Groß-/Kleinschreibung egal). Zuordnung Kurzname -> Satz-ID steht in stimme/zuordnung.csv (vom Projektchat).
   Nummern sind fest und verschieben sich NIE; neue Sätze bekommen die nächste freie Nummer (dennis367 …) und eine neue Zeile.
   Schlüssel in texte.js NIE umbenennen, neue Sätze nur ergänzen. IDs: Dennis wie alleSaetze(), telefon.G.Z = Gespräch G,
@@ -85,7 +85,7 @@
 
 ## Stand der Pull Requests (1.11.2026)
 - Alles bis #54 gemergt (zuletzt #54 Hotfix Ausraster-Videos). Nichts offen. Neue Zweige immer von `origin/main`.
-- Versionsnummer zuletzt `v=20261101-12`.
-- Nächste freie Satz-Nummern (aus stimme/zuordnung.csv): dennis487, jonny58, waldo43, torben20, kumpel8.
+- Versionsnummer zuletzt `v=20261101-13`.
+- Nächste freie Satz-Nummern (aus stimme/zuordnung.csv): dennis489, jonny58, waldo43, torben20, kumpel8.
 - Projektchat-Session: `session_0136ircvAvU3aCzRamNp3F96` (1.11.; die alte ID `session_01KZ18oujuEFnsAskwuMiw8Y` oben ist veraltet).
 - Offene Fäden und Ungetestetes: `docs/details.md`, Abschnitt „Offene Fäden und Ungetestetes“ (zuerst lesen, wenn ein neuer Chat startet).

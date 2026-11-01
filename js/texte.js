@@ -289,6 +289,7 @@ export const DENNIS = {
     danke: ['Ordentlich aufgerollt und im Regal. So mag ich das!', 'Endlich mal einer, der Spanngurte richtig aufrollt. Danke!'],
     verdreht: ['Die sind ja verdreht aufgerollt! Na ja, besser als auf dem Boden.'],
     selbst: ['Muss ich die Spanngurte jetzt auch noch selbst aufrollen?! Unglaublich.', 'Hier räumt keiner was weg. Immer ich!'],
+    geworfen: ['Hast du die Gurte gerade WIEDER hingeschmissen?! Ich glaub es nicht!', 'Die waren aufgerollt! AUFGEROLLT! Und jetzt ist alles verknotet!'],
   },
   paletten: {
     danke: ['Die Paletten hinterm Haus gestapelt? Sehr gut, genau da gehören die hin!', 'Noch eine Palette auf dem Stapel. So sieht ein Hof aus!'],
