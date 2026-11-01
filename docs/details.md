@@ -384,6 +384,14 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   'palettenSchild': zeigt den Stand). Mit dem Hoflader dort abgesetzt (Gabel-Ereignis abgesetzt) zählt fahrten.palettenGezaehlt:
   je neue Palette Wut -3, Hinweis „x von 12“, Lob beim ersten und jeder 3.; alle 12 = großes Lob, Wut -8. Note: je gestapelte
   Palette 1 Punkt, höchstens 6 (Gesamt höchstens 100). Tipp beim ersten Einsteigen in den Hoflader.
+- Paket F Hofladen und Essen (Projektchat 30.10., I46/I48/I54, Vorschau): Peters Kühlschrank im SB-Laden (landschaft.js) hat eine Tür (Klick:
+  „Tür öffnen“, schwenkt auf, Innenlicht), vier Gitterregale wie in der Werkstatt, unten Käse (4 Keile + Laib im roten Wachs), darüber
+  Mettenden; offen: „Mettenden nehmen“, „Käse nehmen“, „Tür zumachen“ (landschaft.kuehlschrank.auf/istAuf, spiel.js Menü 'sb_mettenden').
+  Neues Hand-Ding 'kaese' (kaeseModell: Emmentaler-Keil mit Löchern). Mettenden neu (wurstModell): dicke, rötliche, gebogene Wurst mit
+  runden Enden, die Packung (mettendenModell) hat drei davon, Folienhaube, Schweißnaht, Etikett mit Preis. Kollision/Ladung fällt
+  (fahrten.js ladungFaellt): Eier -> leerer Karton plus aufgeplatzte Eier am Boden (eierKaputtModell, nicht aufhebbar, „Wegräumen“);
+  Mettenden -> drei einzelne Würste (id 'wurst'), aufhebbar, Dennis gegeben nur Wut -3 (Hand 'wurst'). Neue Sätze dennis479–482
+  (einkauf.kaese/wurst).
 - Paket E Bad (Projektchat 30.10., I42–I44, Vorschau): Badfenster mit echtem Durchblick: Loch in der Bad-Innenwand (badWand mit loch)
   und in der Außenwand (draussen.js, vier Wandstücke um BAD_FENSTER x 1,95–2,65, y 1,45–2,05), Rahmen/Laibung/Sprossenkreuz/Griff,
   klares Glas (Klicks gehen durch), Fensterbänke innen und außen; das alte Milchglasfenster ist weg. Waschplatz in der Werkstatt:
