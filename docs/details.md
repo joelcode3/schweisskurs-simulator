@@ -221,8 +221,11 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   fängt die Maus (dieser Klick benutzt nichts), Zeiger unsichtbar, Punkt in der Mitte; Mausbewegung dreht (0,0024 rad/px), Klick =
   benutzen, was in der Bildmitte ist (treffer(mitte)), Name der Sache in der Mitte als Hover-Name. Öffnet sich ein Menü/Dialog/
   Minispiel/Dennis-Fenster (fensterOffen), wird die Maus freigegeben; der nächste Klick auf einen Knopf fängt sie wieder (wiederFangen,
-  click-Listener im Capture). Esc = Maus frei (Browser), dann Hinweis #maus-tipp, Klick ins Bild fängt wieder. Touch: Wischen wie bisher.
-  In Playwright headless lässt sich Esc nicht testen (Lock bleibt).
+  click-Listener im Capture). Esc ist kein Bedienelement mehr (Browser gibt frei, nächster Klick ins Bild fängt wieder).
+  P1 (1.11.): Rechtsklick wechselt Umschauen <-> Cursor (cursorModus in steuerung.js: Maus frei, Hover/Klick an der Zeigerposition,
+  Ziehen dreht wie früher); im Cursor-Modus fängt kein Linksklick. Beim Öffnen eines Fensters wird freigegeben, danach nur im
+  Umschauen-Modus wieder gefangen. Rechtsklick bei offenem Fenster/Minispiel wirkt nicht. Kein Browser-Kontextmenü auf dem Bild.
+  Touch: Wischen wie bisher.
 
 ## Jonny
 - Jonny (js/jonny.js, nach Fotos): so groß wie Dennis, etwas breiter, lange braune Haare, Vollbart, grüne Cap mit Schirm nach
@@ -427,8 +430,7 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   sondern einzeln alle 1–2,5 Min. (fahrten.js muellNachschub: neue Sorte, neue Stelle). Hula-Hoop etwas schwerer (Halt +6 statt +7,
   Abfall 36 + 1,5 je Runde, Fehltaste -26). Neues Minispiel pumpeSpiel (minispiele.js) statt Halten-Dialog: Wasserstrahl über
   Gülle-Kleckse, Krusten brauchen länger, Luft-Balken beim Spritzen, leer = Würgen (husten), loslassen = durchatmen.
-  Zurücklegen: hand.nimm merkt sich beim ersten Aufheben den Platz (userData.platz), Taste R / Knopf „An seinen Platz“ legt es dort
-  ab (nur unter 3,2 m, nicht für Tasse, Pumpe, Flasche, Ofen, Schlauch, Kaffee, Wäsche, Sieb); Dennis sieht es: Wut -2 (max. alle 2 Min.).
+  Zurücklegen per Taste R / Knopf „An seinen Platz“ ist seit P1 (1.11.) entfernt (Betreiber-Wunsch B13).
   Milch: Tüte 1,5x größer und vorne auf dem Kaffeetisch (stand hinter der Kaffeemaschine), Hinweis beim ersten Kaffee.
   Rohrbruch-Minispiel war schon in P7.
 - Paket O Kühe (Projektchat 29.10., nach Fotos des Betreibers abgenommen): Holstein-Kuh aus wenigen geformten Teilen
@@ -545,7 +547,9 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   alles (WebM statt H.264, Chromium kann hier kein H.264). Der Betreiber prüft im echten Browser (Browser und Anzeige erfragen: schwarz,
   gezeichneter Dennis oder nichts). Das Problem besteht laut Betreiber schon länger. Brotdose und „Dennis abgeworfen“ sind stufe voll,
   aber nebensache (nur Sprechblase, seit Commit 72a4e0a): gewollt? Der Betreiber muss entscheiden. Pages-Abruf ist von hier gesperrt.
-- Esc/Pointer-Lock (Paket A) ist im echten Browser ungetestet (Playwright kann Esc nicht ausprobieren).
+- Pointer-Lock/Rechtsklick-Umschalten (Paket A, P1) ist im echten Browser ungetestet (Headless testet nur den Ablauf, nicht das Gefühl).
+- P1 (1.11.): leere Bierflasche von Jonny kann in die Hand genommen und geworfen werden (hand.js `bierflasche`, Dennis meckert: dennis483/484
+  `wurf.bierflasche.1/.2`, ohne Aufnahme). Mit etwas in der Hand bietet die Flasche keine Aktion an (immer nur EINE Sache).
 - Hoflader-Fahrt zum Palettenplatz ist nicht komplett getestet.
 - Hintergrundgeräusche (Paket H): nur Pegel gemessen, nicht nach Gehör beurteilt.
 - Jonnys Hand ist an der Leiter noch offen (greift nicht richtig).

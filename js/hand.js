@@ -28,6 +28,7 @@ const HALTUNG = {
   sieb: { pos: [0.16, -0.18, -0.48], rot: [0.2, 1.3, 0.2], skala: 1.3, name: 'Flusensieb', nichtWerfen: true, nichtAblegen: true, ablegenHinweis: 'Das Sieb gehört in den Trockner. Dreckig erst am Kompressor ausblasen.' },
   hulahup: { pos: [0.3, -0.5, -1.05], rot: [0.35, 1.1, 0], skala: 0.85, name: 'Hula-Hoop-Reifen', benutzen: 'Dennis bringen' },
   creme: { pos: [0.18, -0.16, -0.42], rot: [0.2, 0.4, 0], skala: 1.5, name: 'Lockencreme', benutzen: 'Dennis geben (auf Dennis klicken)' },
+  bierflasche: { pos: [0.2, -0.22, -0.5], rot: [0.3, 0, 0], skala: 1.6, name: 'Leere Bierflasche', benutzen: null },
   poempel: { pos: [0.22, -0.45, -0.62], rot: [0.35, 0, -0.25], name: 'Pömpel', benutzen: 'Pömpeln' },
   tasse: { pos: [0.2, -0.2, -0.45], rot: [0.1, 2.0, 0], skala: 1.3, name: 'Benutzte Kaffeetasse', benutzen: 'Auf den Kühlschrank stellen' },
   kackpumpe: { pos: [0.3, -0.5, -0.85], rot: [0.15, 0.6, 0], skala: 0.85, name: 'Kackepumpe', benutzen: 'Abwaschen (Bad) / zurückstellen (Kompressor)' },
@@ -141,12 +142,6 @@ export function baueHand(scene, kamera) {
     nimm(id, obj) {
       const cfg = HALTUNG[id];
       if (!obj.userData.ruhe) obj.userData.ruhe = { rot: obj.rotation.clone(), skala: obj.scale.clone() };
-      // ursprünglicher Platz (beim allerersten Aufheben), damit man es später genau dorthin zurücklegen kann
-      if (!obj.userData.platz && obj.parent && obj.parent !== halter) {
-        const welt = new THREE.Vector3();
-        obj.getWorldPosition(welt);
-        obj.userData.platz = { eltern: obj.parent, pos: obj.position.clone(), rot: obj.rotation.clone(), welt };
-      }
       obj.userData.versatz = undefined;
       obj.removeFromParent();
       halter.add(obj);
@@ -178,20 +173,6 @@ export function baueHand(scene, kamera) {
       return obj;
     },
     // Auf eine Fläche legen (punkt = Treffer auf der Oberseite)
-    // Wo das Ding in der Hand ursprünglich lag (Weltposition), oder null
-    get platz() { return item?.obj.userData.platz?.welt || null; },
-    // genau an den ursprünglichen Platz zurücklegen
-    zuruecklegen() {
-      if (!item || !item.obj.userData.platz) return null;
-      const pl = item.obj.userData.platz;
-      const obj = api.weg();
-      pl.eltern.add(obj);
-      obj.position.copy(pl.pos);
-      obj.rotation.copy(pl.rot);
-      obj.scale.copy(obj.userData.ruhe.skala);
-      obj.visible = true;
-      return obj;
-    },
     lege(punkt, drehungY) {
       if (!item) return null;
       const obj = api.weg();

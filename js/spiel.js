@@ -187,7 +187,7 @@ const WURF_ART = {
   kaffee: 'kaffee',
   flex: 'werkzeug', hammer: 'werkzeug', rohrzange: 'werkzeug', edding: 'edding',
   brille: 'ausruestung', handschuhe: 'ausruestung', helm: 'ausruestung',
-  tasse: 'tasse', hulahup: 'reifen', klemmbrett: 'notizen', besen: 'besen', feuerloescher: 'loescher',
+  tasse: 'tasse', hulahup: 'reifen', klemmbrett: 'notizen', besen: 'besen', feuerloescher: 'loescher', bierflasche: 'bierflasche',
 };
 const ARGERN_TOENE = ['stimme/aergern-1.mp3', 'stimme/aergern-2.mp3'];
 const STUFEN_CLIP = { leicht: 'ermahnung', mittel: 'sauer', voll: 'ausraster' };
@@ -2696,7 +2696,6 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     if (!cfg.nichtWerfen) knoepfe.push(['werfen', 'Werfen', 'Q']);
     if (!cfg.nichtAblegen && it.id !== 'flasche' && it.id !== 'ofen') knoepfe.push(['fallen', 'Fallen lassen', 'G']);
     if (it.id === 'schlauch') knoepfe.push(['fallen', 'Zurückhängen', 'G']);
-    if (hatPlatz()) knoepfe.push(['zurueck', 'An seinen Platz', 'R']);
     if (it.id === 'kaffee') knoepfe.push(['fallen', 'Fallen lassen', 'G']);
     el.innerHTML = `<div class="hand-name">${SYMBOL.hand}<span>${cfg.name}</span></div>${knoepfe.map(([k, t, taste]) => (k
       ? `<button type="button" data-k="${k}">${taste ? `<kbd>${taste}</kbd>` : ''}${t}</button>`
@@ -2716,27 +2715,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     else if (k === 'benutzen') benutzen();
     else if (k === 'werfen') werfen();
     else if (k === 'fallen') fallenLassen();
-    else if (k === 'zurueck') zuruecklegen();
   }
-  // Werkzeug & Co. an den Platz zurücklegen, an dem es lag (nur in der Nähe). Dennis freut sich über Ordnung.
-  const OHNE_PLATZ = ['tasse', 'kackpumpe', 'flasche', 'ofen', 'schlauch', 'kaffee', 'waeschetasche', 'sieb'];
-  function hatPlatz() { return hand.item && !OHNE_PLATZ.includes(hand.item.id) && !!hand.platz; }
-  function zuruecklegen() {
-    if (!hatPlatz()) return;
-    const pl = hand.platz;
-    if (Math.hypot(pl.x - kamera.position.x, pl.z - kamera.position.z) > 3.2) { ui.hinweis(`Zu weit weg. ${hand.item.cfg.name}: erst zu seinem Platz gehen.`, 2600); return; }
-    const name = hand.item.cfg.name;
-    hand.zuruecklegen();
-    klonk(0.2);
-    handleisteZeigen();
-    ui.hinweis(`${name}: zurück an seinem Platz.`, 1800);
-    if (dennisSiehts() && ruhig() && sekundenSeitStart() - (z.ordnungZuletzt ?? -999) > 120) {
-      z.ordnungZuletzt = sekundenSeitStart();
-      z.wut = Math.max(0, z.wut - 2);
-      aktualisieren();
-    }
-  }
-
   function aufnehmen(id, obj) {
     if (id === 'schlauch' && !hand.item) {
       // nur die Spritzpistole kommt in die Hand, der Schlauch bleibt an der Wand
@@ -3258,7 +3237,6 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     if (k === 'e') handAktion(hand.item && ANZIEHBAR.includes(hand.item.id) ? 'anziehen' : 'benutzen');
     else if (k === 'q') handAktion('werfen');
     else if (k === 'g') handAktion('fallen');
-    else if (k === 'r') handAktion('zurueck');
   });
   window.addEventListener('keyup', (e) => { if (e.key.toLowerCase() === 'e') { spritzStopp(); loeschStopp(); fegeStopp(); } });
   window.addEventListener('blur', () => { spritzStopp(); loeschStopp(); });
@@ -3432,7 +3410,13 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
         if (obj?.userData.aufgeraeumt) return ['Kaffeetasse', 'Steht ordentlich auf dem Kühlschrank.', []];
         return ['Kaffeetasse', 'Benutzt, mit eingetrocknetem Kaffeerest. Gehört auf den Kühlschrank.', [A('In die Hand nehmen', 'hand', () => aufnehmen('tasse', obj))]];
       case 'leereflasche':
-        return ['Leere Bierflasche', 'Von Jonny. Natürlich.', [A('Wegräumen', 'hand', () => {
+        if (hand.item) return ['Leere Bierflasche', `Du hast schon ${hand.item.cfg.name} in der Hand. Immer nur eine Sache.`, []];
+        return ['Leere Bierflasche', 'Von Jonny. Natürlich.', [A('In die Hand nehmen (werfen mit Q)', 'hand', () => {
+          if (!obj.userData.ruhe) { obj.rotation.set(0, 0, 0); obj.userData.liegend = true; }
+          hand.nimm('bierflasche', obj);
+          blip(520, 0.05);
+          handleisteZeigen();
+        }), A('Wegräumen', 'hand', () => {
           welt.flascheWeg(obj);
           klonk(0.2);
           z.wut = Math.max(0, z.wut - 2);

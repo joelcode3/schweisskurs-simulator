@@ -1,6 +1,6 @@
 // Ich-Perspektive: Computer = Mauszeiger ist gefangen (Pointer Lock) und steht fest in der Bildmitte, Umschauen durch
 // Mausbewegung ohne Klicken, Klick = benutzen, was in der Mitte ist. Menüs, Dialoge und Minispiele geben die Maus frei,
-// danach wird sie wieder gefangen; Esc = Maus frei (z. B. für die Knöpfe oben). Touch = Wischen. Gehen per WASD.
+// danach wird sie wieder gefangen; Rechtsklick wechselt zwischen Umschauen und freiem Cursor. Touch = Wischen. Gehen per WASD.
 import * as THREE from 'three';
 import { AUGENHOEHE, STATIONEN } from './world.js';
 import { inHindernis } from './draussen.js';
@@ -95,11 +95,12 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
   const EMPFINDLICH = 0.0024; // Drehung pro Pixel Mausbewegung
   let gefangen = false;
   let wiederFangen = false; // Maus wurde für ein Fenster freigegeben: danach automatisch wieder fangen
+  let cursorModus = false; // Rechtsklick: Maus bewusst frei (Hand/Cursor), statt Umschauen
   let hoverTakt = 0;
   const tipp = document.createElement('div');
   tipp.id = 'maus-tipp';
   tipp.className = 'versteckt';
-  tipp.textContent = 'Ins Bild klicken: Umschauen mit der Maus. Esc: Maus wieder frei.';
+  tipp.textContent = 'Ins Bild klicken: Umschauen mit der Maus. Rechtsklick: zwischen Umschauen und Cursor wechseln.';
   document.body.appendChild(tipp);
   function fensterOffen() {
     for (const id of ['aktionen', 'dialog', 'minispiel', 'start-einfach', 'start']) {
@@ -115,13 +116,14 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
   }
   function fangen() {
     if (!mitMaus || gefangen || fensterOffen()) return;
+    cursorModus = false;
     try { const p = canvas.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch { /* Browser will nicht */ }
   }
   document.addEventListener('pointerlockchange', () => {
     const jetzt = document.pointerLockElement === canvas;
     if (gefangen && !jetzt) {
       // losgelassen: wegen eines Fensters (dann gleich wieder fangen) oder per Esc (dann erst beim nächsten Klick ins Bild)
-      wiederFangen = fensterOffen();
+      wiederFangen = fensterOffen() && !cursorModus;
       beiHover(null, 0, 0);
     }
     gefangen = jetzt;
@@ -143,7 +145,7 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
     const offen = fensterOffen();
     // Fenster geht auf: Maus freigeben, damit man die Knöpfe anklicken kann
     if (gefangen && offen) { wiederFangen = true; document.exitPointerLock(); }
-    tipp.classList.toggle('versteckt', gefangen || offen || wiederFangen);
+    tipp.classList.toggle('versteckt', gefangen || offen || wiederFangen || cursorModus);
     // Name von dem, was in der Bildmitte ist
     if (gefangen && !offen) {
       hoverTakt -= dt;
@@ -157,8 +159,17 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
   }
 
   // ---------- Zeiger ----------
+  // Rechtsklick: Umschauen (Maus gefangen) <-> Hand/Cursor (Maus frei). Kein Browsermenü.
+  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   canvas.addEventListener('pointerdown', (e) => {
-    if (mitMaus && e.pointerType === 'mouse' && !gefangen) { fangen(); return; }
+    if (mitMaus && e.pointerType === 'mouse' && e.button === 2) {
+      if (fensterOffen()) return;
+      if (gefangen) { cursorModus = true; wiederFangen = false; document.exitPointerLock(); }
+      else fangen();
+      return;
+    }
+    if (e.button > 0) return;
+    if (mitMaus && e.pointerType === 'mouse' && !gefangen && !cursorModus) { fangen(); return; }
     if (gesperrt) return;
     if (!gefangen) { try { canvas.setPointerCapture(e.pointerId); } catch { /* egal */ } }
     zeiger.set(e.pointerId, { x: e.clientX, y: e.clientY });
