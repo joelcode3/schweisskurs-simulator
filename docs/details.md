@@ -552,6 +552,14 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   wiederverwendetes vorgeladenes mehr), bis zu 6 Abspielversuche (ab dem 2. stumm, Ton beim nächsten Klick/Taste), Start auch bei `canplay`;
   erst danach der gezeichnete Dennis. `vorladen()` wärmt nur noch den Zwischenspeicher.
 
+- P4 Figuren (1.11.): Wege in der Werkstatt (wege.js `innenWeg`, `freierPunkt`, main.js `setzeInnen(welt.hindernisse)`): Figuren laufen um Möbel
+  und Stahlträger herum (Ecken-Dijkstra wie draußen) und Ziele in Möbeln werden herausgeschoben (Johnny stand in der Werkbank, Dennis lief
+  durch die Träger). Bierkasten (world.js `bierKasten`, x -1,95 | z 3,62, links neben dem Sofa, 20 Fächer): leere Flaschen von Jonny aufheben
+  (Menü) und auf den Kasten klicken (spiel.js `flascheInKasten`, Wut -1); Aufgaben-Icon „Flaschen“ ab 3 offenen Flaschen, nach 110 s
+  räumt Dennis zwei selbst (`dennisRaeumtFlaschen`, DENNIS.flaschenSelbst = dennis485/486, Wut +3). Die alte Sofort-Aktion „Wegräumen“ gibt es nicht
+  mehr. Waldo setzt sich nach dem Zurückbringen der dreckigen Pumpe aufs Sofa (`waldoPlatzNehmen`), statt sofort hinter die Werkstatt zu gehen.
+  WALDO.spanngurt (waldo42) war in texte.js nicht angelegt: ergänzt.
+
 ## Offene Fäden und Ungetestetes (Übergabe 1.11.2026)
 - Ausraster-Videos: #54 (frisches Video-Element, bis zu 6 Versuche, canplay) ist nur eine Absicherung. Die Ursache ist unklar, im Test lief
   alles (WebM statt H.264, Chromium kann hier kein H.264). Der Betreiber prüft im echten Browser (Browser und Anzeige erfragen: schwarz,

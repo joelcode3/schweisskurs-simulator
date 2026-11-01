@@ -8,7 +8,7 @@ import { baueTorben } from './torben.js';
 import { baueKumpels } from './kumpels.js';
 import { baueSegway } from './segway.js';
 import { baueFahrzeuge } from './fahrzeuge.js';
-import { setzeDynamisch, setzeFiguren, bereich } from './wege.js';
+import { setzeDynamisch, setzeFiguren, setzeInnen, bereich } from './wege.js';
 import { gelaendeHoehe } from './landschaft.js';
 import { baueSteuerung } from './steuerung.js';
 import { baueSpiel } from './spiel.js';
@@ -45,6 +45,7 @@ const segway = baueSegway(scene);
 const fz = baueFahrzeuge(scene, welt);
 
 // Wege der Figuren: draußen um Jeep und Hoflader herum, unterwegs anderen Figuren und dem Spieler ausweichen
+setzeInnen(() => welt.hindernisse);
 setzeDynamisch(() => [fz.jeep, fz.lader].filter((f) => f.g.visible && !f.aufGabel).map((f) => f.hindernis));
 setzeFiguren(() => [dennis, jonny, waldo, torben, ...Object.values(kumpels.alle || {})]
   .filter((f) => f.wurzel && f.wurzel.visible && f.wurzel.parent === scene).map((f) => f.wurzel.position).concat([kamera.position]));

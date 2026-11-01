@@ -89,20 +89,79 @@ export function ausweichen(pos, d, rest = Infinity) {
   return d;
 }
 
+// Möbel und Stahlträger in der Werkstatt (welt.hindernisse): main.js meldet sie an. Figuren laufen drum herum
+// und bleiben nicht in Möbeln stehen (Ziele werden herausgeschoben).
+let innenHindernisse = () => [];
+export function setzeInnen(f) { innenHindernisse = f; }
+const INNEN_R = 0.3;
+function innenKaesten() {
+  return innenHindernisse().filter((h) => !h.niedrig)
+    .map((h) => ({ xMin: h.xMin - INNEN_R, xMax: h.xMax + INNEN_R, zMin: h.zMin - INNEN_R, zMax: h.zMax + INNEN_R }));
+}
+const inWerkstatt = (p) => p.x > RAUM.xMin + 0.3 && p.x < RAUM.xMax - 0.3 && p.z > RAUM.zMin + 0.3 && p.z < RAUM.zMax - 0.3;
+// Steht der Punkt in einem Möbel, wird er zum nächsten freien Rand geschoben
+export function freierPunkt(p) {
+  const q = { x: p.x, z: p.z };
+  if (bereich(q.x, q.z) !== 'werkstatt') return q;
+  for (let runde = 0; runde < 3; runde++) {
+    const k = innenKaesten().find((c) => q.x > c.xMin + 0.05 && q.x < c.xMax - 0.05 && q.z > c.zMin + 0.05 && q.z < c.zMax - 0.05);
+    if (!k) break;
+    const opt = [{ x: k.xMin - 0.05, z: q.z }, { x: k.xMax + 0.05, z: q.z }, { x: q.x, z: k.zMin - 0.05 }, { x: q.x, z: k.zMax + 0.05 }]
+      .filter(inWerkstatt).sort((m, n) => Math.hypot(m.x - q.x, m.z - q.z) - Math.hypot(n.x - q.x, n.z - q.z));
+    if (!opt.length) break;
+    q.x = opt[0].x; q.z = opt[0].z;
+  }
+  return q;
+}
+// In der Werkstatt von a nach b um Möbel herum (Ecken-Dijkstra wie draußen); Start/Ziel in einem Möbel: dieses zählt nicht
+function innenWeg(a, b) {
+  const alle = innenKaesten().filter((k) => !drin(a, k) && !drin(b, k));
+  const frei = (p, q) => !alle.some((k) => schneidet(p, q, k));
+  if (frei(a, b)) return [b];
+  const ecken = [];
+  for (const k of alle) for (const x of [k.xMin - 0.05, k.xMax + 0.05]) for (const z of [k.zMin - 0.05, k.zMax + 0.05]) {
+    const e = { x, z };
+    if (inWerkstatt(e) && !alle.some((c) => drin(e, c))) ecken.push(e);
+  }
+  const knoten = [a, ...ecken, b];
+  const n = knoten.length, dist = new Array(n).fill(Infinity), vor = new Array(n).fill(-1), fertig = new Array(n).fill(false);
+  dist[0] = 0;
+  for (;;) {
+    let i = -1;
+    for (let k = 0; k < n; k++) if (!fertig[k] && (i < 0 || dist[k] < dist[i])) i = k;
+    if (i < 0 || dist[i] === Infinity || i === n - 1) break;
+    fertig[i] = true;
+    for (let k = 0; k < n; k++) {
+      if (fertig[k] || !frei(knoten[i], knoten[k])) continue;
+      const d = dist[i] + abst(knoten[i], knoten[k]);
+      if (d < dist[k]) { dist[k] = d; vor[k] = i; }
+    }
+  }
+  if (vor[n - 1] < 0) return [b];
+  const weg = [];
+  for (let k = n - 1; k > 0; k = vor[k]) weg.unshift(knoten[k]);
+  return weg;
+}
+
 // Wegpunkte von (von) nach (nach), ohne den Startpunkt
 export function wegNach(von, nach) {
-  const a = { x: von.x, z: von.z }, b = { x: nach.x, z: nach.z };
+  const a = { x: von.x, z: von.z };
+  let b = { x: nach.x, z: nach.z };
   const ba = bereich(a.x, a.z), bb = bereich(b.x, b.z);
-  if (ba === bb) return ba === 'draussen' ? aussenWeg(a, b) : [b];
+  if (bb === 'werkstatt') b = freierPunkt(b);
+  if (ba === bb) return ba === 'draussen' ? aussenWeg(a, b) : ba === 'werkstatt' ? innenWeg(a, b) : [b];
   const weg = [];
   let hier = a, wo = ba;
   const hin = (p) => { if (abst(hier, p) > 0.12) weg.push(p); hier = p; };
+  // in der Werkstatt um Möbel herum zum Wegpunkt
+  const hinInnen = (p) => { for (const q of innenWeg(hier, p)) hin(q); };
   // erst raus in die Werkstatt, dann weiter
   if (wo === 'bad') { hin(WC_BAD); hin(WC_WERKSTATT); wo = 'werkstatt'; }
   if (wo === 'draussen') { for (const p of aussenWeg(hier, TUER_AUSSEN)) hin(p); hin(TUER_INNEN); wo = 'werkstatt'; }
-  if (bb === 'bad') { hin(WC_WERKSTATT); hin(WC_BAD); }
-  if (bb === 'draussen') { hin(TUER_INNEN); hin(TUER_AUSSEN); for (const p of aussenWeg(hier, b)) hin(p); return weg; }
-  hin(b);
+  if (bb === 'bad') { hinInnen(WC_WERKSTATT); hin(WC_BAD); }
+  if (bb === 'draussen') { hinInnen(TUER_INNEN); hin(TUER_AUSSEN); for (const p of aussenWeg(hier, b)) hin(p); return weg; }
+  if (bb === 'werkstatt') { for (const q of innenWeg(hier, b)) hin(q); }
+  else hin(b);
   if (!weg.length || abst(weg[weg.length - 1], b) > 0.01) weg.push(b);
   return weg;
 }
