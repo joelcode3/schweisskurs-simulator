@@ -1092,18 +1092,25 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     // Dennis' Ende knallt runter, dann rutscht der ganze Träger auf Torbens Hand
     const a = dennis.position.clone(), b = torben.position.clone();
     const start = beam.position.clone(), r0 = beam.rotation.y;
-    for (let k = 0; k <= 20; k++) {
-      const t = k / 20;
-      beam.position.set(start.x + (b.x - start.x) * 0.35 * t, 0.78 - 0.66 * t * t, start.z);
-      beam.rotation.set(0, r0, (t < 0.5 ? t * 0.5 : (1 - t) * 0.5) * (a.x < b.x ? 1 : -1));
+    // Ende liegt am Schluss genau bei Torben (auf seiner Hand), das andere Ende Richtung Dennis
+    const rx = a.x - b.x, rz = a.z - b.z, rl = Math.hypot(rx, rz) || 1;
+    const ziel = new THREE.Vector3(b.x + (rx / rl) * 1.05, 0.1, b.z + (rz / rl) * 1.05 + 0.25);
+    for (let k = 0; k <= 24; k++) {
+      const t = k / 24;
+      // erst kippt Dennis' Ende runter, dann rutscht alles auf den Boden
+      beam.position.set(start.x + (ziel.x - start.x) * t, 0.78 + (0.1 - 0.78) * t * t, start.z + (ziel.z - start.z) * t);
+      beam.rotation.set(0, r0, Math.sin(t * Math.PI) * 0.35 * (a.x < b.x ? 1 : -1));
       await warte(16);
     }
+    beam.rotation.set(0, r0, 0);
     klonk(0.9); setTimeout(() => klonk(0.6), 120);
     ui.torbenSagt(sag(TORBEN.aua), 4000);
-    torbenLiegt(true, b.x + 0.2, b.z - 0.35, -Math.PI / 2);
+    // Torben fällt nach hinten um, die rechte Hand bleibt unter dem Trägerende
+    torbenLiegt(true, b.x + 0.05, b.z - 0.1, 0);
     TU.zustand = 'liegt';
     TU.seit = sekundenSeitStart();
     z.beschaeftigt = false;
+    z.dennisRaeumt = true; // Dennis ist mit Panik beschäftigt: keine Tassen, Flaschen, Gurte nebenbei
     ui.hinweis('Torben liegt am Boden! Schnell den Erste-Hilfe-Kasten holen (rechte Wand) und Torben verarzten.', 6000);
     dennisPanik();
   }
@@ -1121,6 +1128,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     if (TU.zustand !== 'liegt') return;
     TU.zustand = 'verarztet';
     z.beschaeftigt = true;
+    z.dennisRaeumt = false;
     if (durchDennis) {
       await Promise.race([dennis.gehZu(torben.position.x - 0.6, torben.position.z, 1.6), warte(8000)]);
       await warte(3500);
@@ -1131,7 +1139,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       steuerung.sperre(true);
       const e = await fingerSpiel();
       steuerung.sperre(false);
-      if (!e || e.abgebrochen) { TU.zustand = 'liegt'; z.beschaeftigt = false; dennisPanik(); return; }
+      if (!e || e.abgebrochen) { TU.zustand = 'liegt'; z.beschaeftigt = false; z.dennisRaeumt = true; dennisPanik(); return; }
       const box = hand.weg();
       if (box) welt.zurueckAnDieWand(box);
       handleisteZeigen();
