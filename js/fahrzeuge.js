@@ -81,16 +81,54 @@ export function baueFahrzeuge(scene, welt) {
   function palettenAmPlatz() {
     return paletten.filter((p) => p.parent === scene && Math.abs(p.position.x - PALETTEN_PLATZ.x) < PALETTEN_PLATZ.hx && Math.abs(p.position.z - PALETTEN_PLATZ.z) < PALETTEN_PLATZ.hz).length;
   }
+  const PAL_H = 0.144;
+  // liegt (x, z) auf der Grundfläche der Palette p? (gedreht, ohne Weltmatrix: geht auch direkt nach dem Verschieben)
+  function aufPalette(p, x, z, rand = 0) {
+    const dx = x - p.position.x, dz = z - p.position.z, c = Math.cos(p.rotation.y), sn = Math.sin(p.rotation.y);
+    return Math.abs(dx * c - dz * sn) < 0.4 + rand && Math.abs(dx * sn + dz * c) < 0.6 + rand;
+  }
   function stuetzHoehe(x, z, ohne) {
     // Oberkante der höchsten Palette unter (x, z), sonst Boden
     let h = 0;
     for (const p of paletten) {
       if ((Array.isArray(ohne) ? ohne.includes(p) : p === ohne) || p.parent !== scene) continue;
-      const lokal = p.worldToLocal(new THREE.Vector3(x, p.position.y, z));
-      if (Math.abs(lokal.x) < 0.42 && Math.abs(lokal.z) < 0.62) h = Math.max(h, p.position.y + 0.144);
+      if (aufPalette(p, x, z, 0.02)) h = Math.max(h, p.position.y + PAL_H);
     }
     return h;
   }
+  // Ecken und Mitte einer Palette (Welt), für die Auflage
+  function palettenPunkte(p, x = p.position.x, z = p.position.z, ry = p.rotation.y) {
+    const c = Math.cos(ry), sn = Math.sin(ry);
+    return [[0, 0], [-0.36, -0.56], [0.36, -0.56], [-0.36, 0.56], [0.36, 0.56]].map(([lx, lz]) => ({ x: x + lx * c + lz * sn, z: z - lx * sn + lz * c }));
+  }
+  // worauf eine Palette zu liegen kommt: höchste Oberkante unter einer ihrer Ecken (nie halb in einer anderen)
+  function auflage(p, ohne) {
+    return Math.max(...palettenPunkte(p).map((q) => stuetzHoehe(q.x, q.z, ohne)));
+  }
+  // Schwerkraft: jede Palette liegt auf dem Boden oder auf der Palette darunter (nichts schwebt), von unten nach oben
+  function palettenSetzen() {
+    const liegend = paletten.filter((p) => p.parent === scene).sort((a, b) => a.position.y - b.position.y);
+    liegend.forEach((p, i) => {
+      const unter = liegend.slice(0, i);
+      p.position.y = auflage(p, paletten.filter((q) => !unter.includes(q)));
+      p.rotation.x = 0; p.rotation.z = 0;
+      palettenBox(p);
+    });
+  }
+  // Stapel über einer Palette (alles, was darauf liegt, auch schief gestapelt)
+  function stapelUeber(p) {
+    const s = [p];
+    for (let neu = true; neu;) {
+      neu = false;
+      for (const q of paletten) {
+        if (s.includes(q) || q.parent !== scene) continue;
+        if (s.some((u) => q.position.y > u.position.y + 0.1 && palettenPunkte(q).some((pt) => aufPalette(u, pt.x, pt.z, 0.02)))) { s.push(q); neu = true; }
+      }
+    }
+    return s.sort((a, b) => a.position.y - b.position.y);
+  }
+
+  palettenSetzen();
 
   // ---------- Fahrzeuge ----------
   const jeepG = T.jeep.gruppe;
@@ -130,39 +168,70 @@ export function baueFahrzeuge(scene, welt) {
   let treffer = null;
   // befreien: hängt ein Fahrzeug fest und man gibt weiter Gas, zählen Hindernisse kurz nicht (nur der Geländerand)
   let befreien = false;
-  function punktFrei(x, z, f, spieler, ohne) {
+  // Kollision (Paket P5): andere Fahrzeuge als gedrehte Kästen (genau, kein Durchrutschen zwischen Eckpunkten), Paletten
+  // als gedrehte Grundflächen. Jeep: keine Palette. Hoflader: über EINE einzelne Palette darf er drüber, über Stapel nicht
+  // (die Gabel vorne fährt ohnehin unter die Palette, die Kabine stößt an).
+  const fzHindernisse = () => new Set(alle.map((g) => g.hindernis));
+  const palHindernisse = () => new Set(paletten.map((q) => q.userData.hindernis));
+  function boxenVon(f, x, z, psi, knick = 0) {
+    const b = (w, cz, hx, hz) => ({ x: x + Math.sin(w) * cz, z: z + Math.cos(w) * cz, psi: w, hx, hz });
+    return f.art === 'jeep' ? [b(psi, -0.03, 0.6, 1.03)] : [b(psi, -0.865, 0.66, 0.8), b(psi + knick, 0.66, 0.66, 0.52)];
+  }
+  // Überlappung zweier gedrehter Kästen (Trennachsen): 0 = berühren sich nicht, sonst wie tief sie ineinander stecken
+  function obbTiefe(a, b) {
+    let min = Infinity;
+    for (const w of [a.psi, a.psi + Math.PI / 2, b.psi, b.psi + Math.PI / 2]) {
+      const ax = Math.sin(w), az = Math.cos(w);
+      const r = (o) => o.hz * Math.abs(Math.sin(o.psi) * ax + Math.cos(o.psi) * az) + o.hx * Math.abs(Math.cos(o.psi) * ax - Math.sin(o.psi) * az);
+      const ueber = r(a) + r(b) - Math.abs((a.x - b.x) * ax + (a.z - b.z) * az);
+      if (ueber <= 0) return 0;
+      min = Math.min(min, ueber);
+    }
+    return min;
+  }
+  // tiefste Überlappung des Fahrzeugs f (in der Pose boxen) mit einem anderen Fahrzeug
+  function fahrzeugTiefe(f, boxen, ohneFz) {
+    let t = 0, wer = null;
+    for (const g of alle) {
+      if (g === f || g === ohneFz || !g.g.visible || g.aufGabel) continue;
+      for (const a of boxen) for (const b of boxenVon(g, g.x, g.z, g.psi, g.knick || 0)) {
+        const d = obbTiefe(a, b);
+        if (d > t) { t = d; wer = g; }
+      }
+    }
+    return { t, wer };
+  }
+  function punktFrei(x, z, f, spieler, ohne, fzH, palH) {
     if (!welt.draussen.fahrbar(x, z)) { treffer = 'rand'; return false; }
     if (befreien) return true;
     for (const h of welt.hindernisse) {
-      if (h === f.hindernis || (ohne && ohne.has(h))) continue;
-      if (f.last && f.last.some((p) => h === p.userData.hindernis)) continue;
+      if (h === f.hindernis || fzH.has(h) || palH.has(h) || (ohne && ohne.has(h))) continue;
       if (inHindernis(h, x, z)) { treffer = h; return false; }
     }
+    // Paletten: Jeep gar nicht, Hoflader nur über eine einzelne
+    const hoch = Math.round(stuetzHoehe(x, z, ohne ? paletten.filter((q) => ohne.has(q.userData.hindernis)) : null) / PAL_H);
+    if (f.art === 'jeep' ? hoch >= 1 : hoch >= 2) { treffer = 'palette'; return false; }
     for (const p of spieler) if (Math.hypot(x - p.x, z - p.z) < 0.45) { treffer = 'figur'; return false; }
     return true;
   }
-  // Paletten zählen beim Lader vorne nicht (die Gabel fährt drunter)
-  function frei(f, x, z, psi, knick, spieler, ohne) {
+  // ohneFz: dieses Fahrzeug zählt nicht (z. B. der Jeep, den der Hoflader gerade schiebt)
+  function frei(f, x, z, psi, knick, spieler, ohne, ohneFz) {
     treffer = null;
-    const ok = (lx, lz, bx, bz, w) => {
-      const c = Math.cos(w), s = Math.sin(w);
-      return punktFrei(bx + lx * c + lz * s, bz - lx * s + lz * c, f, spieler, ohne);
+    const fzH = fzHindernisse(), palH = palHindernisse();
+    const ok = (lx, lz, w) => {
+      const c = Math.cos(w), sn = Math.sin(w);
+      return punktFrei(x + lx * c + lz * sn, z - lx * sn + lz * c, f, spieler, ohne, fzH, palH);
     };
-    if (f.art === 'jeep') return f.punkte.every(([lx, lz]) => ok(lx, lz, x, z, psi));
-    if (!f.hinten.every(([lx, lz]) => ok(lx, lz, x, z, psi))) return false;
-    const pal = new Set(paletten.map((p) => p.userData.hindernis));
-    const vorneFrei = (lx, lz) => {
-      const w = psi + knick, c = Math.cos(w), s = Math.sin(w);
-      const px = x + lx * c + lz * s, pz = z - lx * s + lz * c;
-      if (!welt.draussen.fahrbar(px, pz)) { treffer = 'rand'; return false; }
-      for (const h of welt.hindernisse) {
-        if (h === f.hindernis || pal.has(h) || (ohne && ohne.has(h))) continue;
-        if (inHindernis(h, px, pz)) { treffer = h; return false; }
-      }
-      for (const p of spieler) if (Math.hypot(px - p.x, pz - p.z) < 0.45) { treffer = 'figur'; return false; }
-      return true;
-    };
-    return f.vorne.every(([lx, lz]) => vorneFrei(lx, lz));
+    if (f.art === 'jeep') { if (!f.punkte.every(([lx, lz]) => ok(lx, lz, psi))) return false; }
+    else if (!f.hinten.every(([lx, lz]) => ok(lx, lz, psi)) || !f.vorne.every(([lx, lz]) => ok(lx, lz, psi + knick))) return false;
+    if (befreien) return true;
+    // andere Fahrzeuge: nie (tiefer) hinein; steckt man schon drin (z. B. nach einer Figuren-Fahrt), nur heraus
+    const neu = fahrzeugTiefe(f, boxenVon(f, x, z, psi, knick), ohneFz);
+    if (neu.t > 0.001) {
+      const alt = fahrzeugTiefe(f, boxenVon(f, f.x, f.z, f.psi, f.knick || 0), ohneFz);
+      if (neu.t >= alt.t - 1e-4) { treffer = neu.wer.hindernis; return false; }
+    }
+    return true;
   }
 
   // Hindernisse, in denen das Fahrzeug gerade schon steckt (z. B. Grill umgefahren und größer geworden, vom Lader geschoben):
@@ -185,8 +254,10 @@ export function baueFahrzeuge(scene, welt) {
     // auf dem Gelände: Höhe und Neigung (vorne/hinten, links/rechts) aus dem Boden unter den Rädern
     const lang = f.art === 'jeep' ? 0.8 : 1.0, breit = 0.5;
     const sn = Math.sin(f.psi), cs = Math.cos(f.psi);
-    const hv = gelaendeHoehe(f.x + sn * lang, f.z + cs * lang), hh = gelaendeHoehe(f.x - sn * lang, f.z - cs * lang);
-    const hl = gelaendeHoehe(f.x + cs * breit, f.z - sn * breit), hr = gelaendeHoehe(f.x - cs * breit, f.z + sn * breit);
+    // der Hoflader fährt über einzelne Paletten: die Räder stehen dann oben drauf
+    const boden = (x, z) => gelaendeHoehe(x, z) + (f.art === 'lader' ? stuetzHoehe(x, z) : 0);
+    const hv = boden(f.x + sn * lang, f.z + cs * lang), hh = boden(f.x - sn * lang, f.z - cs * lang);
+    const hl = boden(f.x + cs * breit, f.z - sn * breit), hr = boden(f.x - cs * breit, f.z + sn * breit);
     f.g.position.set(f.x, (hv + hh + hl + hr) / 4, f.z);
     f.g.rotation.set(-Math.atan2(hv - hh, 2 * lang), f.psi, Math.atan2(hl - hr, 2 * breit), 'YXZ');
     for (const rad of f.raeder) rad.rotation.x += dWeg / f.radR;
@@ -247,14 +318,24 @@ export function baueFahrzeuge(scene, welt) {
       const J = R.addScaledVector(richt(psi), f.Lr);
       const drin = steckt(f);
       let ok = frei(f, J.x, J.z, psi, gNeu, spieler, drin);
-      // steht der Jeep im Weg (und fährt nicht gerade der Spieler damit): wegschieben, wenn er Platz hat
-      if (!ok && treffer === jeep.hindernis && jeep.fahrer !== 'spieler' && !jeep.aufGabel && frei(f, J.x, J.z, psi, gNeu, spieler, new Set([...(drin || []), jeep.hindernis]))) {
-        const dx = J.x - f.x, dz = J.z - f.z;
-        if (frei(jeep, jeep.x + dx, jeep.z + dz, jeep.psi, 0, spieler, steckt(jeep, new Set([f.hindernis])))) {
-          jeep.x += dx; jeep.z += dz; anwenden(jeep, Math.hypot(dx, dz));
+      // steht der Jeep im Weg (und fährt nicht gerade der Spieler damit): wegschieben, wenn er Platz hat.
+      // Geschoben wird in die Richtung, in die sich der vordere Teil bewegt, und so weit, dass sich nichts überlappt.
+      if (!ok && treffer === jeep.hindernis && jeep.fahrer !== 'spieler' && !jeep.aufGabel && frei(f, J.x, J.z, psi, gNeu, spieler, drin, jeep)) {
+        const neuB = boxenVon(f, J.x, J.z, psi, gNeu), altB = boxenVon(f, f.x, f.z, f.psi, f.knick);
+        const dx = neuB[1].x - altB[1].x, dz = neuB[1].z - altB[1].z, len = Math.hypot(dx, dz) || 0.01;
+        ok = false;
+        for (const k of [1, 1.5, 2.5, 4]) {
+          const nx = jeep.x + (dx / len) * (len * k + 0.01), nz = jeep.z + (dz / len) * (len * k + 0.01);
+          const jb = boxenVon(jeep, nx, nz, jeep.psi);
+          if (neuB.some((a) => jb.some((b) => obbTiefe(a, b) > 0.001))) continue;
+          if (!frei(jeep, nx, nz, jeep.psi, 0, spieler, steckt(jeep), f)) continue;
+          const w = Math.hypot(nx - jeep.x, nz - jeep.z);
+          jeep.x = nx; jeep.z = nz; anwenden(jeep, w);
           jeep.geschoben = true;
           ok = true;
-        } else treffer = jeep.hindernis;
+          break;
+        }
+        if (!ok) treffer = jeep.hindernis;
       }
       if (ok) { f.x = J.x; f.z = J.z; f.psi = psi; f.knick = gNeu; anwenden(f, weg); }
       else { rums = Math.abs(f.v) > 0.6; f.v = 0; anwenden(f, 0); }
@@ -277,13 +358,21 @@ export function baueFahrzeuge(scene, welt) {
       const wp = unten.getWorldPosition(new THREE.Vector3());
       const stuetz = stuetzHoehe(wp.x, wp.z, lader.last);
       if (richtung < 0 && wp.y <= stuetz + 0.01) {
-        const dy = stuetz - wp.y;
-        for (const p of lader.last) {
-          scene.attach(p);
-          p.position.y += dy;
-          p.rotation.x = 0; p.rotation.z = 0;
-          palettenBox(p);
+        for (const p of lader.last) { scene.attach(p); p.rotation.x = 0; p.rotation.z = 0; }
+        // sauber stapeln: liegt darunter eine Palette und passt es ungefähr, rutscht der ganze Stapel genau auf sie;
+        // sonst stehen die getragenen Paletten wenigstens genau übereinander
+        const unten0 = lader.last[0];
+        let basis = null, basisH = -1;
+        for (const q of paletten) {
+          if (lader.last.includes(q) || q.parent !== scene || !aufPalette(q, unten0.position.x, unten0.position.z, 0.05)) continue;
+          if (q.position.y > basisH) { basisH = q.position.y; basis = q; }
         }
+        const dWinkel = basis ? Math.abs(winkelDiff(unten0.rotation.y, basis.rotation.y)) % Math.PI : 9;
+        const passt = basis && Math.hypot(basis.position.x - unten0.position.x, basis.position.z - unten0.position.z) < 0.35 && Math.min(dWinkel, Math.PI - dWinkel) < 0.35;
+        const ziel = passt ? basis : unten0;
+        for (const p of lader.last) { p.position.x = ziel.position.x; p.position.z = ziel.position.z; p.rotation.y = ziel.rotation.y; }
+        lader.last.forEach((p, i) => { p.position.y = 10 + i; }); // erst nach oben, dann fällt alles von unten nach oben an seinen Platz
+        palettenSetzen();
         ereignis = lader.last.length > 1 ? 'abgesetztMehrere' : 'abgesetzt';
         lader.last = null;
       }
@@ -317,11 +406,11 @@ export function baueFahrzeuge(scene, welt) {
         const wDiff = Math.abs(winkelDiff(fRicht, p.rotation.y)) % (Math.PI / 2);
         const gerade = Math.min(wDiff, Math.PI / 2 - wDiff) < 0.45;
         if (gerade && Math.abs(lokal.x) < 0.42 && Math.abs(lokal.z) < 0.62 && lokal.y > 0.02 && lokal.y < 0.135) {
-          const stapel = paletten.filter((q) => q !== p && q.parent === scene && Math.hypot(q.position.x - p.position.x, q.position.z - p.position.z) < 0.35 && q.position.y > p.position.y + 0.1)
-            .sort((a, b) => a.position.y - b.position.y).slice(0, 4);
-          lader.last = [p, ...stapel];
+          // der ganze Stapel darüber kommt mit (beliebig hoch, auch schief gestapelte), nichts bleibt in der Luft hängen
+          lader.last = stapelUeber(p);
           for (const q of lader.last) { lader.gabel.attach(q); Object.assign(q.userData.hindernis, AUS); }
-          ereignis = stapel.length ? 'aufgenommenMehrere' : 'aufgenommen';
+          palettenSetzen();
+          ereignis = lader.last.length > 1 ? 'aufgenommenMehrere' : 'aufgenommen';
           break;
         }
       }
@@ -451,7 +540,7 @@ export function baueFahrzeuge(scene, welt) {
   function verstecken(f, an) { f.g.visible = !an; if (an) Object.assign(f.hindernis, AUS, { boxen: null }); else anwenden(f, 0); }
 
   return {
-    jeep, lader, paletten, alle, palettenAmPlatz, PALETTEN_PLATZ,
+    jeep, lader, paletten, alle, palettenAmPlatz, PALETTEN_PLATZ, palettenSetzen, boxenVon, obbTiefe,
     // Höhe, auf der man an (x, z) steht (Paletten), für die Kamera
     bodenHoehe: (x, z) => stuetzHoehe(x, z),
     schritt, gabel, anwenden, fahreRoute, einparken, mitAnfahrt, verstecken, figurRein, figurRaus,
