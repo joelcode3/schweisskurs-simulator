@@ -12,6 +12,16 @@
 - Immer nur EIN Paket auf einmal (Betreiber-Wunsch, Limit sparen): nach jedem Paket (PR gemeldet bzw. Vorschau geschickt)
   stoppen und warten, bis der Projektchat „weiter <Paketname>“ schickt. Nie selbst das nächste Paket anfangen.
   Der Betreiber wählt pro Paket das Modell (/model).
+- Dauerhafte Arbeitsregeln (Betreiber/Projektchat, Stand 1.11.):
+  - Pakete einzeln; nach jedem Paket stoppen, bis der Projektchat „weiter <Paket>“ schickt (außer der Betreiber sagt „durchziehen“).
+  - Je Paket eigener Zweig und eigener PR. Pro Paket die Modellempfehlung (Opus oder Sonnet) nennen.
+  - Optik und neue Minispiele: erst Vorschau (Screenshots) an den Betreiber, PR erst nach Abnahme.
+  - PR-Meldung an den Projektchat: Link, Kurzliste, neue Sätze mit Nummern und Schlüsseln.
+  - Konflikte: main in den Zweig mergen (kein Rebase, kein Force-Push), beide Seiten behalten, Version hochzählen, kurz testen.
+    Bei PR-Ketten die Merge-Reihenfolge angeben.
+  - Ehrlich melden, was nicht getestet oder weggelassen wurde.
+  - iPhone/Touch komplett außen vor, nur Computer-Ansicht testen.
+  - „todo …“ und „bug …“ gehen über den Projektchat (er pflegt die Projektliste), nicht selbst umsetzen ohne Go.
 - Vor jedem PR im Browser testen (nur Computer-Ansicht, Web hat Prio; iPhone erstmal nicht, Betreiber 24.10.), Playwright mit vorinstalliertem Chromium.
 - Optisches: erst Vorschau (Screenshot) an den Betreiber, PR erst nach Abnahme (Projektchat 24.10.).
 
@@ -72,4 +82,9 @@
 - KI-Stimmklon ist in dieser Umgebung nicht möglich (huggingface.co gesperrt). Stimmproben nie ins Repo (öffentlich).
 
 ## Stand der Pull Requests (1.11.2026)
-- Bis #51 (P1–P7, S, F, D, T, O, M, A, B, C, G, D-Haltung) gemergt. Offen: #52 E Bad, #53 F Hofladen (auf E), #50 H Geräusche (auf F). Reihenfolge #52, #53, #50. Neue Zweige von `origin/main`. Versionsnummer zuletzt `v=20261101-4` (Hotfix Ausraster-Videos).
+- Alles bis #54 gemergt (zuletzt #54 Hotfix Ausraster-Videos). Nichts offen. Neue Zweige immer von `origin/main`.
+- Versionsnummer zuletzt `v=20261101-4`.
+- Nächste freie Satz-Nummern (aus stimme/zuordnung.csv): dennis483, jonny58, waldo43, torben20, kumpel8.
+- Projektchat-Session: `PLATZHALTER_NEUE_PROJEKTCHAT_ID` (aktuell noch `session_012U3BQmPuiyZpwhAoLyJrFQ`, der Betreiber setzt beide Chats neu auf;
+  die alte ID `session_01KZ18oujuEFnsAskwuMiw8Y` oben ist veraltet). Neue ID hier und in „Zusammenarbeit“ eintragen, sobald bekannt.
+- Offene Fäden und Ungetestetes: `docs/details.md`, Abschnitt „Offene Fäden und Ungetestetes“ (zuerst lesen, wenn ein neuer Chat startet).
