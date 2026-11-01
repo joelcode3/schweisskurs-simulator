@@ -1059,3 +1059,13 @@ button { font: inherit; color: inherit; }
 #testmenue button { font: inherit; color: #eee; background: #34373d; border: 1px solid #111; border-radius: 6px; padding: 4px 6px; text-align: left; cursor: pointer; }
 #testmenue button:hover { background: #4a4e56; }
 #testmenue .tm-nr { color: #ffc81e; font-variant-numeric: tabular-nums; margin-right: 4px; }
+#testmenue .tm-zeile { display: flex; flex-direction: column; }
+#testmenue .tm-zeile > button:first-child { width: 100%; }
+#testmenue .tm-grund { display: none; font-weight: 400; font-size: 11px; color: #aaa; padding: 1px 4px 0; }
+#testmenue .tm-laeuft > button:first-child { background: #1f6b34; border-color: #2fa04f; color: #fff; }
+#testmenue .tm-laeuft .tm-grund { display: block; color: #7be39a; }
+#testmenue .tm-gesperrt > button:first-child { opacity: 0.45; cursor: not-allowed; }
+#testmenue .tm-gesperrt > button:first-child:hover { background: #34373d; }
+#testmenue .tm-gesperrt .tm-grund { display: block; }
+#testmenue .tm-reset { align-self: flex-end; margin-top: 2px; padding: 1px 6px; font-size: 11px; background: #4a3a1a; }
+#testmenue .tm-reset[hidden] { display: none; }

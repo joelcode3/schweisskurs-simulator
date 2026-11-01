@@ -27,36 +27,87 @@ export function baueTestMenue({ spiel, welt, kamera, fahrten, fz }) {
     inhalt.appendChild(d);
     gruppe = d.querySelector('.tm-knoepfe');
   };
-  // jede Zeile hat eine FESTE Nummer (T01 …); Nummern verschieben sich nie, neue Einträge bekommen die nächste freie Nummer
-  const knopf = (nr, text, tun) => {
+  // jede Zeile hat eine FESTE Nummer (T01 …); Nummern verschieben sich nie, neue Einträge bekommen die nächste freie Nummer.
+  // opt.laeuft(): läuft gerade (grün). opt.sperre(): Text, warum es gerade nicht geht (grau, Knopf aus).
+  // opt.reset(): einmaliges Ereignis wieder freigeben (Knopf „zurücksetzen“ erscheint, solange gesperrt).
+  // opt.resetNoetig(): nur dann „zurücksetzen“ zeigen (wenn die Sperre auch andere Gründe haben kann).
+  // Zusätzlich gilt alles als laufend, solange das vom Knopf gestartete Ereignis (Promise) noch nicht fertig ist.
+  const zeilen = [];
+  const knopf = (nr, text, tun, opt = {}) => {
+    const zeile = document.createElement('div');
+    zeile.className = 'tm-zeile';
     const b = document.createElement('button');
     b.type = 'button';
     b.innerHTML = `<span class="tm-nr">${nr}</span> ${text}`;
-    b.addEventListener('click', (e) => { e.stopPropagation(); try { tun(); } catch (err) { console.error('[testmenue]', text, err); } b.blur(); });
-    gruppe.appendChild(b);
+    const grund = document.createElement('div');
+    grund.className = 'tm-grund';
+    const eintrag = { b, grund, opt, offen: 0, zeile, reset: null };
+    b.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (b.disabled) return;
+      try {
+        const r = tun();
+        if (r && typeof r.then === 'function') { eintrag.offen++; r.finally(() => { eintrag.offen--; }); }
+      } catch (err) { console.error('[testmenue]', text, err); }
+      b.blur();
+      setTimeout(status, 50);
+    });
+    zeile.append(b, grund);
+    if (opt.reset) {
+      const r = document.createElement('button');
+      r.type = 'button';
+      r.className = 'tm-reset';
+      r.textContent = 'zurücksetzen';
+      r.addEventListener('click', (e) => { e.stopPropagation(); try { opt.reset(); } catch (err) { console.error('[testmenue] reset', text, err); } r.blur(); setTimeout(status, 50); });
+      zeile.appendChild(r);
+      eintrag.reset = r;
+    }
+    gruppe.appendChild(zeile);
+    zeilen.push(eintrag);
   };
+  // Minispiel läuft, wenn das Minispiel-Fenster offen ist und der Titel passt
+  const miniTitel = () => {
+    const el = document.getElementById('minispiel');
+    if (!el || el.classList.contains('versteckt')) return '';
+    return el.querySelector('#minispiel-oben h3')?.textContent || '';
+  };
+  const titelEnthaelt = (...teile) => () => { const tt = miniTitel(); return !!tt && teile.some((x) => tt.includes(x)); };
+  function status() {
+    for (const e of zeilen) {
+      let sperre = null, laeuft = false;
+      try { laeuft = e.offen > 0 || !!e.opt.laeuft?.(); } catch { /* egal */ }
+      try { sperre = laeuft ? null : e.opt.sperre?.() || null; } catch { /* egal */ }
+      e.zeile.classList.toggle('tm-laeuft', laeuft);
+      e.zeile.classList.toggle('tm-gesperrt', !!sperre);
+      e.b.disabled = !!sperre;
+      const hinweis = laeuft ? 'läuft gerade' : sperre || '';
+      e.b.title = hinweis;
+      e.grund.textContent = hinweis;
+      if (e.reset) e.reset.hidden = !sperre || (e.opt.resetNoetig ? !e.opt.resetNoetig() : false);
+    }
+  }
   const frei = () => { z.beschaeftigt = false; };
   const mini = (f) => () => { frei(); f(); };
 
   ueberschrift('Minispiele (direkt)');
-  knopf('T01', 'Anzeichnen', mini(() => M.anzeichnenSpiel()));
-  knopf('T02', 'Schneiden (Flex)', mini(() => M.pfadSpiel({ art: 'schneiden', form: 'rechteck', titel: 'Tür ausschneiden', text: 'Testlauf.' })));
-  knopf('T03', 'Schweißen', mini(() => M.pfadSpiel({ art: 'schweissen', form: 'linie', titel: 'Naht schweißen', text: 'Testlauf.', strom: 80, helm: true })));
-  knopf('T04', 'Schlacke klopfen', mini(() => M.schlackeSpiel()));
-  knopf('T05', 'Lackieren', mini(() => M.lackierSpiel()));
-  knopf('T06', 'Restgas ablassen (Ventil)', mini(() => M.ventilSpiel()));
-  knopf('T07', 'Flasche spülen', mini(() => M.spuelSpiel()));
-  knopf('T08', 'Bitsatz sortieren', mini(() => M.bitsatzSpiel()));
-  knopf('T09', 'Akkuschrauber reparieren', mini(() => M.akkuschrauberSpiel()));
-  knopf('T10', 'Flusensieb ausblasen', mini(() => M.siebSpiel()));
-  knopf('T11', 'Kaffee kochen', mini(() => M.kaffeeSpiel()));
-  knopf('T12', 'Rohrbruch reparieren', mini(() => M.rohrSpiel()));
-  knopf('T13', 'Räuberleiter (Jonnys Leiter)', mini(() => M.leiterSpiel()));
-  knopf('T14', 'Hula-Hoop', mini(() => M.hulaSpiel()));
-  knopf('T15', 'Kackepumpe putzen', mini(() => M.pumpeSpiel()));
-  knopf('T16', 'Spanngurte entknoten', mini(() => M.spanngurtSpiel({ verknotet: true })));
-  if (M.poempelSpiel) knopf('T17', 'Klo pömpeln', mini(() => M.poempelSpiel()));
-  knopf('T18', 'Finger verarzten (Torben)', mini(() => M.fingerSpiel()));
+  knopf('T01', 'Anzeichnen', mini(() => M.anzeichnenSpiel()), { laeuft: titelEnthaelt('Ofentür anzeichnen') });
+  knopf('T02', 'Schneiden (Flex)', mini(() => M.pfadSpiel({ art: 'schneiden', form: 'rechteck', titel: 'Tür ausschneiden', text: 'Testlauf.' })), { laeuft: titelEnthaelt('ausschneiden') });
+  knopf('T03', 'Schweißen', mini(() => M.pfadSpiel({ art: 'schweissen', form: 'linie', titel: 'Naht schweißen', text: 'Testlauf.', strom: 80, helm: true })), { laeuft: titelEnthaelt('anschweißen', 'Naht schweißen') });
+  knopf('T04', 'Schlacke klopfen', mini(() => M.schlackeSpiel()), { laeuft: titelEnthaelt('Schlacke') });
+  knopf('T05', 'Lackieren', mini(() => M.lackierSpiel()), { laeuft: titelEnthaelt('lackieren') });
+  knopf('T06', 'Restgas ablassen (Ventil)', mini(() => M.ventilSpiel()), { laeuft: titelEnthaelt('Restgas') });
+  knopf('T07', 'Flasche spülen', mini(() => M.spuelSpiel()), { laeuft: titelEnthaelt('Flasche spülen') });
+  knopf('T08', 'Bitsatz sortieren', mini(() => M.bitsatzSpiel()), { laeuft: titelEnthaelt('Bitsatz') });
+  knopf('T09', 'Akkuschrauber reparieren', mini(() => M.akkuschrauberSpiel()), { laeuft: titelEnthaelt('Akkuschrauber') });
+  knopf('T10', 'Flusensieb ausblasen', mini(() => M.siebSpiel()), { laeuft: titelEnthaelt('Flusensieb') });
+  knopf('T11', 'Kaffee kochen', mini(() => M.kaffeeSpiel()), { laeuft: titelEnthaelt('Kaffee kochen') });
+  knopf('T12', 'Rohrbruch reparieren', mini(() => M.rohrSpiel()), { laeuft: titelEnthaelt('Rohr abdichten') });
+  knopf('T13', 'Räuberleiter (Jonnys Leiter)', mini(() => M.leiterSpiel()), { laeuft: titelEnthaelt('Räuberleiter') });
+  knopf('T14', 'Hula-Hoop', mini(() => M.hulaSpiel()), { laeuft: titelEnthaelt('Hula-Hoop') });
+  knopf('T15', 'Kackepumpe putzen', mini(() => M.pumpeSpiel()), { laeuft: titelEnthaelt('Kackepumpe') });
+  knopf('T16', 'Spanngurte entknoten', mini(() => M.spanngurtSpiel({ verknotet: true })), { laeuft: titelEnthaelt('Spanngurte') });
+  if (M.poempelSpiel) knopf('T17', 'Klo pömpeln', mini(() => M.poempelSpiel()), { laeuft: titelEnthaelt('Klo pömpeln') });
+  knopf('T18', 'Finger verarzten (Torben)', mini(() => M.fingerSpiel()), { laeuft: titelEnthaelt('Finger verarzten') });
 
   ueberschrift('Ofen-Bau: Stand springen');
   // springt auf den Stand VOR dem Schritt (alles davor erledigt, Flasche am richtigen Platz); den Schritt dann normal im Spiel machen
@@ -64,26 +115,42 @@ export function baueTestMenue({ spiel, welt, kamera, fahrten, fz }) {
   knopf('T77', 'Schutzausrüstung anziehen (alles)', () => t.schutzAn());
 
   ueberschrift('Nebenaufgaben');
-  knopf('T19', 'Klo verstopft', () => { frei(); z.verstopft = null; t.kloVerstopft(); });
-  knopf('T20', 'Feuer', () => { frei(); t.feuerStart(); });
-  knopf('T21', 'Wasserrohrbruch', () => { frei(); t.leckStart(); });
-  knopf('T22', 'Wäsche übernehmen', () => { frei(); z.waesche = 'nie'; t.waescheUebernehmen(); });
-  knopf('T23', 'Akkuschrauber (Waldo bringt ihn)', () => { frei(); t.wz.beschaeftigt = false; t.waldoAkkuschrauber(); });
-  knopf('T24', 'Bitsatz sortieren', () => { frei(); z.bitsatz = null; t.bitsatzSortieren(); });
+  knopf('T19', 'Klo verstopft', () => { frei(); z.verstopft = null; t.kloVerstopft(); }, { laeuft: () => z.verstopft === 'ja' || z.verstopft === 'dennis' });
+  knopf('T20', 'Feuer', () => { frei(); t.feuerStart(); }, { laeuft: () => z.feuer === 'brennt' });
+  knopf('T21', 'Wasserrohrbruch', () => { frei(); t.leckStart(); }, { laeuft: () => z.leck === 'spritzt' });
+  knopf('T22', 'Wäsche übernehmen', () => { frei(); return t.waescheUebernehmen(); }, {
+    laeuft: () => z.waesche !== 'nie' && z.waesche !== 'erledigt',
+    sperre: () => (z.waesche === 'erledigt' ? 'Wäsche ist schon erledigt' : null),
+    reset: () => { z.waesche = 'nie'; },
+  });
+  knopf('T23', 'Akkuschrauber (Waldo bringt ihn)', () => { frei(); t.wz.beschaeftigt = false; return t.waldoAkkuschrauber(); });
+  knopf('T24', 'Bitsatz sortieren', () => { frei(); return t.bitsatzSortieren(); }, {
+    sperre: () => (z.bitsatz === 'sortiert' ? 'Bitsatz ist schon sortiert' : null),
+    reset: () => { z.bitsatz = null; },
+  });
   knopf('T25', 'Tassen verteilen', () => { welt.tassenVerteilen(6); });
-  knopf('T26', 'Spüldienst (Kumpel-Besuch)', () => { frei(); t.kumpelBesuch(); });
-  knopf('T27', 'Kackepumpe (Waldo sucht sie)', () => { frei(); t.wz.beschaeftigt = false; t.kackePumpe(); });
-  knopf('T28', 'Kackepumpe dreckig zurück', () => { frei(); t.wz.beschaeftigt = false; t.waldoPumpeZurueck(); });
+  knopf('T26', 'Spüldienst (Kumpel-Besuch)', () => { frei(); return t.kumpelBesuch(); }, {
+    laeuft: () => t.sd.kumpelDa, sperre: () => (t.sd.kumpelDa ? 'Kumpel ist schon da' : null),
+  });
+  knopf('T27', 'Kackepumpe (Waldo sucht sie)', () => { frei(); t.wz.beschaeftigt = false; return t.kackePumpe(); }, { laeuft: () => t.wz.pumpe === 'weg' || t.wz.pumpe === 'imWeg' || t.wz.pumpe === 'sauber' });
+  knopf('T28', 'Kackepumpe dreckig zurück', () => { frei(); t.wz.beschaeftigt = false; return t.waldoPumpeZurueck(); });
   knopf('T29', 'Mülltonnen umfahren', () => { ft.tonnenUm?.(); });
   knopf('T30', 'Grill umfahren', () => { ft.grillUm?.(); });
-  knopf('T31', 'Jonnys Leiter', () => { frei(); t.jz.beschaeftigt = false; t.jonnyLeiterHolen(); });
+  knopf('T31', 'Jonnys Leiter', () => { frei(); t.jz.beschaeftigt = false; return t.jonnyLeiterHolen(); }, {
+    laeuft: () => t.jz.leiter === 'wartet',
+    sperre: () => (!t.jz.da ? 'Jonny ist nicht da (erst T50)' : t.jz.leiter !== 'nie' ? 'War schon (einmal pro Spiel)' : null),
+    reset: () => { t.jz.leiter = 'nie'; },
+    resetNoetig: () => t.jz.leiter !== 'nie',
+  });
   knopf('T32', 'Spanngurte hinwerfen', () => {
     frei();
     z.gurte = null;
     if (!t.spanngurtEreignis()) { z.gurte = 'kommt'; t.gurteHinwerfen(t.jz.da ? 'jonny' : 'waldo'); }
   });
-  knopf('T33', 'Spanngurte aufrollen (im Spiel)', () => { frei(); welt.objekte.gurteBoden.visible = true; z.gurte = 'boden'; z.gurteSeit = 1e9; t.gurteAufrollen(); });
-  knopf('T34', 'Jonnys Bier (leere Flasche)', () => { frei(); t.jz.beschaeftigt = false; t.jonnyBier(true); });
+  knopf('T33', 'Spanngurte aufrollen (im Spiel)', () => { frei(); welt.objekte.gurteBoden.visible = true; z.gurte = 'boden'; z.gurteSeit = 1e9; t.gurteAufrollen(); }, { laeuft: () => z.gurte === 'boden' });
+  knopf('T34', 'Jonnys Bier (leere Flasche)', () => { frei(); t.jz.beschaeftigt = false; return t.jonnyBier(true); }, {
+    sperre: () => (!t.jz.da ? 'Jonny ist nicht da (erst T50)' : t.jz.ersterBesuch ? 'Beim ersten Besuch trinkt Jonny noch nichts' : null),
+  });
   knopf('T35', 'Leere Flaschen hinlegen (3)', () => {
     const p = kamera.position;
     for (let i = 0; i < 3; i++) welt.leereFlasche(p.x + Math.sin(i * 2.1) * 0.9, p.z + Math.cos(i * 2.1) * 0.9);
@@ -93,37 +160,62 @@ export function baueTestMenue({ spiel, welt, kamera, fahrten, fz }) {
   knopf('T38', 'Hofladen: Mettenden nehmen', () => { frei(); t.einkaufen('mettenden'); });
   knopf('T39', 'Torben-Unfall (Träger, Finger)', () => {
     frei();
-    if (t.TU.zustand && t.TU.zustand !== 'fertig') return;
-    t.TU.zustand = null;
     if (fahrten?.zustand?.torben) fahrten.zustand.torben.unterwegs = false;
-    t.torbenUnfall();
+    return t.torbenUnfall();
+  }, {
+    laeuft: () => !!t.TU.zustand && t.TU.zustand !== 'fertig',
+    sperre: () => (t.TU.zustand === 'fertig' ? 'Schon passiert, Torben hat seinen Verband' : null),
+    reset: () => { t.TU.zustand = null; },
   });
 
   ueberschrift('Ereignisse');
-  knopf('T40', 'Dennis telefoniert', () => { frei(); t.dennisTelefoniert(); });
-  knopf('T41', 'Dennis Klo-Pause', () => { frei(); t.kloPause(); });
-  knopf('T42', 'Mittagspause', () => { frei(); z.mittag = 'nie'; t.mittagspause(); });
-  knopf('T43', 'Hüfte (Dennis liegt)', () => { frei(); z.huefte = 'nie'; t.hueftePlatt(); });
-  knopf('T44', 'Kaffee kochen (im Spiel)', () => { frei(); t.kaffeeKochen(); });
-  knopf('T45', 'Dennis Hula-Hoop', () => { frei(); z.hula = false; t.hulaHoop(true); });
-  knopf('T46', 'Torben kommt', () => { ft.torbenKommt?.(); });
-  knopf('T47', 'Kumpel-Besuch', () => { frei(); t.kumpelBesuch(); });
-  knopf('T48', 'Waldo-Besuch', () => { frei(); t.wz.beschaeftigt = false; t.waldoBesuch(); });
-  knopf('T49', 'Sofa-Streit (Waldo)', () => { frei(); t.sofaStreit(); });
-  knopf('T50', 'Jonny kommt rein', () => { frei(); t.jz.beschaeftigt = false; t.jonnyRein(); });
-  knopf('T51', 'Jonny geht raus', () => { frei(); t.jz.beschaeftigt = false; t.jonnyRaus(); });
-  knopf('T52', 'Jonny kitzelt Dennis', () => { frei(); t.jz.beschaeftigt = false; t.jonnyKitzelt(); });
-  knopf('T53', 'Jonny stört', () => { frei(); t.jz.beschaeftigt = false; t.jonnyStoert(); });
-  knopf('T54', 'Jonny Sodbrennen', () => { frei(); t.jz.beschaeftigt = false; t.jonnySodbrennen(); });
-  knopf('T55', 'Kiwi essen', () => { frei(); t.kiwiEssen(); });
+  knopf('T40', 'Dennis telefoniert', () => { frei(); return t.dennisTelefoniert(); }, { laeuft: () => !!z.telefon });
+  knopf('T41', 'Dennis Klo-Pause', () => { frei(); return t.kloPause(); }, { laeuft: () => !!z.aufKlo });
+  knopf('T42', 'Mittagspause', () => { frei(); return t.mittagspause(); }, {
+    laeuft: () => z.mittag === 'gerade',
+    sperre: () => (z.mittag === 'erledigt' ? 'Mittagspause war schon' : null),
+    reset: () => { z.mittag = 'nie'; },
+  });
+  knopf('T43', 'Hüfte (Dennis liegt)', () => { frei(); return t.hueftePlatt(); }, {
+    laeuft: () => z.huefte === 'geht' || z.huefte === 'liegt',
+    sperre: () => (z.huefte === 'erledigt' ? 'Hüfte war schon' : null),
+    reset: () => { z.huefte = 'nie'; },
+  });
+  knopf('T44', 'Kaffee kochen (im Spiel)', () => { frei(); return t.kaffeeKochen(); });
+  knopf('T45', 'Dennis Hula-Hoop', () => { frei(); return t.hulaHoop(true); }, { laeuft: () => !!z.hula });
+  knopf('T46', 'Torben kommt', () => ft.torbenKommt?.(), {
+    laeuft: () => !!fahrten?.zustand?.torben?.unterwegs,
+    sperre: () => (fahrten?.zustand?.torben?.da ? 'Torben ist schon da' : null),
+  });
+  knopf('T47', 'Kumpel-Besuch', () => { frei(); return t.kumpelBesuch(); }, {
+    laeuft: () => t.sd.kumpelDa, sperre: () => (t.sd.kumpelDa ? 'Kumpel ist schon da' : null),
+  });
+  knopf('T48', 'Waldo-Besuch', () => { frei(); t.wz.beschaeftigt = false; return t.waldoBesuch(); });
+  knopf('T49', 'Sofa-Streit (Waldo)', () => { frei(); return t.sofaStreit(); }, { laeuft: () => !!t.wz.streit });
+  knopf('T50', 'Jonny kommt rein', () => { frei(); t.jz.beschaeftigt = false; return t.jonnyRein(); }, {
+    sperre: () => (t.jz.da ? 'Jonny ist schon da' : !t.jz.draussen ? 'Jonny ist gerade nicht in der Nähe' : null),
+  });
+  knopf('T51', 'Jonny geht raus', () => { frei(); t.jz.beschaeftigt = false; return t.jonnyRaus(); }, { sperre: () => (!t.jz.da ? 'Jonny ist nicht da (erst T50)' : null) });
+  knopf('T52', 'Jonny kitzelt Dennis', () => { frei(); t.jz.beschaeftigt = false; return t.jonnyKitzelt(); }, { sperre: () => (!t.jz.da ? 'Jonny ist nicht da (erst T50)' : null) });
+  knopf('T53', 'Jonny stört', () => { frei(); t.jz.beschaeftigt = false; return t.jonnyStoert(); }, { sperre: () => (!t.jz.da ? 'Jonny ist nicht da (erst T50)' : null) });
+  knopf('T54', 'Jonny Sodbrennen', () => { frei(); t.jz.beschaeftigt = false; return t.jonnySodbrennen(); }, { sperre: () => (!t.jz.da ? 'Jonny ist nicht da (erst T50)' : null) });
+  knopf('T55', 'Kiwi essen', () => { frei(); return t.kiwiEssen(); }, {
+    sperre: () => (z.kiwisWeg >= 6 ? 'Keine Kiwis mehr da' : null),
+    reset: () => { z.kiwisWeg = 0; welt.kiwisZeigen?.(6); },
+  });
 
   ueberschrift('Fahrzeuge');
   knopf('T78', 'Jeep entdrosseln (Torben)', () => {
     if (!fz) return;
-    if (fz.jeep.gedrosselt) { fz.entdrosseln(); ui.torbenSagt(sag(TORBEN.entdrosseln), 6000); }
-    else ui.torbenSagt(sag(TORBEN.schonEntdrosselt));
+    fz.entdrosseln();
+    ui.torbenSagt(sag(TORBEN.entdrosseln), 6000);
+  }, {
+    sperre: () => (fz && !fz.jeep.gedrosselt ? 'Jeep ist schon entdrosselt' : null),
+    reset: () => { if (fz) fz.jeep.gedrosselt = true; },
   });
-  knopf('T79', 'Jeep wieder drosseln', () => { if (fz) fz.jeep.gedrosselt = true; });
+  knopf('T79', 'Jeep wieder drosseln', () => { if (fz) fz.jeep.gedrosselt = true; }, {
+    sperre: () => (fz && fz.jeep.gedrosselt ? 'Jeep ist schon gedrosselt' : null),
+  });
 
   ueberschrift('Wut und Zeit');
   knopf('T56', 'Wut auf 0', () => t.setzeWut(0));
@@ -132,6 +224,9 @@ export function baueTestMenue({ spiel, welt, kamera, fahrten, fz }) {
   knopf('T59', 'Wut auf 90', () => t.setzeWut(90));
   knopf('T60', 'Zeit + 5 Minuten', () => t.zeitVor(300));
   knopf('T61', 'Zeit + 15 Minuten', () => t.zeitVor(900));
+
+  status();
+  setInterval(() => { if (!inhalt.classList.contains('versteckt')) status(); }, 500);
 
   el.querySelector('[data-k="zu"]').addEventListener('click', (e) => {
     e.stopPropagation();

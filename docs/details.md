@@ -592,6 +592,12 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Jeder Eintrag hat eine FESTE Nummer (T01 …), die sich nie verschiebt; neue Einträge bekommen die nächste freie Nummer (zuletzt T79).
   Ofen-Bau „Stand springen“ setzt den Stand VOR dem Schritt
   (alles davor erledigt, Flasche am Platz, man steht dort); der Schritt wird dann normal im Spiel gemacht.
+  Status (1.11.): GRÜN = läuft gerade (Ereignis/Nebenaufgabe aktiv oder Minispiel offen, auch wenn im Spiel gestartet; dazu alles,
+  was über den Knopf gestartet wurde, bis es fertig ist). GRAU = geht gerade nicht, darunter steht warum (z. B. „Jonny ist nicht da
+  (erst T50)“, „Schon passiert, Torben hat seinen Verband“). Einmalige Sachen haben dann einen Knopf „zurücksetzen“
+  (T22 Wäsche, T24 Bitsatz, T31 Jonnys Leiter, T39 Torben-Unfall, T42 Mittag, T43 Hüfte, T55 Kiwis, T78 Jeep).
+  Neue Knöpfe: `knopf(nr, text, tun, { laeuft, sperre, reset })` in js/testmenue.js.
+  Die 404 beim Start ist das Plakat-Foto assets/dennis-plakat.jpg (kommt noch, mit Absicht nicht da).
   Nr | Gruppe | Eintrag
   T01 | Minispiele (direkt) | Anzeichnen
   T02 | Minispiele (direkt) | Schneiden (Flex)
