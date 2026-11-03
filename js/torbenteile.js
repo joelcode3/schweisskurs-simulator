@@ -38,7 +38,7 @@ export function torbenShirtTextur() {
 
 // Hellbraune Arbeitshose mit Farbspritzern und Dreck (u = Umfang, v = Länge)
 // Hosenbein als Lathe mit Falten: leichte Ausbuchtungen, Quetschfalten am Knie, Stauchung über dem Schuh, Bund etwas ausgebeult
-function hosenbein(r0, r1, h, saat, knie = false) {
+function hosenbein(r0, r1, h, saat, knie = false, oben = false) {
   const q = (() => { let z = saat; return () => { z = (z * 1664525 + 1013904223) >>> 0; return z / 4294967296; }; })();
   const pts = [];
   const N = 22;
@@ -46,6 +46,7 @@ function hosenbein(r0, r1, h, saat, knie = false) {
     const t = i / N;
     let r = r0 + (r1 - r0) * t;
     r *= 1 + 0.045 * Math.sin(t * 9 + saat) + 0.03 * Math.sin(t * 23 + saat * 2);
+    if (oben && t < 0.2) r *= 0.66 + 0.34 * Math.sin((t / 0.2) * Math.PI / 2); // oben zur Taille hin schmal: der Gürtel liegt drüber
     if (knie && t > 0.78) r *= 1 + 0.07 * Math.sin((t - 0.78) * 60); // Stauchfalten über dem Schuh
     pts.push(new THREE.Vector2(r, -t * h));
   }
@@ -262,7 +263,7 @@ export function torbenErweitern(c) {
 
   // ---------- Hose: lang, hellbraun, Flecken, aufgesetzte Seitentaschen ----------
   // Becken tief unter dem Gürtel verstecken: über dem Gürtel ist nur noch das weiße Shirt
-  becken.scale.set(1.12, 0.5, 0.6);
+  becken.scale.set(0.8, 0.5, 0.6);
   becken.position.y = HUEFT - 0.07;
   const hosenMat = toon(F.HOSE);
   for (const [i, b] of beine.entries()) {
@@ -273,11 +274,11 @@ export function torbenErweitern(c) {
     const [knie, wade, , , schuh] = k.children;
     knie.visible = false; wade.visible = false; schuh.visible = false;
     hf.scale.set(1.1, 1.19, 1.1);
-    hf.add(setze(teil(hosenbein(0.122, 0.106, 0.46, 1 + i * 3), 0, { material: hosenMat, umriss: 0.003 }), 0, -0.2, 0));
+    hf.add(setze(teil(hosenbein(0.115, 0.106, 0.46, 1 + i * 3, false, true), 0, { material: hosenMat, umriss: 0.003 }), 0, -0.212, 0));
     k.add(setze(teil(new THREE.SphereGeometry(0.104, 12, 10), 0, { material: hosenMat, umriss: false }), 0, 0, 0));
-    k.add(setze(teil(hosenbein(0.106, 0.096, 0.3, 5 + i * 2, true), 0, { material: hosenMat, umriss: 0.003 }), 0, -0.15, 0));
+    k.add(setze(teil(hosenbein(0.106, 0.096, 0.37, 5 + i * 2, true), 0, { material: hosenMat, umriss: 0.003 }), 0, -0.185, 0));
     // Saum
-    k.add(setze(zylinder(0.096, 0.096, 0.014, 0x8e7048, { umriss: false }, 16), 0, -0.296, 0));
+    k.add(setze(zylinder(0.097, 0.097, 0.014, 0x8e7048, { umriss: false }, 16), 0, -0.365, 0));
     // schwarzer Schuh mit weißer Sohle (keine Streifen)
     const sch = new THREE.Group();
     sch.position.y = -0.43;
@@ -333,7 +334,7 @@ export function torbenErweitern(c) {
     // Radius über die ganze Gürtelhöhe (Rumpf wird nach oben breiter): sonst taucht der Gürtel seitlich im Shirt unter
     let rx = 0, rz = 0;
     for (const yy of [-0.045, -0.02, 0.0, 0.02, 0.04]) { rx = Math.max(rx, R(yy, 0.0)); rz = Math.max(rz, R(yy, 0.0) * T(yy)); }
-    rx += 0.016; rz += 0.016;
+    rx += 0.016; rz += 0.014;
     const ring = (h, f, plus, y, farbe, umr) => {
       const m = teil(new THREE.CylinderGeometry(1, 1, h, 48, 1, true), 0, { material: toon(farbe, { side: THREE.DoubleSide }), umriss: umr });
       m.scale.set(rx + plus, 1, rz + plus);
@@ -395,14 +396,15 @@ export function torbenErweitern(c) {
   // Stoppeln: dunkle Punkte auf einem dünnen Kugelstück über Kinn und Kieferlinie (kein dicker Bart), Mund und Oberlippe bleiben frei
   {
     const tex = leinwandTextur(256, 128, (g, b, h) => {
-      for (let i = 0; i < 3600; i++) {
+      for (let i = 0; i < 6200; i++) {
         const x = rnd() * b, y = rnd() * h, u = x / b, v = y / h;
         const mitte = Math.abs(u - 0.5);
         // Dichte: unten (Kinn, Kiefer) hoch, oben (Wangen) und um den Mund niedrig
         let dichte = Math.min(1, 0.25 + v * 0.9) * Math.min(1, 1.9 - mitte * 2.2);
-        if (mitte < 0.13 && v > 0.28 && v < 0.62) dichte = 0; // Mund und Lippen
-        if (mitte < 0.2 && v < 0.3) dichte = 0; // Oberlippe: nur der Schnurrbart
-        if (rnd() > dichte * 0.85) continue;
+        if (mitte < 0.1 && v > 0.45 && v < 0.62) dichte = 0; // Mund und Lippen
+        if (mitte < 0.22 && v > 0.27 && v < 0.45) dichte = 1.6; // Oberlippenbart aus dichten Stoppeln
+        else if (mitte < 0.2 && v < 0.27) dichte = 0; // Nase
+        if (rnd() > Math.min(1, dichte * 0.85)) continue;
         g.fillStyle = rnd() < 0.7 ? 'rgba(70,48,34,0.95)' : 'rgba(110,78,52,0.9)';
         g.fillRect(x, y, 1.6, 1.6);
       }
@@ -411,15 +413,6 @@ export function torbenErweitern(c) {
     stoppel.scale.set(0.985, 1.125, 0.985);
     stoppel.position.set(0, 0.12, 0);
     kopf.add(stoppel);
-    // kleiner, dünner Schnurrbart in Haarfarbe
-    const sbMat = toon(F.HAAR);
-    for (const sx of [-1, 1]) {
-      const h = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), sbMat);
-      h.scale.set(0.026, 0.0065, 0.0105);
-      h.position.set(sx * 0.0235, 0.0535, 0.1665);
-      h.rotation.set(0.1, sx * 0.3, 0);
-      kopf.add(h);
-    }
     // Gesicht nach den Referenzfotos: schmaler, kantiger Kiefer, kleinere Nase mit schmaler Spitze, helle Augen unter schweren Brauen
     kopf.scale.set(0.9, 0.96, 0.94);
     nase.scale.set(0.58, 0.82, 0.78);
@@ -442,25 +435,23 @@ export function torbenErweitern(c) {
     }
   }
   // ---------- Haare: dunkelbraun, kurz, oben länger und leicht gewellt ----------
-  // Oben und an den Seiten kurz und glatt, hinten länger bis in den Nacken (Vokuhila-Richtung), kaum gewellt
-  const kappe = teil(new THREE.SphereGeometry(0.172, 24, 14, 0, Math.PI * 2, 0, Math.PI * 0.46), 0, { material: haarMat, umriss: 0.004 });
-  kappe.scale.set(0.96, 1.04, 1.02); kappe.position.set(0, 0.112, -0.014); kappe.rotation.x = -0.18;
-  kopf.add(kappe);
-  // leicht nach vorn gekämmter Pony-Rand (glatt) und Koteletten
-  const pony = teil(new THREE.SphereGeometry(0.1, 14, 8), 0, { material: haarMat, umriss: 0.003 });
-  pony.scale.set(1.05, 0.3, 0.7); pony.position.set(0, 0.262, 0.07); pony.rotation.x = 0.1;
-  kopf.add(pony);
-  for (const sx of [-1, 1]) {
-    const k = teil(new THREE.CapsuleGeometry(0.022, 0.05, 4, 8), 0, { material: haarMat, umriss: false });
-    k.position.set(sx * 0.155, 0.14, 0.0); kopf.add(k);
-    // Nacken: längere glatte Strähnen hinten und seitlich hinten
-    for (const [x, z, l] of [[0.04, -0.14, 0.17], [0.09, -0.12, 0.13]]) {
-      const n = teil(new THREE.CapsuleGeometry(0.033, l, 4, 8), 0, { material: haarMat, umriss: 0.002 });
-      n.position.set(sx * x, 0.02, z); n.rotation.set(-0.12, 0, sx * 0.05);
-      kopf.add(n);
-    }
+  const wellen = [[0, 0.275, 0.02], [0.07, 0.272, 0.0], [-0.07, 0.272, 0.0], [0.03, 0.262, 0.08], [-0.05, 0.262, 0.09], [0.1, 0.25, 0.07], [-0.11, 0.25, 0.06],
+    [0.0, 0.248, 0.13], [0.09, 0.235, 0.12], [-0.09, 0.235, 0.12], [0.05, 0.28, -0.06], [-0.05, 0.278, -0.06], [0.13, 0.22, 0.0], [-0.13, 0.22, 0.0], [0.0, 0.255, -0.12]];
+  for (const [x, y, z] of wellen) {
+    const b = teil(new THREE.SphereGeometry(0.052, 10, 8), 0, { material: haarMat, umriss: 0.003 });
+    b.scale.set(1, 0.62, 1.5);
+    b.position.set(x, y, z);
+    b.rotation.set(0.35 + rnd() * 0.3, rnd() * 1.2 - 0.6, rnd() * 0.8 - 0.4);
+    kopf.add(b);
   }
-  kopf.add(setze(teil(new THREE.CapsuleGeometry(0.045, 0.2, 4, 10), 0, { material: haarMat, umriss: 0.003 }), 0, 0.01, -0.145));
+
+  for (const [x, y, z, r] of [[0, 0.12, -0.11, 0.13], [0.09, 0.1, -0.09, 0.1], [-0.09, 0.1, -0.09, 0.1], [0, 0.02, -0.1, 0.1]]) {
+    const b = teil(new THREE.SphereGeometry(r, 12, 10), 0, { material: haarMat, umriss: 0.003 });
+    b.scale.set(1, 0.9, 0.8);
+    b.position.set(x, y, z);
+    kopf.add(b);
+  }
+
   // ---------- Werkzeugtasche: schwarz mit gelben Details, groß und rund, flacher Riemen über die Schulter, wippt beim Gehen ----------
   // Schulterpartie: flacher Übergang vom Hals zu den Armen (keine Kugelschultern)
   const joch = teil(new THREE.SphereGeometry(1, 24, 14), F.SHIRT, { umriss: 0.003 });
