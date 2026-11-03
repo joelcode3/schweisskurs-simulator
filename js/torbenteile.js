@@ -396,17 +396,15 @@ export function torbenErweitern(c) {
   // Stoppeln: dunkle Punkte auf einem dünnen Kugelstück über Kinn und Kieferlinie (kein dicker Bart), Mund und Oberlippe bleiben frei
   {
     const tex = leinwandTextur(256, 128, (g, b, h) => {
-      for (let i = 0; i < 6200; i++) {
-        const x = rnd() * b, y = rnd() * h, u = x / b, v = y / h;
+      // nur ein Oberlippenbart aus dichten Stoppeln (Bereich über dem Mund), sonst glatt rasiert
+      for (let i = 0; i < 9000; i++) {
+        const u = 0.28 + rnd() * 0.44, v = 0.25 + rnd() * 0.22;
         const mitte = Math.abs(u - 0.5);
-        // Dichte: unten (Kinn, Kiefer) hoch, oben (Wangen) und um den Mund niedrig
-        let dichte = Math.min(1, 0.25 + v * 0.9) * Math.min(1, 1.9 - mitte * 2.2);
-        if (mitte < 0.1 && v > 0.45 && v < 0.62) dichte = 0; // Mund und Lippen
-        if (mitte < 0.22 && v > 0.27 && v < 0.45) dichte = 1.6; // Oberlippenbart aus dichten Stoppeln
-        else if (mitte < 0.2 && v < 0.27) dichte = 0; // Nase
-        if (rnd() > Math.min(1, dichte * 0.85)) continue;
-        g.fillStyle = rnd() < 0.7 ? 'rgba(70,48,34,0.95)' : 'rgba(110,78,52,0.9)';
-        g.fillRect(x, y, 1.6, 1.6);
+        // weicher Rand: zur Seite und nach oben (Nase) dünner
+        const rand = Math.min(1, (0.22 - mitte) / 0.06) * Math.min(1, (v - 0.25) / 0.05) * Math.min(1, (0.47 - v) / 0.03);
+        if (rand <= 0 || rnd() > rand) continue;
+        g.fillStyle = rnd() < 0.7 ? 'rgba(62,42,30,0.97)' : 'rgba(100,70,48,0.92)';
+        g.fillRect(u * b, v * h, 1.7, 1.7);
       }
     });
     const stoppel = new THREE.Mesh(new THREE.SphereGeometry(0.1665, 40, 20, Math.PI / 2 - 1.3, 2.6, 1.5, 1.2), toon(0xffffff, { map: tex, alphaTest: 0.5, side: THREE.DoubleSide }));
