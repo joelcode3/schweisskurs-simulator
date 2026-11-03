@@ -213,6 +213,13 @@ export function torbenSagt(text, ms = 4500) {
   $('lobblase').querySelector('b').textContent = 'TORBEN';
   $('lob-gesicht').innerHTML = TORBEN_MINI;
 }
+// David (F3): blonde Haare oben, Seiten kurz, grauer Hoodie
+const DAVID_MINI = '<circle cx="20" cy="22" r="13" fill="#f0c4a6" stroke="#111" stroke-width="2"/><path d="M8 18 Q12 6 22 7 Q32 8 33 17 Q28 11 21 12 Q14 12 8 18z" fill="#eee0b6" stroke="#111" stroke-width="1.5"/><path d="M16 30 Q20 32 24 30" fill="none" stroke="#c9a870" stroke-width="2.5"/><circle cx="15" cy="21" r="1.8" fill="#111"/><circle cx="25" cy="21" r="1.8" fill="#111"/><path d="M6 40 L13 34 L27 34 L34 40z" fill="#8d8f94" stroke="#111" stroke-width="1.5"/>';
+export function davidSagt(text, ms = 4500) {
+  blaseRechts(text, ms, 'normal');
+  $('lobblase').querySelector('b').textContent = 'DAVID';
+  $('lob-gesicht').innerHTML = DAVID_MINI;
+}
 // Fahrhilfe unten: Tasten beim Fahren
 export function fahrHilfe(text) {
   const el = $('fahrhilfe');

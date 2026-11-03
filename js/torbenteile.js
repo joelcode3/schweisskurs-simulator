@@ -38,7 +38,7 @@ export function torbenShirtTextur() {
 
 // Hellbraune Arbeitshose mit Farbspritzern und Dreck (u = Umfang, v = Länge)
 // Hosenbein als Lathe mit Falten: leichte Ausbuchtungen, Quetschfalten am Knie, Stauchung über dem Schuh, Bund etwas ausgebeult
-function hosenbein(r0, r1, h, saat, knie = false, oben = false) {
+export function hosenbein(r0, r1, h, saat, knie = false, oben = false) {
   const q = (() => { let z = saat; return () => { z = (z * 1664525 + 1013904223) >>> 0; return z / 4294967296; }; })();
   const pts = [];
   const N = 22;
@@ -118,7 +118,7 @@ function wurfModell(art) {
 
 
 // ---------- Arme und Hände (nur Torben): durchgehende, kräftige Teile ohne Lücken ----------
-function armTextur(haut) {
+export function armTextur(haut) {
   const hex = '#' + haut.toString(16).padStart(6, '0');
   return leinwandTextur(64, 64, (g) => {
     g.fillStyle = hex; g.fillRect(0, 0, 64, 64);
@@ -148,7 +148,7 @@ const FINGER = [ // Zeigefinger (neben dem Daumen) bis kleiner Finger: x, Radius
   { x: -0.032, r: 0.0122, l: [0.024, 0.016, 0.015] },
 ];
 
-function baueHand(seite, haut) {
+export function baueHand(seite, haut) {
   const hand = new THREE.Group();
   const U = { umriss: 0.0022 };
   const kugelS = (rx, ry, rz, x, y, z) => { const m = teil(new THREE.SphereGeometry(1, 16, 12), haut, U); m.scale.set(rx, ry, rz); m.position.set(x, y, z); return m; };
