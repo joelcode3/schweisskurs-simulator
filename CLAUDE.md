@@ -87,7 +87,7 @@
 - KI-Stimmklon ist in dieser Umgebung nicht möglich (huggingface.co gesperrt). Stimmproben nie ins Repo (öffentlich).
 
 ## Stand der Pull Requests (1.11.2026)
-- Alles bis #64 gemergt. Offen: #65 Jonnys Möhre. Neue Zweige immer von `origin/main`.
+- Alles bis #65 gemergt. Offen: #66 F1 Torben neu. Neue Zweige immer von `origin/main`.
 - Versionsnummer zuletzt `v=20261103-30`.
 - Nächste freie Satz-Nummern (aus stimme/zuordnung.csv): dennis502, jonny58, waldo43, torben32, kumpel8.
 - Projektchat-Session: `session_0136ircvAvU3aCzRamNp3F96` (1.11.; die alte ID `session_01KZ18oujuEFnsAskwuMiw8Y` oben ist veraltet).
