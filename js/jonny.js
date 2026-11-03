@@ -98,19 +98,19 @@ export function baueJonny(scene, opts = {}) {
     stall.add(setze(quader(0.006, 0.075, 0.008, 0x2c2d33, { umriss: false }), 0.019, -0.004, 0.001));
     // dickes Ende der Möhre: alt, schrumpelig, leberwurstfarben, schräg nach unten; vorne die alte Schnittfläche mit Strunkrest
     const moehre = new THREE.Group();
-    const stumpf = teil(new THREE.CylinderGeometry(0.022, 0.016, 0.06, 14), 0xa98670, { umriss: 0.0015 });
+    const stumpf = teil(new THREE.CylinderGeometry(0.0155, 0.012, 0.04, 14), 0xa98670, { umriss: 0.0015 });
     stumpf.rotation.x = Math.PI / 2;
-    stumpf.position.z = 0.028;
+    stumpf.position.z = 0.018;
     moehre.add(stumpf);
-    // leicht gewölbte, dunklere Schnittfläche und ein vertrockneter Strunk-Stummel
-    const kappe = teil(new THREE.SphereGeometry(0.022, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), 0x8f6e5b, { umriss: 0.0015 });
+    // rundes Ende (Halbkugel), ein Hauch dunkler, mit winzigem vertrocknetem Strunk-Rest
+    const kappe = teil(new THREE.SphereGeometry(0.0155, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), 0x9f7d68, { umriss: 0.0015 });
     kappe.rotation.x = Math.PI / 2;
-    kappe.scale.set(1, 0.25, 1);
-    kappe.position.z = 0.058;
+    kappe.scale.set(1, 0.7, 1);
+    kappe.position.z = 0.038;
     moehre.add(kappe);
-    moehre.add(setze(zylinder(0.005, 0.006, 0.008, 0x5e5a3c, { umriss: false }, 8), 0, 0, 0.062, Math.PI / 2));
+    moehre.add(setze(zylinder(0.003, 0.0035, 0.005, 0x5e5a3c, { umriss: false }, 8), 0, 0, 0.0485, Math.PI / 2));
     // Schrumpelringe
-    for (let i = 0; i < 3; i++) moehre.add(setze(zylinder(0.0172 + i * 0.0018, 0.0172 + i * 0.0018, 0.002, 0x7d6150, { umriss: false }, 14), 0, 0, 0.012 + i * 0.015, Math.PI / 2));
+    for (let i = 0; i < 2; i++) moehre.add(setze(zylinder(0.0136 + i * 0.0014, 0.0136 + i * 0.0014, 0.0018, 0x7d6150, { umriss: false }, 14), 0, 0, 0.012 + i * 0.013, Math.PI / 2));
     moehre.rotation.set(0.95, 0.12, 0);
     moehre.position.set(0.002, -0.008, 0.0);
     stall.add(moehre);
