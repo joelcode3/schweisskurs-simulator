@@ -292,15 +292,20 @@ export function torbenErweitern(c) {
     // aufgesetzte Seitentasche außen am Oberschenkel, Klappe und Werkzeug
     const t = new THREE.Group();
     // organische Tasche: gewölbter Beutel (abgeflachte Ellipsoide), Klappe mit Rundung, leicht ausgebeult, hängt etwas schief
-    const sack = teil(new THREE.SphereGeometry(1, 20, 14), 0x8a6034, { umriss: 0.003 });
-    sack.scale.set(0.024, 0.115, 0.092);
+    // Superellipsoid: kantiger als eine Kugel, aber mit weichen Ecken
+    const sg = new THREE.SphereGeometry(1, 28, 18);
+    { const ps = sg.attributes.position; const e = 0.62; for (let i = 0; i < ps.count; i++) ps.setXYZ(i, Math.sign(ps.getX(i)) * Math.abs(ps.getX(i)) ** e, Math.sign(ps.getY(i)) * Math.abs(ps.getY(i)) ** e, Math.sign(ps.getZ(i)) * Math.abs(ps.getZ(i)) ** e); sg.computeVertexNormals(); }
+    const sack = teil(sg, 0xb98a52, { umriss: 0.003 });
+    sack.scale.set(0.022, 0.115, 0.09);
     sack.position.set(0, -0.012, 0);
     t.add(sack);
-    const bauch = teil(new THREE.SphereGeometry(1, 16, 12), 0x916838, { umriss: false });
+    const bauch = teil(new THREE.SphereGeometry(1, 16, 12), 0xc09258, { umriss: false });
     bauch.scale.set(0.03, 0.07, 0.07);
     bauch.position.set(0.006 * seite, -0.04, 0);
     t.add(bauch);
-    const klappe = teil(new THREE.SphereGeometry(1, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), 0x6f4a28, { umriss: 0.002 });
+    const kg = new THREE.SphereGeometry(1, 24, 10, 0, Math.PI * 2, 0, Math.PI / 2);
+    { const ps = kg.attributes.position; for (let i = 0; i < ps.count; i++) ps.setXYZ(i, Math.sign(ps.getX(i)) * Math.abs(ps.getX(i)) ** 0.7, ps.getY(i), Math.sign(ps.getZ(i)) * Math.abs(ps.getZ(i)) ** 0.62); kg.computeVertexNormals(); }
+    const klappe = teil(kg, 0xa97a44, { umriss: 0.002 });
     klappe.scale.set(0.03, 0.05, 0.095);
     klappe.rotation.z = Math.PI / 2 * -seite;
     klappe.rotation.y = 0;
@@ -325,7 +330,10 @@ export function torbenErweitern(c) {
 
   // ---------- Gürtel: schwarz, goldene Schnalle; darunter der Hosenbund, darüber nur das Shirt ----------
   {
-    const rx = R(0.0, 0.024), rz = rx * T(0.0) + 0.016;
+    // Radius über die ganze Gürtelhöhe (Rumpf wird nach oben breiter): sonst taucht der Gürtel seitlich im Shirt unter
+    let rx = 0, rz = 0;
+    for (const yy of [-0.045, -0.02, 0.0, 0.02, 0.04]) { rx = Math.max(rx, R(yy, 0.0)); rz = Math.max(rz, R(yy, 0.0) * T(yy)); }
+    rx += 0.016; rz += 0.016;
     const ring = (h, f, plus, y, farbe, umr) => {
       const m = teil(new THREE.CylinderGeometry(1, 1, h, 48, 1, true), 0, { material: toon(farbe, { side: THREE.DoubleSide }), umriss: umr });
       m.scale.set(rx + plus, 1, rz + plus);
@@ -408,8 +416,8 @@ export function torbenErweitern(c) {
     for (const sx of [-1, 1]) {
       const h = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), sbMat);
       h.scale.set(0.026, 0.0065, 0.0105);
-      h.position.set(sx * 0.0225, 0.0535, 0.1665);
-      h.rotation.set(0.1, sx * 0.3, sx * 0.28);
+      h.position.set(sx * 0.0235, 0.0535, 0.1665);
+      h.rotation.set(0.1, sx * 0.3, 0);
       kopf.add(h);
     }
     // Gesicht nach den Referenzfotos: schmaler, kantiger Kiefer, kleinere Nase mit schmaler Spitze, helle Augen unter schweren Brauen
@@ -434,23 +442,25 @@ export function torbenErweitern(c) {
     }
   }
   // ---------- Haare: dunkelbraun, kurz, oben länger und leicht gewellt ----------
-  const wellen = [[0, 0.275, 0.02], [0.07, 0.272, 0.0], [-0.07, 0.272, 0.0], [0.03, 0.262, 0.08], [-0.05, 0.262, 0.09], [0.1, 0.25, 0.07], [-0.11, 0.25, 0.06],
-    [0.0, 0.248, 0.13], [0.09, 0.235, 0.12], [-0.09, 0.235, 0.12], [0.05, 0.28, -0.06], [-0.05, 0.278, -0.06], [0.13, 0.22, 0.0], [-0.13, 0.22, 0.0], [0.0, 0.255, -0.12]];
-  for (const [x, y, z] of wellen) {
-    const b = teil(new THREE.SphereGeometry(0.052, 10, 8), 0, { material: haarMat, umriss: 0.003 });
-    b.scale.set(1, 0.62, 1.5);
-    b.position.set(x, y, z);
-    b.rotation.set(0.35 + rnd() * 0.3, rnd() * 1.2 - 0.6, rnd() * 0.8 - 0.4);
-    kopf.add(b);
+  // Oben und an den Seiten kurz und glatt, hinten länger bis in den Nacken (Vokuhila-Richtung), kaum gewellt
+  const kappe = teil(new THREE.SphereGeometry(0.172, 24, 14, 0, Math.PI * 2, 0, Math.PI * 0.46), 0, { material: haarMat, umriss: 0.004 });
+  kappe.scale.set(0.96, 1.04, 1.02); kappe.position.set(0, 0.112, -0.014); kappe.rotation.x = -0.18;
+  kopf.add(kappe);
+  // leicht nach vorn gekämmter Pony-Rand (glatt) und Koteletten
+  const pony = teil(new THREE.SphereGeometry(0.1, 14, 8), 0, { material: haarMat, umriss: 0.003 });
+  pony.scale.set(1.05, 0.3, 0.7); pony.position.set(0, 0.262, 0.07); pony.rotation.x = 0.1;
+  kopf.add(pony);
+  for (const sx of [-1, 1]) {
+    const k = teil(new THREE.CapsuleGeometry(0.022, 0.05, 4, 8), 0, { material: haarMat, umriss: false });
+    k.position.set(sx * 0.155, 0.14, 0.0); kopf.add(k);
+    // Nacken: längere glatte Strähnen hinten und seitlich hinten
+    for (const [x, z, l] of [[0.04, -0.14, 0.17], [0.09, -0.12, 0.13]]) {
+      const n = teil(new THREE.CapsuleGeometry(0.033, l, 4, 8), 0, { material: haarMat, umriss: 0.002 });
+      n.position.set(sx * x, 0.02, z); n.rotation.set(-0.12, 0, sx * 0.05);
+      kopf.add(n);
+    }
   }
-
-  for (const [x, y, z, r] of [[0, 0.12, -0.11, 0.13], [0.09, 0.1, -0.09, 0.1], [-0.09, 0.1, -0.09, 0.1], [0, 0.02, -0.1, 0.1]]) {
-    const b = teil(new THREE.SphereGeometry(r, 12, 10), 0, { material: haarMat, umriss: 0.003 });
-    b.scale.set(1, 0.9, 0.8);
-    b.position.set(x, y, z);
-    kopf.add(b);
-  }
-
+  kopf.add(setze(teil(new THREE.CapsuleGeometry(0.045, 0.2, 4, 10), 0, { material: haarMat, umriss: 0.003 }), 0, 0.01, -0.145));
   // ---------- Werkzeugtasche: schwarz mit gelben Details, groß und rund, flacher Riemen über die Schulter, wippt beim Gehen ----------
   // Schulterpartie: flacher Übergang vom Hals zu den Armen (keine Kugelschultern)
   const joch = teil(new THREE.SphereGeometry(1, 24, 14), F.SHIRT, { umriss: 0.003 });
