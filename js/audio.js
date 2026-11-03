@@ -633,6 +633,59 @@ export function gertenKlatsch(lautst = 0.8) {
 }
 
 // Zusammenstoß mit dem Fahrzeug: dumpfer Schlag, Knirschen und etwas Blechscheppern (staerke 0…1)
+// Spaghetti schlürfen (F1): feuchtes, hohes Rauschen mit fallendem Filter, am Ende ein kleines Schmatzen
+export function schluerfen(lautst = 0.5) {
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  const q = rauschQuelle();
+  const f = ctx.createBiquadFilter();
+  f.type = 'bandpass'; f.Q.value = 6;
+  f.frequency.setValueAtTime(3200, t);
+  f.frequency.exponentialRampToValueAtTime(900, t + 0.7);
+  const g = ctx.createGain();
+  huelle(g, t, 0.05, 0.3, 0.35, 0.5 * lautst);
+  q.connect(f).connect(g).connect(master);
+  q.start(t); q.stop(t + 0.8);
+  // Schmatzer
+  for (let i = 0; i < 2; i++) {
+    const tt = t + 0.75 + i * 0.16;
+    const o = ctx.createOscillator();
+    const og = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(260 + i * 60, tt);
+    o.frequency.exponentialRampToValueAtTime(120, tt + 0.07);
+    huelle(og, tt, 0.004, 0.03, 0.04, 0.3 * lautst);
+    o.connect(og).connect(master);
+    o.start(tt); o.stop(tt + 0.12);
+  }
+}
+
+// Wurfgeräusch (F1): Luftzischen von hoch nach tief plus kurzes Grunzen (Torben wirft Dinge)
+export function torbenWurfTon(art = 'werkzeug', lautst = 0.6) {
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  const q = rauschQuelle();
+  const f = ctx.createBiquadFilter();
+  f.type = 'bandpass'; f.Q.value = 1.4;
+  f.frequency.setValueAtTime(1800, t);
+  f.frequency.exponentialRampToValueAtTime(500, t + 0.3);
+  const g = ctx.createGain();
+  huelle(g, t, 0.02, 0.1, 0.2, 0.45 * lautst);
+  q.connect(f).connect(g).connect(master);
+  q.start(t); q.stop(t + 0.4);
+  // Grunzen: tiefe Säge, fallend
+  const o = ctx.createOscillator();
+  const og = ctx.createGain();
+  o.type = 'sawtooth';
+  o.frequency.setValueAtTime(190, t);
+  o.frequency.exponentialRampToValueAtTime(95, t + 0.25);
+  const lp = ctx.createBiquadFilter();
+  lp.type = 'lowpass'; lp.frequency.value = 700;
+  huelle(og, t, 0.02, 0.1, 0.15, 0.28 * lautst);
+  o.connect(lp).connect(og).connect(master);
+  o.start(t); o.stop(t + 0.35);
+}
+
 export function aufprall(staerke = 0.6) {
   if (!ctx) return;
   const t = ctx.currentTime;

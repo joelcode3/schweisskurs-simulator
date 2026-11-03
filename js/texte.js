@@ -365,6 +365,13 @@ export const DENNIS = {
     erleichtert: ['Puh. Gut gemacht. Ich hätte das nicht gekonnt.'],
     selbst: ['Na gut, dann verbinde ich ihn eben. Mit zitternden Händen. Danke für nix!'],
   },
+  // F1: Torben rastet aus und wirft Dinge; Dennis meckert über die Sauerei (je nach Wurfobjekt)
+  torbenWirft: {
+    tasse: ['Torben! Die Tasse war noch gut!'],
+    werkzeug: ['Torben! Das ist Werkzeug, das wirft man nicht! Und wer räumt das jetzt wieder auf?!'],
+    flasche: ['Torben! Die Flasche war noch halb voll!'],
+    spaghetti: ['Torben! Die Nudeln liegen jetzt auf meinem Boden! Wer macht das weg?!'],
+  },
 };
 
 // Alle Sätze flach mit ID, z. B. { id: 'fehler.brille.1', text: '...' }
@@ -450,6 +457,9 @@ export const TORBEN = {
   aua: ['AAAH! MEIN FINGER!', 'Aua aua aua ... der ist platt!'],
   danke: ['Danke dir. Ich leg mich kurz aufs Sofa ...'],
   verband: ['Der Verband bleibt jetzt dran. Ehrenzeichen.'],
+  // F1: Choleriker
+  wut: ['Wer hat das hier hingestellt?!', 'So eine Scheiße!', 'Ich dreh gleich durch!', 'Immer ich! Immer ich!', 'Verdammte Kacke, das gibt es doch nicht!'],
+  essen: ['Mhm. Al dente.', 'Nudeln gehen immer.'],
 };
 
 // Kumpels mit Spüldienst (Jonas, David, Joel): vorläufige Sätze, bis die Figuren eine eigene Rolle bekommen

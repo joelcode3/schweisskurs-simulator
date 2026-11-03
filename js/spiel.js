@@ -1096,6 +1096,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     const tb = fahrten.zustand.torben;
     TU.zustand = 'laeuft';
     tb.unterwegs = true;
+    torben.posenSperre(true); // Spaghetti weg, Arme gehören jetzt dem Unfall (Tragen, Liegen)
     z.beschaeftigt = true;
     torben.sitzen(null);
     if (!torben.wurzel.visible) { torben.wurzel.position.set(-0.35, 0, 5.8); torben.sichtbar(true); }
@@ -1231,6 +1232,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     torbenLiegt(false, -3.2, 2.6, Math.PI);
     ui.torbenSagt(sag(TORBEN.verband), 4000);
     TU.zustand = 'fertig';
+    torben.posenSperre(false); // Spaghetti wieder in der Hand
     const tb = fahrten.zustand.torben;
     tb.da = true; tb.unterwegs = false; tb.bisWeg = sekundenSeitStart() + 30;
   }
