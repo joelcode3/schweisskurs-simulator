@@ -397,13 +397,13 @@ export function torbenErweitern(c) {
   {
     const tex = leinwandTextur(256, 128, (g, b, h) => {
       // nur ein Oberlippenbart aus dichten Stoppeln (Bereich über dem Mund), sonst glatt rasiert
-      for (let i = 0; i < 9000; i++) {
-        const u = 0.28 + rnd() * 0.44, v = 0.25 + rnd() * 0.22;
+      for (let i = 0; i < 6000; i++) {
+        const u = 0.28 + rnd() * 0.44, v = 0.31 + rnd() * 0.16;
         const mitte = Math.abs(u - 0.5);
         // weicher Rand: zur Seite und nach oben (Nase) dünner
-        const rand = Math.min(1, (0.22 - mitte) / 0.06) * Math.min(1, (v - 0.25) / 0.05) * Math.min(1, (0.47 - v) / 0.03);
+        const rand = Math.min(1, (0.22 - mitte) / 0.06) * Math.min(1, (v - 0.31) / 0.04) * Math.min(1, (0.47 - v) / 0.03);
         // obere Ecken abgerundet (Viertelkreis zur Nase hin)
-        if (mitte > 0.13 && v < 0.34) { const e = ((mitte - 0.13) / 0.09) ** 2 + ((0.34 - v) / 0.09) ** 2; if (e > 1) continue; }
+        if (mitte > 0.15 && v < 0.38) { const e = ((mitte - 0.15) / 0.07) ** 2 + ((0.38 - v) / 0.07) ** 2; if (e > 1) continue; }
         if (rand <= 0 || rnd() > rand) continue;
         g.fillStyle = rnd() < 0.7 ? 'rgba(62,42,30,0.97)' : 'rgba(100,70,48,0.92)';
         g.fillRect(u * b, v * h, 1.7, 1.7);
