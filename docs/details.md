@@ -234,6 +234,8 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   saubere Hüllen (`huelle`, `aufHuelle` in jonny.js, R(y)/T(y) = Rumpfform), große Hände (dicke Finger mit zwei Gliedern, Nägel, Daumen), Arme richtig verschränkt (links unten, rechts darüber),
   kein Gürtel, dünner, flacher Bauch, sehr kurze schwarze Arbeitshose mit
   Zollstock und Stift, weiße Socken, grüne Sneaker, goldener Ring. Kann laufen (gehZu). Heim: Tor-Ecke (0,45 | 3,2).
+- Hosenstall leicht offen, das dicke, runde Ende einer alten Möhre guckt schräg nach unten raus (Farbe Leberwurst, unrund,
+  Furchen, Härchen; Betreiber 3.11.). Nur Jonny (`A.moehre`, Torben/Kumpels nicht).
   Bier: Flasche in der linken Faust (Finger um den Flaschenbauch, offene Finger ausgeblendet), Trinkzug alle 5 s weich zum Mund
   (BIER_UNTEN/BIER_MUND in jonny.js, per Suche bestimmt, Kopf geht leicht in den Nacken, guckt dabei geradeaus).
   Verhalten (spiel.js, Objekt jz): raucht zwischendurch; holt sich alle 70–130 s ein Bier aus dem Kühlschrank (oder lässt sich
