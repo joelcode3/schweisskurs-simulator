@@ -98,19 +98,53 @@ export function baueJonny(scene, opts = {}) {
     stall.add(setze(quader(0.006, 0.075, 0.008, 0x2c2d33, { umriss: false }), 0.019, -0.004, 0.001));
     // dickes Ende der Möhre: alt, schrumpelig, leberwurstfarben, schräg nach unten; vorne die alte Schnittfläche mit Strunkrest
     const moehre = new THREE.Group();
-    const stumpf = teil(new THREE.CylinderGeometry(0.0155, 0.012, 0.04, 14), 0xa98670, { umriss: 0.0015 });
-    stumpf.rotation.x = Math.PI / 2;
-    stumpf.position.z = 0.018;
-    moehre.add(stumpf);
-    // rundes Ende (Halbkugel), ein Hauch dunkler, mit winzigem vertrocknetem Strunk-Rest
-    const kappe = teil(new THREE.SphereGeometry(0.0155, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), 0x9f7d68, { umriss: 0.0015 });
-    kappe.rotation.x = Math.PI / 2;
-    kappe.scale.set(1, 0.7, 1);
-    kappe.position.z = 0.038;
-    moehre.add(kappe);
-    moehre.add(setze(zylinder(0.003, 0.0035, 0.005, 0x5e5a3c, { umriss: false }, 8), 0, 0, 0.0485, Math.PI / 2));
-    // Schrumpelringe
-    for (let i = 0; i < 2; i++) moehre.add(setze(zylinder(0.0136 + i * 0.0014, 0.0136 + i * 0.0014, 0.0018, 0x7d6150, { umriss: false }, 14), 0, 0, 0.012 + i * 0.013, Math.PI / 2));
+    // Form: gedrehtes Profil (Lathe) mit Dellen, leicht krumm und unrund, rundes Ende
+    const L = 0.047;
+    const profil = [];
+    for (let i = 0; i <= 14; i++) {
+      const t = i / 14;
+      const y = t * L;
+      let r = 0.0122 + 0.0034 * t + 0.0007 * Math.sin(t * 17);
+      if (t > 0.72) r *= Math.sqrt(Math.max(0, 1 - Math.pow((t - 0.72) / 0.28, 2))) * 0.96 + 0.04;
+      profil.push(new THREE.Vector2(Math.max(r, 0.0006), y));
+    }
+    const geo = new THREE.LatheGeometry(profil, 16);
+    const pos = geo.attributes.position;
+    const v = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i);
+      const t = v.y / L;
+      const w = Math.atan2(v.z, v.x);
+      // unrund (etwas platt gedrückt), Schrumpelfurchen längs, Beulen, leicht krumm nach unten-links
+      const f = 1 + 0.12 * Math.cos(2 * w + 0.6) + 0.05 * Math.sin(5 * w + t * 9) + 0.04 * Math.sin(3 * w - t * 14);
+      v.x *= f * 1.06; v.z *= f * 0.92;
+      v.x += 0.004 * t * t; v.z -= 0.003 * t * t;
+      pos.setXYZ(i, v.x, v.y, v.z);
+    }
+    geo.computeVertexNormals();
+    const koerperM = teil(geo, 0xa98670, { umriss: 0.0015 });
+    koerperM.rotation.x = Math.PI / 2;
+    moehre.add(koerperM);
+    // dunklere Stellen und Querfurchen (alt, angetrocknet), ein paar feine Wurzelhärchen
+    const dunkel = 0x7d6150;
+    const fleck = setze(kugel(0.0045, 0x8a6b58, { umriss: false }, 8), 0.011, 0.004, 0.024);
+    fleck.scale.set(1, 0.6, 1.4);
+    moehre.add(fleck);
+    moehre.add(setze(kugel(0.0035, 0x8a6b58, { umriss: false }, 8), -0.009, -0.007, 0.033));
+    for (const [y0, wk, br] of [[0.014, 0.4, 0.7], [0.027, -0.5, 0.55], [0.036, 1.4, 0.5]]) {
+      const furche = new THREE.Mesh(new THREE.TorusGeometry(0.0138, 0.0007, 4, 16, Math.PI * br), toon(dunkel));
+      furche.position.z = y0;
+      furche.rotation.z = wk;
+      moehre.add(furche);
+    }
+    for (const [x, y, z, rx, ry] of [[0.012, -0.004, 0.018, 0.3, 1.2], [-0.012, 0.003, 0.03, -0.2, -1.3], [0.004, -0.012, 0.026, 1.4, 0.2]]) {
+      const haar = new THREE.Mesh(new THREE.CylinderGeometry(0.0004, 0.0004, 0.008, 4), toon(0x6b5444));
+      haar.position.set(x, y, z);
+      haar.rotation.set(rx, ry, 0);
+      moehre.add(haar);
+    }
+    // winziger vertrockneter Strunk-Rest am Ende
+    moehre.add(setze(zylinder(0.0025, 0.003, 0.004, 0x5e5a3c, { umriss: false }, 6), 0.004, 0.003, L + 0.001, Math.PI / 2));
     moehre.rotation.set(0.95, 0.12, 0);
     moehre.position.set(0.002, -0.008, 0.0);
     stall.add(moehre);
