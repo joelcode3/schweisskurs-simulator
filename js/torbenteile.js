@@ -402,6 +402,8 @@ export function torbenErweitern(c) {
         const mitte = Math.abs(u - 0.5);
         // weicher Rand: zur Seite und nach oben (Nase) dünner
         const rand = Math.min(1, (0.22 - mitte) / 0.06) * Math.min(1, (v - 0.25) / 0.05) * Math.min(1, (0.47 - v) / 0.03);
+        // obere Ecken abgerundet (Viertelkreis zur Nase hin)
+        if (mitte > 0.13 && v < 0.34) { const e = ((mitte - 0.13) / 0.09) ** 2 + ((0.34 - v) / 0.09) ** 2; if (e > 1) continue; }
         if (rand <= 0 || rnd() > rand) continue;
         g.fillStyle = rnd() < 0.7 ? 'rgba(62,42,30,0.97)' : 'rgba(100,70,48,0.92)';
         g.fillRect(u * b, v * h, 1.7, 1.7);
