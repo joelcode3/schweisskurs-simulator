@@ -509,6 +509,7 @@ export function baueJonny(scene, opts = {}) {
       // kräftige dunkle Brauen, innen tiefer (entschlossener Blick)
       const br = setze(quader(0.074, 0.03, 0.03, F.BRAUE || F.BART, { umriss: false }), x, 0.196, 0.148);
       br.rotation.z = x < 0 ? -0.2 : 0.2;
+      br.visible = !A.torben; // Torben bekommt eigene, grimmigere Brauen (torbenteile.js)
       kopf.add(br);
     } else kopf.add(setze(quader(0.066, 0.02, 0.024, F.BART, { umriss: false }), x, 0.2, 0.148));
   }
