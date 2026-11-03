@@ -204,6 +204,16 @@ export function baueTestMenue({ spiel, welt, kamera, fahrten, fz }) {
     reset: () => { z.kiwisWeg = 0; welt.kiwisZeigen?.(6); },
   });
 
+  // F1: Torben (Choleriker, Spaghetti). Jeder Knopf holt Torben vor den Spieler, falls er nicht da ist.
+  const torbenWut = (art) => () => { const w = ft.torbenHerholen?.(); if (!w) return; ft.torbenWuetet?.('test', art); };
+  const torbenZeile = (nr, text, art) => knopf(nr, text, torbenWut(art), { laeuft: () => !!ft.torbenIstAm?.('wirft'), sperre: () => (t.TU.zustand && t.TU.zustand !== 'fertig' ? 'Torben ist gerade im Unfall' : null) });
+  torbenZeile('T80', 'Torben wütet (wirft zufällig)', null);
+  torbenZeile('T81', 'Torben wirft Werkzeug', 'werkzeug');
+  torbenZeile('T82', 'Torben wirft Tasse', 'tasse');
+  torbenZeile('T83', 'Torben wirft Flasche', 'flasche');
+  torbenZeile('T84', 'Torben wirft Spaghetti', 'spaghetti');
+  knopf('T85', 'Torben isst Spaghetti', () => { const w = ft.torbenHerholen?.(); if (w) return w.essen(); }, { laeuft: () => !!ft.torbenIstAm?.('isst'), sperre: () => (t.TU.zustand && t.TU.zustand !== 'fertig' ? 'Torben ist gerade im Unfall' : null) });
+
   ueberschrift('Fahrzeuge');
   knopf('T78', 'Jeep entdrosseln (Torben)', () => {
     if (!fz) return;

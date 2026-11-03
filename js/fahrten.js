@@ -36,7 +36,7 @@ export function baueFahrten(c) {
   const { fz, welt, scene, dennis, jonny, waldo, torben, steuerung, kamera, hand, z, jz, wz, sag, dennisSagt, aerger, lob, sekunden, warte, dennisFrei } = c;
   const A = (text, symbol, tun) => ({ text, symbol, tun });
   const T = welt.draussen.fahrzeuge;
-  const sitzVon = { jonny: (an) => jonny.sitzen(an ? 0.5 : null), torben: (an) => torben.sitzen(an ? 0.5 : null), waldo: (an) => waldo.haltung(an ? 'sitzen' : 'stehen', 0.5) };
+  const sitzVon = { jonny: (an) => jonny.sitzen(an ? 0.5 : null), torben: (an) => { torben.sitzen(an ? 0.5 : null); torben.posenSperre(an); }, waldo: (an) => waldo.haltung(an ? 'sitzen' : 'stehen', 0.5) };
   const figurVon = { jonny, waldo, torben };
   const sagVon = { jonny: ui.jonnySagt, waldo: ui.waldoSagt, torben: ui.torbenSagt };
   const fz2 = { aktiv: null, meckerAb: 0, rumsAb: 0, ersteFahrt: true, npc: false,
@@ -332,7 +332,7 @@ export function baueFahrten(c) {
       beiRums: (was) => {
         if (was === 'grill') grillUm();
         else tonnenWackeln();
-        if (wer === 'torben') setTimeout(() => ui.torbenSagt(sag(TORBEN.rums)), 700);
+        if (wer === 'torben') { setTimeout(() => ui.torbenSagt(sag(TORBEN.rums)), 700); if (Math.random() < 0.4) tw.nachRums = true; }
       },
     };
     if (weg) {
@@ -365,6 +365,73 @@ export function baueFahrten(c) {
     return true;
   }
 
+  // ---------- F1: Torben ist ein Choleriker: wird schnell laut und wirft Dinge (nie auf den Spieler) ----------
+  // Auslöser: Spieler stört (zweimal Quatschen), etwas geht schief (Jeep, Rums), Dennis meckert ihn an.
+  // Er wirft Werkzeug, Tasse, Flasche oder Spaghetti nur zur Seite oder auf den Boden. Dennis reagiert mit Abklingzeit.
+  const tw = { quatschZuletzt: -999, dennisAb: 0, anzahl: 0, nachRums: false };
+  function torbenIstFrei() {
+    return torben.wurzel.visible && torben.wurzel.parent === scene && !torben.gesperrt && !torben.wirft && !torben.isst;
+  }
+  // Wurfziel: seitlich zum Spieler (70 bis 110 Grad daneben), weit weg von ihm, oder knapp vor Torbens Füße auf den Boden
+  function wurfZiel(boden) {
+    const k = kamera.position, v = torben.position;
+    const zum = Math.atan2(k.x - v.x, k.z - v.z);
+    for (let i = 0; i < 24; i++) {
+      const ang = zum + (Math.random() < 0.5 ? -1 : 1) * (1.2 + Math.random() * 0.7);
+      const d = boden ? 0.7 + Math.random() * 0.5 : 2.0 + Math.random() * 1.8;
+      const ziel = { x: v.x + Math.sin(ang) * d, z: v.z + Math.cos(ang) * d };
+      if (Math.hypot(ziel.x - k.x, ziel.z - k.z) < 2.2) continue;
+      if (Math.hypot(ziel.x - dennis.position.x, ziel.z - dennis.position.z) < 1.3) continue;
+      // Wurfweg darf dem Spieler nie nahe kommen
+      const ax = ziel.x - v.x, az = ziel.z - v.z, l2 = ax * ax + az * az || 1;
+      const tt = Math.max(0, Math.min(1, ((k.x - v.x) * ax + (k.z - v.z) * az) / l2));
+      if (Math.hypot(v.x + ax * tt - k.x, v.z + az * tt - k.z) < 1.4) continue;
+      return ziel;
+    }
+    // Notlösung: genau vom Spieler weg auf den Boden
+    return { x: v.x - Math.sin(zum) * 1.0, z: v.z - Math.cos(zum) * 1.0 };
+  }
+  async function torbenWuetet(grund = 'zufall', art = null) {
+    const tb = fz2.torben;
+    if (!torbenIstFrei() || (tb.unterwegs && grund !== 'test')) return false;
+    const war = tb.unterwegs;
+    tb.unterwegs = true;
+    torben.halt();
+    const arten = { gestoert: ['werkzeug', 'tasse', 'spaghetti'], jeep: ['werkzeug', 'flasche'], dennis: ['tasse', 'spaghetti', 'flasche'], rums: ['werkzeug', 'flasche'], zufall: ['werkzeug', 'tasse', 'flasche', 'spaghetti'], test: ['werkzeug', 'tasse', 'flasche', 'spaghetti'] };
+    const wahl = art || (arten[grund] || arten.zufall)[Math.floor(Math.random() * (arten[grund] || arten.zufall).length)];
+    torben.dreheZu(kamera.position);
+    ui.torbenSagt(sag(TORBEN.wut), 3200);
+    const boden = wahl === 'spaghetti' ? Math.random() < 0.5 : Math.random() < 0.25;
+    const ziel = wurfZiel(boden);
+    await warte(900);
+    torben.dreheZu(ziel);
+    await torben.werfen(wahl, ziel, { boden });
+    tw.anzahl++;
+    // Dennis meckert über die Sauerei, aber nicht bei jedem Wurf (Abklingzeit)
+    const t = sekunden();
+    if (t > tw.dennisAb && dennis.wurzel.visible && !z.vorbei) {
+      tw.dennisAb = t + 45;
+      aerger(3);
+      setTimeout(() => dennisSagt(sag(DENNIS.torbenWirft[wahl]), true, { prio: 1 }), 1400);
+    }
+    tb.unterwegs = war;
+    return true;
+  }
+  // zum Testen (Testmenü): Torben her holen, mitten in den Blick des Spielers
+  function torbenHerholen() {
+    const tb = fz2.torben;
+    if (torben.gesperrt) torben.posenSperre(false);
+    torben.halt();
+    if (torben.wurzel.parent !== scene) scene.attach(torben.wurzel);
+    const k = kamera.position;
+    const r = new THREE.Vector3(); kamera.getWorldDirection(r); r.y = 0; r.normalize();
+    torben.sichtbar(true);
+    torben.wurzel.position.set(k.x + r.x * 2.8, 0, k.z + r.z * 2.8);
+    torben.dreheZu(k);
+    tb.da = true; tb.unterwegs = false; tb.bisWeg = sekunden() + 400; tb.naechsteFahrt = Math.max(tb.naechsteFahrt, sekunden() + 90);
+    return torben;
+  }
+
   // ---------- Torben kommt ab und zu vorbei (zu Fuß den Feldweg hoch) ----------
   async function torbenKommt() {
     const tb = fz2.torben;
@@ -375,6 +442,8 @@ export function baueFahrten(c) {
     await geheWeg(torben, [...FELDWEG.slice(0, 7).reverse(), TORBEN_PLATZ], 1.5);
     ui.torbenSagt(sag(TORBEN.hallo));
     setTimeout(() => dennisSagt(sag(DENNIS.torbenDa), true, { prio: 0 }), 2500);
+    // Dennis meckert ihn an: manchmal rastet Torben dann aus (F1)
+    if (Math.random() < 0.5) setTimeout(() => { if (tb.da && !tb.unterwegs) torbenWuetet('dennis'); }, 7000);
     tb.bisWeg = sekunden() + 120 + Math.random() * 60;
     tb.naechsteFahrt = sekunden() + 15 + Math.random() * 15;
     tb.unterwegs = false;
@@ -398,7 +467,8 @@ export function baueFahrten(c) {
     if (fz2.tonnen === 'um' && t - fz2.tonnenSeit > 75 && !z.dennisRaeumt && dennisFrei()) dennisStelltTonnenAuf();
     const tb = fz2.torben;
     if (!tb.da && !tb.unterwegs && t > tb.naechsterBesuch && !fz2.npc) torbenKommt();
-    if (tb.da && !tb.unterwegs && !fz2.npc) {
+    if (tw.nachRums && tb.da && !tb.unterwegs) { tw.nachRums = false; setTimeout(() => torbenWuetet('rums'), 1500); }
+    if (tb.da && !tb.unterwegs && !fz2.npc && !torben.wirft && !torben.isst) {
       if (t > tb.bisWeg) torbenGeht();
       else if (t > tb.naechsteFahrt) {
         tb.naechsteFahrt = t + 30 + Math.random() * 30;
@@ -515,10 +585,17 @@ export function baueFahrten(c) {
         return null;
       case 'torben':
         return ['Torben', 'Erledigt die schweren Sachen. Fährt alles, was Räder hat.', [
-          A('Quatschen', 'frage', () => ui.torbenSagt(sag(TORBEN.quatschen))),
+          A('Quatschen', 'frage', () => {
+            // zweimal kurz hintereinander angequatscht: Torben fühlt sich gestört und rastet aus
+            const t = sekunden();
+            const gestoert = t - tw.quatschZuletzt < 25;
+            tw.quatschZuletzt = t;
+            if (gestoert) torbenWuetet('gestoert');
+            else ui.torbenSagt(sag(TORBEN.quatschen));
+          }),
           A('Lieb fragen: Jeep entdrosseln?', 'hand', () => {
             if (fz.jeep.gedrosselt) { fz.entdrosseln(); ui.torbenSagt(sag(TORBEN.entdrosseln), 6000); blip(700, 0.1); }
-            else ui.torbenSagt(sag(TORBEN.schonEntdrosselt));
+            else { ui.torbenSagt(sag(TORBEN.schonEntdrosselt)); if (Math.random() < 0.6) setTimeout(() => torbenWuetet('jeep'), 2800); }
           }),
         ]];
       default:
@@ -552,6 +629,6 @@ export function baueFahrten(c) {
     zustand: fz2,
     // nur für Tests
     aufLadeflaeche,
-    test: { ladungFaellt, einsteigen, aussteigen, figurFaehrt, torbenKommt, torbenGeht, grillUm, grillAuf, dennisStelltGrillAuf, tonnenUm, tonnenAuf },
+    test: { torbenIstAm: (w) => (w === 'wirft' ? torben.wirft : torben.isst), torbenWuetet, torbenHerholen, torbenWurfZiel: wurfZiel, ladungFaellt, einsteigen, aussteigen, figurFaehrt, torbenKommt, torbenGeht, grillUm, grillAuf, dennisStelltGrillAuf, tonnenUm, tonnenAuf },
   };
 }

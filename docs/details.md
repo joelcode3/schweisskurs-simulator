@@ -589,9 +589,19 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   (Menü), auf Torben klicken, Minispiel `fingerSpiel` (abtupfen, drücken, Verband wickeln). Sonst verbindet Dennis ihn (Wut +10).
   Danach 70 s Torben auf dem Sofa, ab dann dauerhaft weißer Verband an der rechten Hand (`torbenVerbandAn`). Der Träger bleibt liegen.
 
+- F1 Torben neu (3.11., Vorschau): neue Figur nach Fotos des Betreibers, Aussehen/Teile in js/torben.js (Parameter) und js/torbenteile.js
+  (lange Hose, Gürtel, Werkzeugtasche, Spaghetti, Wurf); jonny.js bekommt dafür optionale Parameter (`aussehen.torben`, `groesse`,
+  `torso`, `hueft`, `vform`, `tshirt`, `weste:false` ...), Jonny/Waldo/Kumpels bleiben unverändert. Größe ca. 56 %, kürzerer Oberkörper,
+  lange dicke Beine, V-Form, dicke Unterarme mit Adern, eigene Hände (baueHand: drei Glieder, Daumen, Nägel, `userData.krumm(0..1)`).
+  Immer Spaghetti in der linken Hand (wackeln), alle 8 bis 16 s isst er daraus (Hand zum Mund, Strang hängt raus, Schlürfen).
+  Choleriker (fahrten.js `torbenWuetet(grund, art)`): wirft Werkzeug/Tasse/Flasche/Spaghetti nur zur Seite oder auf den Boden, nie auf den
+  Spieler (`wurfZiel` hält 2,2 m Abstand zum Spieler und 1,4 m zur Flugbahn). Auslöser: zweimal kurz hintereinander „Quatschen“ (25 s),
+  Jeep schon entdrosselt (60 %), Rums mit Jeep/Lader (40 %), nach Ankunft (50 %, Dennis meckert). Dennis meckert nach dem Wurf mit
+  45 s Abklingzeit (Wut +3). Geräusche live: `schluerfen`, `torbenWurfTon` (audio.js). Während Unfall und Fahren sind Spaghetti/Tasche
+  aus (`posenSperre`). Sätze: TORBEN.wut (torben25-29), TORBEN.essen (torben30-31), DENNIS.torbenWirft (dennis498-501).
 - Testmenü (1.11.): `?test` an die Adresse hängen (https://joelcode3.github.io/schweisskurs-simulator/?test), nach „Kurs starten“
   erscheint rechts das Menü (einklappbar, Gruppen aufklappbar). Unter Pointer-Lock erst Rechtsklick (Cursor), dann klicken.
-  Jeder Eintrag hat eine FESTE Nummer (T01 …), die sich nie verschiebt; neue Einträge bekommen die nächste freie Nummer (zuletzt T79).
+  Jeder Eintrag hat eine FESTE Nummer (T01 …), die sich nie verschiebt; neue Einträge bekommen die nächste freie Nummer (zuletzt T85).
   Ofen-Bau „Stand springen“ setzt den Stand VOR dem Schritt
   (alles davor erledigt, Flasche am Platz, man steht dort); der Schritt wird dann normal im Spiel gemacht.
   Status (1.11.): GRÜN = läuft gerade (Ereignis/Nebenaufgabe aktiv oder Minispiel offen, auch wenn im Spiel gestartet; dazu alles,
@@ -680,6 +690,12 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   T77 | Ofen-Bau: Stand springen | Schutzausrüstung anziehen (alles)
   T78 | Fahrzeuge | Jeep entdrosseln (Torben)
   T79 | Fahrzeuge | Jeep wieder drosseln
+  T80 | Ereignisse | Torben wütet (wirft zufällig)
+  T81 | Ereignisse | Torben wirft Werkzeug
+  T82 | Ereignisse | Torben wirft Tasse
+  T83 | Ereignisse | Torben wirft Flasche
+  T84 | Ereignisse | Torben wirft Spaghetti
+  T85 | Ereignisse | Torben isst Spaghetti
 
 ## Offene Fäden und Ungetestetes (Übergabe 1.11.2026)
 - Ausraster-Videos: #54 (frisches Video-Element, bis zu 6 Versuche, canplay) ist nur eine Absicherung. Die Ursache ist unklar, im Test lief
