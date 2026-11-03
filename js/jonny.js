@@ -16,11 +16,14 @@ const HOSE = 0x1f2024;
 const SCHUH = 0x2f7d4f;
 const GOLD = 0xd7b25c;
 // Wo Jonny rumsteht: an der Tor-Ecke (raucht dort, obwohl das Schild hängt)
+// Hosenstall vorne in der Mitte (Abstand der Hosen-Oberfläche nach vorn)
+const MOEHRE_Z = 0.1;
 const PLATZ_JONNY = new THREE.Vector3(0.45, 0, 3.2);
 
 // opts.aussehen überschreibt Farben und Merkmale (Torben nutzt dieselbe Figur mit anderem Aussehen)
 export function baueJonny(scene, opts = {}) {
-  const A = { brille: true, langeHaare: true, bart: 'voll', cap: true, ...(opts.aussehen || {}) };
+  // moehre: nur Jonny selbst (Torben und die Kumpels nutzen dieselbe Figur mit eigenem Aussehen)
+  const A = { brille: true, langeHaare: true, bart: 'voll', cap: true, moehre: !opts.aussehen, ...(opts.aussehen || {}) };
   const F = { HAUT, HAAR, BART, CAP, SHIRT, WESTE, HOSE, SCHUH, GOLD, ...(A.farben || {}) };
   const PLATZ = opts.platz ? opts.platz.clone() : PLATZ_JONNY.clone();
   const wurzel = new THREE.Group();
@@ -86,6 +89,69 @@ export function baueJonny(scene, opts = {}) {
   tasche.add(setze(zylinder(0.006, 0.006, 0.16, 0xc8352a, { umriss: 0.0015 }, 6), 0.005, 0.07, 0.025));
   tasche.position.set(0.235, 0.82, 0.0);
   koerper.add(tasche);
+  // Hosenstall leicht offen, vorne guckt die Spitze einer alten Möhre raus (Farbe wie Leberwurst). Ganz subtil.
+  if (A.moehre) {
+    const stall = new THREE.Group();
+    // offener Schlitz: dunkler Spalt mit etwas Futter, darunter die Reißverschluss-Kante
+    stall.add(setze(quader(0.032, 0.07, 0.006, 0x08090a, { umriss: false }), 0, 0, 0));
+    stall.add(setze(quader(0.006, 0.075, 0.008, 0x2c2d33, { umriss: false }), -0.019, -0.004, 0.001));
+    stall.add(setze(quader(0.006, 0.075, 0.008, 0x2c2d33, { umriss: false }), 0.019, -0.004, 0.001));
+    // dickes Ende der Möhre: alt, schrumpelig, leberwurstfarben, schräg nach unten; vorne die alte Schnittfläche mit Strunkrest
+    const moehre = new THREE.Group();
+    // Form: gedrehtes Profil (Lathe) mit Dellen, leicht krumm und unrund, rundes Ende
+    const L = 0.047;
+    const profil = [];
+    for (let i = 0; i <= 14; i++) {
+      const t = i / 14;
+      const y = t * L;
+      let r = 0.0122 + 0.0034 * t + 0.0007 * Math.sin(t * 17);
+      if (t > 0.72) r *= Math.sqrt(Math.max(0, 1 - Math.pow((t - 0.72) / 0.28, 2))) * 0.96 + 0.04;
+      profil.push(new THREE.Vector2(Math.max(r, 0.0006), y));
+    }
+    const geo = new THREE.LatheGeometry(profil, 16);
+    const pos = geo.attributes.position;
+    const v = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i);
+      const t = v.y / L;
+      const w = Math.atan2(v.z, v.x);
+      // unrund (etwas platt gedrückt), Schrumpelfurchen längs, Beulen, leicht krumm nach unten-links
+      const f = 1 + 0.12 * Math.cos(2 * w + 0.6) + 0.05 * Math.sin(5 * w + t * 9) + 0.04 * Math.sin(3 * w - t * 14);
+      v.x *= f * 1.06; v.z *= f * 0.92;
+      v.x += 0.004 * t * t; v.z -= 0.003 * t * t;
+      pos.setXYZ(i, v.x, v.y, v.z);
+    }
+    geo.computeVertexNormals();
+    const koerperM = teil(geo, 0xa98670, { umriss: 0.0015 });
+    koerperM.rotation.x = Math.PI / 2;
+    moehre.add(koerperM);
+    // dunklere Stellen und Querfurchen (alt, angetrocknet), ein paar feine Wurzelhärchen
+    const dunkel = 0x7d6150;
+    const fleck = setze(kugel(0.0045, 0x8a6b58, { umriss: false }, 8), 0.011, 0.004, 0.024);
+    fleck.scale.set(1, 0.6, 1.4);
+    moehre.add(fleck);
+    moehre.add(setze(kugel(0.0035, 0x8a6b58, { umriss: false }, 8), -0.009, -0.007, 0.033));
+    for (const [y0, wk, br] of [[0.014, 0.4, 0.7], [0.027, -0.5, 0.55], [0.036, 1.4, 0.5]]) {
+      const furche = new THREE.Mesh(new THREE.TorusGeometry(0.0138, 0.0007, 4, 16, Math.PI * br), toon(dunkel));
+      furche.position.z = y0;
+      furche.rotation.z = wk;
+      moehre.add(furche);
+    }
+    for (const [x, y, z, rx, ry] of [[0.012, -0.004, 0.018, 0.3, 1.2], [-0.012, 0.003, 0.03, -0.2, -1.3], [0.004, -0.012, 0.026, 1.4, 0.2]]) {
+      const haar = new THREE.Mesh(new THREE.CylinderGeometry(0.0004, 0.0004, 0.008, 4), toon(0x6b5444));
+      haar.position.set(x, y, z);
+      haar.rotation.set(rx, ry, 0);
+      moehre.add(haar);
+    }
+    // winziger vertrockneter Strunk-Rest am Ende
+    moehre.add(setze(zylinder(0.0025, 0.003, 0.004, 0x5e5a3c, { umriss: false }, 6), 0.004, 0.003, L + 0.001, Math.PI / 2));
+    moehre.rotation.set(0.95, 0.12, 0);
+    moehre.position.set(0.002, -0.008, 0.0);
+    stall.add(moehre);
+    stall.position.set(0.0, 0.845, MOEHRE_Z);
+    stall.rotation.x = -0.12;
+    koerper.add(stall);
+  }
   // ---------- Oberkörper: weißes, kurzärmliges Hemd weit offen mit viel Brusthaar, hellbraune Cord-Zimmermannsweste ----------
   const rumpf = new THREE.Group();
   rumpf.position.y = 0.92;
