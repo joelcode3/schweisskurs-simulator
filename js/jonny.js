@@ -170,7 +170,7 @@ export function baueJonny(scene, opts = {}) {
       // Torben: schmale Taille, breite Brust, breite Schultern (V-Form), Schulterkuppe läuft zum kurzen Hals
       const r = 0.262 + plus;
       if (y > 0.52) return r * Math.sqrt(Math.max(0, 1 - ((y - 0.52) / 0.235) ** 2));
-      return 0.158 + plus + (0.262 - 0.158) * glatt(0.0, 0.5, y);
+      return 0.176 + plus + (0.262 - 0.176) * glatt(0.0, 0.5, y);
     }
     const r = 0.19 * BR + plus;
     if (y > 0.56) return r * Math.sqrt(Math.max(0, 1 - ((y - 0.56) / r) ** 2));
@@ -596,7 +596,7 @@ export function baueJonny(scene, opts = {}) {
   if (A.cap) kopf.add(cap);
 
   // Torben: Zusatzteile (lange Hose, Gürtel, Tasche, Spaghetti ...) und Wurf, siehe torbenteile.js
-  const zusatz = A.torben ? torbenErweitern({ wurzel, koerper, rumpf, kopf, beine, links, rechts, F, A, R, T, huelle, aufHuelle, haarMat, becken, scene, opts, mund, hemdMesh, KY, HUEFT }) : null;
+  const zusatz = A.torben ? torbenErweitern({ wurzel, koerper, rumpf, kopf, beine, links, rechts, F, A, R, T, huelle, aufHuelle, haarMat, becken, scene, opts, mund, hemdMesh, KY, HUEFT, nase, schaedel, augen }) : null;
   const ruhe = () => (zusatz ? zusatz.ruhe() : armeVerschraenkt());
 
   // ---------- Verhalten ----------

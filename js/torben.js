@@ -21,7 +21,7 @@ export function baueTorben(scene) {
       brille: false, langeHaare: false, bart: 'stoppel', nurKinn: true, cap: false, brusthaar: false, weste: false, tshirt: true,
       groesse: 0.56, torso: 0.86, hueft: 1.30, breit: 1.18, tief: 1.28, halsKurz: true, armDick: 1.28, handGross: 1.12, fingerKurz: 0.72, adern: true, entschlossen: true, ernst: true,
       farben: {
-        HAUT: 0xeab99e, HAAR: 0x3a281c, BART: 0xa88060, SCHNURR: 0x8c5e38, BRAUE: 0x2c1c12, AUGE: 0x9cc8ee,
+        HAUT: 0xeab99e, HAAR: 0x3a281c, BART: 0xa88060, SCHNURR: 0x8c5e38, BRAUE: 0x2c1c12, AUGE: 0xa9cdec,
         SHIRT: 0xf0ede6, HOSE: 0xb98a52, SCHUH: 0x141416,
       },
     },

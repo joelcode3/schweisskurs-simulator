@@ -154,7 +154,8 @@ function baueHand(seite, haut) {
   const flach = new THREE.Group();
   hand.add(flach);
   // Handgelenk, Handteller, Daumen- und Kleinfingerballen, Knöchel
-  flach.add(setze(teil(new THREE.CylinderGeometry(0.043, 0.046, 0.05, 14), haut, U), 0, -0.006, 0));
+  flach.add(setze(teil(new THREE.CylinderGeometry(0.044, 0.047, 0.05, 14), haut, U), 0, -0.006, 0));
+  flach.add(setze(teil(new THREE.SphereGeometry(0.05, 14, 10), haut, { umriss: false }), 0, 0.002, 0));
   flach.add(kugelS(0.054, 0.058, 0.027, 0, -0.048, 0));
   flach.add(kugelS(0.03, 0.038, 0.021, 0.03 * seite, -0.042, 0.011));
   flach.add(kugelS(0.022, 0.042, 0.02, -0.04 * seite, -0.046, 0.006));
@@ -228,9 +229,9 @@ export function torbenArm(seite, { rumpf, F, KY = 1 }) {
   const schulter = new THREE.Group();
   schulter.position.set(0.262 * seite, 0.622 * KY, 0);
   // Schultergelenk (Deltamuskel) und kurzer T-Shirt-Ärmel, eng am Oberarm
-  const delta = kugel(0.078, F.SHIRT, { umriss: 0.004 }, 14);
-  delta.scale.set(1.0, 0.9, 1.0);
-  delta.position.y = -0.016;
+  const delta = kugel(0.083, F.SHIRT, { umriss: 0.004 }, 14);
+  delta.scale.set(0.98, 0.72, 1.0);
+  delta.position.set(0, -0.02, 0);
   schulter.add(delta);
   const lathe = (pts, seg = 18) => new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(r, y)), seg);
   // Oberarm: Bizeps und Trizeps kräftig, zum Ellbogen schmaler
@@ -241,7 +242,7 @@ export function torbenArm(seite, { rumpf, F, KY = 1 }) {
   ellbogen.position.y = -0.27;
   ellbogen.add(teil(new THREE.SphereGeometry(0.063, 14, 12), 0, ARMUMRISS));
   // Unterarm: dick unter dem Ellbogen, zum Handgelenk schmal, mit Adern
-  ellbogen.add(teil(lathe([[0.043, -0.255], [0.05, -0.2], [0.063, -0.12], [0.071, -0.05], [0.069, -0.01], [0.06, 0]]), 0, ARMUMRISS));
+  ellbogen.add(teil(lathe([[0.047, -0.29], [0.047, -0.262], [0.052, -0.23], [0.058, -0.19], [0.066, -0.12], [0.071, -0.05], [0.069, -0.01], [0.06, 0]]), 0, ARMUMRISS));
   const { hand, finger } = baueHand(seite, F.HAUT);
   hand.position.y = -0.25;
   if (seite < 0) {
@@ -255,7 +256,7 @@ export function torbenArm(seite, { rumpf, F, KY = 1 }) {
 }
 
 export function torbenErweitern(c) {
-  const { wurzel, koerper, rumpf, kopf, beine, links, rechts, F, A, R, T, huelle, aufHuelle, haarMat, becken, scene, opts, mund, hemdMesh, KY, HUEFT } = c;
+  const { wurzel, koerper, rumpf, kopf, beine, links, rechts, F, A, R, T, huelle, aufHuelle, haarMat, becken, scene, opts, mund, hemdMesh, KY, HUEFT, nase, schaedel, augen } = c;
   const GOLD = F.GOLD;
   const noUmr = { umriss: false };
 
@@ -290,9 +291,24 @@ export function torbenErweitern(c) {
     k.add(sch);
     // aufgesetzte Seitentasche außen am Oberschenkel, Klappe und Werkzeug
     const t = new THREE.Group();
-    t.add(quader(0.04, 0.21, 0.17, 0x8a6034, { umriss: 0.003 }));
-    t.add(setze(quader(0.045, 0.06, 0.175, 0x6f4a28, { umriss: 0.003 }), 0.001 * seite, 0.075, 0));
-    t.add(setze(kugel(0.011, GOLD, noUmr, 8), 0.024 * seite, 0.062, 0.05));
+    // organische Tasche: gewölbter Beutel (abgeflachte Ellipsoide), Klappe mit Rundung, leicht ausgebeult, hängt etwas schief
+    const sack = teil(new THREE.SphereGeometry(1, 20, 14), 0x8a6034, { umriss: 0.003 });
+    sack.scale.set(0.024, 0.115, 0.092);
+    sack.position.set(0, -0.012, 0);
+    t.add(sack);
+    const bauch = teil(new THREE.SphereGeometry(1, 16, 12), 0x916838, { umriss: false });
+    bauch.scale.set(0.03, 0.07, 0.07);
+    bauch.position.set(0.006 * seite, -0.04, 0);
+    t.add(bauch);
+    const klappe = teil(new THREE.SphereGeometry(1, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), 0x6f4a28, { umriss: 0.002 });
+    klappe.scale.set(0.03, 0.05, 0.095);
+    klappe.rotation.z = Math.PI / 2 * -seite;
+    klappe.rotation.y = 0;
+    klappe.position.set(0.002 * seite, 0.07, 0);
+    klappe.rotation.set(Math.PI, 0, 0);
+    t.add(klappe);
+    t.add(setze(kugel(0.0105, GOLD, noUmr, 8), 0.026 * seite, 0.052, 0.0));
+    t.rotation.set(0.05, 0, 0.07 * seite);
     if (seite > 0) {
       // Schraubendreher (gelb-schwarz) und Zollstock schauen raus
       t.add(setze(zylinder(0.014, 0.014, 0.07, 0xf2c21c, { umriss: 0.0015 }, 8), 0.004, 0.13, 0.03));
@@ -303,35 +319,60 @@ export function torbenErweitern(c) {
       t.add(setze(zylinder(0.011, 0.011, 0.1, 0xc8352a, { umriss: 0.0015 }, 8), 0.004, 0.13, 0.02, 0, 0, 0.1));
       t.add(setze(zylinder(0.011, 0.011, 0.1, 0xc8352a, { umriss: 0.0015 }, 8), 0.004, 0.13, -0.02, 0, 0, -0.1));
     }
-    t.position.set(0.122 * seite, -0.17, 0.02);
+    t.position.set(0.118 * seite, -0.17, 0.02);
     hf.add(t);
   }
 
   // ---------- Gürtel: schwarz, goldene Schnalle; darunter der Hosenbund, darüber nur das Shirt ----------
   {
-    const rx = R(0.0, 0.034), rz = rx * T(0.0) + 0.026;
+    const rx = R(0.0, 0.024), rz = rx * T(0.0) + 0.016;
     const ring = (h, f, plus, y, farbe, umr) => {
       const m = teil(new THREE.CylinderGeometry(1, 1, h, 48, 1, true), 0, { material: toon(farbe, { side: THREE.DoubleSide }), umriss: umr });
       m.scale.set(rx + plus, 1, rz + plus);
       m.position.y = y;
       return m;
     };
-    rumpf.add(ring(0.09, 0, 0.0, -0.075, F.HOSE, 0.002));          // Hosenbund
-    rumpf.add(ring(0.052, 0, 0.004, -0.005, 0x131417, 0.003));     // Gürtel
-    // dünne Naht oben und unten am Gürtel
-    for (const y of [0.019, -0.029]) rumpf.add(ring(0.003, 0, 0.0055, y, 0x2a2b30, false));
-    // Schnalle vorne: rund, gold, mit dunklem Dorn
-    const sy = -0.005, sz = rz + 0.004 + 0.005;
-    const d = zylinder(0.036, 0.036, 0.01, GOLD, { umriss: 0.002 }, 24);
-    d.rotation.x = Math.PI / 2; d.position.set(0, sy, sz);
-    rumpf.add(d);
-    const d2 = zylinder(0.025, 0.025, 0.012, 0x8a6a2a, noUmr, 24);
-    d2.rotation.x = Math.PI / 2; d2.position.set(0, sy, sz + 0.001);
-    rumpf.add(d2);
+    rumpf.add(ring(0.1, 0, 0.0, -0.08, F.HOSE, 0.002));            // Hosenbund
+    rumpf.add(ring(0.064, 0, 0.0075, -0.008, 0x131417, 0.003));    // breiter schwarzer Ledergürtel
+    // Nähte (hellgrau) und Randlinien oben und unten
+    for (const y of [0.0195, -0.0355]) rumpf.add(ring(0.0035, 0, 0.0098, y, 0x4a4c52, false));
+    for (const y of [0.014, -0.03]) rumpf.add(ring(0.002, 0, 0.0093, y, 0x6a6c72, false));
+    // Schnalle vorne: große runde goldene Münzschnalle mit Rahmen, erhabener Mitte und Dorn
+    const sy = -0.008, sz = rz + 0.0075 + 0.004;
+    const rahmen = zylinder(0.047, 0.047, 0.009, GOLD, { umriss: 0.002 }, 32);
+    rahmen.rotation.x = Math.PI / 2; rahmen.position.set(0, sy, sz);
+    rumpf.add(rahmen);
+    const innen = zylinder(0.036, 0.036, 0.011, 0x7a5a24, noUmr, 32);
+    innen.rotation.x = Math.PI / 2; innen.position.set(0, sy, sz + 0.0012);
+    rumpf.add(innen);
+    const buckel = zylinder(0.03, 0.03, 0.012, 0xd9b44a, { umriss: 0.0015 }, 32);
+    buckel.rotation.x = Math.PI / 2; buckel.position.set(0, sy, sz + 0.0028);
+    rumpf.add(buckel);
+    // Prägung: kleines Kreuz aus Strichen in der Mitte der Schnalle
+    for (const r of [0, Math.PI / 2]) {
+      const st = quader(0.036, 0.005, 0.002, 0x8a6a2a, noUmr);
+      st.position.set(0, sy, sz + 0.0092); st.rotation.z = r + 0.4;
+      rumpf.add(st);
+    }
+    // Nieten am Gürtel links und rechts der Schnalle
+    for (const x of [-0.085, -0.1, 0.085, 0.1]) {
+      const th = Math.asin(Math.min(0.99, x / (rx + 0.0075)));
+      const nt = kugel(0.0065, 0xcfcfd2, noUmr, 8);
+      nt.position.set((rx + 0.0075) * Math.sin(th), sy, (rz + 0.0075) * Math.cos(th) + 0.001);
+      rumpf.add(nt);
+    }
+    // Gürtelende hängt links der Schnalle durch die Schlaufe
+    {
+      const th = Math.asin(Math.min(0.99, -0.07 / (rx + 0.0075)));
+      const ende = quader(0.03, 0.1, 0.006, 0x131417, { umriss: 0.002 });
+      ende.position.set((rx + 0.011) * Math.sin(th) - 0.01, -0.07, (rz + 0.011) * Math.cos(th) + 0.003);
+      ende.rotation.y = th;
+      rumpf.add(ende);
+    }
     // Gürtelschlaufen an der Hose
     for (const x of [-0.12, 0.12, -0.065, 0.065]) {
       const th = Math.asin(Math.min(0.99, x / rx));
-      rumpf.add(setze(quader(0.014, 0.06, 0.008, 0x8a6034, noUmr), (rx + 0.003) * Math.sin(th), -0.07, (rz + 0.003) * Math.cos(th), 0, th, 0));
+      rumpf.add(setze(quader(0.016, 0.075, 0.008, 0x8a6034, noUmr), (rx + 0.003) * Math.sin(th), -0.075, (rz + 0.003) * Math.cos(th), 0, th, 0));
     }
   }
   // T-Shirt-Halsbündchen
@@ -371,7 +412,19 @@ export function torbenErweitern(c) {
       h.rotation.set(0.1, sx * 0.3, sx * 0.28);
       kopf.add(h);
     }
-    kopf.scale.setScalar(0.94);
+    // Gesicht nach den Referenzfotos: schmaler, kantiger Kiefer, kleinere Nase mit schmaler Spitze, helle Augen unter schweren Brauen
+    kopf.scale.set(0.9, 0.96, 0.94);
+    nase.scale.set(0.58, 0.82, 0.78);
+    nase.position.set(0, 0.098, 0.168);
+    // schmaleres, kantigeres Gesicht: Schädel etwas schmaler und das Kinn leicht länger
+    schaedel.scale.set(0.9, 1.12, 0.97);
+    // Augen: hellblau-graue Iris, kleine dunkle Pupille, schmalere Lidspalte (leichtes Zusammenkneifen)
+    for (const a of augen) { a.scale.set(1.0, 0.82, 1.0); a.children[1].scale.setScalar(1.15); }
+    for (const sx of [-1, 1]) {
+      const br = new THREE.Mesh(new THREE.BoxGeometry(0.078, 0.034, 0.03), toon(F.BRAUE || F.HAAR));
+      br.position.set(sx * 0.059, 0.204, 0.1475); br.rotation.z = sx * 0.3;
+      kopf.add(br);
+    }
     // Augen: schwarze Pupillen, dunkle Oberlider (entschlossener Blick)
     for (const x of [-0.06, 0.06]) {
       kopf.add(setze(kugel(0.0065, 0x0e0e10, { umriss: false }, 8), x, 0.15, 0.1625));
@@ -401,8 +454,8 @@ export function torbenErweitern(c) {
   // ---------- Werkzeugtasche: schwarz mit gelben Details, groß und rund, flacher Riemen über die Schulter, wippt beim Gehen ----------
   // Schulterpartie: flacher Übergang vom Hals zu den Armen (keine Kugelschultern)
   const joch = teil(new THREE.SphereGeometry(1, 24, 14), F.SHIRT, { umriss: 0.003 });
-  joch.scale.set(0.262, 0.07 * KY, 0.096);
-  joch.position.set(0, 0.672 * KY, -0.002);
+  joch.scale.set(0.2, 0.058 * KY, 0.092);
+  joch.position.set(0, 0.655 * KY, -0.002);
   rumpf.add(joch);
   {
     // Riemen als flaches Band: Auftreffpunkte per Strahl auf Shirt und Schulterpartie, so verschwindet er nirgends im Stoff
