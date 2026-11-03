@@ -96,15 +96,21 @@ export function baueJonny(scene, opts = {}) {
     stall.add(setze(quader(0.032, 0.07, 0.006, 0x08090a, { umriss: false }), 0, 0, 0));
     stall.add(setze(quader(0.006, 0.075, 0.008, 0x2c2d33, { umriss: false }), -0.019, -0.004, 0.001));
     stall.add(setze(quader(0.006, 0.075, 0.008, 0x2c2d33, { umriss: false }), 0.019, -0.004, 0.001));
-    // Möhrenspitze: alt, schrumpelig, leberwurstfarben, leicht schräg nach unten
+    // dickes Ende der Möhre: alt, schrumpelig, leberwurstfarben, schräg nach unten; vorne die alte Schnittfläche mit Strunkrest
     const moehre = new THREE.Group();
-    const spitze = teil(new THREE.ConeGeometry(0.018, 0.075, 12), 0xa98670, { umriss: 0.0015 });
-    spitze.rotation.x = Math.PI / 2;
-    spitze.position.z = 0.035;
-    // abgerundete Spitze (alte Möhren sind vorne nicht spitz)
-    moehre.add(setze(kugel(0.0045, 0x9a7762, { umriss: false }), 0, 0, 0.071));
-    moehre.add(spitze);
-    for (let i = 0; i < 3; i++) moehre.add(setze(zylinder(0.0165 - i * 0.0048, 0.0165 - i * 0.0048, 0.002, 0x7d6150, { umriss: false }, 12), 0, 0, 0.006 + i * 0.016, Math.PI / 2));
+    const stumpf = teil(new THREE.CylinderGeometry(0.022, 0.016, 0.06, 14), 0xa98670, { umriss: 0.0015 });
+    stumpf.rotation.x = Math.PI / 2;
+    stumpf.position.z = 0.028;
+    moehre.add(stumpf);
+    // leicht gewölbte, dunklere Schnittfläche und ein vertrockneter Strunk-Stummel
+    const kappe = teil(new THREE.SphereGeometry(0.022, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), 0x8f6e5b, { umriss: 0.0015 });
+    kappe.rotation.x = Math.PI / 2;
+    kappe.scale.set(1, 0.25, 1);
+    kappe.position.z = 0.058;
+    moehre.add(kappe);
+    moehre.add(setze(zylinder(0.005, 0.006, 0.008, 0x5e5a3c, { umriss: false }, 8), 0, 0, 0.062, Math.PI / 2));
+    // Schrumpelringe
+    for (let i = 0; i < 3; i++) moehre.add(setze(zylinder(0.0172 + i * 0.0018, 0.0172 + i * 0.0018, 0.002, 0x7d6150, { umriss: false }, 14), 0, 0, 0.012 + i * 0.015, Math.PI / 2));
     moehre.rotation.set(0.95, 0.12, 0);
     moehre.position.set(0.002, -0.008, 0.0);
     stall.add(moehre);
