@@ -16,11 +16,14 @@ const HOSE = 0x1f2024;
 const SCHUH = 0x2f7d4f;
 const GOLD = 0xd7b25c;
 // Wo Jonny rumsteht: an der Tor-Ecke (raucht dort, obwohl das Schild hängt)
+// Hosenstall vorne in der Mitte (Abstand der Hosen-Oberfläche nach vorn)
+const MOEHRE_Z = 0.1;
 const PLATZ_JONNY = new THREE.Vector3(0.45, 0, 3.2);
 
 // opts.aussehen überschreibt Farben und Merkmale (Torben nutzt dieselbe Figur mit anderem Aussehen)
 export function baueJonny(scene, opts = {}) {
-  const A = { brille: true, langeHaare: true, bart: 'voll', cap: true, ...(opts.aussehen || {}) };
+  // moehre: nur Jonny selbst (Torben und die Kumpels nutzen dieselbe Figur mit eigenem Aussehen)
+  const A = { brille: true, langeHaare: true, bart: 'voll', cap: true, moehre: !opts.aussehen, ...(opts.aussehen || {}) };
   const F = { HAUT, HAAR, BART, CAP, SHIRT, WESTE, HOSE, SCHUH, GOLD, ...(A.farben || {}) };
   const PLATZ = opts.platz ? opts.platz.clone() : PLATZ_JONNY.clone();
   const wurzel = new THREE.Group();
@@ -86,6 +89,29 @@ export function baueJonny(scene, opts = {}) {
   tasche.add(setze(zylinder(0.006, 0.006, 0.16, 0xc8352a, { umriss: 0.0015 }, 6), 0.005, 0.07, 0.025));
   tasche.position.set(0.235, 0.82, 0.0);
   koerper.add(tasche);
+  // Hosenstall leicht offen, vorne guckt die Spitze einer alten Möhre raus (Farbe wie Leberwurst). Ganz subtil.
+  if (A.moehre) {
+    const stall = new THREE.Group();
+    // offener Schlitz: dunkler Spalt mit etwas Futter, darunter die Reißverschluss-Kante
+    stall.add(setze(quader(0.032, 0.07, 0.006, 0x08090a, { umriss: false }), 0, 0, 0));
+    stall.add(setze(quader(0.006, 0.075, 0.008, 0x2c2d33, { umriss: false }), -0.019, -0.004, 0.001));
+    stall.add(setze(quader(0.006, 0.075, 0.008, 0x2c2d33, { umriss: false }), 0.019, -0.004, 0.001));
+    // Möhrenspitze: alt, schrumpelig, leberwurstfarben, leicht schräg nach unten
+    const moehre = new THREE.Group();
+    const spitze = teil(new THREE.ConeGeometry(0.018, 0.075, 12), 0xa98670, { umriss: 0.0015 });
+    spitze.rotation.x = Math.PI / 2;
+    spitze.position.z = 0.035;
+    // abgerundete Spitze (alte Möhren sind vorne nicht spitz)
+    moehre.add(setze(kugel(0.0045, 0x9a7762, { umriss: false }), 0, 0, 0.071));
+    moehre.add(spitze);
+    for (let i = 0; i < 3; i++) moehre.add(setze(zylinder(0.0165 - i * 0.0048, 0.0165 - i * 0.0048, 0.002, 0x7d6150, { umriss: false }, 12), 0, 0, 0.006 + i * 0.016, Math.PI / 2));
+    moehre.rotation.set(0.95, 0.12, 0);
+    moehre.position.set(0.002, -0.008, 0.0);
+    stall.add(moehre);
+    stall.position.set(0.0, 0.845, MOEHRE_Z);
+    stall.rotation.x = -0.12;
+    koerper.add(stall);
+  }
   // ---------- Oberkörper: weißes, kurzärmliges Hemd weit offen mit viel Brusthaar, hellbraune Cord-Zimmermannsweste ----------
   const rumpf = new THREE.Group();
   rumpf.position.y = 0.92;
