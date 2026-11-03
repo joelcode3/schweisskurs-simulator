@@ -154,7 +154,7 @@ function baueHand(seite, haut) {
   const flach = new THREE.Group();
   hand.add(flach);
   // Handgelenk, Handteller, Daumen- und Kleinfingerballen, Knöchel
-  flach.add(setze(teil(new THREE.CylinderGeometry(0.036, 0.039, 0.04, 14), haut, U), 0, -0.004, 0));
+  flach.add(setze(teil(new THREE.CylinderGeometry(0.043, 0.046, 0.05, 14), haut, U), 0, -0.006, 0));
   flach.add(kugelS(0.054, 0.058, 0.027, 0, -0.048, 0));
   flach.add(kugelS(0.03, 0.038, 0.021, 0.03 * seite, -0.042, 0.011));
   flach.add(kugelS(0.022, 0.042, 0.02, -0.04 * seite, -0.046, 0.006));
@@ -226,22 +226,22 @@ export function torbenArm(seite, { rumpf, F, KY = 1 }) {
   const mat = toon(0xffffff, { map: armTextur(F.HAUT) });
   const ARMUMRISS = { material: mat, umriss: 0.003 };
   const schulter = new THREE.Group();
-  schulter.position.set(0.232 * seite, 0.622 * KY, 0);
+  schulter.position.set(0.262 * seite, 0.622 * KY, 0);
   // Schultergelenk (Deltamuskel) und kurzer T-Shirt-Ärmel, eng am Oberarm
-  const delta = kugel(0.068, F.SHIRT, { umriss: 0.004 }, 14);
+  const delta = kugel(0.078, F.SHIRT, { umriss: 0.004 }, 14);
   delta.scale.set(1.0, 0.9, 1.0);
   delta.position.y = -0.016;
   schulter.add(delta);
   const lathe = (pts, seg = 18) => new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(r, y)), seg);
   // Oberarm: Bizeps und Trizeps kräftig, zum Ellbogen schmaler
-  schulter.add(teil(lathe([[0.049, -0.275], [0.056, -0.25], [0.066, -0.17], [0.07, -0.09], [0.066, -0.03], [0.05, 0]]), 0, ARMUMRISS));
-  schulter.add(setze(teil(new THREE.CylinderGeometry(0.072, 0.075, 0.15, 18), F.SHIRT, { umriss: 0.003 }), 0, -0.075, 0));
-  schulter.add(setze(teil(new THREE.TorusGeometry(0.0755, 0.004, 6, 20), 0xdedad0, { umriss: false }), 0, -0.149, 0, Math.PI / 2, 0, 0));
+  schulter.add(teil(lathe([[0.056, -0.275], [0.063, -0.25], [0.072, -0.17], [0.076, -0.09], [0.072, -0.03], [0.056, 0]]), 0, ARMUMRISS));
+  schulter.add(setze(teil(new THREE.CylinderGeometry(0.082, 0.086, 0.15, 18), F.SHIRT, { umriss: 0.003 }), 0, -0.075, 0));
+  schulter.add(setze(teil(new THREE.TorusGeometry(0.0865, 0.004, 6, 20), 0xdedad0, { umriss: false }), 0, -0.149, 0, Math.PI / 2, 0, 0));
   const ellbogen = new THREE.Group();
   ellbogen.position.y = -0.27;
-  ellbogen.add(teil(new THREE.SphereGeometry(0.054, 14, 12), 0, ARMUMRISS));
+  ellbogen.add(teil(new THREE.SphereGeometry(0.063, 14, 12), 0, ARMUMRISS));
   // Unterarm: dick unter dem Ellbogen, zum Handgelenk schmal, mit Adern
-  ellbogen.add(teil(lathe([[0.035, -0.255], [0.039, -0.2], [0.049, -0.12], [0.056, -0.05], [0.054, -0.01], [0.048, 0]]), 0, ARMUMRISS));
+  ellbogen.add(teil(lathe([[0.043, -0.255], [0.05, -0.2], [0.063, -0.12], [0.071, -0.05], [0.069, -0.01], [0.06, 0]]), 0, ARMUMRISS));
   const { hand, finger } = baueHand(seite, F.HAUT);
   hand.position.y = -0.25;
   if (seite < 0) {
@@ -382,7 +382,7 @@ export function torbenErweitern(c) {
   // ---------- Werkzeugtasche: schwarz mit gelben Details, groß und rund, flacher Riemen über die Schulter, wippt beim Gehen ----------
   // Schulterpartie: flacher Übergang vom Hals zu den Armen (keine Kugelschultern)
   const joch = teil(new THREE.SphereGeometry(1, 24, 14), F.SHIRT, { umriss: 0.003 });
-  joch.scale.set(0.232, 0.066 * KY, 0.092);
+  joch.scale.set(0.262, 0.07 * KY, 0.096);
   joch.position.set(0, 0.672 * KY, -0.002);
   rumpf.add(joch);
   {

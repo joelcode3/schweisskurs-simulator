@@ -168,9 +168,9 @@ export function baueJonny(scene, opts = {}) {
     y /= KY;
     if (A.vform) {
       // Torben: schmale Taille, breite Brust, breite Schultern (V-Form), Schulterkuppe läuft zum kurzen Hals
-      const r = 0.232 + plus;
+      const r = 0.262 + plus;
       if (y > 0.52) return r * Math.sqrt(Math.max(0, 1 - ((y - 0.52) / 0.235) ** 2));
-      return 0.158 + plus + (0.232 - 0.158) * glatt(0.0, 0.5, y);
+      return 0.158 + plus + (0.262 - 0.158) * glatt(0.0, 0.5, y);
     }
     const r = 0.19 * BR + plus;
     if (y > 0.56) return r * Math.sqrt(Math.max(0, 1 - ((y - 0.56) / r) ** 2));
