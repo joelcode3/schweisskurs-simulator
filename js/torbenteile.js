@@ -307,22 +307,32 @@ export function torbenErweitern(c) {
     hf.add(t);
   }
 
-  // ---------- Gürtel: schwarz, goldene Schnalle ----------
-  rumpf.add(teil(huelle(0.024, 0.018, -0.07, 0.035, null, 48, 4), 0, { material: toon(0x131417, { side: THREE.DoubleSide }), umriss: 0.002 }));
-  const sn = aufHuelle(0.024, 0.018, 0, -0.018, 0.012);
+  // ---------- Gürtel: schwarz, goldene Schnalle; darunter der Hosenbund, darüber nur das Shirt ----------
   {
-    const d = zylinder(0.042, 0.042, 0.012, GOLD, { umriss: 0.002 }, 20);
-    d.position.copy(sn.p);
-    d.rotation.order = 'YXZ';
-    d.rotation.set(Math.PI / 2, sn.rot, 0);
+    const rx = R(0.0, 0.034), rz = rx * T(0.0) + 0.026;
+    const ring = (h, f, plus, y, farbe, umr) => {
+      const m = teil(new THREE.CylinderGeometry(1, 1, h, 48, 1, true), 0, { material: toon(farbe, { side: THREE.DoubleSide }), umriss: umr });
+      m.scale.set(rx + plus, 1, rz + plus);
+      m.position.y = y;
+      return m;
+    };
+    rumpf.add(ring(0.09, 0, 0.0, -0.075, F.HOSE, 0.002));          // Hosenbund
+    rumpf.add(ring(0.052, 0, 0.004, -0.005, 0x131417, 0.003));     // Gürtel
+    // dünne Naht oben und unten am Gürtel
+    for (const y of [0.019, -0.029]) rumpf.add(ring(0.003, 0, 0.0055, y, 0x2a2b30, false));
+    // Schnalle vorne: rund, gold, mit dunklem Dorn
+    const sy = -0.005, sz = rz + 0.004 + 0.005;
+    const d = zylinder(0.036, 0.036, 0.01, GOLD, { umriss: 0.002 }, 24);
+    d.rotation.x = Math.PI / 2; d.position.set(0, sy, sz);
     rumpf.add(d);
-  }
-  {
-    const d = zylinder(0.03, 0.03, 0.014, 0x8a6a2a, noUmr, 20);
-    d.position.copy(sn.p);
-    d.rotation.order = 'YXZ';
-    d.rotation.set(Math.PI / 2, sn.rot, 0);
-    rumpf.add(d);
+    const d2 = zylinder(0.025, 0.025, 0.012, 0x8a6a2a, noUmr, 24);
+    d2.rotation.x = Math.PI / 2; d2.position.set(0, sy, sz + 0.001);
+    rumpf.add(d2);
+    // Gürtelschlaufen an der Hose
+    for (const x of [-0.12, 0.12, -0.065, 0.065]) {
+      const th = Math.asin(Math.min(0.99, x / rx));
+      rumpf.add(setze(quader(0.014, 0.06, 0.008, 0x8a6034, noUmr), (rx + 0.003) * Math.sin(th), -0.07, (rz + 0.003) * Math.cos(th), 0, th, 0));
+    }
   }
   // T-Shirt-Halsbündchen
   rumpf.add(setze(teil(new THREE.TorusGeometry(0.083, 0.011, 6, 22), 0xe6e1d4, noUmr), 0, 0.738 * KY, -0.004, Math.PI / 2, 0, 0));
@@ -336,13 +346,13 @@ export function torbenErweitern(c) {
   // Stoppeln: dunkle Punkte auf einem dünnen Kugelstück über Kinn und Kieferlinie (kein dicker Bart), Mund und Oberlippe bleiben frei
   {
     const tex = leinwandTextur(256, 128, (g, b, h) => {
-      for (let i = 0; i < 9000; i++) {
+      for (let i = 0; i < 3600; i++) {
         const x = rnd() * b, y = rnd() * h, u = x / b, v = y / h;
         const mitte = Math.abs(u - 0.5);
         // Dichte: unten (Kinn, Kiefer) hoch, oben (Wangen) und um den Mund niedrig
         let dichte = Math.min(1, 0.25 + v * 0.9) * Math.min(1, 1.9 - mitte * 2.2);
         if (mitte < 0.13 && v > 0.28 && v < 0.62) dichte = 0; // Mund und Lippen
-        if (mitte < 0.2 && v < 0.3) dichte *= 0.55; // über der Oberlippe nur wenig
+        if (mitte < 0.2 && v < 0.3) dichte = 0; // Oberlippe: nur der Schnurrbart
         if (rnd() > dichte * 0.85) continue;
         g.fillStyle = rnd() < 0.7 ? 'rgba(70,48,34,0.95)' : 'rgba(110,78,52,0.9)';
         g.fillRect(x, y, 1.6, 1.6);
@@ -352,6 +362,15 @@ export function torbenErweitern(c) {
     stoppel.scale.set(0.985, 1.125, 0.985);
     stoppel.position.set(0, 0.12, 0);
     kopf.add(stoppel);
+    // kleiner, dünner Schnurrbart in Haarfarbe
+    const sbMat = toon(F.HAAR);
+    for (const sx of [-1, 1]) {
+      const h = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), sbMat);
+      h.scale.set(0.026, 0.0065, 0.0105);
+      h.position.set(sx * 0.0225, 0.0535, 0.1665);
+      h.rotation.set(0.1, sx * 0.3, sx * 0.28);
+      kopf.add(h);
+    }
     kopf.scale.setScalar(0.94);
     // Augen: schwarze Pupillen, dunkle Oberlider (entschlossener Blick)
     for (const x of [-0.06, 0.06]) {
@@ -400,12 +419,12 @@ export function torbenErweitern(c) {
       if (n.dot(d) > 0) n.negate();
       return { p: rumpf.worldToLocal(h.point.clone()), n };
     };
-    const lin = [[-0.19, 0.34], [-0.12, 0.42], [-0.04, 0.5], [0.03, 0.57], [0.085, 0.63], [0.115, 0.67]];
+    const lin = [[-0.2, 0.32], [-0.13, 0.4], [-0.05, 0.49], [0.03, 0.57], [0.1, 0.63], [0.15, 0.665]];
     const treffer = [];
     for (const [x, y] of lin) { const h = schnitt(new THREE.Vector3(x, y * KY, 1), new THREE.Vector3(0, 0, -1)); if (h) treffer.push(h); }
-    for (const z of [0.06, 0.03, 0, -0.03, -0.06]) { const h = schnitt(new THREE.Vector3(0.125, 1.4, z), new THREE.Vector3(0, -1, 0)); if (h) treffer.push(h); }
+    for (const z of [0.06, 0.03, 0, -0.03, -0.06]) { const h = schnitt(new THREE.Vector3(0.165, 1.4, z), new THREE.Vector3(0, -1, 0)); if (h) treffer.push(h); }
     for (const [x, y] of lin.slice().reverse()) { const h = schnitt(new THREE.Vector3(x, y * KY, -1), new THREE.Vector3(0, 0, 1)); if (h) treffer.push(h); }
-    const OFF = 0.009;
+    const OFF = 0.017;
     const kurve = new THREE.CatmullRomCurve3(treffer.map((h) => h.p.clone().addScaledVector(h.n, OFF)));
     const N = 110, pts = kurve.getSpacedPoints(N);
     const nrm = (t) => { const f = t * (treffer.length - 1), i0 = Math.floor(f), i1 = Math.min(treffer.length - 1, i0 + 1); return treffer[i0].n.clone().lerp(treffer[i1].n, f - i0).normalize(); };
@@ -414,8 +433,8 @@ export function torbenErweitern(c) {
       const P = pts[i], Tg = pts[Math.min(N, i + 1)].clone().sub(pts[Math.max(0, i - 1)]).normalize();
       const Nn = nrm(i / N);
       const Bn = new THREE.Vector3().crossVectors(Tg, Nn).normalize();
-      const t = i / N, w = 0.028 + 0.012 * Math.exp(-(((t - 0.5) / 0.1) ** 2));
-      const Q = P.clone().addScaledVector(Nn, 0.0015), Q2 = P.clone().addScaledVector(Nn, 0.004);
+      const t = i / N, w = 0.026 + 0.01 * Math.exp(-(((t - 0.5) / 0.12) ** 2));
+      const Q = P.clone().addScaledVector(Nn, 0.0015), Q2 = P.clone().addScaledVector(Nn, 0.0035);
       pos.push(Q.x + Bn.x * w, Q.y + Bn.y * w, Q.z + Bn.z * w, Q.x - Bn.x * w, Q.y - Bn.y * w, Q.z - Bn.z * w);
       pos2.push(Q2.x + Bn.x * 0.0038, Q2.y + Bn.y * 0.0038, Q2.z + Bn.z * 0.0038, Q2.x - Bn.x * 0.0038, Q2.y - Bn.y * 0.0038, Q2.z - Bn.z * 0.0038);
       if (i < N) { const a0 = i * 2; idx.push(a0, a0 + 1, a0 + 2, a0 + 1, a0 + 3, a0 + 2); }
