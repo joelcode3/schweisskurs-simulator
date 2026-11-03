@@ -54,7 +54,7 @@
 
 ## Dateien
 - `index.html`, `css/style.css`
-- `js/main.js` Einstieg · `js/world.js` Werkstatt + Gasflasche · `js/draussen.js` Hof · `js/carport.js` Wohnwagen/Benz · `js/fahrzeuge.js` + `js/fahrten.js` Fahren · `js/landschaft.js` Landschaft · `js/jonny.js` Jonny · `js/waldo.js` Waldo · `js/torben.js` Torben · `js/kumpels.js` Platzhalter-Kumpels · `js/dennis.js` 3D-Dennis · `js/wege.js` Wegfindung der Figuren (Türen, um Werkstatt/Bad herum; in jedem gehZu)
+- `js/main.js` Einstieg · `js/world.js` Werkstatt + Gasflasche · `js/draussen.js` Hof · `js/carport.js` Wohnwagen/Benz · `js/fahrzeuge.js` + `js/fahrten.js` Fahren · `js/landschaft.js` Landschaft · `js/jonny.js` Jonny · `js/waldo.js` Waldo · `js/torben.js` Torben · `js/kumpels.js` Platzhalter-Kumpels · `js/torbenteile.js` Torben-Teile · `js/david.js` + `js/davidteile.js` David und Hund Coco · `js/dennis.js` 3D-Dennis · `js/wege.js` Wegfindung der Figuren (Türen, um Werkstatt/Bad herum; in jedem gehZu)
 - `js/steuerung.js` Kamera/Gehen/Klicks · `js/spiel.js` Ablauf, Fehler, Texte, Note
 - `js/minispiele.js` Schneiden, Schweißen, Schlacke · `js/clips.js` Dennis-Auftritte + Archiv
 - `js/testmenue.js` Testmenü (`?test`) · `js/hand.js` Dinge in der Hand (Haltung, Ablegen, Werfen mit Physik) · `js/ui.js` HUD/Dialoge · `js/audio.js` Geräusche (live erzeugt) · `js/gesicht.js` Comic-Gesicht + Icons
@@ -77,7 +77,7 @@
 - Alle Dennis-Sätze stehen in `js/texte.js` (IDs = Dateinamen der Aufnahmen), `spiel.js` nutzt nur diese.
 - `stimme/stimme.json` + `stimme/<id>.mp3`: Aufnahmen pro Satz, Mund bewegt sich nach Lautstärke.
   Pflege mit `node tools/stimme.mjs liste|eintragen`, siehe `stimme/LIESMICH.md`.
-- Die Jungs sprechen ALLE Sätze ein. Dateinamen kurz: dennis1 … dennis501 (498–501 Torben wirft, 491–497 Torben-Unfall, 489–490 Pömpel gespritzt, 487–488 Gurte geworfen, 485–486 Flaschen räumen, 483–484 Bierflasche werfen, 469–475 Spanngurt, 476–478 Paletten, 479–482 Hofladen), jonny1 … jonny56, waldo1 … waldo41, torben1 … torben31 (25–31 wütet/isst), kumpel1 … kumpel7 (KUMPEL) (Endung
+- Die Jungs sprechen ALLE Sätze ein. Dateinamen kurz: dennis1 … dennis504 (502–504 David, 498–501 Torben wirft, 491–497 Torben-Unfall, 489–490 Pömpel gespritzt, 487–488 Gurte geworfen, 485–486 Flaschen räumen, 483–484 Bierflasche werfen, 469–475 Spanngurt, 476–478 Paletten, 479–482 Hofladen), jonny1 … jonny56, waldo1 … waldo41, torben1 … torben31 (25–31 wütet/isst), kumpel1 … kumpel7 (KUMPEL), david1 … david18 (DAVID) (Endung
   .mp3/.m4a/.wav, Groß-/Kleinschreibung egal). Zuordnung Kurzname -> Satz-ID steht in stimme/zuordnung.csv (vom Projektchat).
   Nummern sind fest und verschieben sich NIE; neue Sätze bekommen die nächste freie Nummer (dennis367 …) und eine neue Zeile.
   Schlüssel in texte.js NIE umbenennen, neue Sätze nur ergänzen. IDs: Dennis wie alleSaetze(), telefon.G.Z = Gespräch G,
@@ -87,8 +87,8 @@
 - KI-Stimmklon ist in dieser Umgebung nicht möglich (huggingface.co gesperrt). Stimmproben nie ins Repo (öffentlich).
 
 ## Stand der Pull Requests (1.11.2026)
-- Alles bis #65 gemergt. Offen: #66 F1 Torben neu. Neue Zweige immer von `origin/main`.
-- Versionsnummer zuletzt `v=20261103-35`.
-- Nächste freie Satz-Nummern (aus stimme/zuordnung.csv): dennis502, jonny58, waldo43, torben32, kumpel8.
+- Alles bis #66 gemergt. In Arbeit: F3 David (Zweig claude/f3-david). Neue Zweige immer von `origin/main`.
+- Versionsnummer zuletzt `v=20261103-37`.
+- Nächste freie Satz-Nummern (aus stimme/zuordnung.csv): dennis505, jonny58, waldo43, torben32, kumpel8, david19.
 - Projektchat-Session: `session_0136ircvAvU3aCzRamNp3F96` (1.11.; die alte ID `session_01KZ18oujuEFnsAskwuMiw8Y` oben ist veraltet).
 - Offene Fäden und Ungetestetes: `docs/details.md`, Abschnitt „Offene Fäden und Ungetestetes“ (zuerst lesen, wenn ein neuer Chat startet).

@@ -368,6 +368,8 @@ export function baueCoco(scene) {
         const sx = Math.sin(f.rotation.y), sz = Math.cos(f.rotation.y);
         ziel = new THREE.Vector3(f.position.x - sx * 0.7 + sz * 0.5, 0, f.position.z - sz * 0.7 - sx * 0.5);
         tempo = folgt.geht ? 1.6 : 1.2;
+        // zu weit weg (z. B. David wurde versetzt): Coco springt hinterher
+        if (wurzel.position.distanceTo(ziel) > 6) wurzel.position.copy(ziel);
       }
       let geht = false;
       if (ziel) {

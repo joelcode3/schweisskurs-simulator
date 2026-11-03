@@ -1360,6 +1360,11 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   const dv = { da: false, beschaeftigt: false, mitCoco: false, naechsterBesuch: 260 + Math.random() * 200, bisWeg: 0, naechsteAktion: 0, tischGefragt: 0, gassiAb: 0 };
   const david = kumpels.alle.david;
   const coco = kumpels.coco;
+  // hinlaufen; kommt er (langsames Gerät, verlaufen) nicht an, steht er danach direkt dort
+  async function davidHin(x, zz, tempo = 1.1) {
+    await Promise.race([david.gehZu(x, zz, tempo), warte(12000)]);
+    if (Math.hypot(david.wurzel.position.x - x, david.wurzel.position.z - zz) > 0.4) { david.halt?.(); david.wurzel.position.set(x, 0, zz); }
+  }
   const davidFrei = () => dv.da && !dv.beschaeftigt && !(sd.id === 'david' && (sd.kumpelDa || sd.unterwegs));
   async function davidKommt(mitCoco = Math.random() < 0.5) {
     if (dv.da || (sd.id === 'david' && sd.kumpelDa)) return false;
@@ -1368,7 +1373,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     const von = Math.random() < 0.5 ? 'hinten' : 'feldweg';
     if (mitCoco) { const w = [...DRAUSSEN.wege[von]].reverse()[0]; coco.wurzel.position.set(w.x + 0.6, 0, w.z + 0.4); coco.sichtbar(true); }
     await reinkommen(david, von);
-    await Promise.race([david.gehZu(-1.6, 1.4, 1.1), warte(10000)]);
+    await davidHin(-1.6, 1.4);
     david.dreheZu(kamera.position);
     ui.davidSagt(sag(mitCoco ? DAVID.hallo : DAVID.halloOhneHund));
     const t = sekundenSeitStart();
@@ -1409,14 +1414,14 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     // nur wenn sie an der Wand hängt (nicht beim Spieler, nicht woanders) und er nichts anderes in der Hand hat
     if (!davidFrei() || david.hatRohrzange || !zange.parent || zange.position.distanceTo(zange.userData.wand.pos) > 0.05) return false;
     dv.beschaeftigt = true;
-    await Promise.race([david.gehZu(ZANGE_PLATZ.x, ZANGE_PLATZ.z, 1.1), warte(12000)]);
+    await davidHin(ZANGE_PLATZ.x, ZANGE_PLATZ.z);
     david.wurzel.rotation.y = Math.PI;
     await david.zangeWand();
     // noch da? (Spieler könnte sie inzwischen genommen haben)
     if (zange.parent && hand.item?.obj !== zange) { zange.visible = false; david.rohrzange(true); ui.davidSagt(sag(DAVID.zange), 3500); }
     else { dv.beschaeftigt = false; return false; }
     await david.zangeAnsehen(2600);
-    await Promise.race([david.gehZu(0.2, -1.5, 1.0), warte(8000)]);
+    await davidHin(0.2, -1.5, 1.0);
     await warte(4000);
     await davidZangeZurueck();
     dv.beschaeftigt = false;
@@ -1424,7 +1429,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   }
   async function davidZangeZurueck() {
     if (!david.hatRohrzange) return;
-    await Promise.race([david.gehZu(ZANGE_PLATZ.x, ZANGE_PLATZ.z, 1.1), warte(12000)]);
+    await davidHin(ZANGE_PLATZ.x, ZANGE_PLATZ.z);
     david.wurzel.rotation.y = Math.PI;
     await david.zangeWand();
     david.rohrzange(false);
@@ -1437,7 +1442,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     if (!davidFrei() || z.feuer === 'brennt' || hand.item?.id === 'feuerloescher') return false;
     dv.beschaeftigt = true;
     const L = welt.objekte.feuerloescher.position;
-    await Promise.race([david.gehZu(L.x - 0.65, L.z, 1.1), warte(12000)]);
+    await davidHin(L.x - 0.65, L.z);
     david.dreheZu(L);
     await david.loescherPruefen(3200);
     ui.davidSagt(sag(DAVID.tuev), 5000);
@@ -1450,7 +1455,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   async function davidTischgestell() {
     if (!davidFrei() || !dennis.wurzel.visible || dennis.modus !== 'normal') return false;
     dv.beschaeftigt = true;
-    await Promise.race([david.gehZu(dennis.position.x + 0.9, dennis.position.z + 0.4, 1.1), warte(12000)]);
+    await davidHin(dennis.position.x + 0.9, dennis.position.z + 0.4);
     david.dreheZu(dennis.position);
     ui.davidSagt(sag(DAVID.tisch), 5000);
     await warte(3000);
@@ -1466,7 +1471,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     dv.beschaeftigt = true; jz.beschaeftigt = true;
     ui.davidSagt(sag(DAVID.rauchen), 3500);
     // beide zur Tor-Ecke (dort raucht Jonny sonst auch)
-    await Promise.all([Promise.race([david.gehZu(0.0, 2.7, 1.1), warte(12000)]), Promise.race([jonny.gehZu(0.6, 3.15, 1.1), warte(12000)])]);
+    await Promise.all([davidHin(0.0, 2.7), Promise.race([jonny.gehZu(0.6, 3.15, 1.1), warte(12000)])]);
     david.dreheZu(jonny.position); jonny.dreheZu(david.position);
     await david.drehen();
     david.rauchen(true); jonny.rauchen(true); z.jonnyRaucht = true;

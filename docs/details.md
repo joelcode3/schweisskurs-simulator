@@ -589,6 +589,19 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   (Menü), auf Torben klicken, Minispiel `fingerSpiel` (abtupfen, drücken, Verband wickeln). Sonst verbindet Dennis ihn (Wut +10).
   Danach 70 s Torben auf dem Sofa, ab dann dauerhaft weißer Verband an der rechten Hand (`torbenVerbandAn`). Der Träger bleibt liegen.
 
+- F3 David (3.11., Vorschau): js/david.js (Parameter), js/davidteile.js (Hoodie, Hose, Stiefel, Kopf, Haltungen, Hund Coco),
+  Abläufe in spiel.js Abschnitt „F3: David“ (`dv`, davidKommt/Geht/Gassi/Rohrzange/Loescher/Tischgestell/RauchtMitJonny). David ist
+  weiterhin in kumpels.js (Spüldienst-Kumpel); kommt er als Spüldienst, gibt es keinen David-Besuch gleichzeitig und umgekehrt.
+  Jonas hat noch keine eigene Figur: Rauchen nur mit Jonny. Testmenü T86–T93.
+  SOLL-LISTE David (bei jeder Änderung komplett gegen Screenshots vorne/seitlich/hinten prüfen):
+  1. Größe wie Jonny, schlank, normale Proportionen.
+  2. Haare: oben hellblond und etwas länger, nach vorn/rechts gestylt; Seiten und Hinterkopf kurz und dunkler blond.
+  3. Blonde Stoppeln nur am Kinn und über dem Mund (kein Vollbart), schmale helle Brauen, blaue Augen, schiefes Grinsen.
+  4. Silberkette am Hals, Ring rechts, goldene Uhr links.
+  5. Grauer Hoodie: Kapuze hinten, Kordeln mit Metallösen, Bauchtasche, Bündchen an Hüfte und Handgelenken.
+  6. Lange schwarze Zimmererhose mit Knietaschen und Beintaschen (rechts Zollstock).
+  7. Dicke schwarze Arbeitsstiefel mit Schnürung und Profilsohle.
+  8. Coco: schwarzer Labrador mit rotem Halsband, folgt David, wedelt.
 - F1 Torben neu (3.11., Vorschau): neue Figur nach Fotos des Betreibers, Aussehen/Teile in js/torben.js (Parameter) und js/torbenteile.js
   (lange Hose, Gürtel, Werkzeugtasche, Spaghetti, Wurf); jonny.js bekommt dafür optionale Parameter (`aussehen.torben`, `groesse`,
   `torso`, `hueft`, `vform`, `tshirt`, `weste:false` ...), Jonny/Waldo/Kumpels bleiben unverändert. Größe ca. 56 %, kürzerer Oberkörper,
@@ -601,7 +614,7 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   aus (`posenSperre`). Sätze: TORBEN.wut (torben25-29), TORBEN.essen (torben30-31), DENNIS.torbenWirft (dennis498-501).
 - Testmenü (1.11.): `?test` an die Adresse hängen (https://joelcode3.github.io/schweisskurs-simulator/?test), nach „Kurs starten“
   erscheint rechts das Menü (einklappbar, Gruppen aufklappbar). Unter Pointer-Lock erst Rechtsklick (Cursor), dann klicken.
-  Jeder Eintrag hat eine FESTE Nummer (T01 …), die sich nie verschiebt; neue Einträge bekommen die nächste freie Nummer (zuletzt T85).
+  Jeder Eintrag hat eine FESTE Nummer (T01 …), die sich nie verschiebt; neue Einträge bekommen die nächste freie Nummer (zuletzt T93).
   Ofen-Bau „Stand springen“ setzt den Stand VOR dem Schritt
   (alles davor erledigt, Flasche am Platz, man steht dort); der Schritt wird dann normal im Spiel gemacht.
   Status (1.11.): GRÜN = läuft gerade (Ereignis/Nebenaufgabe aktiv oder Minispiel offen, auch wenn im Spiel gestartet; dazu alles,
@@ -696,6 +709,14 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   T83 | Ereignisse | Torben wirft Flasche
   T84 | Ereignisse | Torben wirft Spaghetti
   T85 | Ereignisse | Torben isst Spaghetti
+  T86 | Ereignisse | David kommt (ohne Coco)
+  T87 | Ereignisse | David kommt mit Coco
+  T88 | Ereignisse | David nimmt die Rohrzange
+  T89 | Ereignisse | David prüft den Feuerlöscher
+  T90 | Ereignisse | David fragt nach Tischgestell
+  T91 | Ereignisse | David raucht mit Jonny
+  T92 | Ereignisse | David geht mit Coco Gassi
+  T93 | Ereignisse | David geht wieder
 
 ## Offene Fäden und Ungetestetes (Übergabe 1.11.2026)
 - Ausraster-Videos: #54 (frisches Video-Element, bis zu 6 Versuche, canplay) ist nur eine Absicherung. Die Ursache ist unklar, im Test lief
