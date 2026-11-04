@@ -87,7 +87,7 @@
 - KI-Stimmklon ist in dieser Umgebung nicht möglich (huggingface.co gesperrt). Stimmproben nie ins Repo (öffentlich).
 
 ## Stand der Pull Requests (1.11.2026)
-- Alles bis #66 gemergt. In Arbeit: F3 David (Zweig claude/f3-david). Neue Zweige immer von `origin/main`.
+- Alles bis #66 gemergt. Offen: #67 F3 David. Neue Zweige immer von `origin/main`.
 - Versionsnummer zuletzt `v=20261104-12`.
 - Nächste freie Satz-Nummern (aus stimme/zuordnung.csv): dennis505, jonny58, waldo43, torben32, kumpel8, david19.
 - Projektchat-Session: `session_0136ircvAvU3aCzRamNp3F96` (1.11.; die alte ID `session_01KZ18oujuEFnsAskwuMiw8Y` oben ist veraltet).
