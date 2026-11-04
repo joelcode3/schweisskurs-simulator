@@ -148,7 +148,7 @@ const FINGER = [ // Zeigefinger (neben dem Daumen) bis kleiner Finger: x, Radius
   { x: -0.032, r: 0.0122, l: [0.024, 0.016, 0.015] },
 ];
 
-export function baueHand(seite, haut) {
+export function baueHand(seite, haut, detail = false) {
   const hand = new THREE.Group();
   const U = { umriss: 0.0022 };
   const kugelS = (rx, ry, rz, x, y, z) => { const m = teil(new THREE.SphereGeometry(1, 16, 12), haut, U); m.scale.set(rx, ry, rz); m.position.set(x, y, z); return m; };
@@ -166,6 +166,14 @@ export function baueHand(seite, haut) {
     const k = new THREE.CatmullRomCurve3([[x0 * seite, -0.088, -0.0225], [x0 * 0.7 * seite, -0.06, -0.0262], [x1 * seite, -0.022, -0.0245]].map(([x, y, z]) => new THREE.Vector3(x, y, z)));
     flach.add(new THREE.Mesh(new THREE.TubeGeometry(k, 10, 0.0021, 4, false), toon(0x8f9cb2)));
   }
+  if (detail) {
+    // Sehnen auf dem Handrücken zu jedem Finger, Knöchel etwas betont
+    for (const f of FINGER) {
+      const k = new THREE.CatmullRomCurve3([[f.x * 0.55 * seite, -0.02, -0.024], [f.x * 0.85 * seite, -0.06, -0.027], [f.x * seite, -0.088, -0.024]].map(([x, y, z]) => new THREE.Vector3(x, y, z)));
+      flach.add(teil(new THREE.TubeGeometry(k, 10, 0.0032, 5, false), haut, { umriss: false }));
+      flach.add(setze(kugel(f.r * 0.7, 0xd9a088, { umriss: false }, 8), f.x * seite, -0.094, -f.r * 0.85));
+    }
+  }
   const segs = []; // [Gruppe, Basisbeugung, Faktor]
   const fingerGr = new THREE.Group();
   hand.add(fingerGr);
@@ -182,10 +190,27 @@ export function baueHand(seite, haut) {
       if (i) g.position.y = -f.l[i - 1] * 0.95;
       g.add(setze(teil(new THREE.CapsuleGeometry(r, L, 4, 10), haut, U), 0, -L / 2, 0));
       g.add(kugel(r * 1.03, haut, { umriss: false }, 8)); // Gelenkkugel: keine Lücke beim Beugen
+      if (detail) {
+        // Knöchelfalten auf dem Fingerrücken (zwei feine Bögen) und rosige Fingerkuppe
+        const faltMat = toon(0xb98670);
+        for (const dy of [-0.003, 0.004]) {
+          const f = new THREE.Mesh(new THREE.TorusGeometry(r * 0.75, 0.0011, 3, 10, Math.PI * 0.7), faltMat);
+          f.position.set(0, dy, -r * 0.82); f.rotation.set(0, 0, Math.PI * 0.15 + Math.PI);
+          f.rotation.x = 0.2;
+          g.add(f);
+        }
+        if (i === 2) g.add(setze(kugel(r * 0.9, 0xeaa892, { umriss: false }, 8), 0, -L * 0.85, r * 0.25));
+      }
       if (i === 2) {
         const n = teil(new THREE.SphereGeometry(1, 8, 6), nagelFarbe, { umriss: false });
         n.scale.set(r * 0.78, L * 0.5, 0.0035); n.position.set(0, -L * 0.62, -r * 0.9);
         g.add(n);
+        if (detail) {
+          // Nagel etwas größer, mit hellem Nagelmond und weißem Rand
+          n.scale.set(r * 0.85, L * 0.58, 0.004);
+          g.add(setze(teil(new THREE.CircleGeometry(r * 0.35, 10, 0, Math.PI), 0xfaece4, { umriss: false }), 0, -L * 0.42, -r * 0.95, 0, Math.PI, Math.PI));
+          g.add(setze(quader(r * 1.3, 0.0022, 0.002, 0xfdf6ef, { umriss: false }), 0, -L * 0.9, -r * 0.88));
+        }
       }
       gruppen.push(g);
       eltern = g;

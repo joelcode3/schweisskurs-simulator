@@ -173,6 +173,8 @@ export function baueJonny(scene, opts = {}) {
       return 0.176 + plus + (0.262 - 0.176) * glatt(0.0, 0.5, y);
     }
     const r = 0.19 * BR + plus;
+    // flache Schultern (David): Schulterlinie eckiger statt Halbkreis
+    if (y > 0.56 && A.schulterFlach) return r * Math.pow(Math.max(0, 1 - Math.abs((y - 0.56) / r) ** 3.2), 1 / 3.2);
     if (y > 0.56) return r * Math.sqrt(Math.max(0, 1 - ((y - 0.56) / r) ** 2));
     return 0.165 * BR + plus + (0.19 - 0.165) * BR * glatt(0.1, 0.45, y);
   }
