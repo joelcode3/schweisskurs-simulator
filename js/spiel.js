@@ -9,7 +9,7 @@ import { auftritt, hatClip, buehneBelegt } from './clips.js';
 import { pfadSpiel, schlackeSpiel, hulaSpiel, DENNIS_HULA_REKORD, ventilSpiel, spuelSpiel, anzeichnenSpiel, lackierSpiel, bitsatzSpiel, akkuschrauberSpiel, siebSpiel, kaffeeSpiel, rohrSpiel, leiterSpiel, spanngurtSpiel, pumpeSpiel, poempelSpiel, fingerSpiel } from './minispiele.js';
 import { bierAuf, blip, kratzen, jingle, klonk as klonkRoh, brummeln, dauer as dauerTon, technoAn, technoAus, technoBeat, klospuelung, mampfen, klick as schalterKlick, stimmeAbspielen, stimmenVorladen, husten, gertenKlatsch } from './audio.js';
 import * as ui from './ui.js';
-import { DENNIS, JONNY, WALDO, TORBEN, KUMPEL, satzId } from './texte.js';
+import { DENNIS, JONNY, WALDO, TORBEN, KUMPEL, satzId, DAVID } from './texte.js';
 import { SYMBOL } from './gesicht.js';
 import { baueFahrten } from './fahrten.js';
 
@@ -1354,6 +1354,148 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   }
   const zufallsZiel = () => ['hinten', 'feldweg', 'terrasse'][Math.floor(Math.random() * 3)];
 
+  // ---------- F3: David (Zimmerer) mit Hund Coco ----------
+  // Kommt ab und zu vorbei (manchmal mit Coco), nimmt die Rohrzange von der Wand und hängt sie zurück, prüft den Feuerlöscher
+  // (TÜV abgelaufen), fragt Dennis nach dem Wochenende (Tischgestell), raucht mit Jonny eine selbstgedrehte, geht mit Coco Gassi.
+  const dv = { da: false, beschaeftigt: false, mitCoco: false, naechsterBesuch: 260 + Math.random() * 200, bisWeg: 0, naechsteAktion: 0, tischGefragt: 0, gassiAb: 0 };
+  const david = kumpels.alle.david;
+  const coco = kumpels.coco;
+  // hinlaufen; kommt er (langsames Gerät, verlaufen) nicht an, steht er danach direkt dort
+  async function davidHin(x, zz, tempo = 1.1) {
+    await Promise.race([david.gehZu(x, zz, tempo), warte(12000)]);
+    if (Math.hypot(david.wurzel.position.x - x, david.wurzel.position.z - zz) > 0.4) { david.halt?.(); david.wurzel.position.set(x, 0, zz); }
+  }
+  const davidFrei = () => dv.da && !dv.beschaeftigt && !(sd.id === 'david' && (sd.kumpelDa || sd.unterwegs));
+  async function davidKommt(mitCoco = Math.random() < 0.5) {
+    if (dv.da || (sd.id === 'david' && sd.kumpelDa)) return false;
+    dv.da = true; dv.beschaeftigt = true; dv.mitCoco = mitCoco;
+    david.halt?.();
+    const von = Math.random() < 0.5 ? 'hinten' : 'feldweg';
+    if (mitCoco) { const w = [...DRAUSSEN.wege[von]].reverse()[0]; coco.wurzel.position.set(w.x + 0.6, 0, w.z + 0.4); coco.sichtbar(true); }
+    await reinkommen(david, von);
+    await davidHin(-1.6, 1.4);
+    david.dreheZu(kamera.position);
+    ui.davidSagt(sag(mitCoco ? DAVID.hallo : DAVID.halloOhneHund));
+    const t = sekundenSeitStart();
+    dv.bisWeg = t + 150 + Math.random() * 90;
+    dv.naechsteAktion = t + 12 + Math.random() * 10;
+    dv.gassiAb = mitCoco ? t + 60 + Math.random() * 40 : Infinity;
+    dv.beschaeftigt = false;
+    return true;
+  }
+  async function davidGeht() {
+    if (!dv.da) return;
+    dv.beschaeftigt = true;
+    if (david.hatRohrzange) await davidZangeZurueck();
+    ui.davidSagt(sag(DAVID.tschuess));
+    await rausgehen(david, Math.random() < 0.5 ? 'hinten' : 'feldweg');
+    david.rauchen(false);
+    coco.sichtbar(false);
+    dv.da = false; dv.beschaeftigt = false; dv.mitCoco = false;
+    dv.naechsterBesuch = sekundenSeitStart() + 300 + Math.random() * 240;
+  }
+  // mit Coco Gassi: beide raus, nach einer Weile wieder rein
+  async function davidGassi() {
+    if (!davidFrei() || !dv.mitCoco) return false;
+    dv.beschaeftigt = true;
+    ui.davidSagt(sag(DAVID.gassi));
+    await lauf(david, [DRAUSSEN.tuerInnen, DRAUSSEN.tuerAussen, { x: 2.5, z: 9.5 }, { x: 6.5, z: 12 }], 1.0);
+    await warte(25000);
+    await lauf(david, [{ x: 2.5, z: 9.5 }, DRAUSSEN.tuerAussen, DRAUSSEN.tuerInnen, { x: -1.6, z: 1.4 }], 1.0);
+    ui.davidSagt(sag(DAVID.zurueck));
+    dv.gassiAb = Infinity;
+    dv.beschaeftigt = false;
+    return true;
+  }
+  // Rohrzange von der Wand nehmen, begutachten, ein Stück herumtragen und wieder zurückhängen (nur eine Sache in der Hand)
+  const ZANGE_PLATZ = { x: 1.32, z: -3.35 };
+  async function davidRohrzange() {
+    const zange = welt.objekte.rohrzange;
+    // nur wenn sie an der Wand hängt (nicht beim Spieler, nicht woanders) und er nichts anderes in der Hand hat
+    if (!davidFrei() || david.hatRohrzange || !zange.parent || zange.position.distanceTo(zange.userData.wand.pos) > 0.05) return false;
+    dv.beschaeftigt = true;
+    await davidHin(ZANGE_PLATZ.x, ZANGE_PLATZ.z);
+    david.wurzel.rotation.y = Math.PI;
+    await david.zangeWand();
+    // noch da? (Spieler könnte sie inzwischen genommen haben)
+    if (zange.parent && hand.item?.obj !== zange) { zange.visible = false; david.rohrzange(true); ui.davidSagt(sag(DAVID.zange), 3500); }
+    else { dv.beschaeftigt = false; return false; }
+    await david.zangeAnsehen(2600);
+    await davidHin(0.2, -1.5, 1.0);
+    await warte(4000);
+    await davidZangeZurueck();
+    dv.beschaeftigt = false;
+    return true;
+  }
+  async function davidZangeZurueck() {
+    if (!david.hatRohrzange) return;
+    await davidHin(ZANGE_PLATZ.x, ZANGE_PLATZ.z);
+    david.wurzel.rotation.y = Math.PI;
+    await david.zangeWand();
+    david.rohrzange(false);
+    const zange = welt.objekte.rohrzange;
+    zange.position.copy(zange.userData.wand.pos); zange.rotation.copy(zange.userData.wand.rot); zange.visible = true;
+    ui.davidSagt(sag(DAVID.zangeZurueck), 3000);
+  }
+  // Feuerlöscher prüfen: hinbeugen, Schild ansehen, meckern; Dennis wiegelt ab
+  async function davidLoescher() {
+    if (!davidFrei() || z.feuer === 'brennt' || hand.item?.id === 'feuerloescher') return false;
+    dv.beschaeftigt = true;
+    const L = welt.objekte.feuerloescher.position;
+    await davidHin(L.x - 0.65, L.z);
+    david.dreheZu(L);
+    await david.loescherPruefen(3200);
+    ui.davidSagt(sag(DAVID.tuev), 5000);
+    if (dennisSiehts()) setTimeout(() => dennisSagt(sag(DENNIS.davidTuev), false, { prio: 0 }), 3000);
+    await warte(1500);
+    dv.beschaeftigt = false;
+    return true;
+  }
+  // fragt Dennis nach dem Wochenende (Tischgestell): Dennis wird ein kleines bisschen sauer
+  async function davidTischgestell() {
+    if (!davidFrei() || !dennis.wurzel.visible || dennis.modus !== 'normal') return false;
+    dv.beschaeftigt = true;
+    await davidHin(dennis.position.x + 0.9, dennis.position.z + 0.4);
+    david.dreheZu(dennis.position);
+    ui.davidSagt(sag(DAVID.tisch), 5000);
+    await warte(3000);
+    aerger(1 + Math.round(Math.random()));
+    await dennisSagt(sag(DENNIS.davidTisch), true, { prio: 1 });
+    dv.tischGefragt++;
+    dv.beschaeftigt = false;
+    return true;
+  }
+  // raucht mit Jonny eine selbstgedrehte (Jonas hat noch keine eigene Figur: nur mit Jonny)
+  async function davidRauchtMitJonny() {
+    if (!davidFrei() || !jz.da || jz.beschaeftigt || !jonny.wurzel.visible) return false;
+    dv.beschaeftigt = true; jz.beschaeftigt = true;
+    ui.davidSagt(sag(DAVID.rauchen), 3500);
+    // beide zur Tor-Ecke (dort raucht Jonny sonst auch)
+    await Promise.all([davidHin(0.0, 2.7), Promise.race([jonny.gehZu(0.6, 3.15, 1.1), warte(12000)])]);
+    david.dreheZu(jonny.position); jonny.dreheZu(david.position);
+    await david.drehen();
+    david.rauchen(true); jonny.rauchen(true); z.jonnyRaucht = true;
+    await warte(18000);
+    david.rauchen(false); jonny.rauchen(false); z.jonnyRaucht = false;
+    jz.beschaeftigt = false;
+    jonny.heim?.();
+    dv.beschaeftigt = false;
+    return true;
+  }
+  function davidUpdate() {
+    const t = sekundenSeitStart();
+    if (z.vorbei) return;
+    if (!dv.da) { if (t > dv.naechsterBesuch && ruhigeLage() && !(sd.id === 'david' && sd.kumpelDa)) davidKommt(); return; }
+    if (!davidFrei()) return;
+    if (t > dv.bisWeg) { davidGeht(); return; }
+    if (t > dv.gassiAb) { davidGassi(); return; }
+    if (t < dv.naechsteAktion) return;
+    dv.naechsteAktion = t + 30 + Math.random() * 30;
+    const wahl = [davidRohrzange, davidLoescher, davidRauchtMitJonny];
+    if (dv.tischGefragt < 2) wahl.push(davidTischgestell);
+    wahl[Math.floor(Math.random() * wahl.length)]();
+  }
+
   // ---------- Jonny: Bier, Kitzeln, Leiter abholen, Störenfried, Sodbrennen ----------
   // Jonny ist am Anfang noch nicht da, er kommt erst nach ein, zwei Minuten (beim ersten Besuch ohne Bier)
   const jz = { da: false, ersterBesuch: true, beschaeftigt: false, biere: 0, naechstesBier: 70 + Math.random() * 50, naechstesKitzeln: 110 + Math.random() * 80,
@@ -2203,7 +2345,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   }
   // Jonas, David oder Joel (wer Spüldienst hat) kommt ab und zu kurz auf einen Kaffee vorbei
   function spueldienstUpdate() {
-    if (!kumpels || !kumpels.alle[sd.id] || sd.kumpelDa || sd.unterwegs) return;
+    if (!kumpels || !kumpels.alle[sd.id] || sd.kumpelDa || sd.unterwegs || (sd.id === 'david' && dv.da)) return;
     const t = sekundenSeitStart();
     if (t < sd.kumpelAb) return;
     sd.kumpelAb = t + 150 + Math.random() * 90;
@@ -2369,6 +2511,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   function waldoUpdate() {
     akkuUpdate();
     tassenUpdate();
+    davidUpdate();
     torbenUnfallUpdate();
     telefonUpdate();
     if (dennis.telefoniert && (dennis.modus !== 'normal' || z.beschaeftigt)) telefonAuflegen();
@@ -4175,7 +4318,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   return {
     zustand: z,
     klick,
-    test: { get z() { return z; }, OFEN_SCHRITTE, ofenStand, schutzAn, armAnpassen, setzeWut(w) { z.wut = w; aktualisieren(); }, zeitVor(sek) { z.start -= sek * 1000; }, waescheUebernehmen, kaffeeKochen, hulaHoop, einkaufen, kiwiEssen, TU, torbenUnfall, torbenVerarzten, torbenVerbandAn, spanngurtEreignis, gurteHinwerfen, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
+    test: { dv, davidKommt, davidGeht, davidGassi, davidRohrzange, davidLoescher, davidTischgestell, davidRauchtMitJonny, get z() { return z; }, OFEN_SCHRITTE, ofenStand, schutzAn, armAnpassen, setzeWut(w) { z.wut = w; aktualisieren(); }, zeitVor(sek) { z.start -= sek * 1000; }, waescheUebernehmen, kaffeeKochen, hulaHoop, einkaufen, kiwiEssen, TU, torbenUnfall, torbenVerarzten, torbenVerbandAn, spanngurtEreignis, gurteHinwerfen, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
     stationWaehlen,
     intro,
     aktualisieren,

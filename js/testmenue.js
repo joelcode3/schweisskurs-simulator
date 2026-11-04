@@ -214,6 +214,17 @@ export function baueTestMenue({ spiel, welt, kamera, fahrten, fz }) {
   torbenZeile('T84', 'Torben wirft Spaghetti', 'spaghetti');
   knopf('T85', 'Torben isst Spaghetti', () => { const w = ft.torbenHerholen?.(); if (w) return w.essen(); }, { laeuft: () => !!ft.torbenIstAm?.('isst'), sperre: () => (t.TU.zustand && t.TU.zustand !== 'fertig' ? 'Torben ist gerade im Unfall' : null) });
 
+  // F3: David (Zimmerer) mit Coco. Die Abläufe brauchen David in der Werkstatt: erst T86 oder T87.
+  const dvNichtDa = () => (!t.dv.da ? 'David ist nicht da (erst T86 oder T87)' : t.dv.beschaeftigt ? 'David ist gerade beschäftigt' : null);
+  knopf('T86', 'David kommt (ohne Coco)', () => { frei(); return t.davidKommt(false); }, { sperre: () => (t.dv.da ? 'David ist schon da' : null) });
+  knopf('T87', 'David kommt mit Coco', () => { frei(); return t.davidKommt(true); }, { sperre: () => (t.dv.da ? 'David ist schon da' : null) });
+  knopf('T88', 'David nimmt die Rohrzange', () => t.davidRohrzange(), { sperre: dvNichtDa });
+  knopf('T89', 'David prüft den Feuerlöscher', () => t.davidLoescher(), { sperre: dvNichtDa });
+  knopf('T90', 'David fragt nach Tischgestell', () => t.davidTischgestell(), { sperre: dvNichtDa });
+  knopf('T91', 'David raucht mit Jonny', () => t.davidRauchtMitJonny(), { sperre: () => dvNichtDa() || (!t.jz.da ? 'Jonny ist nicht da (erst T50)' : null) });
+  knopf('T92', 'David geht mit Coco Gassi', () => t.davidGassi(), { sperre: () => dvNichtDa() || (!t.dv.mitCoco ? 'Coco ist nicht dabei' : null) });
+  knopf('T93', 'David geht wieder', () => t.davidGeht(), { sperre: dvNichtDa });
+
   ueberschrift('Fahrzeuge');
   knopf('T78', 'Jeep entdrosseln (Torben)', () => {
     if (!fz) return;

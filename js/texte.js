@@ -366,6 +366,9 @@ export const DENNIS = {
     selbst: ['Na gut, dann verbinde ich ihn eben. Mit zitternden Händen. Danke für nix!'],
   },
   // F1: Torben rastet aus und wirft Dinge; Dennis meckert über die Sauerei (je nach Wurfobjekt)
+  // F3: Dennis reagiert auf David
+  davidTisch: ['Am Wochenende sind Schweißkurse! Wie oft denn noch?!', 'Nein! Wochenende ist Kurs. Kauf dir einen Tisch!'],
+  davidTuev: ['Ja, ja, ich kümmer mich drum. Irgendwann.'],
   torbenWirft: {
     tasse: ['Torben! Die Tasse war noch gut!'],
     werkzeug: ['Torben! Das ist Werkzeug, das wirft man nicht! Und wer räumt das jetzt wieder auf?!'],
@@ -460,6 +463,20 @@ export const TORBEN = {
   // F1: Choleriker
   wut: ['Wer hat das hier hingestellt?!', 'So eine Scheiße!', 'Ich dreh gleich durch!', 'Immer ich! Immer ich!', 'Verdammte Kacke, das gibt es doch nicht!'],
   essen: ['Mhm. Al dente.', 'Nudeln gehen immer.'],
+};
+
+// F3: David (Zimmerer, Hund Coco, dreht seine Zigaretten selbst)
+export const DAVID = {
+  hallo: ['Moin! Coco, sitz! ... Na gut, dann nicht.', 'Na, ihr Schweißer? Ich bin nur kurz da.'],
+  halloOhneHund: ['Moin zusammen!', 'Na? Läuft?'],
+  gassi: ['So, Coco muss mal. Ich geh kurz Gassi.', 'Coco! Komm, wir gehen raus.'],
+  zurueck: ['So, Coco hat ihr Geschäft gemacht.'],
+  zange: ['Gute Zange. Die nehm ich mir mal kurz.', 'Wem gehört die Rohrzange? Egal.'],
+  zangeZurueck: ['So, hängt wieder.', 'Zurück an ihren Platz. Ordnung muss sein.'],
+  tuev: ['Dennis! Der Feuerlöscher ist seit zwei Jahren nicht mehr geprüft! Das Schild ist abgelaufen!', 'TÜV abgelaufen. Na super. Wenn es brennt, sprühen wir mit Hoffnung.'],
+  tisch: ['Dennis, kann ich mir am Wochenende ein Tischgestell schweißen? Dauert auch nicht lange.', 'Sag mal, ist die Werkstatt am Wochenende frei? Ich bräuchte ein Tischgestell.'],
+  rauchen: ['Kurze Pause? Ich dreh mir eine.', 'Jonny, rauchen wir eine?'],
+  tschuess: ['So, ich muss weiter. Bis dann!'],
 };
 
 // Kumpels mit Spüldienst (Jonas, David, Joel): vorläufige Sätze, bis die Figuren eine eigene Rolle bekommen

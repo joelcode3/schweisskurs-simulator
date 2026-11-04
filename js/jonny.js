@@ -173,6 +173,8 @@ export function baueJonny(scene, opts = {}) {
       return 0.176 + plus + (0.262 - 0.176) * glatt(0.0, 0.5, y);
     }
     const r = 0.19 * BR + plus;
+    // flache Schultern (David): Schulterlinie eckiger statt Halbkreis
+    if (y > 0.56 && A.schulterFlach) return r * Math.pow(Math.max(0, 1 - Math.abs((y - 0.56) / r) ** 3.2), 1 / 3.2);
     if (y > 0.56) return r * Math.sqrt(Math.max(0, 1 - ((y - 0.56) / r) ** 2));
     return 0.165 * BR + plus + (0.19 - 0.165) * BR * glatt(0.1, 0.45, y);
   }
@@ -407,8 +409,10 @@ export function baueJonny(scene, opts = {}) {
     rumpf.add(schulter);
     return { schulter, ellbogen, hand, finger };
   }
-  const links = A.torben ? torbenArm(-1, { rumpf, F, A, KY }) : arm(-1);
-  const rechts = A.torben ? torbenArm(1, { rumpf, F, A, KY }) : arm(1);
+  // eigene Arme: Torben (torbenteile.js) oder über opts.armBau (z. B. David, davidteile.js)
+  const armBau = opts.armBau || (A.torben ? torbenArm : null);
+  const links = armBau ? armBau(-1, { rumpf, F, A, KY }) : arm(-1);
+  const rechts = armBau ? armBau(1, { rumpf, F, A, KY }) : arm(1);
   function armeVerschraenkt() {
     // richtig verschränkt: linker Unterarm unten, rechter darüber und etwas weiter vorn, Hände liegen am anderen Oberarm
     links.schulter.rotation.set(-0.3, 0, -0.16);
@@ -509,9 +513,9 @@ export function baueJonny(scene, opts = {}) {
       // kräftige dunkle Brauen, innen tiefer (entschlossener Blick)
       const br = setze(quader(0.074, 0.03, 0.03, F.BRAUE || F.BART, { umriss: false }), x, 0.196, 0.148);
       br.rotation.z = x < 0 ? -0.2 : 0.2;
-      br.visible = !A.torben; // Torben bekommt eigene, grimmigere Brauen (torbenteile.js)
+      br.visible = !A.torben && !A.eigeneBrauen; // Torben bekommt eigene, grimmigere Brauen (torbenteile.js)
       kopf.add(br);
-    } else kopf.add(setze(quader(0.066, 0.02, 0.024, F.BART, { umriss: false }), x, 0.2, 0.148));
+    } else if (!A.eigeneBrauen) kopf.add(setze(quader(0.066, 0.02, 0.024, F.BART, { umriss: false }), x, 0.2, 0.148));
   }
   // Vollbart: Wangen und Kinn, Schnurrbart
   const bartGeo = new THREE.SphereGeometry(0.15, 18, 14, -Math.PI * 0.2, Math.PI * 1.4, Math.PI * 0.5, Math.PI * 0.38);
@@ -597,7 +601,8 @@ export function baueJonny(scene, opts = {}) {
   if (A.cap) kopf.add(cap);
 
   // Torben: Zusatzteile (lange Hose, Gürtel, Tasche, Spaghetti ...) und Wurf, siehe torbenteile.js
-  const zusatz = A.torben ? torbenErweitern({ wurzel, koerper, rumpf, kopf, beine, links, rechts, F, A, R, T, huelle, aufHuelle, haarMat, becken, scene, opts, mund, hemdMesh, KY, HUEFT, nase, schaedel, augen }) : null;
+  const erweitern = opts.erweitern || (A.torben ? torbenErweitern : null);
+  const zusatz = erweitern ? erweitern({ wurzel, koerper, rumpf, kopf, beine, links, rechts, F, A, R, T, huelle, aufHuelle, haarMat, becken, scene, opts, mund, hemdMesh, KY, HUEFT, nase, schaedel, augen }) : null;
   const ruhe = () => (zusatz ? zusatz.ruhe() : armeVerschraenkt());
 
   // ---------- Verhalten ----------
