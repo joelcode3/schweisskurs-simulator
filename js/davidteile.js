@@ -84,17 +84,17 @@ export function davidErweitern(c) {
       let x = ps.getX(i), y = ps.getY(i) / KY, z = ps.getZ(i);
       const ax = Math.abs(x);
       if (z > 0) {
-        z += 0.016 * g2((ax - 0.075) / 0.055, (y - 0.5) / 0.07);           // Brust
+        z += 0.02 * g2((ax - 0.075) / 0.06, (y - 0.5) / 0.08);           // Brust
         z -= 0.006 * g2(x / 0.02, (y - 0.42) / 0.12);                      // Brustbein-Rinne
         z += 0.006 * g2((ax - 0.05) / 0.06, (y - 0.18) / 0.08);            // Bauch leicht
       } else {
-        z -= 0.014 * g2((ax - 0.085) / 0.05, (y - 0.5) / 0.08);            // Schulterblätter
+        z += 0.01 * g2((ax - 0.085) / 0.06, (y - 0.52) / 0.09);            // Schulterblätter
         z += 0.004 * g2(x / 0.02, (y - 0.4) / 0.2);                        // Wirbelsäulen-Rinne
       }
       // Flanken flacher und Taille etwas schmaler
       const flanke = ax / Math.max(0.001, Math.hypot(x, z));
       x *= 1 - 0.05 * flanke * g2(0, (y - 0.12) / 0.14);
-      z *= 1 - 0.04 * Math.max(0, flanke - 0.6);
+
       ps.setXYZ(i, x, y * KY, z);
     }
     hemdMesh.geometry.computeVertexNormals();
@@ -110,20 +110,20 @@ export function davidErweitern(c) {
   // Hoodie geht bis über den Hosenbund, unten Bündchen
   // er hängt über dem Hosenbund: unten etwas weiter, Bündchen liegt auf der Hose (Hosenbund verschwindet darunter)
   {
-    const unten = new THREE.LatheGeometry([[0.0, -0.115], [1.27, -0.115], [1.28, -0.095], [1.22, -0.06], [1.1, -0.02], [1.02, 0.02], [1.0, 0.05]].map(([r, y]) => new THREE.Vector2(r, y)), 40);
+    const unten = new THREE.LatheGeometry([[0.0, -0.115], [1.22, -0.115], [1.23, -0.095], [1.16, -0.06], [1.06, -0.02], [1.0, 0.02], [0.98, 0.05]].map(([r, y]) => new THREE.Vector2(r, y)), 40);
     let rx = 0, rz = 0;
     for (const yy of [-0.04, 0, 0.04]) { rx = Math.max(rx, R(yy, 0)); rz = Math.max(rz, R(yy, 0) * T(yy)); }
     const m = teil(unten, 0, { material: toon(0xffffff, { map: hoodieTextur(), side: THREE.DoubleSide }), umriss: 0.003 });
     m.scale.set(rx + 0.012, 1, rz + 0.012);
     rumpf.add(m);
     // Bündchen (gerippt): dunklerer Ring unten
-    const b = teil(new THREE.CylinderGeometry(1.285, 1.29, 0.035, 40, 1, true), 0, { material: toon(HOODIE_D, { side: THREE.DoubleSide }), umriss: 0.002 });
+    const b = teil(new THREE.CylinderGeometry(1.235, 1.24, 0.035, 40, 1, true), 0, { material: toon(HOODIE_D, { side: THREE.DoubleSide }), umriss: 0.002 });
     b.scale.set(rx + 0.013, 1, rz + 0.013);
     b.position.y = -0.1;
     rumpf.add(b);
     for (let i = 0; i < 40; i++) {
       const w = (i / 40) * Math.PI * 2;
-      rumpf.add(setze(quader(0.003, 0.03, 0.003, 0x66686d, noUmr), Math.sin(w) * (rx + 0.013) * 1.295, -0.1, Math.cos(w) * (rz + 0.013) * 1.295, 0, w, 0));
+      rumpf.add(setze(quader(0.003, 0.03, 0.003, 0x66686d, noUmr), Math.sin(w) * (rx + 0.013) * 1.245, -0.1, Math.cos(w) * (rz + 0.013) * 1.245, 0, w, 0));
     }
   }
   // Bauchtasche (Känguru-Tasche): liegt auf dem Bauch (folgt der Körperform), Eingriffe schräg an den Seiten, Naht oben
@@ -342,8 +342,8 @@ export function davidErweitern(c) {
   function ruhe() {
     links.hand.rotation.set(0, 0.9, 0); rechts.hand.rotation.set(0, -0.9, 0);
     links.hand.userData.krumm(0.35); rechts.hand.userData.krumm(zange.visible ? 0.9 : 0.35);
-    links.schulter.rotation.set(0.05, 0, -0.1); links.ellbogen.rotation.set(-0.25, 0, 0.05);
-    rechts.schulter.rotation.set(zange.visible ? -0.15 : 0.05, 0, 0.1); rechts.ellbogen.rotation.set(zange.visible ? -0.7 : -0.25, 0, -0.05);
+    links.schulter.rotation.set(0.08, 0, -0.16); links.ellbogen.rotation.set(-0.35, 0, 0.08);
+    rechts.schulter.rotation.set(zange.visible ? -0.15 : 0.08, 0, 0.16); rechts.ellbogen.rotation.set(zange.visible ? -0.7 : -0.25, 0, -0.05);
   }
   function starte(h, dauer) {
     haltung = h; t0 = zeit;
