@@ -336,14 +336,17 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Rohre, Doppel-T, U, Winkel, Vierkantrohr, Bleche, Kantbleche, plattgedrückte Fässer), ein Teil schwarz. Reifen mit Querschnitt
   und Profil (reifen()). Grundfläche abgerundet (Superellipse in den Schrott-Kästen).
   Belegung (platziere): jedes Teil hat einen Prüfkasten; große Teile suchen einen freien Platz, Haufen- und Gitterbox-Teile
-  schichten sich auf; nicht ganz streng (Prüfkasten verkleinert, Teile sinken etwas ein, Betreiber-Wunsch). Danach werden die
+  schichten sich auf; nicht ganz streng (Prüfkasten verkleinert, Teile sinken etwas ein, Betreiber-Wunsch). Große Teile
+  (hart) bekommen einen eigenen Platz, nichts sinkt in sie ein (Haufenteile liegen höchstens obendrauf). Reihenfolge: große
+  Teile zuerst, Haufen zuletzt; Schrott-Kasten dafür nach hinten links vergrößert (x -12,2). Danach werden die
   Teile jedes Gegenstands zu wenigen Meshes zusammengefasst (zusammenfassen(), Leistung: ca. 2.900 statt 7.100 Zeichenaufrufe). Freier Gang von der Hintertür (x ≈ -2,9) bis vorne ans Carport.
 - Blauer 20-Fuß-Container (CONTAINER x -1,6 … 4,46, z -6,6 … -4,1) Rücken an Rücken an der Rückwand, von hinten gesehen links
   neben der Hintertür (Gang bleibt frei). Längsseite zum Hof ganz offen. Innen an der Rückwand drei gelbe Fachbodenregale
   (Kisten mit Schraubenschlüsseln, Vierzylinder-Motor, Hinterachse, Kanister, Ölflaschen), davor ein Kragarmregal mit den
   Metalllängen (5,85 m: Doppel-T, Vierkant, Rundrohre, Flachstahl). Noch ohne Funktion (später Metall einladen). Anklickbar
   (container), Hindernis, in wege.js.
-  Vor der offenen Seite liegt kein Schrott (frei für später).
+  Vor der offenen Seite liegt kein Schrott (frei für später, Betreiber 9.11.). Regalinhalte chaotisch: Schraubenschlüssel
+  kreuz und quer, Kisten schräg, eine umgekippt; Metallteile, Werkzeug und ein Lappen auf dem Containerboden.
 - Hintertür (HINTERTUER x -3,45 … -2,35, 2,15 m): grüne Brettertür an der Rückwand, steht offen nach draußen; dort hing früher der
   Hula-Hoop. Reifen hängt jetzt an der rechten Wand zwischen Erste-Hilfe-Kasten und Spüle (HULA_WAND_Z, HULA_PLATZ).
   wege.js: Ziele hinterm Haus (z < -3,5) gehen durch die Hintertür, sonst durchs Tor; Figuren zum Hoflader laufen selbst

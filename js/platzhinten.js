@@ -12,7 +12,7 @@ export const HINTERTUER = { x0: -3.45, x1: -2.35, hoehe: 2.15, mitte: -2.9 };
 export const SCHOTTER_UMRISS = [
   [5.25, -4.12, true], [5.25, 4.0, true], [7.5, 4.0], [8.8, 2.6], [9.5, 0.2], [9.7, -3.5], [9.9, -8.5], [9.0, -13.0],
   [7.2, -17.0], [5.2, -21.0], [3.0, -23.2], [0.0, -23.5], [-3.5, -23.0], [-6.5, -22.5], [-6.7, -17.5], [-6.6, -12.2],
-  [-8.8, -11.2], [-11.0, -11.0], [-11.9, -8.5], [-11.9, -5.8], [-11.2, -4.3], [-5.2, -4.12, true],
+  [-8.8, -11.6], [-11.8, -11.4], [-13.0, -8.5], [-12.9, -5.8], [-12.2, -4.3], [-5.2, -4.12, true],
 ];
 // Carport: Reihenfolge vom Haus weg Werkstatt, Schrottplatz, Carport (Betreiber 9.11.); längs gestellt, drei Buchten
 // hintereinander (vom Haus weg): Paletten, Pritsche, Weidemann. Offen zur Seite (Welt +x, Schilder dort) und nach hinten
@@ -34,8 +34,7 @@ export const CARPORT_PFOSTEN = [0, 1, 2, 3].flatMap((i) => [CD / 2, -CD / 2].map
 // Längsseite zum Hof ganz offen; innen Metalllängen bis 6 m (Paket E2a, noch ohne Funktion)
 export const CONTAINER = { xMin: -1.6, xMax: 4.46, zMin: -6.6, zMax: -4.1, hoehe: 2.59 };
 export const SCHROTT_KAESTEN = [
-  { xMin: -11.2, xMax: -3.75, zMin: -10.5, zMax: -4.5 },
-  { xMin: -1.95, xMax: 2.6, zMin: -10.4, zMax: -8.6 },
+  { xMin: -12.2, xMax: -3.75, zMin: -10.7, zMax: -4.5 },
 ]
 
 export function bauePlatzHinten(scene, { merke, hindernis }) {
@@ -382,21 +381,22 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     if (opt.suche) { for (let rr = 0; rr <= 2.4; rr += 0.12) for (let k = 0; k < (rr ? 14 : 1); k++) { const w = k / 14 * Math.PI * 2 + rr; versuche.push([x + Math.cos(w) * rr, z + Math.sin(w) * rr]); } }
     else versuche.push([x, z]);
     for (const [px, pz] of versuche) {
-      const e = eintrag(m, px, pz, yaw, opt.sf ?? 1);
-      if (opt.drin && !opt.drin(eintrag(m, px, pz, yaw))) continue;
+      const e = eintrag(m, px, pz, yaw, opt.sf ?? 1), voll = eintrag(m, px, pz, yaw);
+      if (opt.drin && !opt.drin(voll)) continue;
       let y = boden;
       let frei = true;
       for (const o of reg) {
+        // gegen große, feste Teile (Kicker, Mofa, Mischer …) zählt der volle Grundriss, und nichts sinkt in sie ein
         if (!ueberlapp(e, o)) continue;
-        if (!opt.stapel) { frei = false; break; }
-        y = Math.max(y, o.y1 - (opt.einsinken ?? 0) * (o.y1 - o.y0));
+        if (!opt.stapel || (o.hart && opt.nichtAufHart)) { frei = false; break; }
+        y = Math.max(y, o.hart ? o.y1 : o.y1 - (opt.einsinken ?? 0) * (o.y1 - o.y0));
       }
       if (!frei) continue;
       const hoehe = m.y1 - m.y0;
       if (opt.maxY !== undefined && y + hoehe > opt.maxY) continue;
       obj.position.set(px, y - m.y0 + 0.003, pz); obj.rotation.y = yaw;
       eltern.add(obj);
-      reg.push({ ...e, y0: y, y1: y + hoehe + 0.003 });
+      reg.push({ ...e, hart: !!opt.hart, y0: y, y1: y + hoehe + 0.003 });
       return true;
     }
     return false;
@@ -466,10 +466,10 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
       for (const g of geos) g.dispose();
     }
   }
-  let weggelassen = 0;
+  let weggelassen = 0; const fehlend = [];
   // großes Teil am Boden hinlegen (sucht einen freien Platz in der Nähe)
   const legen = (obj, x, z, ry = r() * Math.PI * 2) => {
-    if (!platziere(schrottReg, gruppe, obj, x, z, ry, { suche: true, drin: imSchrott, sf: 0.7 })) weggelassen++;
+    if (!platziere(schrottReg, gruppe, obj, x, z, ry, { suche: true, drin: imSchrott, sf: 0.78, hart: true })) { weggelassen++; fehlend.push((obj.userData.interaktiv?.id || obj.children[0]?.userData?.interaktiv?.id || '?') + '@' + x.toFixed(1) + ',' + z.toFixed(1)); }
     else zusammenfassen(obj);
     return obj;
   };
@@ -479,13 +479,13 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     return [[1, 1], [1, -1], [-1, 1], [-1, -1]].every(([a, b]) => { const px = e.cx + ux[0] * e.hx * a + uz[0] * e.hz * b, pz = e.cz + ux[1] * e.hx * a + uz[1] * e.hz * b; return SCHROTT_KAESTEN.some((k) => px > k.xMin && px < k.xMax && pz > k.zMin && pz < k.zMax); });
   };
   const legenFest = (obj, x, z, ry) => {
-    if (!platziere(schrottReg, gruppe, obj, x, z, ry, { suche: true, drin: imKastenEckig, sf: 0.7 })) weggelassen++;
+    if (!platziere(schrottReg, gruppe, obj, x, z, ry, { suche: true, drin: imKastenEckig, sf: 0.78, hart: true })) weggelassen++;
     else zusammenfassen(obj);
     return obj;
   };
   // obendrauf (z. B. Gitterbox auf Gitterbox): genau hier, auf das, was darunter steht
   const draufstellen = (obj, x, z, ry) => {
-    if (!platziere(schrottReg, gruppe, obj, x, z, ry, { stapel: true, drin: imSchrott })) weggelassen++;
+    if (!platziere(schrottReg, gruppe, obj, x, z, ry, { stapel: true, drin: imSchrott, hart: true })) weggelassen++;
     else zusammenfassen(obj);
     return obj;
   };
@@ -564,7 +564,7 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
       for (let v = 0; v < 6; v++) {
         const [lx, lz] = lage();
         const maxY = hoehe * (0.3 + hoeheBei(lx, lz)) + 0.15;
-        if (platziere(schrottReg, g, holder, cx + lx, cz + lz, r() * Math.PI * 2, { stapel: true, maxY, drin: (e) => imSchrott(e), sf: 0.55, einsinken: 0.35 })) return true;
+        if (platziere(schrottReg, g, holder, cx + lx, cz + lz, r() * Math.PI * 2, { stapel: true, maxY, drin: (e) => imSchrott(e), sf: 0.72, einsinken: 0.15 })) return true;
       }
       return false;
     };
@@ -1260,11 +1260,13 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
 
   // Haufen und Teile im Schrottplatz (der Gang bei x -3,5 … -2,3 bleibt frei): dicht an dicht, gehäuft
   gitterbox(-4.45, -4.95, 0.0, 0, 'felgen', false, true); // neben der Hintertür
+  gitterbox(-6.0, -9.85, 0.05, 0, 'federn');
+  kicker(-5.6, -6.6, 0.3);
+  gitterbox(-7.6, -9.5, -0.04, 0, 'kleinteile', true); gitterbox(-7.6, -9.5, -0.04, 1);
   treckerreifen(-9.9, -9.4); // zuerst: braucht am meisten Platz
   felgenStapel(-10.6, -9.9, 6); felgenStapel(-10.05, -10.0, 4); felgenStapel(-5.6, -4.95, 5);
   reifenStapel(-10.9, -8.6, 5); reifenStapel(-10.85, -7.9, 3); reifenStapel(-10.6, -4.9, 2, true);
   fahrrad(-10.85, -6.2, 0.1, true, 0x2f5fa8);
-  fahrrad(-10.8, -9.3, 0.2, true, 0xc8382c);
   fahrrad(-4.2, -7.4, Math.PI / 2, false, 0x2f6b3a);
   schuessel(-8.2, -5.2, 0.8);
   gasflasche(-4.3, -9.0, 0x8c8f94, false); gasflasche(-4.7, -9.3, 0xc8382c, false); gasflasche(-4.3, -9.6, 0x8c8f94, true);
@@ -1291,7 +1293,7 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     const h = new THREE.Group(); h.add(m);
     return legen(h, x, z);
   }
-  for (const [x, z] of [[-3.9, -5.3], [-4.0, -7.8], [-6.1, -10.35], [-8.9, -10.4], [-10.9, -5.6], [-11.0, -8.0], [-7.6, -4.7], [-3.95, -9.5], [0.0, -8.4], [-1.7, -8.5]]) blechle(x, z);
+  for (const [x, z] of [[-3.9, -5.3], [-4.0, -7.8], [-6.1, -10.35], [-8.9, -10.4], [-10.9, -5.6], [-11.0, -8.0], [-7.6, -4.7], [-3.95, -9.5], [-6.9, -10.2], [-10.5, -8.6]]) blechle(x, z);
   {
     const tex = leinwandTextur(260, 56, (g, b, h) => {
       g.fillStyle = '#f2f0e8'; g.fillRect(0, 0, b, h);
@@ -1384,18 +1386,14 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     pd.position.y = 0.02; pd.rotation.z = 0.2;
     const ph = new THREE.Group(); ph.add(pd); legen(ph, -7.5, -4.8, 1.2);
   }
-  kicker(-5.6, -6.6, 0.3);
   // Gitterkisten voller Kleinteile (eine steht auf einer anderen)
-  gitterbox(-6.0, -9.85, 0.05, 0, 'kleinteile', true); gitterbox(-7.6, -9.9, -0.04); gitterbox(-6.0, -9.85, 0.05, 1);
-  // hinter dem Container (zwischen Container und Carport), mit Abstand zur offenen Containerseite
-  reifenStapel(2.3, -9.9, 4); felgenStapel(-1.6, -9.9, 4); gasflasche(-1.6, -9.0, 0x8c8f94, false);
-  gitterbox(1.2, -9.95, 0.03, 0, 'federn');
-  // zuletzt die Haufen: Profile und Rohre schichten sich um und auf das, was schon steht
+  // (vor dem Container bleibt alles frei, dort muss man später ran) – diese Teile liegen mit beim großen Haufen
+  felgenStapel(-9.6, -5.0, 4); gasflasche(-7.4, -10.1, 0x8c8f94, false);
+  // zuletzt die Haufen: Profile und Rohre schichten sich um und auf das, was schon steht (große Teile: nur obendrauf, nie hinein)
   altmetall(-8.0, -7.9, 2.0, 1.8, 75, 1.0);
   altmetall(-6.3, -6.7, 1.1, 1.1, 50, 0.8);
   altmetall(-10.0, -5.6, 1.1, 0.9, 38, 0.7);
-  altmetall(0.3, -9.5, 1.9, 0.75, 36, 0.6);
-  if (weggelassen) console.info('[platzhinten] Schrott ohne Platz weggelassen:', weggelassen);
+  if (weggelassen) console.info('[platzhinten] Schrott ohne Platz weggelassen:', weggelassen, fehlend.join(' '));
   for (const k of SCHROTT_KAESTEN) hindernis(k.xMin, k.xMax, k.zMin, k.zMax);
 
   // ---------- Blauer Container mit Metalllängen ----------
@@ -1447,22 +1445,40 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     };
     const eb = [-2.0, 0, 2.0].map(regalAn);
     // Kiste (Eurobox) mit Schraubenschlüsseln, die herausschauen
-    const kiste = (x, y, z, farbe) => {
+    // Schraubenschlüssel (Ring-/Maulschlüssel) einzeln
+    const schluesselTeil = (l) => {
+      const sk = new THREE.Group();
+      sk.add(setze(quader(0.022, l, 0.006, 0xc0c4c8, { umriss: 0.001 }), 0, l / 2, 0));
+      sk.add(setze(teil(new THREE.TorusGeometry(0.02, 0.007, 4, 8, Math.PI * 1.4), 0xc0c4c8, { umriss: false }), 0, l + 0.012, 0, 0, 0, 0.9));
+      sk.add(setze(teil(new THREE.TorusGeometry(0.016, 0.006, 4, 8), 0xc0c4c8, { umriss: false }), 0, -0.01, 0));
+      return sk;
+    };
+    // Kiste (Eurobox) mit Schraubenschlüsseln kreuz und quer, schräg hingestellt; umgekippt: liegt auf der Seite,
+    // Schlüssel davor verstreut
+    const kiste = (x, y, z, farbe, umgekippt = false) => {
       const k = new THREE.Group();
       k.add(setze(quader(0.4, 0.02, 0.3, farbe, { umriss: 0.002 }), 0, 0.01, 0));
       for (const sz of [-1, 1]) k.add(setze(quader(0.4, 0.22, 0.015, farbe, { umriss: 0.002 }), 0, 0.11, sz * 0.145));
       for (const sx of [-1, 1]) k.add(setze(quader(0.015, 0.22, 0.3, farbe, { umriss: 0.002 }), sx * 0.195, 0.11, 0));
-      for (let i = 0; i < 7; i++) {
-        const sk = new THREE.Group(), l = 0.2 + r() * 0.12;
-        sk.add(setze(quader(0.022, l, 0.006, 0xc0c4c8, { umriss: 0.001 }), 0, l / 2, 0));
-        sk.add(setze(teil(new THREE.TorusGeometry(0.02, 0.007, 4, 8, Math.PI * 1.4), 0xc0c4c8, { umriss: false }), 0, l + 0.012, 0, 0, 0, 0.9));
-        sk.position.set(-0.15 + i * 0.05, 0.05, (r() - 0.5) * 0.18); sk.rotation.z = (r() - 0.5) * 0.4;
+      const n = umgekippt ? 2 : 6 + Math.floor(r() * 4);
+      for (let i = 0; i < n; i++) {
+        const l = 0.16 + r() * 0.16, sk = schluesselTeil(l);
+        sk.position.set(-0.15 + r() * 0.3, 0.03, (r() - 0.5) * 0.2);
+        sk.rotation.set((r() - 0.5) * 1.0, r() * 6, (r() - 0.5) * 1.2);
+        if (r() < 0.25) { sk.rotation.set(Math.PI / 2 - 0.2, r() * 6, 0); sk.position.y = 0.2; } // liegt quer obendrauf
         k.add(sk);
       }
-      k.position.set(x, y, z);
+      if (umgekippt) {
+        k.rotation.set(-Math.PI / 2, 0, 0); // auf die Rückwand gekippt, Öffnung nach vorn
+        k.position.set(x, y + 0.15, z + 0.05);
+        for (let i = 0; i < 5; i++) { const sk = schluesselTeil(0.15 + r() * 0.15); sk.rotation.set(Math.PI / 2, r() * 6, 0); sk.position.set(x - 0.2 + r() * 0.45, y + 0.01, z - 0.12 - r() * 0.1); c.add(sk); }
+      } else {
+        k.position.set(x, y, z);
+        k.rotation.set(0, (r() - 0.5) * 0.6, (r() - 0.5) * 0.12);
+      }
       c.add(k);
     };
-    kiste(-2.5, eb[0][1], RZ, 0x2f5fa8); kiste(-2.0, eb[0][1], RZ, 0xc8382c); kiste(-1.5, eb[0][1], RZ, 0x5a5e62);
+    kiste(-2.5, eb[0][1], RZ, 0x2f5fa8); kiste(-2.0, eb[0][1], RZ, 0xc8382c, true); kiste(-1.5, eb[0][1], RZ, 0x5a5e62);
     kiste(-2.4, eb[0][2], RZ, 0x5a5e62); kiste(-1.85, eb[0][2], RZ, 0x2f5fa8);
     kiste(1.6, eb[2][2], RZ, 0xc8382c); kiste(2.2, eb[2][3], RZ, 0x2f5fa8); kiste(-0.5, eb[1][3], RZ, 0x5a5e62);
     // Motor (Vierzylinder) auf dem untersten Boden des mittleren Regals
@@ -1498,6 +1514,18 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     // Kanister und Ölflaschen
     for (const [x, f] of [[-0.6, 0xc8382c], [-0.25, 0x2f6b3a]]) c.add(setze(quader(0.18, 0.3, 0.28, f, { umriss: 0.002 }), x, eb[1][1] + 0.15, RZ));
     for (let k = 0; k < 5; k++) c.add(setze(zylinder(0.04, 0.04, 0.24, [0x1d1d1f, 0xd8b23a, 0x2f5fa8][k % 3], { umriss: 0.001 }, 10), 0.3 + k * 0.1, eb[1][2] + 0.12, RZ + 0.05));
+    // etwas Müll und Metallteile auf dem Containerboden (vorn, vor den Regalfüßen)
+    for (let i = 0; i < 12; i++) {
+      const a = r();
+      const t = a < 0.35 ? kleinteil() : a < 0.65 ? werkzeug() : (() => { const b = new THREE.Group(); b.add(teil(new THREE.BoxGeometry(0.15 + r() * 0.25, 0.006, 0.1 + r() * 0.2), 0, { material: rm(), umriss: 0.002 })); return b; })();
+      t.position.set(-2.7 + r() * 5.4, BODEN0 + 0.012, -T / 2 + 0.3 + r() * 0.6);
+      t.rotation.y = r() * 6;
+      c.add(t);
+    }
+    { // Putzlappen
+      const l = new THREE.Mesh(new THREE.CircleGeometry(0.12, 7), toon(0x9a3a2a, { side: THREE.DoubleSide }));
+      l.rotation.x = -Math.PI / 2; l.scale.set(1.3, 0.8, 1); l.position.set(0.9, BODEN0 + 0.014, -T / 2 + 0.55); c.add(l);
+    }
     // Kragarmregal davor: Säulen mit Fuß nach vorn, Arme mit hochgebogener Spitze, darauf die Längen
     const KZ = RZ - RT / 2 - 0.12, ARM = 0.75, KR = 0x3a4a5a;
     const armY = [0.55, 1.05, 1.55];
