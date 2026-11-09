@@ -4067,8 +4067,16 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
         return ['Hintertür', 'Geht raus auf den Schrottplatz. Dahinter steht das Carport für Hoflader, Paletten und Pritsche.', []];
       case 'schrott':
         return ['Schrott', 'Altmetall, Felgen, kaputte Fahrräder, alte Gasflaschen. Dennis sagt, das ist alles noch was wert.', []];
+      case 'betonmischer':
+        return ['Betonmischer', 'Ein Rad fehlt, der Motor ist ausgebaut, die Trommel hat eine Delle. Dennis sagt, den macht er noch fertig.', []];
+      case 'ventilator':
+        return ['Ventilator', 'Alter Standventilator, umgekippt. Ein Flügel ist abgebrochen.', []];
+      case 'mofa':
+        return ['Mofa', 'Kaputtes Mofa, der Motor fehlt. Nur noch Rahmen, Räder und Lenker.', []];
+      case 'schrauben':
+        return ['Schraubenhaufen', 'Schrauben, Muttern, Scheiben. Irgendwann sortiert Dennis die. Sagt er.', []];
       case 'gitterbox':
-        return ['Gitterbox', 'Randvoll mit Kleinteilen: Schrauben, Muttern, Federn, Winkel. Sortiert hat das nie jemand.', []];
+        return ['Gitterbox', 'Randvoll: Kleinteile oder alte Felgen. Sortiert hat das nie jemand.', []];
       case 'container':
         return ['Container', 'Blauer Container, an der Längsseite aufgeschnitten. Drin liegt Material: Träger, Vierkant, Rohre, Flachstahl, alles 6 Meter. Passt gerade so rein.', []];
       case 'carportHinten':

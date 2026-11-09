@@ -313,7 +313,7 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Radstopper in den Buchten Paletten und Weidemann, Ölfleck. Schilder hängen an Ketten unter der Pfette. Buchten vom Haus weg:
   PALETTEN, PRITSCHE (ganz leer, dort muss man später durchfahren können, E2b), WEIDEMANN. Herumliegender Kram (nicht in der
   Pritschen-Bucht): 2 Tassen (eine auf dem Palettenstapel), leere Bierflasche, Farbdosen (eine umgekippt, Pfütze), Autobatterie,
-  Spanngurt mit Ratsche. Liegende Teile werden beim Hinlegen angehoben, bis sie aufliegen (legen()). WEIDEMANN (BUCHTEN, CARPORT_PFOSTEN). Der Gang von der Hintertür endet vorne am Carport.
+  zwei ausgerollte Spanngurte (orange, blau) mit Ratschen und Haken, Farbdosen mit Etikett, Falz, Läufern und Pinsel. Liegende Teile werden beim Hinlegen angehoben, bis sie aufliegen (legen()). WEIDEMANN (BUCHTEN, CARPORT_PFOSTEN). Der Gang von der Hintertür endet vorne am Carport.
   Anklickbar: Schild Paletten (palettenSchild), Dach (carportHinten), Schrotthaufen (schrott), Gitterboxen (gitterbox).
 - Hoflader steht zu Spielbeginn vorwärts eingeparkt in der Bucht „Weidemann“ (Schnauze nach hinten). Figuren setzen erst
   rückwärts heraus (fz.rueckwaerts, fahrten.js LADER_RUECK, Heck schwenkt nach hinten), fahren dann vorwärts zum Weg rechts
@@ -321,11 +321,15 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
 - Paletten: alter Platz (x -1, z -7) samt freistehendem Schild ist weg. Die beiden Stapel vom alten Platz neben der Werkstatt
   (3er und einzelne) stehen jetzt in der Bucht „Paletten“; PALETTEN_PLATZ = diese Bucht. Was am Start schon dort steht, zählt
   nicht als gebracht (z.palettenRekord wird beim Start gesetzt).
-- Schrottplatz zwischen Werkstatt und Carport (SCHROTT_KAESTEN, Hindernisse für Spieler, Fahrzeuge und Wege), dicht gehäuft:
-  Schrotthügel (aufgeschüttete rostige Erde, darauf Bleche, Rohre, Vierkant, Träger, Winkel, Baustahlgitter, Klötze, Scheiben),
-  Gitterboxen randvoll mit Kleinteilen (eine gestapelt), Felgen- und Altreifenstapel, kaputte Fahrräder, Satellitenschüssel,
-  alte Gasflaschen, Ölfässer, Heizkörper, Waschmaschine, Autotüren, Motorblock, Badewanne, Motorhaube, Auspuff. Freier Gang
-  von der Hintertür (x ≈ -2,9) zwischen Schrott und Container bis vorne ans Carport.
+- Schrottplatz zwischen Werkstatt und Carport (SCHROTT_KAESTEN, Hindernisse für Spieler, Fahrzeuge und Wege), dicht gehäuft,
+  nur Metall (keine Erde): Haufen mit Kern aus zerdrückten Blechkisten, darauf Bleche, Rohre, Vierkant, Träger, Winkel,
+  Baustahlgitter, Töpfe, Pfannen, Grillroste, rostiges Werkzeug (kleinteil()); Kleinkram am Fuß. Gitterboxen randvoll mit
+  Kleinteilen (Schrauben mit Sechskantkopf, Muttern, Scheiben, Federn, Kugellager, Zahnräder, Winkel, Scharniere, Ketten; eine
+  gestapelt) und eine Gitterbox nur mit schwarzen, rostigen Stahlfelgen, chaotisch drin. Kaputter Betonmischer (ein Rad fehlt),
+  umgefallener Standventilator (Flügel ab), Mofa ohne Motor (Kabelreste), Felgen- und Altreifenstapel, kaputte Fahrräder (Lenker
+  mit Vorbau, Griffen, Bremshebeln, Klingel), Satellitenschüssel, Gasflaschen, Heizkörper, Waschmaschine, Autotüren, Motorblock,
+  Badewanne, Motorhaube, Auspuff, kleine Bleche, Nummernschild („DE-NN 77“), kleiner Schraubenhaufen. Anklickbar: schrott,
+  gitterbox, betonmischer, ventilator, mofa, schrauben. Freier Gang von der Hintertür (x ≈ -2,9) bis vorne ans Carport.
 - Blauer 20-Fuß-Container (CONTAINER x -1,6 … 4,46, z -6,6 … -4,1) Rücken an Rücken an der Rückwand, von hinten gesehen links
   neben der Hintertür (Gang bleibt frei). Längsseite zum Hof ganz offen; innen auf Kanthölzern Metalllängen (5,85 m: Doppel-T,
   Vierkant, Rundrohre, Flachstahl). Noch ohne Funktion (später Metall einladen). Anklickbar (container), Hindernis, in wege.js.
