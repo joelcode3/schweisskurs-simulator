@@ -4075,6 +4075,12 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
         return ['Mofa', 'Kaputtes Mofa, der Motor fehlt. Nur noch Rahmen, Räder und Lenker.', []];
       case 'schrauben':
         return ['Schraubenhaufen', 'Schrauben, Muttern, Scheiben. Irgendwann sortiert Dennis die. Sagt er.', []];
+      case 'stepper':
+        return ['Stepper', 'Weißer Heimtrainer, kaputt: ein Pedal ist ab, der Lenker verbogen, das Display gesprungen. Benutzt hat ihn eh keiner.', []];
+      case 'treckerreifen':
+        return ['Treckerreifen', 'Riesig. Wo der herkommt, weiß keiner. Dennis meint, daraus wird mal ein Sandkasten.', []];
+      case 'kicker':
+        return ['Kicker', 'Alter Tischkicker. Ein Bein ab, eine Stange fehlt, die Roten haben trotzdem gewonnen.', []];
       case 'gitterbox':
         return ['Gitterbox', 'Randvoll: Kleinteile oder alte Felgen. Sortiert hat das nie jemand.', []];
       case 'container':

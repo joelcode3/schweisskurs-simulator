@@ -313,7 +313,7 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Radstopper in den Buchten Paletten und Weidemann, Ölfleck. Schilder hängen an Ketten unter der Pfette. Buchten vom Haus weg:
   PALETTEN, PRITSCHE (ganz leer, dort muss man später durchfahren können, E2b), WEIDEMANN. Herumliegender Kram (nicht in der
   Pritschen-Bucht): 2 Tassen (eine auf dem Palettenstapel), leere Bierflasche, Farbdosen (eine umgekippt, Pfütze), Autobatterie,
-  zwei ausgerollte Spanngurte (orange, blau) mit Ratschen und Haken, Farbdosen mit Etikett, Falz, Läufern und Pinsel. Liegende Teile werden beim Hinlegen angehoben, bis sie aufliegen (legen()). WEIDEMANN (BUCHTEN, CARPORT_PFOSTEN). Der Gang von der Hintertür endet vorne am Carport.
+  ein orangefarbenes Verlängerungskabel in Schlaufen (Stecker, Kupplung mit Klappdeckel), Farbdosen mit Etikett, Falz, Läufern und Pinsel. Liegende Teile werden beim Hinlegen angehoben, bis sie aufliegen (legen()). WEIDEMANN (BUCHTEN, CARPORT_PFOSTEN). Der Gang von der Hintertür endet vorne am Carport.
   Anklickbar: Schild Paletten (palettenSchild), Dach (carportHinten), Schrotthaufen (schrott), Gitterboxen (gitterbox).
 - Hoflader steht zu Spielbeginn vorwärts eingeparkt in der Bucht „Weidemann“ (Schnauze nach hinten). Figuren setzen erst
   rückwärts heraus (fz.rueckwaerts, fahrten.js LADER_RUECK, Heck schwenkt nach hinten), fahren dann vorwärts zum Weg rechts
@@ -325,11 +325,19 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   nur Metall (keine Erde): Haufen mit Kern aus zerdrückten Blechkisten, darauf Bleche, Rohre, Vierkant, Träger, Winkel,
   Baustahlgitter, Töpfe, Pfannen, Grillroste, rostiges Werkzeug (kleinteil()); Kleinkram am Fuß. Gitterboxen randvoll mit
   Kleinteilen (Schrauben mit Sechskantkopf, Muttern, Scheiben, Federn, Kugellager, Zahnräder, Winkel, Scharniere, Ketten; eine
-  gestapelt) und eine Gitterbox nur mit schwarzen, rostigen Stahlfelgen, chaotisch drin. Kaputter Betonmischer (ein Rad fehlt),
+  gestapelt; größere Einzelteile wie Zahnräder, Flansche, Wellen, Winkel, Ketten, Lager, Zwingen, keine durchgehende Füllung),
+  eine Gitterbox nur mit schwarzen, rostigen Stahlfelgen und eine voller Autofedern, chaotisch drin. Kaputter Betonmischer
+  (hohle Trommel mit Tiefe, innen Betonkruste und Schrott, Zahnkranz, Kipphebel, Handrad, Motor ausgebaut, ein Rad fehlt, Ziegel),
   umgefallener Standventilator (Flügel ab), Mofa ohne Motor (Kabelreste), Felgen- und Altreifenstapel, kaputte Fahrräder (Lenker
   mit Vorbau, Griffen, Bremshebeln, Klingel), Satellitenschüssel, Gasflaschen, Heizkörper, Waschmaschine, Autotüren, Motorblock,
   Badewanne, Motorhaube, Auspuff, kleine Bleche, Nummernschild („DE-NN 77“), kleiner Schraubenhaufen. Anklickbar: schrott,
-  gitterbox, betonmischer, ventilator, mofa, schrauben. Freier Gang von der Hintertür (x ≈ -2,9) bis vorne ans Carport.
+  gitterbox, betonmischer, ventilator, mofa, schrauben, stepper (weißer Stepper, kaputt: Pedal ab, Lenker verbogen, Display
+  gesprungen), treckerreifen (1,6 m), kicker (kaputter Tischkicker). Haufen aus erkennbaren Teilen mit Rost-Struktur (hohle
+  Rohre, Doppel-T, U, Winkel, Vierkantrohr, Bleche, Kantbleche, plattgedrückte Fässer), ein Teil schwarz. Reifen mit Querschnitt
+  und Profil (reifen()). Grundfläche abgerundet (Superellipse in den Schrott-Kästen).
+  Belegung (platziere): jedes Teil hat einen Prüfkasten; große Teile suchen einen freien Platz, Haufen- und Gitterbox-Teile
+  schichten sich auf; nicht ganz streng (Prüfkasten verkleinert, Teile sinken etwas ein, Betreiber-Wunsch). Danach werden die
+  Teile jedes Gegenstands zu wenigen Meshes zusammengefasst (zusammenfassen(), Leistung: ca. 2.900 statt 7.100 Zeichenaufrufe). Freier Gang von der Hintertür (x ≈ -2,9) bis vorne ans Carport.
 - Blauer 20-Fuß-Container (CONTAINER x -1,6 … 4,46, z -6,6 … -4,1) Rücken an Rücken an der Rückwand, von hinten gesehen links
   neben der Hintertür (Gang bleibt frei). Längsseite zum Hof ganz offen; innen auf Kanthölzern Metalllängen (5,85 m: Doppel-T,
   Vierkant, Rundrohre, Flachstahl). Noch ohne Funktion (später Metall einladen). Anklickbar (container), Hindernis, in wege.js.

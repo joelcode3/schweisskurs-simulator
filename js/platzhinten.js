@@ -2,7 +2,7 @@
 // Schrottplatz direkt hinterm Haus mit schmalem Gang von der Hintertür (grüne Tür an der Rückwand) bis vorne ans Carport,
 // dahinter das Carport mit drei beschrifteten Buchten (Paletten, Pritsche, Weidemann). Blauer Container an der Rückwand.
 import * as THREE from 'three';
-import { toon, teil, quader, zylinder, setze, leinwandTextur, zufall } from './toon.js';
+import { toon, teil, quader, zylinder, kugel, setze, leinwandTextur, zufall, umriss as umrissLinie } from './toon.js';
 
 // Hintertür in der Rückwand (z = -4): Öffnung x -3,45 … -2,35, 2,15 m hoch (dort hing früher der Hula-Hoop-Reifen)
 export const HINTERTUER = { x0: -3.45, x1: -2.35, hoehe: 2.15, mitte: -2.9 };
@@ -310,122 +310,376 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     g.add(setze(quader(0.1, 0.05, 0.002, 0xd8b23a, { umriss: false }), 0, 0.12, 0.089));
     kram(g, -L / 2 + 0.55, -D / 2 + 0.4, 0.2);
   }
-  // Spanngurte: zwei Stück lang ausgerollt und durcheinander auf dem Boden, je mit Ratsche und zwei Haken
-  // (vorne in der Paletten-Bucht)
+  // Verlängerungskabel: lose in Schlaufen auf dem Boden, Schutzkontaktstecker an einem Ende, Kupplung mit Klappdeckel am
+  // anderen (vorne in der Paletten-Bucht)
   {
-    const gurt = (farbe, punkte, ratscheBei) => {
-      const g = new THREE.Group();
-      const kurve = new THREE.CatmullRomCurve3(punkte.map(([x, z]) => new THREE.Vector3(x, 0, z)), false, 'centripetal');
-      const n = 60, pts = kurve.getSpacedPoints(n);
-      for (let i = 0; i < n; i++) {
-        const a = pts[i], b = pts[i + 1], l = a.distanceTo(b);
-        // überkreuzende Stellen liegen etwas höher
-        const y = 0.014 + (Math.sin(i * 0.9) > 0.95 ? 0.006 : 0);
-        g.add(setze(quader(0.05, 0.003, l + 0.004, farbe, { umriss: false }), (a.x + b.x) / 2, y, (a.z + b.z) / 2, 0, Math.atan2(b.x - a.x, b.z - a.z), 0));
-      }
-      const haken = (p, t) => {
-        const hk = new THREE.Group();
-        hk.add(setze(quader(0.06, 0.01, 0.05, 0x8c8f94, { umriss: 0.001 }), 0, 0.006, 0));
-        hk.add(setze(teil(new THREE.TorusGeometry(0.025, 0.006, 4, 10, Math.PI * 1.3), 0x8c8f94, { umriss: false }), 0, 0.008, 0.04, Math.PI / 2, 0, 0));
-        hk.position.set(p.x, 0, p.z); hk.rotation.y = Math.atan2(t.x, t.z);
-        g.add(hk);
-      };
-      haken(pts[0], kurve.getTangentAt(0).negate());
-      haken(pts[n], kurve.getTangentAt(1));
-      // Ratsche: Bügel, Griff, Welle
-      const rp = kurve.getPointAt(ratscheBei), rt = kurve.getTangentAt(ratscheBei);
-      const ra = new THREE.Group();
-      ra.add(setze(quader(0.07, 0.035, 0.16, 0x9a9da2, { umriss: 0.002 }), 0, 0.02, 0));
-      ra.add(setze(quader(0.05, 0.02, 0.1, 0x3a3a3c, { umriss: 0.001 }), 0, 0.045, -0.06));
-      ra.add(setze(zylinder(0.015, 0.015, 0.09, 0x7a7e84, { umriss: false }, 8), 0, 0.025, 0.03, 0, 0, Math.PI / 2));
-      ra.position.set(rp.x, 0, rp.z); ra.rotation.y = Math.atan2(rt.x, rt.z);
-      g.add(ra);
-      return g;
-    };
-    const X = -L / 2 + 2.4, Z = D / 2 - 0.7;
-    const g1 = gurt(0xe06a1a, [[-1.0, 0.1], [-0.4, 0.35], [0.1, 0.0], [0.5, -0.4], [0.2, -0.7], [-0.3, -0.5], [0.4, 0.1], [1.1, 0.3]], 0.62);
-    const g2 = gurt(0x2f5fa8, [[-0.8, -0.6], [-0.2, -0.2], [0.3, 0.3], [0.0, 0.55], [-0.5, 0.4], [0.2, -0.1], [0.9, -0.5]], 0.3);
-    g1.position.set(X, 0.004, Z); g2.position.set(X + 0.1, 0, Z - 0.1);
-    cp.add(g1, g2);
+    const g = new THREE.Group();
+    const pkt = [[-1.1, 0.2], [-0.6, 0.45], [-0.1, 0.2], [0.1, -0.3], [-0.2, -0.6], [-0.6, -0.4], [-0.4, 0.0], [0.2, 0.1], [0.7, -0.1], [0.9, -0.5], [0.6, -0.75], [0.3, -0.5], [0.6, -0.2], [1.2, 0.1]];
+    const kurve = new THREE.CatmullRomCurve3(pkt.map(([x, z], i) => new THREE.Vector3(x, 0.022 + (i === 7 || i === 12 ? 0.012 : 0), z)), false, 'centripetal');
+    const kabel = new THREE.Mesh(new THREE.TubeGeometry(kurve, 220, 0.009, 6, false), toon(0xe06a1a));
+    kabel.castShadow = true;
+    g.add(kabel);
+    // Stecker
+    const a0 = kurve.getPointAt(0), t0 = kurve.getTangentAt(0);
+    const st = new THREE.Group();
+    st.add(setze(zylinder(0.022, 0.016, 0.06, 0x1d1d1f, { umriss: 0.002 }, 12), 0, 0, -0.03, Math.PI / 2, 0, 0));
+    st.add(setze(zylinder(0.03, 0.03, 0.02, 0x1d1d1f, { umriss: 0.002 }, 14), 0, 0, -0.07, Math.PI / 2, 0, 0));
+    for (const sx of [-1, 1]) st.add(setze(zylinder(0.003, 0.003, 0.02, 0xc0c4c8, { umriss: false }, 6), sx * 0.01, 0, -0.09, Math.PI / 2, 0, 0));
+    st.position.copy(a0); st.rotation.y = Math.atan2(t0.x, t0.z);
+    g.add(st);
+    // Kupplung
+    const a1 = kurve.getPointAt(1), t1 = kurve.getTangentAt(1);
+    const ku = new THREE.Group();
+    ku.add(setze(zylinder(0.02, 0.03, 0.07, 0x1d1d1f, { umriss: 0.002 }, 12), 0, 0, 0.035, Math.PI / 2, 0, 0));
+    ku.add(setze(zylinder(0.036, 0.036, 0.04, 0x1d1d1f, { umriss: 0.002 }, 14), 0, 0, 0.09, Math.PI / 2, 0, 0));
+    ku.add(setze(zylinder(0.034, 0.034, 0.006, 0x3a3a3c, { umriss: false }, 14), 0, 0.02, 0.12, 0.6, 0, 0)); // Klappdeckel
+    ku.position.copy(a1); ku.rotation.y = Math.atan2(t1.x, t1.z);
+    g.add(ku);
+    g.position.set(-L / 2 + 2.4, 0, D / 2 - 0.7);
+    cp.add(g);
   }
 
   // ---------- Schrottplatz ----------
   const ROST = [0x8a4a2a, 0x7a3e22, 0x9a5a34, 0x6e5a4a, 0x5a4a40];
   const rost = () => ROST[Math.floor(r() * ROST.length)];
-  // hinlegen; ragt etwas in den Boden (z. B. schräg liegend), wird es angehoben, bis es aufliegt
-  const legen = (obj, x, z, ry = r() * Math.PI * 2) => {
-    obj.position.set(x, obj.position.y, z); obj.rotation.y = ry; gruppe.add(obj);
+  // ---------- Belegung: keine Durchdringungen auf dem Schrottplatz ----------
+  // Jedes Teil bekommt einen Kasten (Grundriss als gedrehtes Rechteck, dazu Höhe von–bis). Große Teile suchen sich einen
+  // freien Platz am Boden; Teile in Haufen und Gitterboxen werden von unten nach oben aufgeschichtet: sie legen sich oben auf
+  // das, was unter ihrem Grundriss schon liegt (nie hinein).
+  function belegung() { return []; }
+  const achsen = (yaw) => [[Math.cos(yaw), -Math.sin(yaw)], [Math.sin(yaw), Math.cos(yaw)]];
+  function ueberlapp(a, b, rand = 0.005) {
+    const ua = achsen(a.yaw), ub = achsen(b.yaw), dx = b.cx - a.cx, dz = b.cz - a.cz;
+    for (const n of [...ua, ...ub]) {
+      const ra = a.hx * Math.abs(ua[0][0] * n[0] + ua[0][1] * n[1]) + a.hz * Math.abs(ua[1][0] * n[0] + ua[1][1] * n[1]);
+      const rb = b.hx * Math.abs(ub[0][0] * n[0] + ub[0][1] * n[1]) + b.hz * Math.abs(ub[1][0] * n[0] + ub[1][1] * n[1]);
+      if (Math.abs(dx * n[0] + dz * n[1]) >= ra + rb + rand) return false;
+    }
+    return true;
+  }
+  const _box = new THREE.Box3();
+  // Maße eines Objekts ohne Gier (lokal): Mitte und halbe Kanten
+  function masse(obj) {
+    const py = obj.position.clone(), ry = obj.rotation.y, eltern = obj.parent;
+    if (eltern) eltern.remove(obj);
+    obj.position.set(0, 0, 0); obj.rotation.y = 0; obj.updateMatrixWorld(true);
+    _box.setFromObject(obj);
+    obj.position.copy(py); obj.rotation.y = ry;
+    if (eltern) eltern.add(obj);
+    return { cx: (_box.min.x + _box.max.x) / 2, cz: (_box.min.z + _box.max.z) / 2, hx: (_box.max.x - _box.min.x) / 2, hz: (_box.max.z - _box.min.z) / 2, y0: _box.min.y, y1: _box.max.y };
+  }
+  // sf: Prüfkasten verkleinert (nicht ganz streng: Teile dürfen sich etwas ineinanderschieben, in Lücken legen)
+  const eintrag = (m, x, z, yaw, sf = 1) => {
+    const c = Math.cos(yaw), s = Math.sin(yaw);
+    return { cx: x + m.cx * c + m.cz * s, cz: z - m.cx * s + m.cz * c, hx: m.hx * sf, hz: m.hz * sf, yaw };
+  };
+  // Legt obj an (x, z) mit Gier yaw. opt.suche: freien Platz am Boden suchen (Spirale); opt.stapel: oben auf Vorhandenes;
+  // opt.drin(e): Grundriss erlaubt?; opt.maxY: höchste erlaubte Oberkante; opt.boden: Bodenhöhe. Gibt false zurück, wenn
+  // kein Platz war (dann wird das Teil weggelassen).
+  function platziere(reg, eltern, obj, x, z, yaw, opt = {}) {
+    const m = masse(obj), boden = opt.boden ?? 0;
+    const versuche = [];
+    if (opt.suche) { for (let rr = 0; rr <= 2.4; rr += 0.12) for (let k = 0; k < (rr ? 14 : 1); k++) { const w = k / 14 * Math.PI * 2 + rr; versuche.push([x + Math.cos(w) * rr, z + Math.sin(w) * rr]); } }
+    else versuche.push([x, z]);
+    for (const [px, pz] of versuche) {
+      const e = eintrag(m, px, pz, yaw, opt.sf ?? 1);
+      if (opt.drin && !opt.drin(eintrag(m, px, pz, yaw))) continue;
+      let y = boden;
+      let frei = true;
+      for (const o of reg) {
+        if (!ueberlapp(e, o)) continue;
+        if (!opt.stapel) { frei = false; break; }
+        y = Math.max(y, o.y1 - (opt.einsinken ?? 0) * (o.y1 - o.y0));
+      }
+      if (!frei) continue;
+      const hoehe = m.y1 - m.y0;
+      if (opt.maxY !== undefined && y + hoehe > opt.maxY) continue;
+      obj.position.set(px, y - m.y0 + 0.003, pz); obj.rotation.y = yaw;
+      eltern.add(obj);
+      reg.push({ ...e, y0: y, y1: y + hoehe + 0.003 });
+      return true;
+    }
+    return false;
+  }
+  // Schrottplatz-Belegung (Welt); Grundriss muss in einem Schrott-Kasten liegen
+  const schrottReg = belegung();
+  // abgerundete Grundfläche je Kasten (Superellipse: eckig genug zum Füllen, aber ohne harte Ecken)
+  const inRund = (px, pz, k) => {
+    const mx = (k.xMin + k.xMax) / 2, mz = (k.zMin + k.zMax) / 2, ax = (k.xMax - k.xMin) / 2 - 0.02, az = (k.zMax - k.zMin) / 2 - 0.02;
+    return (Math.abs(px - mx) / ax) ** 2.3 + (Math.abs(pz - mz) / az) ** 2.3 <= 1;
+  };
+  const imSchrott = (e) => {
+    const [ux, uz] = achsen(e.yaw);
+    const ecken = [[1, 1], [1, -1], [-1, 1], [-1, -1]].map(([a, b]) => [e.cx + ux[0] * e.hx * a + uz[0] * e.hz * b, e.cz + ux[1] * e.hx * a + uz[1] * e.hz * b]);
+    return ecken.every(([px, pz]) => SCHROTT_KAESTEN.some((k) => inRund(px, pz, k)));
+  };
+  // Leistung: alle Teile eines Gegenstands (Haufen, Gitterbox, Mofa …) mit gleichem Aussehen zu einem Mesh
+  // zusammenfassen (sieht gleich aus, aber viel weniger Zeichenaufrufe). Anklickbar bleibt der Gegenstand als Ganzes.
+  const _inv = new THREE.Matrix4(), _rel = new THREE.Matrix4();
+  function schluessel(m) {
+    if (m.isShaderMaterial) return 'u|' + m.uuid;
+    return [m.type, m.color?.getHex(), m.map?.uuid || '', m.side, m.transparent, m.opacity, m.alphaTest, m.depthWrite].join('|');
+  }
+  function verschmelzen(geos) {
+    let n = 0, ni = 0;
+    for (const g of geos) { n += g.attributes.position.count; ni += g.index ? g.index.count : g.attributes.position.count; }
+    const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), uv = new Float32Array(n * 2), idx = new Uint32Array(ni);
+    let o = 0, oi = 0;
+    for (const g of geos) {
+      const c = g.attributes.position.count;
+      pos.set(g.attributes.position.array, o * 3);
+      if (g.attributes.normal) nor.set(g.attributes.normal.array, o * 3);
+      if (g.attributes.uv) uv.set(g.attributes.uv.array.subarray(0, c * 2), o * 2);
+      if (g.index) { const a = g.index.array; for (let k = 0; k < a.length; k++) idx[oi + k] = a[k] + o; oi += a.length; }
+      else { for (let k = 0; k < c; k++) idx[oi + k] = k + o; oi += c; }
+      o += c;
+    }
+    const m = new THREE.BufferGeometry();
+    m.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    m.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+    m.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    m.setIndex(new THREE.BufferAttribute(idx, 1));
+    m.computeBoundingSphere();
+    return m;
+  }
+  function zusammenfassen(obj) {
     obj.updateMatrixWorld(true);
-    const bb = new THREE.Box3().setFromObject(obj);
-    if (bb.min.y < 0) obj.position.y -= bb.min.y - 0.005;
+    _inv.copy(obj.matrixWorld).invert();
+    const gruppen = new Map(), weg = [];
+    obj.traverse((o) => {
+      if (!o.isMesh || Array.isArray(o.material) || o.userData.einzeln) return;
+      const k = schluessel(o.material);
+      if (!gruppen.has(k)) gruppen.set(k, { mat: o.material, geos: [], schatten: o.castShadow, umriss: !!o.userData.umriss });
+      const geo = o.geometry.index ? o.geometry.clone() : o.geometry.clone();
+      _rel.multiplyMatrices(_inv, o.matrixWorld);
+      geo.applyMatrix4(_rel);
+      gruppen.get(k).geos.push(geo);
+      weg.push(o);
+    });
+    for (const o of weg) if (o.parent) o.parent.remove(o);
+    // leere Gruppen bleiben stehen (unsichtbar, stören nicht)
+    for (const { mat, geos, schatten, umriss } of gruppen.values()) {
+      const m = new THREE.Mesh(verschmelzen(geos), mat);
+      m.castShadow = schatten && !umriss; m.receiveShadow = !umriss;
+      if (umriss) m.userData.umriss = true;
+      obj.add(m);
+      for (const g of geos) g.dispose();
+    }
+  }
+  let weggelassen = 0;
+  // großes Teil am Boden hinlegen (sucht einen freien Platz in der Nähe)
+  const legen = (obj, x, z, ry = r() * Math.PI * 2) => {
+    if (!platziere(schrottReg, gruppe, obj, x, z, ry, { suche: true, drin: imSchrott, sf: 0.7 })) weggelassen++;
+    else zusammenfassen(obj);
     return obj;
   };
-  // Schrotthaufen: nur Metall. Innen ein Kern aus zerdrückten Blechkisten, verbogenen Blechen und Kleinteilen (füllt den
-  // Haufen, damit nichts in der Luft hängt), darüber Bleche, Rohre, Vierkant, Träger, Winkel, Gitter, Töpfe, Pfannen,
-  // Grillroste und rostiges Werkzeug kreuz und quer; Höhe nach Hügelform
+  // obendrauf (z. B. Gitterbox auf Gitterbox): genau hier, auf das, was darunter steht
+  const draufstellen = (obj, x, z, ry) => {
+    if (!platziere(schrottReg, gruppe, obj, x, z, ry, { stapel: true, drin: imSchrott })) weggelassen++;
+    else zusammenfassen(obj);
+    return obj;
+  };
+  // Rost-Materialien: Struktur statt Einheitsfarbe (Grundton, dunkle Narben, helle Flugrost-Flecken, Laufspuren)
+  const rostMats = [['#8a4a2a', '#5a2c18', '#b8683a'], ['#6e5244', '#3e2c24', '#9a6a4a'], ['#7a3e22', '#4a2414', '#a85a2e'], ['#5e5a56', '#3a3634', '#8a5a3a'], ['#1e1d1c', '#0e0d0c', '#7a4a2a'], ['#262422', '#141210', '#8a5230']].map(([grund, dunkel, hell], k) => {
+    const t = leinwandTextur(128, 128, (cg, b, h) => {
+      cg.fillStyle = grund; cg.fillRect(0, 0, b, h);
+      for (let i = 0; i < 140; i++) { cg.fillStyle = r() < 0.55 ? dunkel : hell; cg.globalAlpha = 0.25 + r() * 0.5; cg.beginPath(); cg.ellipse(r() * b, r() * h, 1 + r() * 7, 1 + r() * 4, r() * 3, 0, Math.PI * 2); cg.fill(); }
+      cg.globalAlpha = 0.3; cg.fillStyle = dunkel;
+      for (let i = 0; i < 10; i++) cg.fillRect(r() * b, r() * h * 0.5, 1 + r() * 2, 20 + r() * 50);
+      cg.globalAlpha = 1;
+    });
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    const m = toon(0xffffff, { map: t, side: THREE.DoubleSide });
+    m.userData.k = k;
+    return m;
+  });
+  // ein Drittel der Teile schwarz (lackiert, Rost an den Kanten)
+  const rm = () => rostMats[Math.floor(r() * rostMats.length)];
+  const innenDunkel = toon(0x2a201a, { side: THREE.BackSide });
+  // Rohr mit Wandstärke: Außenmantel, dunkle Innenseite, Ringflächen an den Enden; ab und zu ein Flansch
+  function hohlrohr(l, R) {
+    const g = new THREE.Group(), mat = rm();
+    const aussen = new THREE.Mesh(new THREE.CylinderGeometry(R, R, l, 16, 1, true), mat); aussen.castShadow = true; g.add(aussen);
+    g.add(new THREE.Mesh(new THREE.CylinderGeometry(R * 0.8, R * 0.8, l, 16, 1, true), innenDunkel));
+    for (const y of [-l / 2, l / 2]) { const ring = new THREE.Mesh(new THREE.RingGeometry(R * 0.8, R, 16), mat); ring.rotation.x = Math.PI / 2; ring.position.y = y; g.add(ring); }
+    if (r() < 0.3) { const fl = new THREE.Mesh(new THREE.CylinderGeometry(R * 1.7, R * 1.7, 0.02, 16), mat); fl.position.y = l / 2 - 0.01; g.add(fl); for (let k = 0; k < 6; k++) { const w = k / 6 * 6.28; g.add(setze(zylinder(R * 0.12, R * 0.12, 0.03, 0x2a2622, { umriss: false }, 6), Math.cos(w) * R * 1.35, l / 2 - 0.01, Math.sin(w) * R * 1.35)); } }
+    umrissLinie(aussen, 0.003);
+    return g;
+  }
+  // Profil aus Formplatten (lokal: Länge entlang x), z. B. Doppel-T, U, L, Vierkantrohr
+  function profil(art, l) {
+    const g = new THREE.Group(), mat = rm();
+    const platte = (b, h, y, z) => { const m = teil(new THREE.BoxGeometry(l, h, b), 0, { material: mat, umriss: 0.002 }); m.position.set(0, y, z); g.add(m); };
+    if (art === 'I') { const H = 0.12 + r() * 0.1, B = H * 0.6, t = 0.012; platte(B, t, H / 2 - t / 2, 0); platte(B, t, -H / 2 + t / 2, 0); platte(t * 0.8, H - 2 * t, 0, 0); }
+    else if (art === 'U') { const H = 0.1 + r() * 0.06, B = 0.05; platte(0.008, H, 0, 0); platte(B, 0.008, H / 2, B / 2); platte(B, 0.008, -H / 2, B / 2); }
+    else if (art === 'L') { const S = 0.05 + r() * 0.04; platte(S, 0.006, 0, S / 2); platte(0.006, S, S / 2, 0); }
+    else { // Vierkantrohr, hohl
+      const S = 0.06 + r() * 0.05, t = 0.005;
+      platte(S, t, S / 2, 0); platte(S, t, -S / 2, 0); platte(t, S, 0, S / 2); platte(t, S, 0, -S / 2);
+      const innen = new THREE.Mesh(new THREE.BoxGeometry(l - 0.01, S - 2 * t, S - 2 * t), innenDunkel); g.add(innen);
+    }
+    // schräg abgetrennte Enden: kleiner Brennschnitt-Rand (dunkel)
+    for (const sx of [-1, 1]) g.add(setze(quader(0.006, 0.02, 0.02, 0x1d1d1f, { umriss: false }), sx * l / 2, 0, 0));
+    return g;
+  }
+  // gebogenes Blech (Kantteil): zwei Flächen im Winkel, mit Bohrungen
+  function kantblech() {
+    const g = new THREE.Group(), mat = rm(), b = 0.4 + r() * 0.6, t1 = 0.2 + r() * 0.3, t2 = 0.1 + r() * 0.2;
+    const a = teil(new THREE.BoxGeometry(b, 0.006, t1), 0, { material: mat, umriss: 0.002 }); a.position.z = t1 / 2; g.add(a);
+    const c = teil(new THREE.BoxGeometry(b, t2, 0.006), 0, { material: mat, umriss: 0.002 }); c.position.y = t2 / 2; g.add(c);
+    for (let k = 0; k < 3; k++) g.add(setze(zylinder(0.012, 0.012, 0.008, 0x1d1d1f, { umriss: false }, 8), -b / 3 + k * b / 3, 0.002, t1 * 0.6));
+    return g;
+  }
+  // plattgedrücktes Fass: gestauchter Zylinder mit Sicken und verbeultem Deckel
+  function plattesFass() {
+    const g = new THREE.Group(), mat = rm();
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(0.29, 0.29, 0.85, 16), mat);
+    m.scale.set(1, 1, 0.38); m.rotation.z = Math.PI / 2; m.castShadow = true; umrissLinie(m, 0.003); g.add(m);
+    for (const x of [-0.15, 0.15]) { const s = new THREE.Mesh(new THREE.TorusGeometry(0.295, 0.012, 4, 16), mat); s.scale.set(1, 0.38, 1); s.rotation.y = Math.PI / 2; s.position.x = x; g.add(s); }
+    return g;
+  }
+  // Schrotthaufen: nur Metall, aus erkennbaren Teilen (keine Klötze): unten plattgedrückte Fässer, Kantbleche und
+  // Blechpakete als Kern, darauf Rohre mit Wandstärke, Doppel-T, U-Profile, Winkel, Vierkantrohre, Baustahlgitter,
+  // Töpfe, Pfannen, Grillroste und Werkzeug kreuz und quer; Höhe nach Hügelform
   function altmetall(cx, cz, rx, rz, n, hoehe = 1.0) {
     const g = new THREE.Group();
-    const hoeheBei = (x, z) => Math.max(0, 1 - (x / rx) ** 2 - (z / rz) ** 2);
-    // Kern: zerdrückte Kisten und Blechpakete, nach innen höher
-    for (let i = 0; i < Math.round(n * 0.45); i++) {
-      let x, z;
-      do { x = (r() - 0.5) * rx * 1.7; z = (r() - 0.5) * rz * 1.7; } while (hoeheBei(x, z) <= 0.15);
-      const hh = hoeheBei(x, z) * hoehe * 0.75;
-      const m = quader(0.3 + r() * 0.5, Math.max(0.12, hh * (0.6 + r() * 0.5)), 0.3 + r() * 0.5, rost(), { umriss: 0.003 });
-      m.position.set(x, m.geometry.parameters.height / 2 * 0.8, z);
-      m.rotation.set((r() - 0.5) * 0.4, r() * Math.PI, (r() - 0.5) * 0.4);
-      g.add(m);
-    }
-    // Kleinkram am Fuß des Haufens
-    for (let i = 0; i < Math.round(n * 0.4); i++) {
-      const w = r() * Math.PI * 2, d = 0.75 + r() * 0.3;
-      const m = kleinteil();
-      m.position.set(Math.cos(w) * rx * d, 0.02, Math.sin(w) * rz * d);
-      m.rotation.y = r() * 6;
-      g.add(m);
-    }
-    for (let i = 0; i < n; i++) {
-      const art = r();
-      let x, z;
-      do { x = (r() - 0.5) * rx * 2; z = (r() - 0.5) * rz * 2; } while (hoeheBei(x, z) <= 0.02);
-      const y = hoeheBei(x, z) * hoehe * (0.55 + r() * 0.5) + 0.03;
-      let m;
-      if (art < 0.25) m = quader(0.4 + r() * 1.0, 0.02, 0.3 + r() * 0.7, rost(), { umriss: 0.003 }); // Blech
-      else if (art < 0.42) m = zylinder(0.03 + r() * 0.05, 0.03 + r() * 0.05, 0.8 + r() * 1.6, rost(), { umriss: 0.003 }, 8); // Rohr
-      else if (art < 0.56) m = quader(0.08, 0.08, 1.0 + r() * 1.4, rost(), { umriss: 0.003 }); // Vierkant
-      else if (art < 0.66) m = quader(0.12, 0.2, 0.8 + r() * 1.6, 0x6a5a50, { umriss: 0.003 }); // Träger
-      else if (art < 0.76) { // Winkel
-        m = new THREE.Group();
-        const l = 0.6 + r() * 1.0, f = rost();
-        m.add(setze(quader(l, 0.06, 0.008, f, { umriss: 0.002 }), 0, 0.03, 0));
-        m.add(setze(quader(l, 0.008, 0.06, f, { umriss: 0.002 }), 0, 0, 0.03));
-      } else if (art < 0.84) { // Baustahlgitter
-        m = new THREE.Group();
-        const f = rost();
-        for (let k = 0; k < 5; k++) m.add(setze(zylinder(0.006, 0.006, 1.0, f, { umriss: false }, 4), -0.4 + k * 0.2, 0, 0, Math.PI / 2, 0, 0));
-        for (let k = 0; k < 5; k++) m.add(setze(zylinder(0.006, 0.006, 1.0, f, { umriss: false }, 4), 0, 0, -0.4 + k * 0.2, 0, 0, Math.PI / 2));
-      } else if (art < 0.88) m = quader(0.15 + r() * 0.25, 0.1 + r() * 0.2, 0.15 + r() * 0.25, rost(), { umriss: 0.003 }); // Klotz, Kasten
-      else m = kleinteil(); // Topf, Pfanne, Grillrost, Werkzeug
-      m.position.set(x, y, z);
-      m.rotation.set((r() - 0.5) * 0.9 + (art >= 0.25 && art < 0.42 ? Math.PI / 2 : 0), r() * Math.PI, (r() - 0.5) * 0.7);
-      g.add(m);
-      if (art >= 0.88) { m.rotation.x *= 0.5; m.rotation.z *= 0.5; }
-    }
-    g.position.set(cx, 0, cz);
     gruppe.add(g);
+    const hoeheBei = (x, z) => Math.max(0, 1 - (x / rx) ** 2 - (z / rz) ** 2);
+    // Lage im Haufen: zur Mitte hin dichter (dort wird er höher)
+    const lage = () => { const w = r() * Math.PI * 2, d = Math.pow(r(), 0.75) * 0.95; return [Math.cos(w) * rx * d, Math.sin(w) * rz * d]; };
+    const drauf = (teil, flach) => {
+      const holder = new THREE.Group();
+      teil.rotation.x = (r() - 0.5) * 0.5 * flach; teil.rotation.z = (r() - 0.5) * 0.5 * flach;
+      holder.add(teil);
+      for (let v = 0; v < 6; v++) {
+        const [lx, lz] = lage();
+        const maxY = hoehe * (0.3 + hoeheBei(lx, lz)) + 0.15;
+        if (platziere(schrottReg, g, holder, cx + lx, cz + lz, r() * Math.PI * 2, { stapel: true, maxY, drin: (e) => imSchrott(e), sf: 0.55, einsinken: 0.35 })) return true;
+      }
+      return false;
+    };
+    // erst der Kern (Fässer, Kantbleche), dann Profile und Rohre, dann Kleinkram obendrauf und am Fuß
+    for (let i = 0; i < Math.round(n * 0.2); i++) drauf(r() < 0.4 ? plattesFass() : kantblech(), 0.4);
+    for (let i = 0; i < Math.round(n * 0.75); i++) {
+      const art = r();
+      let m;
+      if (art < 0.28) { m = new THREE.Group(); const ro = hohlrohr(0.6 + r() * 1.6, 0.03 + r() * 0.07); ro.rotation.z = Math.PI / 2; m.add(ro); }
+      else if (art < 0.48) { // rostiges Blech, leicht verbogen (zwei Hälften im flachen Winkel), mit Löchern
+        m = new THREE.Group();
+        const mat = rm(), b = 0.4 + r() * 0.9, t = 0.3 + r() * 0.7, k = (r() - 0.5) * 0.5;
+        const a = teil(new THREE.BoxGeometry(b / 2, 0.006, t), 0, { material: mat, umriss: 0.002 }); a.position.x = -b / 4; m.add(a);
+        const c = teil(new THREE.BoxGeometry(b / 2, 0.006, t), 0, { material: mat, umriss: 0.002 }); c.position.set(b / 4 * Math.cos(k), b / 4 * Math.sin(k), 0); c.rotation.z = k; m.add(c);
+        for (let i = 0; i < 2; i++) m.add(setze(zylinder(0.015, 0.015, 0.008, 0x1d1d1f, { umriss: false }, 8), -b / 3, 0.002, (r() - 0.5) * t * 0.7));
+      }
+      else if (art < 0.6) m = profil('I', 0.8 + r() * 1.4);
+      else if (art < 0.7) m = profil('U', 0.6 + r() * 1.2);
+      else if (art < 0.8) m = profil('L', 0.6 + r() * 1.0);
+      else if (art < 0.88) m = profil('Q', 0.6 + r() * 1.2);
+      else if (art < 0.93) m = kantblech();
+      else { // Baustahlgitter
+        m = new THREE.Group();
+        const mat = rm();
+        for (let k = 0; k < 6; k++) m.add(setze(new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 1.2, 5), mat), -0.5 + k * 0.2, 0, 0, Math.PI / 2, 0, 0));
+        for (let k = 0; k < 6; k++) m.add(setze(new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 1.2, 5), mat), 0, 0.012, -0.5 + k * 0.2, 0, 0, Math.PI / 2));
+      }
+      drauf(m, 1);
+    }
+    for (let i = 0; i < Math.round(n * 0.25); i++) drauf(kleinteil(), 0.3);
+    zusammenfassen(g);
     merke(g, 'schrott', 'Schrott', null);
   }
   // Altreifen-Stapel
+  // Reifen mit echtem Querschnitt (Drehprofil): flache Lauffläche, Flanken, Wulst innen; Profilblöcke und Rillen
+  const gummi = toon(0x1d1d1f, { side: THREE.DoubleSide }), gummiHell = toon(0x2e2e30);
+  function reifen(R = 0.3, B = 0.17, trecker = false) {
+    const g = new THREE.Group(), i = R * (trecker ? 0.62 : 0.68);
+    const prof = [[i, -B * 0.42], [i + 0.012, -B * 0.5], [R * 0.9, -B * 0.5], [R - 0.012, -B * 0.46], [R, -B * 0.36], [R, B * 0.36], [R - 0.012, B * 0.46], [R * 0.9, B * 0.5], [i + 0.012, B * 0.5], [i, B * 0.42]].map(([x, y]) => new THREE.Vector2(x, y));
+    const m = new THREE.Mesh(new THREE.LatheGeometry(prof, 32), gummi);
+    m.castShadow = true; umrissLinie(m, 0.003); g.add(m);
+    // Flankenschrift (helle Ringe) und Profil
+    for (const y of [-B * 0.5 - 0.001, B * 0.5 + 0.001]) { const ring = new THREE.Mesh(new THREE.RingGeometry(R * 0.8, R * 0.83, 32), gummiHell); ring.rotation.x = -Math.PI / 2; ring.position.y = y; g.add(ring); }
+    const n = trecker ? 22 : 30;
+    for (let k = 0; k < n; k++) {
+      const w = k / n * Math.PI * 2;
+      if (trecker) { // Stollen schräg, abwechselnd links/rechts (Chevron)
+        for (const sy of [-1, 1]) { const st = new THREE.Mesh(new THREE.BoxGeometry(0.07, B * 0.45, 0.06), gummi); st.position.set(Math.cos(w) * (R + 0.03), sy * B * 0.22, Math.sin(w) * (R + 0.03)); st.rotation.set(0, -w, sy * 0.5); g.add(st); }
+      } else { const bl = new THREE.Mesh(new THREE.BoxGeometry(0.035, B * 0.7, 0.012), gummiHell); bl.position.set(Math.cos(w) * (R + 0.002), 0, Math.sin(w) * (R + 0.002)); bl.rotation.y = -w + Math.PI / 2; g.add(bl); }
+    }
+    return g;
+  }
   function reifenStapel(x, z, n, liegt = false) {
     const g = new THREE.Group();
     for (let k = 0; k < n; k++) {
-      const t = setze(teil(new THREE.TorusGeometry(0.3, 0.1, 8, 20), 0x1d1d1f, { umriss: 0.003 }), (r() - 0.5) * 0.08, 0.1 + k * 0.2, (r() - 0.5) * 0.08, Math.PI / 2 + (r() - 0.5) * 0.1, 0, (r() - 0.5) * 0.1);
+      const t = reifen(0.3 + (r() - 0.5) * 0.04, 0.16 + r() * 0.04);
+      t.position.set((r() - 0.5) * 0.08, 0.09 + k * 0.19, (r() - 0.5) * 0.08); t.rotation.set((r() - 0.5) * 0.08, r() * 6, (r() - 0.5) * 0.08);
       g.add(t);
     }
     if (liegt) { g.rotation.z = Math.PI / 2; g.position.y = 0.4; }
     const h = new THREE.Group();
     h.add(g);
     return legen(h, x, z);
+  }
+  // großer Treckerreifen (1,6 m), liegt flach
+  function treckerreifen(x, z) {
+    const t = reifen(0.8, 0.5, true);
+    const h = new THREE.Group(); h.add(t);
+    merke(h, 'treckerreifen', 'Treckerreifen', null);
+    return legen(h, x, z);
+  }
+  // kaputter alter Tischkicker: Holzkasten mit grünem Spielfeld, Mittellinie, Tore, Stangen mit Figuren (rot/blau),
+  // Griffe; ein Bein fehlt (Kasten kippt auf die Ecke), eine Stange verbogen, eine fehlt, Seitenwand gesprungen, Zählwerk
+  function kicker(x, z, ry) {
+    const g = new THREE.Group(), HOLZ = 0x7a5232, L = 1.2, Bk = 0.7, H0 = 0.62, K = 0.24;
+    const feldTex = leinwandTextur(256, 150, (cg, b, h) => {
+      cg.fillStyle = '#3a8a3a'; cg.fillRect(0, 0, b, h);
+      cg.strokeStyle = '#f0f0e8'; cg.lineWidth = 3; cg.strokeRect(6, 6, b - 12, h - 12);
+      cg.beginPath(); cg.moveTo(b / 2, 6); cg.lineTo(b / 2, h - 6); cg.stroke();
+      cg.beginPath(); cg.arc(b / 2, h / 2, 22, 0, Math.PI * 2); cg.stroke();
+      cg.strokeRect(6, h / 2 - 30, 30, 60); cg.strokeRect(b - 36, h / 2 - 30, 30, 60);
+      for (let i = 0; i < 30; i++) { cg.fillStyle = 'rgba(90,70,40,0.35)'; cg.fillRect(r() * b, r() * h, 3 + r() * 10, 2 + r() * 6); }
+    });
+    const kasten = new THREE.Group();
+    const feld = new THREE.Mesh(new THREE.PlaneGeometry(L - 0.06, Bk - 0.06), toon(0xffffff, { map: feldTex })); feld.rotation.x = -Math.PI / 2; feld.position.y = 0.02; kasten.add(feld);
+    kasten.add(setze(quader(L, 0.02, Bk, HOLZ, { umriss: 0.002 }), 0, 0.01, 0));
+    for (const sz of [-1, 1]) kasten.add(setze(quader(L, K, 0.03, HOLZ, { umriss: 0.003 }), 0, K / 2, sz * Bk / 2));
+    for (const sx of [-1, 1]) {
+      kasten.add(setze(quader(0.03, K, Bk, HOLZ, { umriss: 0.003 }), sx * L / 2, K / 2, 0));
+      kasten.add(setze(quader(0.04, 0.08, 0.22, 0x1d1d1f, { umriss: false }), sx * (L / 2 + 0.001), 0.06, 0)); // Tor
+    }
+    kasten.add(setze(quader(0.3, 0.012, 0.04, 0xd8b23a, { umriss: false }), 0.25, K + 0.006, -Bk / 2)); // Zählwerk
+    for (let k = 0; k < 5; k++) kasten.add(setze(zylinder(0.012, 0.012, 0.03, 0xf0f0e8, { umriss: false }, 8), 0.15 + k * 0.05, K + 0.02, -Bk / 2, Math.PI / 2, 0, 0));
+    kasten.add(setze(quader(0.2, 0.006, 0.004, 0x1d1d1f, { umriss: false }), -0.3, K * 0.6, Bk / 2 + 0.017, 0, 0, 0.6)); // Riss
+    // Stangen mit Figuren: 8 Stangen, eine fehlt (Index 5), eine verbogen (Index 2)
+    const stangenX = [-0.5, -0.36, -0.2, -0.06, 0.06, 0.2, 0.36, 0.5], figuren = [1, 2, 3, 5, 5, 3, 2, 1];
+    stangenX.forEach((sx, i) => {
+      if (i === 5) return;
+      const farbe = i % 2 ? 0x2f5fa8 : 0xc8382c, st = new THREE.Group();
+      st.add(setze(zylinder(0.008, 0.008, Bk + 0.5, 0xc0c4c8, { umriss: false }, 8), 0, 0, 0, Math.PI / 2, 0, 0));
+      st.add(setze(zylinder(0.022, 0.022, 0.11, 0x1d1d1f, { umriss: 0.001 }, 10), 0, 0, (i % 2 ? -1 : 1) * (Bk / 2 + 0.2), Math.PI / 2, 0, 0)); // Griff
+      const n = figuren[i];
+      for (let k = 0; k < n; k++) {
+        const fz = (k - (n - 1) / 2) * (Bk - 0.12) / Math.max(1, n);
+        const f = new THREE.Group();
+        f.add(setze(kugel(0.018, 0xe8c8a0, { umriss: false }, 8), 0, 0.045, 0));
+        f.add(setze(quader(0.03, 0.06, 0.035, farbe, { umriss: 0.001 }), 0, 0.0, 0));
+        f.add(setze(quader(0.025, 0.08, 0.02, farbe, { umriss: false }), 0, -0.06, 0));
+        f.position.z = fz; f.rotation.z = (r() - 0.5) * 1.2;
+        st.add(f);
+      }
+      st.position.set(sx, 0.13, 0);
+      if (i === 2) st.rotation.x = 0.12; // verbogen
+      kasten.add(st);
+    });
+    kasten.position.y = H0;
+    g.add(kasten);
+    // Beine (eins fehlt), Querstreben
+    for (const [lx, lz] of [[-1, -1], [-1, 1], [1, -1]]) g.add(setze(quader(0.07, H0, 0.07, HOLZ, { umriss: 0.003 }), lx * (L / 2 - 0.06), H0 / 2, lz * (Bk / 2 - 0.06)));
+    g.add(setze(quader(0.04, 0.04, Bk - 0.12, HOLZ, { umriss: 0.002 }), -(L / 2 - 0.06), 0.15, 0));
+    g.add(setze(quader(0.07, 0.4, 0.07, HOLZ, { umriss: 0.003 }), L / 2 + 0.3, 0.035, 0.1, 0, 0.4, Math.PI / 2)); // abgebrochenes Bein liegt daneben
+    g.rotation.x = -0.08; g.rotation.z = -0.14; // kippt auf die fehlende Ecke
+    const h = new THREE.Group(); h.add(g);
+    merke(h, 'kicker', 'Kicker', null);
+    return legen(h, x, z, ry);
   }
   // Autotür mit Fensterrahmen, schräg angelehnt
   function autotuer(x, z, ry, farbe) {
@@ -518,34 +772,82 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     const a = r();
     return a < 0.25 ? topf() : a < 0.45 ? pfanne() : a < 0.65 ? grillrost() : werkzeug();
   }
-  // kaputter Betonmischer: Trommel (orange, verbeult, schief), Rahmen, ein Rad fehlt, Motorkasten offen, Handrad
+  // kaputter Betonmischer: hohle Trommel mit Tiefe (orange, innen Betonkruste), drin liegt Schrott; Mischflügel innen,
+  // Zahnkranz mit Zähnen, Ritzel, Lagerbock mit Achse, Kipphebel, Handrad, Rahmen mit Streben, Deichsel, ein Rad fehlt
+  // (Achse steht auf einem Klotz), Motorkasten offen (Motor ausgebaut), Riemenschutz, Betonspritzer, Rost
   function betonmischer(x, z, ry) {
-    const g = new THREE.Group(), OR = 0xd8792a;
-    // Rahmen
-    for (const s of [-1, 1]) g.add(setze(quader(1.2, 0.05, 0.05, 0x5a5e62, { umriss: 0.002 }), 0, 0.32, s * 0.28));
-    g.add(setze(quader(0.05, 0.05, 0.6, 0x5a5e62, { umriss: 0.002 }), -0.55, 0.32, 0));
-    g.add(setze(quader(0.05, 0.75, 0.05, 0x5a5e62, { umriss: 0.002 }), 0.1, 0.68, 0.28));
-    g.add(setze(quader(0.05, 0.75, 0.05, 0x5a5e62, { umriss: 0.002 }), 0.1, 0.68, -0.28));
-    // Rad (nur noch eins) und Stütze auf der anderen Seite
-    g.add(setze(teil(new THREE.TorusGeometry(0.17, 0.06, 8, 16), 0x1d1d1f, { umriss: 0.002 }), -0.55, 0.2, 0.36));
-    g.add(setze(zylinder(0.07, 0.07, 0.04, 0x9a9da2, { umriss: false }, 12), -0.55, 0.2, 0.36, Math.PI / 2, 0, 0));
-    g.add(setze(quader(0.05, 0.3, 0.05, 0x5a5e62, { umriss: 0.002 }), 0.55, 0.15, 0));
-    // Trommel: Bauch, Konus, Öffnung, Ring
+    const g = new THREE.Group(), OR = 0xd8792a, RAHMEN = 0x4e5256;
+    const stab = (ax, ay, az, bx, by, bz, d = 0.025, f = RAHMEN) => {
+      const a = new THREE.Vector3(ax, ay, az), b = new THREE.Vector3(bx, by, bz), l = a.distanceTo(b);
+      const m = zylinder(d, d, l, f, { umriss: 0.002 }, 8);
+      m.position.copy(a).add(b).multiplyScalar(0.5);
+      m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize());
+      g.add(m);
+    };
+    // Fahrgestell: zwei Längsholme, Querrohre, Streben zum Lagerbock, Deichsel mit Griff
+    for (const s of [-1, 1]) { stab(-0.6, 0.3, s * 0.28, 0.55, 0.3, s * 0.28, 0.028); stab(0.0, 0.3, s * 0.28, 0.1, 1.0, s * 0.3, 0.03); stab(0.45, 0.3, s * 0.28, 0.1, 0.95, s * 0.3, 0.022); }
+    stab(-0.6, 0.3, -0.28, -0.6, 0.3, 0.28, 0.028); stab(0.5, 0.3, -0.28, 0.5, 0.3, 0.28, 0.028);
+    stab(0.55, 0.3, 0, 0.95, 0.42, 0, 0.025); stab(0.95, 0.42, -0.1, 0.95, 0.42, 0.1, 0.02);
+    // Achse und Rad: eins da, auf der anderen Seite fehlt es, die Achse liegt auf einem Ziegel
+    stab(-0.55, 0.22, -0.38, -0.55, 0.22, 0.38, 0.02, 0x7a7e84);
+    g.add(setze(teil(new THREE.TorusGeometry(0.16, 0.06, 8, 18), 0x1d1d1f, { umriss: 0.002 }), -0.55, 0.22, 0.4));
+    g.add(setze(zylinder(0.1, 0.1, 0.06, 0x9a9da2, { umriss: 0.002 }, 14), -0.55, 0.22, 0.4, Math.PI / 2, 0, 0));
+    for (let i = 0; i < 5; i++) { const w = i / 5 * 6.28; g.add(setze(zylinder(0.008, 0.008, 0.07, 0x3a3a3c, { umriss: false }, 6), -0.55 + Math.cos(w) * 0.06, 0.22 + Math.sin(w) * 0.06, 0.43, Math.PI / 2, 0, 0)); }
+    g.add(setze(quader(0.24, 0.12, 0.12, 0xa8442a, { umriss: 0.002 }), -0.55, 0.1, -0.38)); // Ziegel statt Rad
+    // Lagerbock oben mit Kippachse
+    for (const s of [-1, 1]) g.add(setze(quader(0.1, 0.14, 0.04, RAHMEN, { umriss: 0.002 }), 0.1, 1.02, s * 0.32));
+    stab(0.1, 1.05, -0.4, 0.1, 1.05, 0.4, 0.022, 0x7a7e84);
+    // Trommel: hohl (Drehprofil), innen dunkel mit Betonkruste, Öffnung schräg nach oben
     const tr = new THREE.Group();
-    tr.add(setze(zylinder(0.36, 0.3, 0.32, OR, { umriss: 0.004 }, 18), 0, 0, 0));
-    tr.add(setze(zylinder(0.22, 0.36, 0.26, OR, { umriss: 0.004 }, 18), 0, 0.29, 0));
-    tr.add(setze(teil(new THREE.TorusGeometry(0.22, 0.02, 6, 18), 0xb8601e, { umriss: false }), 0, 0.42, 0, Math.PI / 2, 0, 0));
-    tr.add(setze(zylinder(0.3, 0.2, 0.18, OR, { umriss: 0.004 }, 18), 0, -0.25, 0));
-    tr.add(setze(teil(new THREE.TorusGeometry(0.37, 0.025, 6, 24), 0x3a3a3c, { umriss: false }), 0, 0.02, 0, Math.PI / 2, 0, 0)); // Zahnkranz
-    for (let i = 0; i < 6; i++) tr.add(setze(quader(0.08 + r() * 0.1, 0.05 + r() * 0.08, 0.01, 0x8a4a2a, { umriss: false }), Math.sin(i) * 0.3, (r() - 0.5) * 0.3, Math.cos(i) * 0.3, 0, i, 0)); // Rost
-    tr.add(setze(quader(0.12, 0.07, 0.02, 0xa85818, { umriss: false }), 0.33, 0.05, 0.1, 0, 0.3, 0)); // Delle
-    tr.position.set(0.15, 0.95, 0); tr.rotation.z = -0.9;
+    const profil = [[0.0, -0.38], [0.2, -0.36], [0.33, -0.25], [0.37, -0.05], [0.37, 0.08], [0.3, 0.25], [0.22, 0.38], [0.2, 0.42]].map(([rr, y]) => new THREE.Vector2(rr, y));
+    const aussen = new THREE.Mesh(new THREE.LatheGeometry(profil, 26), toon(OR, { side: THREE.FrontSide }));
+    aussen.castShadow = true; tr.add(aussen);
+    const innenProfil = profil.map((p) => new THREE.Vector2(Math.max(0, p.x - 0.02), p.y + (p.y < 0 ? 0.02 : 0)));
+    const innen = new THREE.Mesh(new THREE.LatheGeometry(innenProfil, 26), toon(0x6e6a64, { side: THREE.BackSide }));
+    tr.add(innen);
+    tr.add(setze(teil(new THREE.TorusGeometry(0.205, 0.022, 8, 24), 0xb8601e, { umriss: 0.002 }), 0, 0.42, 0, Math.PI / 2, 0, 0)); // Rand
+    // Betonkruste am Rand und innen, Rost außen, Delle
+    for (let i = 0; i < 10; i++) { const w = r() * 6.28; tr.add(setze(quader(0.05 + r() * 0.06, 0.03, 0.03, 0xb8b4aa, { umriss: false }), Math.cos(w) * 0.2, 0.42, Math.sin(w) * 0.2, 0, -w, 0)); }
+    for (let i = 0; i < 8; i++) { const w = r() * 6.28, y = -0.2 + r() * 0.35; tr.add(setze(quader(0.07 + r() * 0.08, 0.05 + r() * 0.08, 0.008, 0x8a4a2a, { umriss: false }), Math.cos(w) * 0.375, y, Math.sin(w) * 0.375, 0, -w + Math.PI / 2, 0)); }
+    tr.add(setze(quader(0.14, 0.1, 0.02, 0xa85818, { umriss: false }), 0.36, 0.0, 0.1, 0, 0.3, 0.2));
+    // Mischflügel innen
+    for (let i = 0; i < 3; i++) { const w = i / 3 * 6.28; tr.add(setze(quader(0.16, 0.012, 0.06, 0x7a7e84, { umriss: 0.001 }), Math.cos(w) * 0.24, 0.0, Math.sin(w) * 0.24, 0.6, -w, 0)); }
+    // Zahnkranz mit Zähnen außen
+    tr.add(setze(teil(new THREE.TorusGeometry(0.385, 0.022, 6, 32), 0x3a3a3c, { umriss: false }), 0, -0.02, 0, Math.PI / 2, 0, 0));
+    for (let k = 0; k < 40; k++) { const w = k / 40 * 6.28; tr.add(setze(quader(0.018, 0.04, 0.02, 0x3a3a3c, { umriss: false }), Math.cos(w) * 0.41, -0.02, Math.sin(w) * 0.41, 0, -w, 0)); }
+    // Schrott in der Trommel: Rohrstücke, Blech, Mutter, Schraubenschlüssel, alte Flasche
+    const drin = new THREE.Group();
+    drin.add(setze(zylinder(0.025, 0.025, 0.35, 0x7a3e22, { umriss: 0.002 }, 8), 0.02, -0.18, 0.04, 1.2, 0, 0.4));
+    drin.add(setze(zylinder(0.03, 0.03, 0.28, 0x6e5a4a, { umriss: 0.002 }, 8), -0.06, -0.12, -0.05, 0.3, 1.0, 1.3));
+    drin.add(setze(quader(0.18, 0.006, 0.14, 0x8a4a2a, { umriss: 0.001 }), 0.05, -0.22, -0.08, 0.5, 0.4, 0.2));
+    drin.add(setze(quader(0.12, 0.08, 0.1, 0x5a5e62, { umriss: 0.002 }), -0.1, -0.24, 0.08, 0.2, 0.6, 0.1));
+    { const w = werkzeug(); w.position.set(0.1, -0.06, 0.02); w.rotation.set(0.6, 0.3, 0.9); drin.add(w); }
+    { const t = topf(); t.position.set(-0.05, -0.02, -0.06); t.rotation.set(0.9, 0.2, 0.4); t.scale.setScalar(0.8); drin.add(t); }
+    drin.add(setze(zylinder(0.025, 0.025, 0.18, 0x5a3612, { umriss: 0.002 }, 10), 0.12, 0.05, -0.1, 0.8, 0, 0.5));
+    tr.add(drin);
+    tr.position.set(0.1, 1.05, 0); tr.rotation.z = -0.75;
     g.add(tr);
-    // Motorkasten (Deckel fehlt) und Handrad
-    g.add(setze(quader(0.28, 0.22, 0.24, 0x2f6b3a, { umriss: 0.003 }), -0.35, 0.47, 0));
-    g.add(setze(quader(0.18, 0.12, 0.14, 0x3a3a3c, { umriss: 0.002 }), -0.35, 0.52, 0));
-    g.add(setze(teil(new THREE.TorusGeometry(0.12, 0.012, 4, 14), 0x5a5e62, { umriss: false }), 0.1, 1.0, 0.36));
-    g.rotation.x = 0.12; // hängt schief (Rad fehlt)
+    // Ritzel am Zahnkranz, Kipphebel und Handrad
+    g.add(setze(zylinder(0.06, 0.06, 0.05, 0x3a3a3c, { umriss: 0.002 }, 12), -0.18, 0.72, 0.0, 0, 0, Math.PI / 2 - 0.75));
+    stab(0.1, 1.05, 0.4, 0.5, 1.45, 0.42, 0.018, 0x7a7e84);
+    g.add(setze(zylinder(0.025, 0.025, 0.12, 0x1d1d1f, { umriss: 0.001 }, 8), 0.5, 1.45, 0.48, Math.PI / 2, 0, 0));
+    g.add(setze(teil(new THREE.TorusGeometry(0.14, 0.012, 6, 18), RAHMEN, { umriss: false }), 0.1, 1.05, 0.45));
+    for (let k = 0; k < 4; k++) g.add(setze(zylinder(0.006, 0.006, 0.28, RAHMEN, { umriss: false }, 4), 0.1, 1.05, 0.45, 0, 0, k * Math.PI / 4));
+    // Motorkasten: offen, Motor fehlt, nur Halterung und Kabelreste; Riemenschutz daneben
+    const kasten = new THREE.Group();
+    kasten.add(setze(quader(0.32, 0.02, 0.26, 0x2f6b3a, { umriss: 0.002 }), 0, 0, 0));
+    for (const s of [-1, 1]) kasten.add(setze(quader(0.32, 0.2, 0.02, 0x2f6b3a, { umriss: 0.002 }), 0, 0.1, s * 0.13));
+    kasten.add(setze(quader(0.02, 0.2, 0.26, 0x2f6b3a, { umriss: 0.002 }), -0.16, 0.1, 0));
+    for (const s of [-1, 1]) kasten.add(setze(quader(0.2, 0.02, 0.03, 0x5a5e62, { umriss: false }), 0, 0.03, s * 0.06));
+    for (let i = 0; i < 3; i++) kasten.add(setze(zylinder(0.004, 0.004, 0.16, [0xc8382c, 0x1d1d1f, 0x2f5fa8][i], { umriss: false }, 4), 0.05 + i * 0.03, 0.12, 0.05, 0.5, 0, 0.8));
+    kasten.add(setze(quader(0.3, 0.02, 0.24, 0x2f6b3a, { umriss: 0.002 }), 0.02, 0.24, 0.14, -0.9, 0, 0.1)); // aufgeklappter Deckel
+    kasten.position.set(-0.32, 0.36, 0);
+    g.add(kasten);
+    g.add(setze(quader(0.08, 0.3, 0.22, 0x5a5e62, { umriss: 0.002 }), -0.12, 0.55, -0.2, 0, 0, 0.5)); // Riemenschutz
+    // Betonspritzer am Gestell und auf dem Boden
+    for (let i = 0; i < 8; i++) g.add(setze(quader(0.03 + r() * 0.05, 0.02, 0.03 + r() * 0.04, 0xb8b4aa, { umriss: false }), (r() - 0.5) * 1.0, 0.31, (r() < 0.5 ? -1 : 1) * 0.28));
+    for (let i = 0; i < 4; i++) { const f = new THREE.Mesh(new THREE.CircleGeometry(0.06 + r() * 0.08, 8), toon(0xb8b4aa)); f.rotation.x = -Math.PI / 2; f.position.set((r() - 0.5) * 1.2, 0.012, (r() - 0.5) * 0.8); g.add(f); }
+    g.rotation.x = 0.06; // hängt etwas schief (Ziegel statt Rad)
     const h = new THREE.Group(); h.add(g);
     merke(h, 'betonmischer', 'Betonmischer', null);
     return legen(h, x, z, ry);
@@ -590,8 +892,29 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     rohr(0.45, 0.85, -0.1, 0.38, 0.035); rohr(-0.1, 0.38, -0.55, 0.72, 0.03); rohr(-0.1, 0.38, -0.6, 0.32, 0.02, 0x7a7e84); // Rahmen, Schwinge
     for (const s of [-1, 1]) { const gb = setze(zylinder(0.016, 0.016, 0.62, 0x9a9da2, { umriss: 0.002 }, 8), 0.54, 0.6, s * 0.06, 0, 0, 0.3); g.add(gb); } // Gabel
     g.add(setze(quader(0.3, 0.12, 0.16, BLAU, { umriss: 0.003 }), 0.28, 0.82, 0)); // Tank
-    g.add(setze(quader(0.36, 0.07, 0.18, 0x1d1d1f, { umriss: 0.003 }), -0.35, 0.8, 0)); // Sattel
-    g.add(setze(zylinder(0.012, 0.012, 0.25, 0x3a3a3c, { umriss: false }, 6), -0.35, 0.68, 0)); // Sattelstütze
+    // Sitzbank: gepolstert, abgerundet, mit Naht und aufgeplatztem Bezug (gelber Schaum), Blechwanne darunter
+    {
+      const sb = new THREE.Group();
+      const polster = new THREE.Mesh(new THREE.CapsuleGeometry(0.075, 0.3, 6, 14), toon(0x1d1d1f));
+      polster.rotation.z = Math.PI / 2; polster.scale.set(0.6, 1, 1.2); umrissLinie(polster, 0.002);
+      sb.add(polster);
+      sb.add(setze(teil(new THREE.TorusGeometry(0.09, 0.003, 4, 20), 0x5a5a5c, { umriss: false }), -0.14, 0.0, 0, 0, Math.PI / 2, 0));
+      sb.add(setze(quader(0.42, 0.02, 0.17, 0x3a3a3c, { umriss: 0.002 }), 0, -0.045, 0)); // Wanne
+      sb.add(setze(quader(0.08, 0.004, 0.05, 0xe8c85a, { umriss: false }), 0.05, 0.046, 0.03, 0, 0.4, 0)); // Riss, Schaum
+      sb.add(setze(teil(new THREE.TorusGeometry(0.06, 0.006, 4, 10, Math.PI), 0x9a9da2, { umriss: false }), -0.24, 0.0, 0, 0, Math.PI / 2, -Math.PI / 2)); // Haltegriff
+      sb.position.set(-0.33, 0.82, 0);
+      g.add(sb);
+      for (const sx of [-0.45, -0.2]) g.add(setze(zylinder(0.012, 0.012, 0.12, 0x3a3a3c, { umriss: false }, 6), sx, 0.73, 0));
+    }
+    // Kette, Fußrasten, Rücklicht mit Kennzeichenhalter (leer), Bremstrommeln, Gabelfedern, Tankdeckel, Auspuffrest
+    for (const dy of [0.05, -0.05]) g.add(setze(zylinder(0.005, 0.005, 0.55, 0x3a3634, { umriss: false }, 4), -0.33, 0.32 + dy, 0.07, 0, 0, Math.PI / 2));
+    for (const sz of [-1, 1]) g.add(setze(zylinder(0.012, 0.012, 0.12, 0x2a2a2c, { umriss: 0.001 }, 8), 0.0, 0.3, sz * 0.12, Math.PI / 2, 0, 0));
+    g.add(setze(quader(0.05, 0.05, 0.1, 0xc8382c, { umriss: 0.001 }), -0.86, 0.68, 0));
+    g.add(setze(quader(0.006, 0.09, 0.12, 0x9a9da2, { umriss: 0.001 }), -0.88, 0.58, 0));
+    for (const px of [-0.6, 0.62]) g.add(setze(zylinder(0.07, 0.07, 0.05, 0x8c8f94, { umriss: 0.001 }, 14), px, 0.32, 0.04, Math.PI / 2, 0, 0));
+    for (const sz of [-1, 1]) for (let k = 0; k < 4; k++) g.add(setze(teil(new THREE.TorusGeometry(0.022, 0.004, 4, 10), 0x5a5e62, { umriss: false }), 0.56 - k * 0.025, 0.66 + k * 0.03, sz * 0.06, Math.PI / 2, 0, 0.3));
+    g.add(setze(zylinder(0.025, 0.025, 0.015, 0xc0c4c8, { umriss: false }, 10), 0.28, 0.885, 0));
+    g.add(setze(zylinder(0.022, 0.026, 0.4, 0x5a4a40, { umriss: 0.002 }, 10), -0.45, 0.24, -0.1, 0, 0, Math.PI / 2 - 0.15)); // Auspuffrest (Rost)
     g.add(setze(teil(new THREE.TorusGeometry(0.3, 0.02, 4, 12, Math.PI * 0.7), BLAU, { umriss: 0.002 }), 0.62, 0.32, 0, 0, 0, 0.6)); // Schutzblech vorne
     g.add(setze(teil(new THREE.TorusGeometry(0.3, 0.02, 4, 12, Math.PI * 0.6), BLAU, { umriss: 0.002 }), -0.6, 0.32, 0, 0, 0, 1.4)); // hinten
     // Lenker
@@ -648,7 +971,42 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     };
     rohr(-0.52, 0.34, -0.05, 0.36); rohr(-0.05, 0.36, -0.15, 0.82); rohr(-0.15, 0.78, 0.38, 0.78); rohr(-0.05, 0.36, 0.38, 0.78);
     rohr(-0.52, 0.34, -0.15, 0.78, 0.015); rohr(0.38, 0.78, 0.52, 0.34, 0.018);
-    g.add(setze(quader(0.24, 0.05, 0.1, 0x1d1d1f, { umriss: 0.002 }), -0.17, 0.88, 0)); // Sattel
+    // Sattel: gepolstert (runder Hinterteil, schmale Nase), Naht, Gestell mit Streben, Sattelkloben auf der Stütze
+    {
+      const sa = new THREE.Group();
+      const hinten = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 10), toon(0x1d1d1f)); hinten.scale.set(0.07, 0.03, 0.085); hinten.position.x = -0.04; umrissLinie(hinten, 0.002); sa.add(hinten);
+      const nase = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.06, 0.15, 14), toon(0x1d1d1f)); nase.rotation.z = Math.PI / 2; nase.scale.set(0.5, 1, 1); nase.position.x = 0.07; umrissLinie(nase, 0.002); sa.add(nase);
+      sa.add(setze(teil(new THREE.TorusGeometry(0.075, 0.003, 4, 20, Math.PI), 0x5a5a5c, { umriss: false }), -0.04, 0.0, 0, Math.PI / 2, 0, Math.PI / 2)); // Naht
+      for (const sz of [-0.025, 0.025]) sa.add(setze(zylinder(0.004, 0.004, 0.2, 0x9a9da2, { umriss: false }, 6), 0.0, -0.035, sz, 0, 0, Math.PI / 2)); // Gestell
+      for (const sz of [-0.05, 0.05]) sa.add(setze(teil(new THREE.TorusGeometry(0.03, 0.004, 4, 8, Math.PI), 0x9a9da2, { umriss: false }), -0.1, -0.045, sz, 0, 0, Math.PI)); // Federn
+      sa.add(setze(quader(0.04, 0.025, 0.06, 0x7a7e84, { umriss: 0.001 }), 0.0, -0.05, 0)); // Kloben
+      sa.position.set(-0.17, 0.9, 0); sa.rotation.z = 0.12;
+      g.add(sa);
+      g.add(setze(zylinder(0.012, 0.012, 0.1, 0x9a9da2, { umriss: 0.001 }, 8), -0.16, 0.83, 0, 0, 0, 0.2)); // Sattelstütze
+    }
+    // Antrieb: Kettenblatt mit Zähnen, Kurbeln, Pedale, Kette zum Ritzel; Nabe hinten
+    {
+      const KB = new THREE.Group();
+      KB.add(teil(new THREE.TorusGeometry(0.075, 0.008, 4, 20), 0x7c7670, { umriss: false }));
+      for (let k = 0; k < 24; k++) { const w = k / 24 * 6.28; KB.add(setze(quader(0.012, 0.012, 0.006, 0x7c7670, { umriss: false }), Math.cos(w) * 0.085, Math.sin(w) * 0.085, 0, 0, 0, w)); }
+      for (let k = 0; k < 5; k++) KB.add(setze(quader(0.07, 0.01, 0.006, 0x7c7670, { umriss: false }), Math.cos(k * 1.256) * 0.035, Math.sin(k * 1.256) * 0.035, 0, 0, 0, k * 1.256));
+      KB.position.set(-0.05, 0.36, 0.04); g.add(KB);
+      g.add(setze(zylinder(0.025, 0.025, 0.1, 0x5a5e62, { umriss: false }, 10), -0.05, 0.36, 0, Math.PI / 2, 0, 0)); // Tretlager
+      for (const [sz, w] of [[0.06, 0.4], [-0.06, 0.4 + Math.PI]]) {
+        g.add(setze(quader(0.17, 0.018, 0.012, 0x9a9da2, { umriss: 0.001 }), -0.05 + Math.cos(w) * 0.085, 0.36 + Math.sin(w) * 0.085, sz, 0, 0, w));
+        g.add(setze(quader(0.1, 0.02, 0.06, 0x2a2a2c, { umriss: 0.001 }), -0.05 + Math.cos(w) * 0.17, 0.36 + Math.sin(w) * 0.17, sz * 1.6));
+      }
+      for (const dy of [0.085, -0.085]) { const a = [-0.05, 0.36 + dy], b = [-0.52, 0.34 + dy * 0.45], l = Math.hypot(b[0] - a[0], b[1] - a[1]); g.add(setze(zylinder(0.004, 0.004, l, 0x3a3634, { umriss: false }, 4), (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, 0.04, 0, 0, Math.PI / 2 - Math.atan2(b[1] - a[1], b[0] - a[0]))); }
+      g.add(setze(zylinder(0.04, 0.04, 0.03, 0x7c7670, { umriss: false }, 12), -0.52, 0.34, 0.04, Math.PI / 2, 0, 0)); // Ritzel
+    }
+    // Schutzbleche, Gepäckträger, Rücklicht mit Reflektor, Ständer
+    g.add(setze(teil(new THREE.TorusGeometry(0.36, 0.012, 4, 16, Math.PI * 0.6), 0xc0c4c8, { umriss: 0.001 }), -0.52, 0.34, 0, 0, 0, Math.PI * 0.35));
+    g.add(setze(teil(new THREE.TorusGeometry(0.36, 0.012, 4, 16, Math.PI * 0.45), 0xc0c4c8, { umriss: 0.001 }), 0.52, 0.34, 0, 0, 0, Math.PI * 0.25));
+    for (const sz of [-0.05, 0.05]) g.add(setze(zylinder(0.006, 0.006, 0.36, 0x7c7670, { umriss: false }, 6), -0.42, 0.72, sz, 0, 0, Math.PI / 2 + 0.05));
+    g.add(setze(quader(0.36, 0.006, 0.12, 0x7c7670, { umriss: false }), -0.42, 0.73, 0, 0, 0, 0.05));
+    for (const sz of [-0.05, 0.05]) g.add(setze(zylinder(0.005, 0.005, 0.42, 0x7c7670, { umriss: false }, 6), -0.56, 0.53, sz, 0, 0, 0.4));
+    g.add(setze(quader(0.03, 0.04, 0.06, 0xc8382c, { umriss: 0.001 }), -0.62, 0.7, 0));
+    g.add(setze(zylinder(0.008, 0.008, 0.3, 0x5a5e62, { umriss: false }, 6), -0.2, 0.2, -0.08, 0.5, 0, -0.3)); // Ständer
     // Lenker: Vorbau aus dem Steuerrohr, geschwungener Lenkerbügel (etwas verdreht), Griffe, Bremshebel mit Zügen, Klingel
     {
       const lk = new THREE.Group();
@@ -757,7 +1115,24 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     for (let y = 2; y < h; y += 16) { g.beginPath(); g.moveTo(0, y); g.lineTo(b, y); g.stroke(); }
   });
   gitterTex.wrapS = gitterTex.wrapT = THREE.RepeatWrapping;
-  function gitterbox(x, z, ry, oben = 0, inhalt = 'kleinteile') {
+  // Autofeder (Schraubenfeder vom Fahrwerk): Draht als Wendel, Enden flach angeschliffen, rostig
+  function autofeder() {
+    const R = 0.06 + r() * 0.02, H = 0.28 + r() * 0.1, W = 6 + Math.floor(r() * 2);
+    const pts = [];
+    for (let i = 0; i <= W * 24; i++) {
+      const t = i / (W * 24), w = t * W * Math.PI * 2;
+      const yy = t < 0.06 ? t / 0.06 * 0.02 : t > 0.94 ? H - (1 - t) / 0.06 * 0.02 : 0.02 + (t - 0.06) / 0.88 * (H - 0.04);
+      pts.push(new THREE.Vector3(Math.cos(w) * R, yy, Math.sin(w) * R));
+    }
+    const f = r() < 0.5 ? 0x7a3e22 : r() < 0.5 ? 0x5a5e62 : 0x8a4a2a;
+    const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), W * 24, 0.011, 5, false), toon(f));
+    m.castShadow = true;
+    const g = new THREE.Group();
+    m.position.y = -H / 2;
+    g.add(m);
+    return g;
+  }
+  function gitterbox(x, z, ry, oben = 0, inhalt = 'kleinteile', randFrei = false) {
     const g = new THREE.Group();
     const GB = 1.24, GT = 0.835, GH = 0.97, FUSS = 0.12;
     const wand = (w, h, px, pz, wry) => {
@@ -778,86 +1153,88 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     for (const sx of [-1, 1]) g.add(setze(quader(0.035, 0.035, GT, STAHL_G, { umriss: 0.002 }), sx * GB / 2, GH, 0));
     // Klappe vorne (halbhoch, etwas dunkler) und gelbes Schild
     g.add(setze(quader(0.3, 0.16, 0.01, 0xd8b23a, { umriss: 0.002 }), 0.3, GH - 0.2, GT / 2 + 0.01));
-    if (inhalt === 'felgen') {
+    // Inhalt aufschichten (ohne Durchdringung), innerhalb der Wände, bis knapp über den Rand (oder bündig, wenn eine
+    // zweite Box draufkommt)
+    const innenReg = belegung();
+    const innenDrin = (e) => {
+      const [ux, uz] = achsen(e.yaw);
+      return [[1, 1], [1, -1], [-1, 1], [-1, -1]].every(([a, b]) => Math.abs(e.cx + ux[0] * e.hx * a + uz[0] * e.hz * b) < GB / 2 - 0.035 && Math.abs(e.cz + ux[1] * e.hx * a + uz[1] * e.hz * b) < GT / 2 - 0.035);
+    };
+    const oberkante = randFrei ? GH - 0.04 : GH + 0.12;
+    const rein = (teil, kipp) => {
+      const holder = new THREE.Group();
+      teil.rotation.x = (r() - 0.5) * kipp; teil.rotation.z = (r() - 0.5) * kipp;
+      holder.add(teil);
+      for (let v = 0; v < 8; v++) if (platziere(innenReg, g, holder, (r() - 0.5) * (GB - 0.3), (r() - 0.5) * (GT - 0.3), r() * 6.28, { stapel: true, boden: FUSS + 0.075, maxY: oberkante, drin: innenDrin, sf: 0.7, einsinken: 0.25 })) return;
+    };
+    if (inhalt === 'federn') {
+      // randvoll mit Autofedern, kreuz und quer
+      for (let i = 0; i < 40; i++) rein(autofeder(), 2.2);
+    } else if (inhalt === 'felgen') {
       // nur Stahlfelgen (schwarz, Rost), chaotisch reingeworfen: schief, verkantet, übereinander
-      for (let i = 0; i < 7; i++) {
-        const f = felge(0x1d1d1f, true);
-        const lage = Math.floor(i / 3);
-        f.position.set((r() - 0.5) * (GB - 0.65), FUSS + 0.08 + lage * 0.2 + r() * 0.08, (r() - 0.5) * (GT - 0.65));
-        f.rotation.set((r() - 0.5) * 1.6, r() * 6, (r() - 0.5) * 1.6);
-        g.add(f);
-      }
+      for (let i = 0; i < 14; i++) rein(felge(0x1d1d1f, true), 1.2);
     } else {
-      // Kleinteile-Masse (durchs Gitter sichtbar) und obendrauf einzelne Teile: Schrauben mit Sechskantkopf, Muttern,
-      // Unterlegscheiben, Federn, Kugellager, Zahnräder, Winkel, Bleche, Scharniere, Ketten
-      const fuellTex = leinwandTextur(256, 256, (cg, b, h) => {
-        cg.fillStyle = '#3e342e'; cg.fillRect(0, 0, b, h);
-        const farben = ['#8a4a2a', '#7c7670', '#9a9da2', '#6e5a4a', '#b79a3c', '#2a2622', '#c0c4c8'];
-        for (let i = 0; i < 1400; i++) {
-          cg.fillStyle = farben[Math.floor(r() * farben.length)];
-          const x = r() * b, y = r() * h, t = r();
-          if (t < 0.35) { cg.beginPath(); cg.arc(x, y, 2 + r() * 3, 0, Math.PI * 2); cg.fill(); cg.fillStyle = '#2a2622'; cg.beginPath(); cg.arc(x, y, 1, 0, Math.PI * 2); cg.fill(); }
-          else if (t < 0.7) { cg.save(); cg.translate(x, y); cg.rotate(r() * 3); cg.fillRect(-1, -5, 2.5, 10); cg.fillRect(-2.5, -6, 5, 2); cg.restore(); }
-          else cg.fillRect(x, y, 2 + r() * 6, 2 + r() * 4);
-        }
-      });
-      const fuell = new THREE.Mesh(new THREE.BoxGeometry(GB - 0.08, GH - FUSS - 0.12, GT - 0.08), toon(0xffffff, { map: fuellTex }));
-      fuell.position.y = FUSS + 0.05 + (GH - FUSS - 0.12) / 2; g.add(fuell);
-      const teile = [0x8a4a2a, 0x7c7670, 0x9a9da2, 0x6e5a4a, 0xb79a3c, 0xc0c4c8];
-      for (let i = 0; i < 110; i++) {
-        const art = r(), f = teile[Math.floor(r() * teile.length)];
+      // größere Einzelteile, durcheinander im ganzen Kasten verteilt (unten dichter, oben ein Haufen über den Rand)
+      const teile = [0x8a4a2a, 0x7c7670, 0x9a9da2, 0x6e5a4a, 0x5a4a40, 0x7a3e22];
+      const fb = () => teile[Math.floor(r() * teile.length)];
+      const stueck = () => {
+        const a = r(), f = fb();
         let m;
-        if (art < 0.22) { // Schraube mit Sechskantkopf
+        if (a < 0.14) { // Zahnrad mit Bohrung
           m = new THREE.Group();
-          const l = 0.06 + r() * 0.1;
-          m.add(setze(zylinder(0.008, 0.008, l, f, { umriss: false }, 6), 0, l / 2, 0));
-          m.add(setze(zylinder(0.017, 0.017, 0.012, f, { umriss: false }, 6), 0, l, 0));
-        } else if (art < 0.36) m = zylinder(0.02, 0.02, 0.014, f, { umriss: false }, 6); // Mutter
-        else if (art < 0.46) m = teil(new THREE.TorusGeometry(0.018, 0.006, 4, 10), f, { umriss: false }); // Scheibe
-        else if (art < 0.54) { // Feder: gestapelte Windungen
+          const R = 0.07 + r() * 0.08;
+          m.add(zylinder(R, R, 0.03, f, { umriss: 0.002 }, 18));
+          m.add(setze(zylinder(R * 0.3, R * 0.3, 0.032, 0x2a2622, { umriss: false }, 10), 0, 0, 0));
+          for (let k = 0; k < 16; k++) { const w = k / 16 * 6.28; m.add(setze(quader(0.02, 0.03, 0.02, f, { umriss: false }), Math.cos(w) * (R + 0.008), 0, Math.sin(w) * (R + 0.008), 0, -w, 0)); }
+        } else if (a < 0.26) m = zylinder(0.03 + r() * 0.04, 0.03 + r() * 0.04, 0.2 + r() * 0.35, f, { umriss: 0.002 }, 10); // Rohrabschnitt, Welle
+        else if (a < 0.38) { // Flansch mit Lochkreis
           m = new THREE.Group();
-          for (let k = 0; k < 6; k++) m.add(setze(teil(new THREE.TorusGeometry(0.018, 0.0035, 4, 10), f, { umriss: false }), 0, k * 0.01, 0, Math.PI / 2 + 0.15, 0, 0));
-        } else if (art < 0.62) { // Kugellager
+          const R = 0.08 + r() * 0.06;
+          m.add(zylinder(R, R, 0.025, f, { umriss: 0.002 }, 18));
+          m.add(setze(zylinder(R * 0.45, R * 0.45, 0.08, f, { umriss: 0.002 }, 14), 0, 0.04, 0));
+          for (let k = 0; k < 6; k++) { const w = k / 6 * 6.28; m.add(setze(zylinder(0.01, 0.01, 0.027, 0x2a2622, { umriss: false }, 6), Math.cos(w) * R * 0.75, 0, Math.sin(w) * R * 0.75)); }
+        } else if (a < 0.5) { // Winkel, Halterung
           m = new THREE.Group();
-          m.add(teil(new THREE.TorusGeometry(0.04, 0.01, 6, 14), 0xc0c4c8, { umriss: false }));
-          m.add(teil(new THREE.TorusGeometry(0.022, 0.007, 6, 12), 0x9a9da2, { umriss: false }));
-        } else if (art < 0.7) { // Zahnrad
+          const l = 0.15 + r() * 0.2;
+          m.add(quader(l, 0.008, 0.06, f, { umriss: 0.002 }));
+          m.add(setze(quader(0.008, l * 0.6, 0.06, f, { umriss: 0.002 }), -l / 2, l * 0.3, 0));
+          for (const x of [-l * 0.2, l * 0.25]) m.add(setze(zylinder(0.008, 0.008, 0.01, 0x2a2622, { umriss: false }, 6), x, 0.005, 0));
+        } else if (a < 0.6) m = quader(0.15 + r() * 0.25, 0.008, 0.1 + r() * 0.2, f, { umriss: 0.002 }); // Blechzuschnitt
+        else if (a < 0.68) { // Kette
           m = new THREE.Group();
-          const R = 0.035 + r() * 0.03;
-          m.add(zylinder(R, R, 0.015, f, { umriss: false }, 14));
-          for (let k = 0; k < 10; k++) m.add(setze(quader(0.012, 0.015, 0.012, f, { umriss: false }), Math.cos(k / 10 * 6.28) * (R + 0.005), 0, Math.sin(k / 10 * 6.28) * (R + 0.005), 0, -k / 10 * 6.28, 0));
-        } else if (art < 0.8) { // Winkel
+          for (let k = 0; k < 8; k++) m.add(setze(teil(new THREE.TorusGeometry(0.022, 0.006, 4, 8), 0x7c7670, { umriss: false }), k * 0.034, Math.sin(k) * 0.02, 0, k % 2 ? Math.PI / 2 : 0, 0, 0));
+        } else if (a < 0.76) { // Kugellager groß
           m = new THREE.Group();
-          m.add(quader(0.07, 0.004, 0.02, f, { umriss: false }));
-          m.add(setze(quader(0.004, 0.05, 0.02, f, { umriss: false }), -0.035, 0.025, 0));
-        } else if (art < 0.88) m = quader(0.05 + r() * 0.1, 0.006, 0.03 + r() * 0.06, f, { umriss: false }); // Blechstück
-        else if (art < 0.94) { // Scharnier
+          m.add(teil(new THREE.TorusGeometry(0.07, 0.018, 6, 16), 0xc0c4c8, { umriss: 0.002 }));
+          m.add(teil(new THREE.TorusGeometry(0.04, 0.012, 6, 14), 0x9a9da2, { umriss: false }));
+        } else if (a < 0.84) { // Scharnier groß
           m = new THREE.Group();
-          for (const sx of [-1, 1]) m.add(setze(quader(0.035, 0.003, 0.05, f, { umriss: false }), sx * 0.02, 0, 0, 0, 0, sx * 0.3));
-          m.add(setze(zylinder(0.005, 0.005, 0.05, f, { umriss: false }, 6), 0, 0.004, 0, Math.PI / 2, 0, 0));
-        } else { // Kettenstück
+          for (const sx of [-1, 1]) m.add(setze(quader(0.08, 0.006, 0.12, f, { umriss: 0.001 }), sx * 0.045, 0, 0, 0, 0, sx * 0.4));
+          m.add(setze(zylinder(0.012, 0.012, 0.12, f, { umriss: false }, 8), 0, 0.01, 0, Math.PI / 2, 0, 0));
+        } else if (a < 0.92) { // Schraubzwinge / Bügel
           m = new THREE.Group();
-          for (let k = 0; k < 5; k++) m.add(setze(teil(new THREE.TorusGeometry(0.014, 0.004, 4, 8), 0x7c7670, { umriss: false }), k * 0.022, 0, 0, k % 2 ? Math.PI / 2 : 0, 0, 0));
+          m.add(quader(0.22, 0.02, 0.025, f, { umriss: 0.001 }));
+          m.add(setze(quader(0.02, 0.1, 0.025, f, { umriss: 0.001 }), -0.1, 0.05, 0));
+          m.add(setze(quader(0.02, 0.1, 0.025, f, { umriss: 0.001 }), 0.06, 0.05, 0));
+          m.add(setze(zylinder(0.006, 0.006, 0.14, 0x9a9da2, { umriss: false }, 6), 0.06, 0.08, 0));
+        } else { // Gussteil, Klotz
+          m = quader(0.08 + r() * 0.1, 0.06 + r() * 0.08, 0.08 + r() * 0.1, 0x5a5e62, { umriss: 0.002 });
         }
-        const rx = (r() - 0.5) * (GB - 0.15), rz = (r() - 0.5) * (GT - 0.15);
-        m.position.set(rx, GH - 0.09 + r() * 0.05 + (1 - Math.hypot(rx / GB, rz / GT) * 2) * 0.05, rz);
-        m.rotation.set(r() * 3, r() * 3, r() * 3);
-        g.add(m);
-      }
+        return m;
+      };
+      g.add(setze(quader(GB - 0.08, 0.03, GT - 0.08, 0x3a342e, { umriss: false }), 0, FUSS + 0.06, 0));
+      for (let i = 0; i < 140; i++) rein(stueck(), 2.4);
     }
-    g.position.y = oben;
     const h = new THREE.Group();
     h.add(g);
     merke(h, 'gitterbox', 'Gitterbox', null);
-    return legen(h, x, z, ry);
+    return oben ? draufstellen(h, x, z, ry) : legen(h, x, z, ry);
   }
 
   // Haufen und Teile im Schrottplatz (der Gang bei x -3,5 … -2,3 bleibt frei): dicht an dicht, gehäuft
-  altmetall(-8.0, -7.9, 2.2, 2.0, 70, 1.4);
-  altmetall(-6.3, -6.7, 1.1, 1.1, 34, 0.9);
-  altmetall(-10.0, -5.6, 1.1, 0.9, 24, 0.7);
+  treckerreifen(-9.9, -9.4); // zuerst: braucht am meisten Platz
   felgenStapel(-10.6, -9.9, 6); felgenStapel(-10.05, -10.0, 4); felgenStapel(-4.25, -4.95, 5);
-  reifenStapel(-10.9, -8.6, 5); reifenStapel(-10.85, -7.9, 3); reifenStapel(-6.9, -4.95, 4); reifenStapel(-10.6, -4.9, 2, true);
+  reifenStapel(-10.9, -8.6, 5); reifenStapel(-10.85, -7.9, 3); reifenStapel(-10.6, -4.9, 2, true);
   fahrrad(-10.85, -6.2, 0.1, true, 0x2f5fa8);
   fahrrad(-10.8, -9.3, 0.2, true, 0xc8382c);
   fahrrad(-4.2, -7.4, Math.PI / 2, false, 0x2f6b3a);
@@ -905,28 +1282,93 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     legen(h, -7.25, -10.38, 0.05);
   }
   {
-    // kleiner Haufen Schrauben, Muttern und Scheiben am Rand zum Gang
+    // kleiner Haufen Schrauben, Muttern und Scheiben am Rand zum Gang (aufgeschichtet, nichts steckt ineinander)
     const g = new THREE.Group();
-    for (let i = 0; i < 60; i++) {
-      const w = r() * Math.PI * 2, d = Math.sqrt(r()) * 0.22, f = [0x9a9da2, 0x7c7670, 0x8a4a2a, 0xb79a3c][Math.floor(r() * 4)];
+    const reg = belegung();
+    for (let i = 0; i < 70; i++) {
+      const f = [0x9a9da2, 0x7c7670, 0x8a4a2a, 0xb79a3c][Math.floor(r() * 4)];
       let m;
-      if (r() < 0.6) { m = new THREE.Group(); const l = 0.05 + r() * 0.06; m.add(setze(zylinder(0.006, 0.006, l, f, { umriss: false }, 6), 0, l / 2, 0)); m.add(setze(zylinder(0.012, 0.012, 0.008, f, { umriss: false }, 6), 0, l, 0)); }
+      if (r() < 0.6) { m = new THREE.Group(); const l = 0.05 + r() * 0.06; m.add(setze(zylinder(0.006, 0.006, l, f, { umriss: false }, 6), l / 2, 0.006, 0, 0, 0, Math.PI / 2)); m.add(setze(zylinder(0.012, 0.012, 0.008, f, { umriss: false }, 6), l, 0.006, 0, 0, 0, Math.PI / 2)); }
       else m = zylinder(0.013, 0.013, 0.01, f, { umriss: false }, 6);
-      m.position.set(Math.cos(w) * d, 0.01 + (0.22 - d) * 0.35 * r(), Math.sin(w) * d);
-      m.rotation.set(Math.PI / 2 + (r() - 0.5), r() * 6, (r() - 0.5));
-      g.add(m);
+      const w = r() * Math.PI * 2, d = Math.pow(r(), 0.8) * 0.2;
+      platziere(reg, g, m, Math.cos(w) * d, Math.sin(w) * d, r() * 6.28, { stapel: true, maxY: 0.02 + (0.22 - d) * 0.5 });
     }
-    g.position.set(-3.95, 0, -8.55);
-    gruppe.add(g);
+    // als Ganzes auf den Schrottplatz
+    legen(g, -3.95, -8.55, 0);
     merke(g, 'schrauben', 'Schraubenhaufen', null);
   }
+  // weißer Stepper (Heimtrainer), kaputt auf dem Schrottplatz: steht schief, ein Pedal fehlt (liegt daneben), der andere
+  // Hebel hängt durch, Display gesprungen. Lenker: Säule mit Gabelkopf, gebogener Bügel aus einem Rohr (Rundungen),
+  // Schaumgriffe mit Endkappen, Pulssensoren aus Blech, Kabel zum Display, Konsole mit Tasten
+  {
+    const g = new THREE.Group(), WEISS = 0xf0eee8, GRAU = 0x5a5e62, weissMat = toon(WEISS);
+    g.add(setze(quader(0.5, 0.06, 0.75, WEISS, { umriss: 0.003 }), 0, 0.05, 0));
+    for (const sz of [-0.3, 0.3]) g.add(setze(quader(0.62, 0.04, 0.08, WEISS, { umriss: 0.002 }), 0, 0.03, sz));
+    for (const sz of [-0.3, 0.3]) for (const sx of [-0.3, 0.3]) g.add(setze(zylinder(0.025, 0.025, 0.04, 0x2a2a2c, { umriss: false }, 8), sx, 0.02, sz, 0, 0, Math.PI / 2)); // Gummikappen
+    // linker Hebel mit Pedal (durchgesackt), rechter Hebel ohne Pedal
+    g.add(setze(quader(0.07, 0.05, 0.5, WEISS, { umriss: 0.002 }), -0.11, 0.12, 0.02, 0.18, 0, 0));
+    { const p = new THREE.Group(); p.add(quader(0.15, 0.03, 0.3, GRAU, { umriss: 0.002 })); for (let k = 0; k < 7; k++) p.add(setze(quader(0.13, 0.006, 0.012, 0x2a2a2c, { umriss: false }), 0, 0.017, -0.12 + k * 0.04)); p.position.set(-0.11, 0.1, 0.12); p.rotation.x = 0.18; g.add(p); }
+    g.add(setze(quader(0.07, 0.05, 0.5, WEISS, { umriss: 0.002 }), 0.11, 0.2, 0.02, -0.12, 0, 0));
+    g.add(setze(zylinder(0.012, 0.012, 0.03, 0x8c8f94, { umriss: false }, 6), 0.11, 0.24, 0.2)); // Bolzen ohne Pedal
+    for (const sx of [-1, 1]) {
+      g.add(setze(zylinder(0.018, 0.018, 0.22, 0x1d1d1f, { umriss: 0.002 }, 10), sx * 0.11, 0.18, -0.24, 0.5, 0, 0)); // Zylinder
+      g.add(setze(zylinder(0.008, 0.008, 0.1, 0xc0c4c8, { umriss: false }, 6), sx * 0.11, 0.25, -0.18, 0.5, 0, 0));
+    }
+    // Säule mit Verstellung
+    g.add(setze(quader(0.07, 0.95, 0.07, WEISS, { umriss: 0.003 }), 0, 0.55, -0.34, -0.12, 0, 0));
+    g.add(setze(zylinder(0.022, 0.022, 0.05, 0x2a2a2c, { umriss: false }, 10), 0, 0.5, -0.29, Math.PI / 2 - 0.12, 0, 0)); // Klemmknauf
+    // Konsole: Gehäuse, gesprungenes Display, drei Tasten
+    const dispTex = leinwandTextur(96, 48, (cg, b, h) => {
+      cg.fillStyle = '#7a8a7a'; cg.fillRect(0, 0, b, h);
+      cg.fillStyle = '#2a3a2a'; cg.font = 'bold 16px monospace'; cg.fillText('0:00', 8, 28);
+      cg.strokeStyle = '#f0f0f0'; cg.lineWidth = 1.5; cg.beginPath(); cg.moveTo(60, 0); cg.lineTo(48, 20); cg.lineTo(70, 30); cg.lineTo(56, 48); cg.moveTo(48, 20); cg.lineTo(30, 26); cg.stroke();
+    });
+    const kon = new THREE.Group();
+    kon.add(quader(0.2, 0.12, 0.06, WEISS, { umriss: 0.002 }));
+    const disp = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 0.06), toon(0xffffff, { map: dispTex })); disp.position.set(0, 0.015, 0.031); kon.add(disp);
+    for (let k = 0; k < 3; k++) kon.add(setze(zylinder(0.008, 0.008, 0.006, [0xc8382c, 0x2f6b3a, 0x2f5fa8][k], { umriss: false }, 8), -0.04 + k * 0.04, -0.035, 0.032, Math.PI / 2, 0, 0));
+    kon.position.set(0, 1.05, -0.4); kon.rotation.x = -0.5;
+    g.add(kon);
+    // Lenkerbügel: ein durchgehend gebogenes Rohr (U mit Rundungen, Enden leicht nach oben)
+    const pfad = new THREE.CatmullRomCurve3([[-0.3, 0.06, 0.18], [-0.31, 0.0, 0.05], [-0.28, -0.02, -0.03], [-0.18, -0.02, -0.05], [0, -0.02, -0.06], [0.18, -0.02, -0.05], [0.28, -0.02, -0.03], [0.31, 0.0, 0.05], [0.3, 0.06, 0.18]].map(([x, y, z]) => new THREE.Vector3(x, y, z)), false, 'centripetal');
+    const buegel = new THREE.Mesh(new THREE.TubeGeometry(pfad, 48, 0.016, 8, false), weissMat);
+    buegel.castShadow = true; umrissLinie(buegel, 0.002);
+    const lk = new THREE.Group();
+    lk.add(buegel);
+    lk.add(setze(quader(0.08, 0.06, 0.06, WEISS, { umriss: 0.002 }), 0, -0.03, -0.06)); // Gabelkopf an der Säule
+    for (const sx of [-1, 1]) {
+      lk.add(setze(zylinder(0.026, 0.026, 0.12, 0x2a2a2c, { umriss: 0.001 }, 10), sx * 0.305, 0.04, 0.13, Math.PI / 2 - 0.45, 0, 0)); // Schaumgriff
+      lk.add(setze(zylinder(0.028, 0.028, 0.012, 0x3a3a3c, { umriss: false }, 10), sx * 0.3, 0.065, 0.185, Math.PI / 2 - 0.45, 0, 0)); // Endkappe
+      lk.add(setze(quader(0.035, 0.012, 0.07, 0xc0c4c8, { umriss: 0.001 }), sx * 0.29, 0.005, 0.0, 0, 0, 0)); // Pulssensor
+      lk.add(setze(zylinder(0.003, 0.003, 0.25, 0x1d1d1f, { umriss: false }, 4), sx * 0.15, 0.02, -0.1, 0.3, 0, sx * 1.2)); // Kabel
+    }
+    lk.position.set(0, 1.0, -0.36); lk.rotation.set(0.15, 0, 0.18); // verbogen
+    g.add(lk);
+    // Schmutz, Rostflecken an den Schrauben
+    for (let i = 0; i < 8; i++) g.add(setze(quader(0.02 + r() * 0.04, 0.02, 0.01, 0x8a7a62, { umriss: false }), (r() - 0.5) * 0.4, 0.09, 0.36));
+    for (let i = 0; i < 5; i++) g.add(setze(quader(0.03, 0.03, 0.005, 0x8a4a2a, { umriss: false }), (r() - 0.5) * 0.45, 0.06, 0.377));
+    g.rotation.z = 0.12; // steht schief
+    const h = new THREE.Group(); h.add(g);
+    merke(h, 'stepper', 'Stepper', null);
+    legen(h, -6.85, -5.05, 0.5);
+    // das abgefallene Pedal liegt daneben
+    const pd = new THREE.Group(); pd.add(quader(0.15, 0.03, 0.3, GRAU, { umriss: 0.002 })); for (let k = 0; k < 7; k++) pd.add(setze(quader(0.13, 0.006, 0.012, 0x2a2a2c, { umriss: false }), 0, 0.017, -0.12 + k * 0.04));
+    pd.position.y = 0.02; pd.rotation.z = 0.2;
+    const ph = new THREE.Group(); ph.add(pd); legen(ph, -7.5, -4.8, 1.2);
+  }
+  kicker(-5.6, -6.6, 0.3);
   // Gitterkisten voller Kleinteile (eine steht auf einer anderen)
-  gitterbox(-6.0, -9.85, 0.05); gitterbox(-7.6, -9.9, -0.04); gitterbox(-6.0, -9.85, 0.05, 0.97);
+  gitterbox(-6.0, -9.85, 0.05, 0, 'kleinteile', true); gitterbox(-7.6, -9.9, -0.04); gitterbox(-6.0, -9.85, 0.05, 1);
   gitterbox(-5.3, -4.95, 0.0, 0, 'felgen');
   // hinter dem Container (zwischen Container und Carport), mit Abstand zur offenen Containerseite
-  altmetall(0.3, -9.5, 1.9, 0.75, 28, 0.7);
   reifenStapel(2.3, -9.9, 4); felgenStapel(-1.6, -9.9, 4); gasflasche(-1.6, -9.0, 0x8c8f94, false);
-  gitterbox(1.2, -9.95, 0.03);
+  gitterbox(1.2, -9.95, 0.03, 0, 'federn');
+  // zuletzt die Haufen: Profile und Rohre schichten sich um und auf das, was schon steht
+  altmetall(-8.0, -7.9, 2.2, 2.0, 130, 1.2);
+  altmetall(-6.3, -6.7, 1.1, 1.1, 50, 0.8);
+  altmetall(-10.0, -5.6, 1.1, 0.9, 38, 0.7);
+  altmetall(0.3, -9.5, 1.9, 0.75, 36, 0.6);
+  if (weggelassen) console.info('[platzhinten] Schrott ohne Platz weggelassen:', weggelassen);
   for (const k of SCHROTT_KAESTEN) hindernis(k.xMin, k.xMax, k.zMin, k.zMax);
 
   // ---------- Blauer Container mit Metalllängen ----------
