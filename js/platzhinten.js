@@ -188,8 +188,9 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
   cp.add(setze(quader(0.3, 0.08, 0.12, 0xe8e4da, { umriss: 0.002 }), 0, hoeheBeiZ(0.6) - 0.06, 0.6));
   cp.add(setze(quader(0.26, 0.02, 0.09, 0xfff4c0, { umriss: false }), 0, hoeheBeiZ(0.6) - 0.105, 0.6));
   cp.add(setze(zylinder(0.006, 0.006, L, 0x1d1d1f, { umriss: false }, 4), 0, hVorne - PF - 0.02, D / 2 - 0.1, 0, 0, Math.PI / 2));
-  // Radstopper (Holzbalken) hinten in jeder Bucht, Ölfleck in der Weidemann-Bucht
-  for (let i = 0; i < 3; i++) cp.add(setze(quader(1.6, 0.12, 0.14, 0x7a5a3a, { umriss: 0.003 }), -L / 2 + BB * (i + 0.5), 0.07, -D / 2 + 0.55));
+  // Radstopper (Holzbalken) hinten in den Buchten Paletten und Weidemann (die Pritschen-Bucht bleibt frei zum Durchfahren),
+  // Ölfleck in der Weidemann-Bucht
+  for (const i of [0, 2]) cp.add(setze(quader(1.6, 0.12, 0.14, 0x7a5a3a, { umriss: 0.003 }), -L / 2 + BB * (i + 0.5), 0.07, -D / 2 + 0.55));
   {
     const fleck = new THREE.Mesh(new THREE.CircleGeometry(0.55, 14), toon(0x2a2622, { transparent: true, opacity: 0.55, depthWrite: false }));
     fleck.rotation.x = -Math.PI / 2; fleck.scale.set(1.3, 0.8, 1);
@@ -217,23 +218,92 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
   schild('PALETTEN', 0, 'palettenSchild', 'Schild: Paletten');
   schild('PRITSCHE', 1, null);
   schild('WEIDEMANN', 2, null);
-  // hinten in der Pritschen-Bucht: ein altes Kanister-Regal (nur Deko)
+  // Kram, der im Carport rumliegt (nicht in der Pritschen-Bucht: die bleibt frei zum Durchfahren). Lokal: X entlang
+  // des Carports (Bucht i: -L/2 + BB*i … +BB), Z quer (+D/2 = offene Seite)
+  const kram = (obj, X, Z, ry = 0) => { obj.position.set(X, obj.position.y, Z); obj.rotation.y = ry; cp.add(obj); return obj; };
+  const tasse = (farbe) => {
+    const g = new THREE.Group();
+    g.add(setze(zylinder(0.045, 0.04, 0.095, farbe, { umriss: 0.002 }, 14), 0, 0.048, 0));
+    g.add(setze(zylinder(0.038, 0.038, 0.004, 0x3a2418, { umriss: false }, 12), 0, 0.09, 0)); // Kaffeerest
+    g.add(setze(teil(new THREE.TorusGeometry(0.026, 0.008, 6, 12, Math.PI), farbe, { umriss: false }), 0.045, 0.05, 0, 0, 0, -Math.PI / 2));
+    return g;
+  };
+  // Tasse oben auf dem Palettenstapel, eine zweite am vorderen Pfosten der Weidemann-Bucht
   {
-    const regal = new THREE.Group();
-    for (const x of [-0.45, 0.45]) for (const z of [-0.18, 0.18]) regal.add(setze(quader(0.05, 1.4, 0.05, 0x6a6e72, { umriss: 0.002 }), x, 0.7, z));
-    for (const y of [0.15, 0.7, 1.25]) regal.add(setze(quader(0.96, 0.03, 0.42, 0x7a7e82, { umriss: 0.002 }), 0, y, 0));
-    for (const [x, y, f] of [[-0.25, 0.32, 0xc8382c], [0.15, 0.32, 0x2f6b3a], [-0.1, 0.87, 0x2f5fa8], [0.28, 1.42, 0xd8b23a]]) regal.add(setze(quader(0.24, 0.32, 0.16, f, { umriss: 0.003 }), x, y, 0));
-    const RX = -L / 2 + BB + 0.7, RZ = -D / 2 + 0.25;
-    regal.position.set(RX, 0, RZ);
-    cp.add(regal);
-    const m = zuWelt(RX, RZ);
-    hindernis(m.x - 0.25, m.x + 0.25, m.z - 0.5, m.z + 0.5);
+    const t = tasse(0xe8e4da);
+    // Welt -> lokal: X = CZ - z, Z = x - CX
+    const P = BUCHTEN.paletten;
+    kram(t, CZ - (P.z - 0.55), (P.x - 1.0) - CX + 0.1, 0.4);
+    t.position.y = 3 * 0.144 + 0.005;
+  }
+  kram(tasse(0x2f5fa8), -L / 2 + 2 * BB + 0.25, D / 2 - 0.3, 1.2);
+  // leere Bierflasche, umgekippt, in der Paletten-Bucht
+  {
+    const g = new THREE.Group();
+    const f = new THREE.Group();
+    f.add(setze(zylinder(0.032, 0.032, 0.17, 0x5a3612, { umriss: 0.002 }, 12), 0, 0.085, 0));
+    f.add(setze(zylinder(0.014, 0.03, 0.05, 0x5a3612, { umriss: 0.002 }, 12), 0, 0.195, 0));
+    f.add(setze(zylinder(0.013, 0.013, 0.05, 0x5a3612, { umriss: 0.002 }, 10), 0, 0.245, 0));
+    f.add(setze(quader(0.065, 0.07, 0.002, 0xe8d8a8, { umriss: false }), 0, 0.09, 0.032));
+    f.rotation.z = Math.PI / 2; f.position.y = 0.032;
+    g.add(f);
+    kram(g, -L / 2 + 0.6, D / 2 - 0.9, 0.7);
+  }
+  // Farbdosen (eine umgekippt, mit Lack-Pfütze) hinten in der Weidemann-Bucht
+  {
+    const dose = (farbe, h = 0.2) => {
+      const g = new THREE.Group();
+      g.add(setze(zylinder(0.09, 0.09, h, 0xc8c2b4, { umriss: 0.003 }, 16), 0, h / 2, 0));
+      g.add(setze(zylinder(0.092, 0.092, h * 0.55, farbe, { umriss: false }, 16), 0, h * 0.45, 0)); // Etikett
+      g.add(setze(zylinder(0.088, 0.088, 0.012, farbe, { umriss: 0.002 }, 16), 0, h + 0.006, 0)); // Deckel mit Farbresten
+      g.add(setze(teil(new THREE.TorusGeometry(0.08, 0.004, 4, 12, Math.PI), 0x8c8f94, { umriss: false }), 0, h, 0)); // Henkel
+      return g;
+    };
+    const X0 = L / 2 - 0.45, Z0 = -D / 2 + 0.35;
+    kram(dose(0x2f6b3a), X0, Z0, 0.3);
+    kram(dose(0xc8382c), X0 - 0.22, Z0 + 0.05, 1.1);
+    kram(dose(0xf2f0e8, 0.15), X0 - 0.05, Z0 + 0.22, 2.0);
+    const um = dose(0x2f5fa8);
+    um.children.forEach((c) => { c.position.y -= 0.1; });
+    um.rotation.z = Math.PI / 2; um.position.y = 0.09;
+    const h = new THREE.Group(); h.add(um); kram(h, X0 - 0.5, Z0 + 0.35, 0.6);
+    const pfuetze = new THREE.Mesh(new THREE.CircleGeometry(0.2, 12), toon(0x2f5fa8));
+    pfuetze.rotation.x = -Math.PI / 2; pfuetze.scale.set(1.4, 0.8, 1);
+    pfuetze.position.set(X0 - 0.75, 0.012, Z0 + 0.4);
+    cp.add(pfuetze);
+  }
+  // Autobatterie hinten in der Paletten-Bucht
+  {
+    const g = new THREE.Group();
+    g.add(setze(quader(0.28, 0.19, 0.175, 0x1d1d1f, { umriss: 0.003 }), 0, 0.095, 0));
+    g.add(setze(quader(0.28, 0.02, 0.175, 0x2a2a2c, { umriss: 0.002 }), 0, 0.2, 0));
+    g.add(setze(zylinder(0.012, 0.014, 0.025, 0xc8382c, { umriss: false }, 8), 0.1, 0.22, 0.05));
+    g.add(setze(zylinder(0.012, 0.014, 0.025, 0x3a3a3c, { umriss: false }, 8), -0.1, 0.22, 0.05));
+    g.add(setze(quader(0.1, 0.05, 0.002, 0xd8b23a, { umriss: false }), 0, 0.12, 0.089));
+    kram(g, -L / 2 + 0.55, -D / 2 + 0.4, 0.2);
+  }
+  // Spanngurt: aufgerollt, ein Stück abgewickelt, Ratsche dran (vorne in der Paletten-Bucht)
+  {
+    const g = new THREE.Group();
+    g.add(setze(zylinder(0.09, 0.09, 0.05, 0xe06a1a, { umriss: 0.003 }, 18), 0, 0.025, 0));
+    g.add(setze(zylinder(0.025, 0.025, 0.052, 0x3a3a3c, { umriss: false }, 10), 0, 0.026, 0));
+    g.add(setze(quader(0.6, 0.004, 0.05, 0xe06a1a, { umriss: 0.001 }), 0.38, 0.003, 0.03, 0, 0.15, 0));
+    g.add(setze(quader(0.14, 0.04, 0.06, 0x8c8f94, { umriss: 0.002 }), 0.72, 0.02, 0.08, 0, 0.15, 0)); // Ratsche
+    g.add(setze(quader(0.05, 0.03, 0.03, 0x8c8f94, { umriss: false }), 0.82, 0.015, 0.1, 0, 0.15, 0)); // Haken
+    kram(g, -L / 2 + 2.6, D / 2 - 0.5, 2.2);
   }
 
   // ---------- Schrottplatz ----------
   const ROST = [0x8a4a2a, 0x7a3e22, 0x9a5a34, 0x6e5a4a, 0x5a4a40];
   const rost = () => ROST[Math.floor(r() * ROST.length)];
-  const legen = (obj, x, z, ry = r() * Math.PI * 2) => { obj.position.set(x, obj.position.y, z); obj.rotation.y = ry; gruppe.add(obj); return obj; };
+  // hinlegen; ragt etwas in den Boden (z. B. schräg liegend), wird es angehoben, bis es aufliegt
+  const legen = (obj, x, z, ry = r() * Math.PI * 2) => {
+    obj.position.set(x, obj.position.y, z); obj.rotation.y = ry; gruppe.add(obj);
+    obj.updateMatrixWorld(true);
+    const bb = new THREE.Box3().setFromObject(obj);
+    if (bb.min.y < 0) obj.position.y -= bb.min.y - 0.005;
+    return obj;
+  };
   // Schrotthaufen: aufgeschütteter Hügel (rostige Erde), darauf Bleche, Rohre, Vierkant, Träger, Winkel, Gitter und
   // Kleinkram kreuz und quer übereinander gehäuft; Höhe nach der Hügelform
   const erdeMat = toon(0x6a4a34);
@@ -375,11 +445,11 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     rohr(-0.52, 0.34, -0.15, 0.78, 0.015); rohr(0.38, 0.78, 0.52, 0.34, 0.018);
     g.add(setze(quader(0.24, 0.05, 0.1, 0x1d1d1f, { umriss: 0.002 }), -0.17, 0.88, 0)); // Sattel
     g.add(setze(zylinder(0.014, 0.014, 0.5, 0x8c8f94, { umriss: 0.002 }, 6), 0.42, 0.98, 0, Math.PI / 2, 0.5, 0)); // Lenker schief
-    g.position.y = liegt ? 0.03 : 0;
-    g.rotation.set(liegt ? Math.PI / 2 : 0.12, 0, 0);
+    g.position.y = 0;
+    g.rotation.set(liegt ? -Math.PI / 2 : 0.12, 0, 0);
     const h = new THREE.Group();
     h.add(g);
-    if (liegt) g.position.set(0, 0.03, 0.34);
+    if (liegt) g.position.set(0, 0, 0.5);
     return legen(h, x, z, ry);
   }
   // Satellitenschüssel: verbeulter Teller mit Arm und LNB, schräg auf den Boden gekippt
@@ -509,18 +579,17 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
   altmetall(-10.0, -5.6, 1.1, 0.9, 24, 0.7);
   felgenStapel(-10.6, -9.9, 6); felgenStapel(-10.05, -10.0, 4); felgenStapel(-4.25, -4.95, 5);
   reifenStapel(-10.9, -8.6, 5); reifenStapel(-10.85, -7.9, 3); reifenStapel(-6.9, -4.95, 4); reifenStapel(-10.6, -4.9, 2, true);
-  fahrrad(-10.6, -6.8, 1.6, true, 0x2f5fa8);
-  fahrrad(-7.0, -10.0, 2.6, true, 0xc8382c);
+  fahrrad(-10.85, -6.2, 0.1, true, 0x2f5fa8);
+  fahrrad(-10.8, -9.3, 0.2, true, 0xc8382c);
   fahrrad(-4.2, -7.4, Math.PI / 2, false, 0x2f6b3a);
   schuessel(-8.2, -5.2, 0.8);
   gasflasche(-4.3, -9.0, 0x8c8f94, false); gasflasche(-4.7, -9.3, 0xc8382c, false); gasflasche(-4.3, -9.6, 0x8c8f94, true);
   gasflasche(-6.3, -4.85, 0x8c8f94, false); gasflasche(-9.5, -10.1, 0x6a8a5a, true);
-  fass(-11.0, -5.6, false); fass(-11.0, -9.4, true);
   heizkoerper(-8.6, -4.85, 0.1);
   waschmaschine(-9.0, -10.1, 0.3);
   autotuer(-4.3, -8.2, Math.PI / 2, 0x3a6aa8); autotuer(-7.6, -5.0, 0.1, 0xc8382c);
   motorblock(-5.1, -9.2, 0.6);
-  badewanne(-10.0, -7.4, 1.5);
+  badewanne(-9.9, -7.6, 1.5);
   motorhaube(-8.9, -9.3, 2.9, 0x2f6b3a);
   auspuff(-9.4, -4.75, 0.2);
   // Gitterkisten voller Kleinteile (eine steht auf einer anderen)

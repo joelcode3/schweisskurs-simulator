@@ -310,8 +310,10 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Werkstatt, Schrottplatz, Carport; Betreiber 9.11.). Längs gestellt, offen zur Seite (Welt +x, Schilder dort) und nach
   hinten, Schotterboden (kein Beton). Holzpfosten auf Stahl-Pfostenträgern, Pfetten, Sparren, Wellplatten-Dach (vorne hoch,
   hinten tief, liegt auf den Sparren), Stirnbrett, Regenrinne mit Fallrohr, Kopfbänder vorne und hinten, Lampe mit Kabel,
-  Radstopper in jeder Bucht, Ölfleck. Schilder hängen an Ketten unter der Pfette. Buchten vom Haus weg: PALETTEN, PRITSCHE
-  (leer, für E2b, Kanister-Regal), WEIDEMANN (BUCHTEN, CARPORT_PFOSTEN). Der Gang von der Hintertür endet vorne am Carport.
+  Radstopper in den Buchten Paletten und Weidemann, Ölfleck. Schilder hängen an Ketten unter der Pfette. Buchten vom Haus weg:
+  PALETTEN, PRITSCHE (ganz leer, dort muss man später durchfahren können, E2b), WEIDEMANN. Herumliegender Kram (nicht in der
+  Pritschen-Bucht): 2 Tassen (eine auf dem Palettenstapel), leere Bierflasche, Farbdosen (eine umgekippt, Pfütze), Autobatterie,
+  Spanngurt mit Ratsche. Liegende Teile werden beim Hinlegen angehoben, bis sie aufliegen (legen()). WEIDEMANN (BUCHTEN, CARPORT_PFOSTEN). Der Gang von der Hintertür endet vorne am Carport.
   Anklickbar: Schild Paletten (palettenSchild), Dach (carportHinten), Schrotthaufen (schrott), Gitterboxen (gitterbox).
 - Hoflader steht zu Spielbeginn vorwärts eingeparkt in der Bucht „Weidemann“ (Schnauze nach hinten). Figuren setzen erst
   rückwärts heraus (fz.rueckwaerts, fahrten.js LADER_RUECK, Heck schwenkt nach hinten), fahren dann vorwärts zum Weg rechts
