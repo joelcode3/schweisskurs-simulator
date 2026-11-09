@@ -24,12 +24,14 @@ export const BUCHTEN = { pritsche: bucht(0), paletten: bucht(1), weidemann: buch
 // Pfosten (Welt), für Hindernisse und Wege
 export const CARPORT_PFOSTEN = [0, 1, 2, 3].flatMap((i) => [CD / 2, -CD / 2].map((Z) => zuWelt(-CL / 2 + i * BB, Z)));
 // Schrottplatz: Kästen, in denen Schrott liegt (Figuren und Fahrzeuge kommen da nicht durch). Dazwischen bleibt der
-// Gang von der Hintertür (x ≈ -2,9) frei bis zur Fahrspur (z -12,4 … -9,8), die direkt zum Carport führt.
+// Gang von der Hintertür (x ≈ -2,9) zwischen Schrott und Container frei bis zur Fahrspur (z -12,4 … -9,8), die direkt zum Carport führt.
+// Blauer 20-Fuß-Container Rücken an Rücken an der Rückwand, rechts von der Hintertür (von hinten gesehen links davon),
+// Längsseite zum Hof ganz offen; innen Metalllängen bis 6 m (Paket E2a, noch ohne Funktion)
+export const CONTAINER = { xMin: -1.6, xMax: 4.46, zMin: -6.6, zMax: -4.1, hoehe: 2.59 };
 export const SCHROTT_KAESTEN = [
   { xMin: -14.6, xMax: -9.6, zMin: -9.7, zMax: -6.2 },
   { xMin: -9.2, xMax: -6.0, zMin: -9.6, zMax: -5.0 },
   { xMin: -5.8, xMax: -3.75, zMin: -9.4, zMax: -4.55 },
-  { xMin: -2.05, xMax: 0.9, zMin: -8.6, zMax: -4.55 },
 ];
 
 export function bauePlatzHinten(scene, { merke, hindernis }) {
@@ -296,19 +298,73 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
   // Haufen und Teile in den Schrott-Kästen (der Gang bei x -3,7 … -2,1 bleibt frei)
   altmetall(-12.2, -8.0, 2.0, 1.4, 34);
   altmetall(-7.6, -7.6, 1.3, 1.8, 26);
-  altmetall(-0.6, -6.6, 1.2, 1.6, 20);
   felgenStapel(-10.3, -9.1, 6); felgenStapel(-9.9, -6.6, 4); felgenStapel(-4.3, -5.1, 5); felgenStapel(-5.0, -5.2, 3);
   fahrrad(-13.6, -6.9, 0.4, true, 0x2f5fa8);
   fahrrad(-6.6, -9.0, 2.6, true, 0xc8382c);
   fahrrad(-4.35, -7.0, Math.PI / 2, false, 0x2f6b3a);
   schuessel(-8.4, -5.7, 0.8);
-  schuessel(0.2, -8.0, -0.5);
+  schuessel(-12.8, -6.6, -0.5);
   gasflasche(-5.2, -8.6, 0x8c8f94, false); gasflasche(-4.75, -8.85, 0xc8382c, false); gasflasche(-5.4, -9.0, 0x8c8f94, true);
-  gasflasche(-1.6, -5.2, 0x8c8f94, false); gasflasche(-1.55, -5.65, 0x6a8a5a, true);
-  fass(-11.0, -6.6, false); fass(-14.0, -9.0, true); fass(-1.5, -8.1, false);
+  gasflasche(-6.6, -5.4, 0x8c8f94, false); gasflasche(-10.6, -9.3, 0x6a8a5a, true);
+  fass(-11.0, -6.6, false); fass(-14.0, -9.0, true); fass(-6.4, -8.9, false);
   heizkoerper(-13.0, -9.3, 0.2);
   waschmaschine(-8.6, -9.0, 0.3);
   for (const k of SCHROTT_KAESTEN) hindernis(k.xMin, k.xMax, k.zMin, k.zMax);
+
+  // ---------- Blauer Container mit Metalllängen ----------
+  {
+    const K = CONTAINER, B = K.xMax - K.xMin, T = K.zMax - K.zMin, H = K.hoehe;
+    const BLAU = 0x2f5f9a, BLAU_D = 0x244a78;
+    const c = new THREE.Group();
+    c.position.set((K.xMin + K.xMax) / 2, 0, (K.zMin + K.zMax) / 2);
+    gruppe.add(c);
+    // Trapezblech: senkrechte Sicken als Textur
+    const sickenTex = leinwandTextur(256, 64, (g, b, h) => {
+      g.fillStyle = '#2f5f9a'; g.fillRect(0, 0, b, h);
+      for (let x = 0; x < b; x += 16) { g.fillStyle = 'rgba(0,0,0,0.22)'; g.fillRect(x, 0, 5, h); g.fillStyle = 'rgba(255,255,255,0.08)'; g.fillRect(x + 8, 0, 3, h); }
+      for (let i = 0; i < 40; i++) { g.fillStyle = `rgba(${120 + r() * 60},${60 + r() * 30},30,${0.25 + r() * 0.3})`; g.fillRect(r() * b, r() * h, 2 + r() * 6, 1 + r() * 5); }
+    });
+    sickenTex.wrapS = sickenTex.wrapT = THREE.RepeatWrapping;
+    const blech = (b, h, rep) => { const t = sickenTex.clone(); t.needsUpdate = true; t.repeat.set(rep, 1); return toon(0xffffff, { map: t, side: THREE.DoubleSide }); };
+    // Rückwand (an der Werkstatt), Stirnwände, Dach, Boden
+    const wand = (w, h, x, y, z, ry, rep) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), blech(w, h, rep)); m.position.set(x, y, z); m.rotation.y = ry; m.receiveShadow = true; c.add(m); };
+    wand(B - 0.1, H - 0.2, 0, H / 2, T / 2 - 0.03, 0, 10);
+    for (const sx of [-1, 1]) wand(T - 0.1, H - 0.2, sx * (B / 2 - 0.03), H / 2, 0, Math.PI / 2, 4);
+    c.add(setze(quader(B, 0.06, T, BLAU_D, { umriss: 0.003 }), 0, H - 0.03, 0)); // Dach
+    c.add(setze(quader(B - 0.1, 0.03, T - 0.1, 0x7a5a3a, { umriss: false }), 0, 0.15, 0)); // Holzboden
+    // Rahmen: Eckpfosten, Ober- und Untergurt an der offenen Seite und hinten
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) c.add(setze(quader(0.16, H, 0.16, BLAU_D, { umriss: 0.003 }), sx * (B / 2 - 0.08), H / 2, sz * (T / 2 - 0.08)));
+    for (const sz of [-1, 1]) for (const y of [0.07, H - 0.1]) c.add(setze(quader(B, 0.14, 0.12, BLAU_D, { umriss: 0.003 }), 0, y, sz * (T / 2 - 0.06)));
+    for (const sx of [-1, 1]) for (const y of [0.07, H - 0.1]) c.add(setze(quader(0.12, 0.14, T, BLAU_D, { umriss: 0.003 }), sx * (B / 2 - 0.06), y, 0));
+    // Eckbeschläge (grau)
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) for (const y of [0.08, H - 0.08]) c.add(setze(quader(0.18, 0.12, 0.18, 0x8c8f94, { umriss: 0.002 }), sx * (B / 2 - 0.09), y, sz * (T / 2 - 0.09)));
+    // Kanthölzer quer als Auflage, darauf Metalllängen (5,85 m: passen gerade so rein)
+    const LANG = 5.85;
+    for (const x of [-2.3, -0.8, 0.8, 2.3]) c.add(setze(quader(0.1, 0.1, T - 0.4, 0x8a6440, { umriss: 0.002 }), x, 0.22, 0));
+    const STAHL = [0x6e6a64, 0x5e5a56, 0x7c7670, 0x8a5a3a];
+    let y0 = 0.27;
+    // Lage 1: Doppel-T-Träger
+    for (let i = 0; i < 4; i++) {
+      const z = -T / 2 + 0.45 + i * 0.32, f = STAHL[i % 4];
+      const tr = new THREE.Group();
+      tr.add(setze(quader(LANG, 0.012, 0.12, f, { umriss: 0.002 }), 0, 0.006, 0));
+      tr.add(setze(quader(LANG, 0.012, 0.12, f, { umriss: 0.002 }), 0, 0.154, 0));
+      tr.add(setze(quader(LANG, 0.14, 0.008, f, { umriss: false }), 0, 0.08, 0));
+      tr.position.set((r() - 0.5) * 0.04, y0, z);
+      c.add(tr);
+    }
+    y0 += 0.17;
+    // Lage 2: Vierkantrohre
+    for (let i = 0; i < 9; i++) c.add(setze(quader(LANG, 0.08, 0.08, STAHL[(i + 1) % 4], { umriss: 0.002 }), (r() - 0.5) * 0.03, y0 + 0.04, -T / 2 + 0.4 + i * 0.16));
+    y0 += 0.09;
+    // Lage 3: Rundrohre
+    for (let i = 0; i < 12; i++) c.add(setze(zylinder(0.045, 0.045, LANG, STAHL[(i + 2) % 4], { umriss: 0.002 }, 10), (r() - 0.5) * 0.03, y0 + 0.045, -T / 2 + 0.38 + i * 0.12, 0, 0, Math.PI / 2));
+    y0 += 0.1;
+    // Lage 4: Flachstahl und Winkel, nicht ganz so ordentlich
+    for (let i = 0; i < 10; i++) c.add(setze(quader(LANG - r() * 0.8, 0.012, 0.06, STAHL[i % 4], { umriss: 0.001 }), (r() - 0.5) * 0.4, y0 + 0.01 + i * 0.012, -T / 2 + 0.5 + r() * (T - 1.0), 0, (r() - 0.5) * 0.04, 0));
+    merke(c, 'container', 'Container', null);
+    hindernis(K.xMin, K.xMax, K.zMin, K.zMax);
+  }
 
   return { gruppe, CARPORT, BUCHTEN, HINTERTUER, SCHROTT_KAESTEN, CARPORT_PFOSTEN };
 }

@@ -1,7 +1,7 @@
 // Wege für die Figuren: nie durch Wände. Werkstatt, Bad und draußen sind über Türen verbunden
 // (Schlupftür im Tor, WC-Tür); draußen geht es außen um Werkstatt und Bad-Anbau herum.
 import { RAUM, BAD } from './world.js';
-import { HINTERTUER, SCHROTT_KAESTEN, CARPORT_PFOSTEN } from './platzhinten.js';
+import { HINTERTUER, SCHROTT_KAESTEN, CARPORT_PFOSTEN, CONTAINER } from './platzhinten.js';
 
 const TUER_INNEN = { x: -0.35, z: 3.2 }, TUER_AUSSEN = { x: -0.35, z: 5.0 };
 // Hintertür an der Rückwand (Paket E2a): führt zum Schrottplatz und zum Carport hinterm Haus
@@ -13,6 +13,7 @@ const KAESTEN = [
   { xMin: BAD.xMin - 0.45, xMax: BAD.xMax + 0.45, zMin: RAUM.zMax, zMax: BAD.zMax + 0.45 },
   // Schrottplatz hinterm Haus (der Gang von der Hintertür bleibt frei) und die Pfosten vom Carport
   ...SCHROTT_KAESTEN.map((k) => ({ xMin: k.xMin - 0.3, xMax: k.xMax + 0.3, zMin: k.zMin - 0.3, zMax: k.zMax + 0.3 })),
+  { xMin: CONTAINER.xMin - 0.3, xMax: CONTAINER.xMax + 0.3, zMin: CONTAINER.zMin - 0.3, zMax: RAUM.zMin }, // Container an der Rückwand
   ...CARPORT_PFOSTEN.map((p) => ({ xMin: p.x - 0.4, xMax: p.x + 0.4, zMin: p.z - 0.4, zMax: p.z + 0.4 })),
 ];
 const ECKEN = [];

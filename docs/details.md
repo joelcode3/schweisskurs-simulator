@@ -317,6 +317,10 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
 - Schrottplatz hinter der Werkstatt, links neben dem Carport (SCHROTT_KAESTEN, Hindernisse für Spieler, Fahrzeuge und Wege): Altmetall-Haufen,
   Felgenstapel, kaputte Fahrräder, Satellitenschüsseln, alte Gasflaschen, Ölfässer, Heizkörper, Waschmaschine. Freier Gang von der
   Hintertür (x ≈ -2,9) bis zur Fahrspur, die direkt zum Carport führt.
+- Blauer 20-Fuß-Container (CONTAINER x -1,6 … 4,46, z -6,6 … -4,1) Rücken an Rücken an der Rückwand, von hinten gesehen links
+  neben der Hintertür (Gang bleibt frei). Längsseite zum Hof ganz offen; innen auf Kanthölzern Metalllängen (5,85 m: Doppel-T,
+  Vierkant, Rundrohre, Flachstahl). Noch ohne Funktion (später Metall einladen). Anklickbar (container), Hindernis, in wege.js.
+  Vor der offenen Seite liegt kein Schrott (frei für später).
 - Hintertür (HINTERTUER x -3,45 … -2,35, 2,15 m): grüne Brettertür an der Rückwand, steht offen nach draußen; dort hing früher der
   Hula-Hoop. Reifen hängt jetzt an der rechten Wand zwischen Erste-Hilfe-Kasten und Spüle (HULA_WAND_Z, HULA_PLATZ).
   wege.js: Ziele hinterm Haus (z < -3,5) gehen durch die Hintertür, sonst durchs Tor; Figuren zum Hoflader laufen selbst
