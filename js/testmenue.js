@@ -242,7 +242,7 @@ export function baueTestMenue({ spiel, welt, kamera, steuerung, fahrten, fz }) {
   // Paket E2a: direkt hinter die Werkstatt (vor die Hintertür, Blick auf Schrottplatz und Carport)
   const springen = (pos, blick) => () => { if (steuerung) steuerung.setze([pos[0], kamera.position.y, pos[1]], [blick[0], 1.2, blick[1]]); };
   const nichtBeimFahren = () => (fahrten?.faehrt ? 'Erst aussteigen (E)' : null);
-  knopf('T94', 'Platz hinten: vor die Hintertür', springen([-2.9, -5.3], [-12.0, -11.5]), { sperre: nichtBeimFahren });
+  knopf('T94', 'Platz hinten: vor die Hintertür', springen([-2.9, -5.3], [-3.0, -16.0]), { sperre: nichtBeimFahren });
 
   ueberschrift('Wut und Zeit');
   knopf('T56', 'Wut auf 0', () => t.setzeWut(0));

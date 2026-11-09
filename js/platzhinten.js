@@ -8,13 +8,13 @@ import { toon, teil, quader, zylinder, setze, leinwandTextur, zufall } from './t
 // Hintertür in der Rückwand (z = -4): Öffnung x -3,45 … -2,35, 2,15 m hoch (dort hing früher der Hula-Hoop-Reifen)
 export const HINTERTUER = { x0: -3.45, x1: -2.35, hoehe: 2.15, mitte: -2.9 };
 // Schotter hinter dem Haus und der Weg rechts am Haus entlang (dort parkte früher der Hoflader)
-export const SCHOTTER = { x0: -24.0, x1: 10.4, z0: -19.5, z1: -4.1 };
+export const SCHOTTER = { x0: -17.0, x1: 10.4, z0: -26.0, z1: -4.1 };
 export const SCHOTTER_WEG = { x0: 5.6, x1: 10.0, z0: -4.1, z1: 3.8 };
-// Carport: von hinten aufs Haus gesehen rechts neben dem Schrottplatz, längs gestellt (Betreiber 9.11.: um 90° gedreht).
-// Drei Buchten hintereinander (vom Haus weg): Pritsche, Paletten, Weidemann. Offen zum Schrottplatz (Welt +x, Schilder
-// an dieser Seite) und nach hinten (Welt -x). Gebaut wird es lokal (Länge entlang lokal x, Öffnung lokal +z) und gedreht:
+// Carport: Reihenfolge vom Haus weg Werkstatt, Schrottplatz, Carport (Betreiber 9.11.); längs gestellt, drei Buchten
+// hintereinander (vom Haus weg): Pritsche, Paletten, Weidemann. Offen zum Gang (Welt +x, Schilder an dieser Seite) und
+// nach hinten (Welt -x). Der Gang von der Hintertür endet direkt am Carport. Gebaut wird es lokal (Länge entlang lokal x, Öffnung lokal +z) und gedreht:
 // lokal (X, Z) -> Welt (CX + Z, CZ - X).
-export const CARPORT = { x0: -19.8, x1: -15.2, z0: -14.6, z1: -4.1, hoehe: 3.2 };
+export const CARPORT = { x0: -6.0, x1: -1.4, z0: -21.6, z1: -11.1, hoehe: 3.2 };
 const CL = CARPORT.z1 - CARPORT.z0, CD = CARPORT.x1 - CARPORT.x0;
 const CX = (CARPORT.x0 + CARPORT.x1) / 2, CZ = (CARPORT.z0 + CARPORT.z1) / 2;
 const BB = CL / 3;
@@ -29,10 +29,9 @@ export const CARPORT_PFOSTEN = [0, 1, 2, 3].flatMap((i) => [CD / 2, -CD / 2].map
 // Längsseite zum Hof ganz offen; innen Metalllängen bis 6 m (Paket E2a, noch ohne Funktion)
 export const CONTAINER = { xMin: -1.6, xMax: 4.46, zMin: -6.6, zMax: -4.1, hoehe: 2.59 };
 export const SCHROTT_KAESTEN = [
-  { xMin: -14.6, xMax: -9.6, zMin: -9.7, zMax: -6.2 },
-  { xMin: -9.2, xMax: -6.0, zMin: -9.6, zMax: -5.0 },
-  { xMin: -5.8, xMax: -3.75, zMin: -9.4, zMax: -4.55 },
-];
+  { xMin: -14.8, xMax: -3.75, zMin: -10.4, zMax: -4.5 },
+  { xMin: -1.95, xMax: 2.6, zMin: -10.4, zMax: -8.6 },
+]
 
 export function bauePlatzHinten(scene, { merke, hindernis }) {
   const r = zufall(808);
@@ -72,9 +71,8 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     }
   };
   spur(7.8, 3.2, 8.6, -7.5);
-  spur(8.6, -7.5, 4.0, -11.1);
-  spur(4.0, -11.1, -9.0, -11.6);
-  spur(-9.0, -11.6, CARPORT.x1 + 0.2, BUCHTEN.weidemann.z);
+  spur(8.6, -7.5, 4.5, -15.0);
+  spur(4.5, -15.0, CARPORT.x1 + 0.2, BUCHTEN.weidemann.z);
   // Rand: ein paar Grasbüschel und Steine, wo der Schotter an die Wiese stößt
   const buschel = toon(0x5d8a3a);
   for (let i = 0; i < 90; i++) {
@@ -171,24 +169,109 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
   const ROST = [0x8a4a2a, 0x7a3e22, 0x9a5a34, 0x6e5a4a, 0x5a4a40];
   const rost = () => ROST[Math.floor(r() * ROST.length)];
   const legen = (obj, x, z, ry = r() * Math.PI * 2) => { obj.position.set(x, obj.position.y, z); obj.rotation.y = ry; gruppe.add(obj); return obj; };
-  // Altmetall-Haufen: Bleche, Winkel, Rohre, Träger kreuz und quer übereinander
-  function altmetall(cx, cz, rx, rz, n) {
+  // Schrotthaufen: aufgeschütteter Hügel (rostige Erde), darauf Bleche, Rohre, Vierkant, Träger, Winkel, Gitter und
+  // Kleinkram kreuz und quer übereinander gehäuft; Höhe nach der Hügelform
+  const erdeMat = toon(0x6a4a34);
+  function altmetall(cx, cz, rx, rz, n, hoehe = 1.0) {
     const g = new THREE.Group();
+    const huegel = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), erdeMat);
+    huegel.scale.set(rx * 1.05, hoehe * 0.55, rz * 1.05);
+    huegel.receiveShadow = true;
+    g.add(huegel);
+    const hoeheBei = (x, z) => Math.max(0, 1 - (x / rx) ** 2 - (z / rz) ** 2);
     for (let i = 0; i < n; i++) {
       const art = r();
-      const y = 0.05 + r() * 0.5 * (1 - Math.hypot((r() - 0.5), (r() - 0.5)));
+      let x, z;
+      do { x = (r() - 0.5) * rx * 2; z = (r() - 0.5) * rz * 2; } while (hoeheBei(x, z) <= 0.02);
+      const y = hoeheBei(x, z) * hoehe * (0.55 + r() * 0.5) + 0.03;
       let m;
-      if (art < 0.35) m = quader(0.4 + r() * 0.9, 0.02, 0.3 + r() * 0.6, rost(), { umriss: 0.003 }); // Blech
-      else if (art < 0.6) m = zylinder(0.03 + r() * 0.04, 0.03 + r() * 0.04, 0.8 + r() * 1.4, rost(), { umriss: 0.003 }, 8); // Rohr
-      else if (art < 0.8) m = quader(0.08, 0.08, 1.0 + r() * 1.2, rost(), { umriss: 0.003 }); // Vierkant
-      else m = quader(0.12, 0.2, 0.8 + r() * 1.4, 0x6a5a50, { umriss: 0.003 }); // Träger
-      m.position.set((r() - 0.5) * rx * 2, y, (r() - 0.5) * rz * 2);
-      m.rotation.set((r() - 0.5) * 0.6 + (art >= 0.35 && art < 0.6 ? Math.PI / 2 : 0), r() * Math.PI, (r() - 0.5) * 0.5);
+      if (art < 0.25) m = quader(0.4 + r() * 1.0, 0.02, 0.3 + r() * 0.7, rost(), { umriss: 0.003 }); // Blech
+      else if (art < 0.42) m = zylinder(0.03 + r() * 0.05, 0.03 + r() * 0.05, 0.8 + r() * 1.6, rost(), { umriss: 0.003 }, 8); // Rohr
+      else if (art < 0.56) m = quader(0.08, 0.08, 1.0 + r() * 1.4, rost(), { umriss: 0.003 }); // Vierkant
+      else if (art < 0.66) m = quader(0.12, 0.2, 0.8 + r() * 1.6, 0x6a5a50, { umriss: 0.003 }); // Träger
+      else if (art < 0.76) { // Winkel
+        m = new THREE.Group();
+        const l = 0.6 + r() * 1.0, f = rost();
+        m.add(setze(quader(l, 0.06, 0.008, f, { umriss: 0.002 }), 0, 0.03, 0));
+        m.add(setze(quader(l, 0.008, 0.06, f, { umriss: 0.002 }), 0, 0, 0.03));
+      } else if (art < 0.84) { // Baustahlgitter
+        m = new THREE.Group();
+        const f = rost();
+        for (let k = 0; k < 5; k++) m.add(setze(zylinder(0.006, 0.006, 1.0, f, { umriss: false }, 4), -0.4 + k * 0.2, 0, 0, Math.PI / 2, 0, 0));
+        for (let k = 0; k < 5; k++) m.add(setze(zylinder(0.006, 0.006, 1.0, f, { umriss: false }, 4), 0, 0, -0.4 + k * 0.2, 0, 0, Math.PI / 2));
+      } else if (art < 0.92) m = quader(0.15 + r() * 0.25, 0.1 + r() * 0.2, 0.15 + r() * 0.25, rost(), { umriss: 0.003 }); // Klotz, Kasten
+      else m = zylinder(0.12 + r() * 0.1, 0.12 + r() * 0.1, 0.05, rost(), { umriss: 0.003 }, 12); // Scheibe, Deckel
+      m.position.set(x, y, z);
+      m.rotation.set((r() - 0.5) * 0.9 + (art >= 0.25 && art < 0.42 ? Math.PI / 2 : 0), r() * Math.PI, (r() - 0.5) * 0.7);
       g.add(m);
     }
     g.position.set(cx, 0, cz);
     gruppe.add(g);
     merke(g, 'schrott', 'Schrott', null);
+  }
+  // Altreifen-Stapel
+  function reifenStapel(x, z, n, liegt = false) {
+    const g = new THREE.Group();
+    for (let k = 0; k < n; k++) {
+      const t = setze(teil(new THREE.TorusGeometry(0.3, 0.1, 8, 20), 0x1d1d1f, { umriss: 0.003 }), (r() - 0.5) * 0.08, 0.1 + k * 0.2, (r() - 0.5) * 0.08, Math.PI / 2 + (r() - 0.5) * 0.1, 0, (r() - 0.5) * 0.1);
+      g.add(t);
+    }
+    if (liegt) { g.rotation.z = Math.PI / 2; g.position.y = 0.4; }
+    const h = new THREE.Group();
+    h.add(g);
+    return legen(h, x, z);
+  }
+  // Autotür mit Fensterrahmen, schräg angelehnt
+  function autotuer(x, z, ry, farbe) {
+    const g = new THREE.Group();
+    g.add(setze(quader(1.0, 0.6, 0.06, farbe, { umriss: 0.003 }), 0, 0.3, 0));
+    g.add(setze(quader(0.9, 0.05, 0.05, farbe, { umriss: 0.002 }), 0.02, 0.95, 0));
+    g.add(setze(quader(0.05, 0.38, 0.05, farbe, { umriss: 0.002 }), -0.45, 0.78, 0));
+    g.add(setze(quader(0.05, 0.4, 0.05, farbe, { umriss: 0.002 }), 0.44, 0.76, 0, 0, 0, -0.35));
+    g.add(setze(quader(0.14, 0.03, 0.04, 0x8c8f94, { umriss: false }), 0.3, 0.45, 0.04)); // Griff
+    for (let i = 0; i < 4; i++) g.add(setze(quader(0.05 + r() * 0.12, 0.03 + r() * 0.1, 0.005, 0x8a4a2a, { umriss: false }), (r() - 0.5) * 0.8, 0.1 + r() * 0.4, 0.035));
+    g.rotation.x = -0.35;
+    const h = new THREE.Group();
+    h.add(g);
+    return legen(h, x, z, ry);
+  }
+  // Motorblock mit Zylinderkopf, Ölwanne, Riemenscheibe
+  function motorblock(x, z, ry) {
+    const g = new THREE.Group();
+    g.add(setze(quader(0.6, 0.4, 0.42, 0x6e6a64, { umriss: 0.004 }), 0, 0.3, 0));
+    g.add(setze(quader(0.62, 0.12, 0.34, 0x5a5650, { umriss: 0.003 }), 0, 0.56, 0));
+    g.add(setze(quader(0.5, 0.1, 0.36, 0x3a3a3c, { umriss: 0.003 }), 0, 0.06, 0));
+    g.add(setze(zylinder(0.13, 0.13, 0.05, 0x3a3a3c, { umriss: 0.002 }, 16), 0.33, 0.3, 0, 0, 0, Math.PI / 2));
+    for (let i = 0; i < 4; i++) g.add(setze(zylinder(0.025, 0.025, 0.1, 0x8a4a2a, { umriss: false }, 6), -0.22 + i * 0.15, 0.66, 0.08));
+    return legen(g, x, z, ry);
+  }
+  // alte Badewanne (emailliert, Rost am Rand)
+  function badewanne(x, z, ry) {
+    const g = new THREE.Group();
+    g.add(setze(quader(1.6, 0.5, 0.06, 0xe8e4da, { umriss: 0.003 }), 0, 0.3, 0.35));
+    g.add(setze(quader(1.6, 0.5, 0.06, 0xe8e4da, { umriss: 0.003 }), 0, 0.3, -0.35));
+    for (const sx of [-1, 1]) g.add(setze(quader(0.06, 0.5, 0.76, 0xe8e4da, { umriss: 0.003 }), sx * 0.8, 0.3, 0));
+    g.add(setze(quader(1.6, 0.05, 0.76, 0xd8d2c4, { umriss: 0.002 }), 0, 0.08, 0));
+    for (const sx of [-0.65, 0.65]) for (const sz of [-0.28, 0.28]) g.add(setze(kugelFuss(), sx, 0.03, sz));
+    for (let i = 0; i < 6; i++) g.add(setze(quader(0.08 + r() * 0.15, 0.06, 0.07, 0x8a4a2a, { umriss: false }), (r() - 0.5) * 1.5, 0.52, (r() < 0.5 ? -1 : 1) * 0.35));
+    g.rotation.z = 0.12;
+    return legen(g, x, z, ry);
+  }
+  function kugelFuss() { return teil(new THREE.SphereGeometry(0.05, 8, 6), 0x3a3a3c, { umriss: false }); }
+  // Motorhaube (verbeult, schräg)
+  function motorhaube(x, z, ry, farbe) {
+    const g = new THREE.Group();
+    const m = setze(quader(1.3, 0.04, 1.0, farbe, { umriss: 0.003 }), 0, 0.35, 0, 0.5, 0, 0.12);
+    g.add(m);
+    for (let i = 0; i < 5; i++) g.add(setze(quader(0.1 + r() * 0.2, 0.005, 0.1 + r() * 0.2, 0x8a4a2a, { umriss: false }), (r() - 0.5) * 1.1, 0.37 + (r() - 0.5) * 0.1, (r() - 0.5) * 0.8, 0.5, 0, 0.12));
+    return legen(g, x, z, ry);
+  }
+  // Auspuff mit Topf
+  function auspuff(x, z, ry) {
+    const g = new THREE.Group();
+    g.add(setze(zylinder(0.03, 0.03, 1.6, 0x5a4a40, { umriss: 0.002 }, 8), 0, 0.05, 0, 0, 0, Math.PI / 2));
+    g.add(setze(zylinder(0.11, 0.11, 0.5, 0x6e5a4a, { umriss: 0.003 }, 12), 0.3, 0.11, 0, 0, 0, Math.PI / 2));
+    return legen(g, x, z, ry);
   }
   // Felgenstapel: Stahlfelgen übereinander (mit Mittelloch und Lüftungslöchern)
   function felgenStapel(x, z, n) {
@@ -295,20 +378,33 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     return legen(g, x, z, ry);
   }
 
-  // Haufen und Teile in den Schrott-Kästen (der Gang bei x -3,7 … -2,1 bleibt frei)
-  altmetall(-12.2, -8.0, 2.0, 1.4, 34);
-  altmetall(-7.6, -7.6, 1.3, 1.8, 26);
-  felgenStapel(-10.3, -9.1, 6); felgenStapel(-9.9, -6.6, 4); felgenStapel(-4.3, -5.1, 5); felgenStapel(-5.0, -5.2, 3);
-  fahrrad(-13.6, -6.9, 0.4, true, 0x2f5fa8);
-  fahrrad(-6.6, -9.0, 2.6, true, 0xc8382c);
-  fahrrad(-4.35, -7.0, Math.PI / 2, false, 0x2f6b3a);
-  schuessel(-8.4, -5.7, 0.8);
-  schuessel(-12.8, -6.6, -0.5);
-  gasflasche(-5.2, -8.6, 0x8c8f94, false); gasflasche(-4.75, -8.85, 0xc8382c, false); gasflasche(-5.4, -9.0, 0x8c8f94, true);
-  gasflasche(-6.6, -5.4, 0x8c8f94, false); gasflasche(-10.6, -9.3, 0x6a8a5a, true);
-  fass(-11.0, -6.6, false); fass(-14.0, -9.0, true); fass(-6.4, -8.9, false);
-  heizkoerper(-13.0, -9.3, 0.2);
-  waschmaschine(-8.6, -9.0, 0.3);
+  // Haufen und Teile im Schrottplatz (der Gang bei x -3,5 … -2,3 bleibt frei): dicht an dicht, gehäuft
+  altmetall(-12.4, -7.6, 2.2, 2.4, 70, 1.4);
+  altmetall(-8.2, -8.4, 2.0, 1.7, 60, 1.2);
+  altmetall(-5.6, -6.2, 1.5, 1.4, 40, 0.9);
+  altmetall(-9.6, -5.4, 1.4, 0.8, 26, 0.7);
+  felgenStapel(-10.4, -9.9, 6); felgenStapel(-9.85, -10.0, 4); felgenStapel(-4.25, -4.95, 5); felgenStapel(-4.85, -5.0, 3);
+  felgenStapel(-14.2, -5.0, 5);
+  reifenStapel(-13.4, -10.0, 5); reifenStapel(-12.8, -9.95, 3); reifenStapel(-6.9, -4.95, 4); reifenStapel(-11.3, -5.0, 2, true);
+  fahrrad(-13.9, -6.4, 0.4, true, 0x2f5fa8);
+  fahrrad(-7.0, -9.9, 2.6, true, 0xc8382c);
+  fahrrad(-4.2, -7.4, Math.PI / 2, false, 0x2f6b3a);
+  fahrrad(-10.8, -7.0, 1.1, true, 0xd8b23a);
+  schuessel(-8.2, -5.2, 0.8);
+  schuessel(-14.0, -8.6, -0.5);
+  gasflasche(-4.3, -9.0, 0x8c8f94, false); gasflasche(-4.7, -9.3, 0xc8382c, false); gasflasche(-4.3, -9.6, 0x8c8f94, true);
+  gasflasche(-6.3, -4.85, 0x8c8f94, false); gasflasche(-11.6, -10.0, 0x6a8a5a, true); gasflasche(-7.6, -10.0, 0xc8382c, false);
+  fass(-12.2, -5.0, false); fass(-14.3, -9.6, true); fass(-5.6, -9.8, false); fass(-6.15, -9.85, false);
+  heizkoerper(-13.0, -10.1, 0.2);
+  waschmaschine(-9.2, -9.9, 0.3);
+  autotuer(-4.3, -8.2, Math.PI / 2, 0x3a6aa8); autotuer(-7.6, -5.0, 0.1, 0xc8382c);
+  motorblock(-5.1, -9.2, 0.6);
+  badewanne(-12.9, -5.5, 0.1);
+  motorhaube(-10.9, -9.6, 2.9, 0x2f6b3a);
+  auspuff(-8.9, -4.9, 0.2); auspuff(-14.4, -7.3, 1.5);
+  // hinter dem Container (zwischen Container und Carport), mit Abstand zur offenen Containerseite
+  altmetall(0.3, -9.5, 1.9, 0.75, 28, 0.7);
+  reifenStapel(2.3, -9.9, 4); felgenStapel(-1.6, -9.9, 4); gasflasche(-1.6, -9.0, 0x8c8f94, false);
   for (const k of SCHROTT_KAESTEN) hindernis(k.xMin, k.xMax, k.zMin, k.zMax);
 
   // ---------- Blauer Container mit Metalllängen ----------
