@@ -7,12 +7,13 @@
   (Betreiber-Wunsch): ist der letzte PR noch offen, einen neuen Zweig (Name vom Arbeitszweig abgeleitet, z. B. `…-draussen`)
   von `origin/main` anlegen. Nur kleine Nachbesserungen zum offenen PR kommen in diesen PR.
   Hängt ein neues Update vom noch offenen PR ab, den neuen Zweig auf dessen Stand aufsetzen und im PR vermerken: erst den alten mergen.
-- Projektchat (Session session_0136ircvAvU3aCzRamNp3F96, pflegt die Projektliste) schickt To-dos: OHNE Go des Betreibers umsetzen
+- Projektchat (Session session_0136irctrTCA3M7n4aU75GVP, pflegt die Projektliste) schickt To-dos: OHNE Go des Betreibers umsetzen
   (Betreiber-Wunsch). Nach jedem erstellten Pull Request dem Projektchat per send_message Bescheid geben (Link + was drin ist).
 - Immer nur EIN Paket auf einmal (Betreiber-Wunsch, Limit sparen): nach jedem Paket (PR gemeldet bzw. Vorschau geschickt)
   stoppen und warten, bis der Projektchat „weiter <Paketname>“ schickt. Nie selbst das nächste Paket anfangen.
   Der Betreiber wählt pro Paket das Modell (/model).
-- Dauerhafte Arbeitsregeln (Betreiber/Projektchat, Stand 1.11.):
+- Dauerhafte Arbeitsregeln (Betreiber/Projektchat, Stand 9.11.):
+  - Bei ALLEN Paketen zuerst Vorschau (Screenshots, nummeriert 01, 02 …) an den Betreiber, PR erst nach Abnahme.
   - Pakete einzeln; nach jedem Paket stoppen, bis der Projektchat „weiter <Paket>“ schickt (außer der Betreiber sagt „durchziehen“).
   - Je Paket eigener Zweig und eigener PR. Pro Paket die Modellempfehlung (Opus oder Sonnet) nennen.
   - Optik und neue Minispiele: erst Vorschau (Screenshots) an den Betreiber, PR erst nach Abnahme.
@@ -42,7 +43,7 @@
 - Arbeitsablauf, Minispiele, Notenformel. → „Arbeitsablauf, Minispiele, Note“
 - Hand-System, Umschauen/Steuerung. → „Hand-System und Steuerung“
 - Figuren: Jonny, Waldo, Torben, Platzhalter-Kumpels. → je eigener Abschnitt
-- Draußen: Hof, Carport/Wohnwagen/Benz, Fahrzeuge, Landschaft, Pakete A/B. → gleichnamige Abschnitte
+- Draußen: Hof, Platz hinten (Carport mit Buchten, Schrottplatz, Hintertür), Carport/Wohnwagen/Benz, Fahrzeuge, Landschaft, Pakete A/B. → gleichnamige Abschnitte
 - Clips (Zuordnung der Videos) und Offene Themen. → „Clips“, „Offene Themen“
 
 ## Projektliste (liste/)
@@ -54,7 +55,7 @@
 
 ## Dateien
 - `index.html`, `css/style.css`
-- `js/main.js` Einstieg · `js/world.js` Werkstatt + Gasflasche · `js/draussen.js` Hof · `js/carport.js` Wohnwagen/Benz · `js/fahrzeuge.js` + `js/fahrten.js` Fahren · `js/landschaft.js` Landschaft · `js/jonny.js` Jonny · `js/waldo.js` Waldo · `js/torben.js` Torben · `js/kumpels.js` Platzhalter-Kumpels · `js/torbenteile.js` Torben-Teile · `js/david.js` + `js/davidteile.js` David und Hund Coco · `js/dennis.js` 3D-Dennis · `js/wege.js` Wegfindung der Figuren (Türen, um Werkstatt/Bad herum; in jedem gehZu)
+- `js/main.js` Einstieg · `js/world.js` Werkstatt + Gasflasche · `js/draussen.js` Hof · `js/carport.js` Wohnwagen/Benz · `js/fahrzeuge.js` + `js/fahrten.js` Fahren · `js/landschaft.js` Landschaft · `js/platzhinten.js` Platz hinter der Werkstatt (Schotter, Carport, Schrott) · `js/jonny.js` Jonny · `js/waldo.js` Waldo · `js/torben.js` Torben · `js/kumpels.js` Platzhalter-Kumpels · `js/torbenteile.js` Torben-Teile · `js/david.js` + `js/davidteile.js` David und Hund Coco · `js/dennis.js` 3D-Dennis · `js/wege.js` Wegfindung der Figuren (Türen, um Werkstatt/Bad herum; in jedem gehZu)
 - `js/steuerung.js` Kamera/Gehen/Klicks · `js/spiel.js` Ablauf, Fehler, Texte, Note
 - `js/minispiele.js` Schneiden, Schweißen, Schlacke · `js/clips.js` Dennis-Auftritte + Archiv
 - `js/testmenue.js` Testmenü (`?test`) · `js/hand.js` Dinge in der Hand (Haltung, Ablegen, Werfen mit Physik) · `js/ui.js` HUD/Dialoge · `js/audio.js` Geräusche (live erzeugt) · `js/gesicht.js` Comic-Gesicht + Icons
@@ -86,9 +87,9 @@
   nur DENNIS und löst verschachtelte Listen wie telefon nicht auf).
 - KI-Stimmklon ist in dieser Umgebung nicht möglich (huggingface.co gesperrt). Stimmproben nie ins Repo (öffentlich).
 
-## Stand der Pull Requests (1.11.2026)
-- Alles bis #66 gemergt. Offen: #67 F3 David. Neue Zweige immer von `origin/main`.
-- Versionsnummer zuletzt `v=20261104-12`.
+## Stand der Pull Requests (9.11.2026)
+- Alles bis #67 gemergt. Offen: #68 E2a Platz hinten (Hintertür, Schrottplatz, Carport, Container). Neue Zweige immer von `origin/main`.
+- Versionsnummer zuletzt `v=20261109-2`. Testmenü bis T94, nächste freie T95.
 - Nächste freie Satz-Nummern (aus stimme/zuordnung.csv): dennis505, jonny58, waldo43, torben32, kumpel8, david19.
-- Projektchat-Session: `session_0136ircvAvU3aCzRamNp3F96` (1.11.; die alte ID `session_01KZ18oujuEFnsAskwuMiw8Y` oben ist veraltet).
+- Projektchat-Session: `session_0136irctrTCA3M7n4aU75GVP` (seit 9.11., Projektchat Nr. 4).
 - Offene Fäden und Ungetestetes: `docs/details.md`, Abschnitt „Offene Fäden und Ungetestetes“ (zuerst lesen, wenn ein neuer Chat startet).

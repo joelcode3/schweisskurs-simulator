@@ -222,7 +222,7 @@ async function spielStarten() {
   ui.zeigeHud(true);
   stationAlt = undefined;
   spiel.intro();
-  baueTestMenue({ spiel, welt, kamera, fahrten: spiel.test.fahrten, fz });
+  baueTestMenue({ spiel, welt, kamera, steuerung, fahrten: spiel.test.fahrten, fz });
 }
 
 // Aktuell: einfacher Start per Knopf

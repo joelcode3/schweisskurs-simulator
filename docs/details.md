@@ -296,10 +296,61 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   (Hügel + Waldrand), Himmel mit Wolken (Kamera-Sichtweite 1500, Nebel ab 260 m, siehe Landschaft). Mülltonnen (grau, blau, braun, detailliert, OHNE
   Schilder, Müllsack daneben) links vom Tor, kein großes Fassadenschild mehr, roter Hoflader OHNE Logo/Schrift (detailliert:
   Kühlergrill, Gegengewicht, Knicklenkung, Kabine mit Sitz/Joystick, Rundumleuchte, Stollenreifen, Hubzylinder) mit Palettengabel
-  rechts neben der Werkstatt, rosa Mini-Jeep (Wrangler-Look, ohne Dach, Elektro-Kinderauto), Feuerschale (flach, graue Asche mit Häufchen, verkohlte Holzreste) mit Dreibein, Kette,
+  im Carport hinterm Haus (Paket E2a, früher rechts neben der Werkstatt), rosa Mini-Jeep (Wrangler-Look, ohne Dach, Elektro-Kinderauto), Feuerschale (flach, graue Asche mit Häufchen, verkohlte Holzreste) mit Dreibein, Kette,
   rundem Grillrost und alter schwarzer Bratwurst. Begehbar: draußen überall innerhalb der Ringstraße (imKreis in landschaft.js),
   in die Werkstatt nur durch die Schlupftür, Bad-Anbau ausgespart. Würfe draußen prallen an der Hauswand und am Geländerand ab
   (hand.js AUSSEN = GELAENDE).
+
+## Platz hinten (Paket E2a)
+- js/platzhinten.js (`bauePlatzHinten`, aus draussen.js aufgerufen): Schotterfläche als ein Umriss (SCHOTTER_UMRISS) mit
+  organischen Rändern und weichem Übergang (lose, durchsichtige Schotterflecken, kleine Grasbüschel). Läuft rechts am Haus
+  entlang (wo früher der Hoflader parkte) bis an die Betonplatte vorne (dort kann man langfahren), hinterm Haus über
+  Schrottplatz und Carport; neben dem Carport auf der Wohnwagen-Seite kein Schotter. Festgefahrene Spuren zum Carport.
+- Carport (CARPORT x -6 … -1,4, z -21,6 … -11,1) hinter der Werkstatt, dazwischen der Schrottplatz (Reihenfolge vom Haus weg:
+  Werkstatt, Schrottplatz, Carport; Betreiber 9.11.). Längs gestellt, offen zur Seite (Welt +x, Schilder dort) und nach
+  hinten, Schotterboden (kein Beton). Holzpfosten auf Stahl-Pfostenträgern, Pfetten, Sparren, Wellplatten-Dach (vorne hoch,
+  hinten tief, liegt auf den Sparren), Stirnbrett, Regenrinne mit Fallrohr, Kopfbänder vorne und hinten, Lampe mit Kabel,
+  Radstopper nur in der Paletten-Bucht (in der Weidemann-Bucht stieß die Gabel daran), Ölfleck. Schilder hängen an Ketten unter der Pfette. Buchten vom Haus weg:
+  PALETTEN, PRITSCHE (ganz leer, dort muss man später durchfahren können, E2b), WEIDEMANN. Herumliegender Kram (nicht in der
+  Pritschen-Bucht): 2 Tassen (eine auf dem Palettenstapel), leere Bierflasche, Farbdosen (eine umgekippt, Pfütze), Autobatterie,
+  ein schwarzes Verlängerungskabel in Schlaufen (Stecker, Kupplung mit Klappdeckel), Farbdosen mit Etikett, Falz, Läufern und Pinsel. Liegende Teile werden beim Hinlegen angehoben, bis sie aufliegen (legen()). WEIDEMANN (BUCHTEN, CARPORT_PFOSTEN). Der Gang von der Hintertür endet vorne am Carport.
+  Anklickbar: Schild Paletten (palettenSchild), Dach (carportHinten), Schrotthaufen (schrott), Gitterboxen (gitterbox).
+- Hoflader steht zu Spielbeginn vorwärts eingeparkt in der Bucht „Weidemann“ (Schnauze nach hinten). Figuren setzen erst
+  rückwärts heraus (fz.rueckwaerts, fahrten.js LADER_RUECK, Heck schwenkt nach hinten), fahren dann vorwärts zum Weg rechts
+  am Haus (LADER_RAUS); zurück denselben Weg und vorwärts in die Bucht (LADER_REIN + mitAnfahrt).
+- Paletten: alter Platz (x -1, z -7) samt freistehendem Schild ist weg. Die beiden Stapel vom alten Platz neben der Werkstatt
+  (3er und einzelne) stehen jetzt in der Bucht „Paletten“; PALETTEN_PLATZ = diese Bucht. Was am Start schon dort steht, zählt
+  nicht als gebracht (z.palettenRekord wird beim Start gesetzt).
+- Schrottplatz zwischen Werkstatt und Carport (SCHROTT_KAESTEN, Hindernisse für Spieler, Fahrzeuge und Wege), dicht gehäuft,
+  nur Metall (keine Erde): Haufen mit Kern aus zerdrückten Blechkisten, darauf Bleche, Rohre, Vierkant, Träger, Winkel,
+  Baustahlgitter, Töpfe, Pfannen, Grillroste, rostiges Werkzeug (kleinteil()); Kleinkram am Fuß. Gitterboxen randvoll mit
+  Kleinteilen (Schrauben mit Sechskantkopf, Muttern, Scheiben, Federn, Kugellager, Zahnräder, Winkel, Scharniere, Ketten; eine
+  gestapelt; größere Einzelteile wie Zahnräder, Flansche, Wellen, Winkel, Ketten, Lager, Zwingen, keine durchgehende Füllung),
+  eine Gitterbox nur mit schwarzen, rostigen Stahlfelgen (fest neben der Hintertür) und eine voller Autofedern, chaotisch drin. Kaputter Betonmischer
+  (hohle Trommel mit Tiefe, innen Betonkruste und Schrott, Zahnkranz, Kipphebel, Handrad, Motor ausgebaut, ein Rad fehlt, Ziegel),
+  umgefallener Standventilator (Flügel ab), Mofa ohne Motor (Kabelreste), Felgen- und Altreifenstapel, kaputte Fahrräder (Lenker
+  mit Vorbau, Griffen, Bremshebeln, Klingel), Satellitenschüssel, Gasflaschen, Heizkörper, Waschmaschine, Autotüren, Motorblock,
+  Badewanne, Motorhaube, Auspuff, kleine Bleche, Nummernschild („DE-NN 77“), kleiner Schraubenhaufen. Anklickbar: schrott,
+  gitterbox, betonmischer, ventilator, mofa, schrauben, stepper (weißer Stepper, kaputt: Pedal ab, Lenker verbogen, Display
+  gesprungen), treckerreifen (1,6 m), kicker (kaputter Tischkicker). Haufen aus erkennbaren Teilen mit Rost-Struktur (hohle
+  Rohre, Doppel-T, U, Winkel, Vierkantrohr, Bleche, Kantbleche, plattgedrückte Fässer), ein Teil schwarz. Reifen mit Querschnitt
+  und Profil (reifen()). Grundfläche abgerundet (Superellipse in den Schrott-Kästen).
+  Belegung (platziere): jedes Teil hat einen Prüfkasten; große Teile suchen einen freien Platz, Haufen- und Gitterbox-Teile
+  schichten sich auf; nicht ganz streng (Prüfkasten verkleinert, Teile sinken etwas ein, Betreiber-Wunsch). Große Teile
+  (hart) bekommen einen eigenen Platz, nichts sinkt in sie ein (Haufenteile liegen höchstens obendrauf). Reihenfolge: große
+  Teile zuerst, Haufen zuletzt; Schrott-Kasten dafür nach hinten links vergrößert (x -12,2). Danach werden die
+  Teile jedes Gegenstands zu wenigen Meshes zusammengefasst (zusammenfassen(), Leistung: ca. 2.900 statt 7.100 Zeichenaufrufe). Freier Gang von der Hintertür (x ≈ -2,9) bis vorne ans Carport.
+- Blauer 20-Fuß-Container (CONTAINER x -1,6 … 4,46, z -6,6 … -4,1) Rücken an Rücken an der Rückwand, von hinten gesehen links
+  neben der Hintertür (Gang bleibt frei). Längsseite zum Hof ganz offen. Innen an der Rückwand drei gelbe Fachbodenregale
+  (Kisten mit Schraubenschlüsseln, Vierzylinder-Motor, Hinterachse, Kanister, Ölflaschen), davor ein Kragarmregal mit den
+  Metalllängen (5,85 m: Doppel-T, Vierkant, Rundrohre, Flachstahl). Noch ohne Funktion (später Metall einladen). Anklickbar
+  (container), Hindernis, in wege.js.
+  Vor der offenen Seite liegt kein Schrott (frei für später, Betreiber 9.11.). Regalinhalte chaotisch: Schraubenschlüssel
+  kreuz und quer, Kisten schräg, eine umgekippt; Metallteile, Werkzeug und ein Lappen auf dem Containerboden.
+- Hintertür (HINTERTUER x -3,45 … -2,35, 2,15 m): grüne Brettertür an der Rückwand, steht offen nach draußen; dort hing früher der
+  Hula-Hoop. Reifen hängt jetzt an der rechten Wand zwischen Erste-Hilfe-Kasten und Spüle (HULA_WAND_Z, HULA_PLATZ).
+  wege.js: Ziele hinterm Haus (z < -3,5) gehen durch die Hintertür, sonst durchs Tor; Figuren zum Hoflader laufen selbst
+  dorthin (kein fester Weg durchs Tor mehr). Testmenü T94: vor die Hintertür springen.
 
 ## Carport, Wohnwagen, Benz
 - Dennis' Wohnwagen (js/carport.js, `baueCarport`): links auf der Wiese neben der Betonfläche unter einer Eiche ein großes Carport
@@ -733,6 +784,8 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
 - Die Gerte sieht noch wie eine Peitsche aus.
 - Aufgaben-Icons (Paket B) nur teilweise: Wäsche, Akkuschrauber, Bitsatz, Müll und Leiter fehlen noch.
 - Geänderte Satzwortlaute ohne Neuaufnahme: dennis434–436 und dennis442–446 (die Aufnahmen passen nicht mehr zum Text).
+- E2a Platz hinten (9.11.): Optik nur per Screenshot geprüft; Hoflader-Fahrt von Waldo (raus, Runde, rein) im Test gelaufen, siehe
+  PR. Spieler fährt den Hoflader selbst in die Bucht: nicht ausprobiert (Kollision mit den Pfosten sollte greifen).
 - Test-Tricks: Waldos/Jonnys Timer stören Tests (`wz.beschaeftigt = true; wz.naechsterBesuch = 1e9`); kleine Teile in der Ferne
   erscheinen erst nach ca. 9 s (`fernUpdate`); `setPointerCapture` unter Pointer-Lock in try/catch; JS-Syntax prüfen mit
   `node --input-type=module --check < datei.js`.

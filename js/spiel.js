@@ -4063,6 +4063,30 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
         return ['Turnmatte', 'Vom Carport-Dach geweht. Die Gehwegplatte, die drauf lag, ist jetzt im Benz.', []];
       case 'muelltonnen':
         return ['Mülltonnen', 'Restmüll, Papier, Bio. Die blaue geht nicht mehr zu.', []];
+      case 'hintertuer':
+        return ['Hintertür', 'Geht raus auf den Schrottplatz. Dahinter steht das Carport für Hoflader, Paletten und Pritsche.', []];
+      case 'schrott':
+        return ['Schrott', 'Altmetall, Felgen, kaputte Fahrräder, alte Gasflaschen. Dennis sagt, das ist alles noch was wert.', []];
+      case 'betonmischer':
+        return ['Betonmischer', 'Ein Rad fehlt, der Motor ist ausgebaut, die Trommel hat eine Delle. Dennis sagt, den macht er noch fertig.', []];
+      case 'ventilator':
+        return ['Ventilator', 'Alter Standventilator, umgekippt. Ein Flügel ist abgebrochen.', []];
+      case 'mofa':
+        return ['Mofa', 'Kaputtes Mofa, der Motor fehlt. Nur noch Rahmen, Räder und Lenker.', []];
+      case 'schrauben':
+        return ['Schraubenhaufen', 'Schrauben, Muttern, Scheiben. Irgendwann sortiert Dennis die. Sagt er.', []];
+      case 'stepper':
+        return ['Stepper', 'Weißer Heimtrainer, kaputt: ein Pedal ist ab, der Lenker verbogen, das Display gesprungen. Benutzt hat ihn eh keiner.', []];
+      case 'treckerreifen':
+        return ['Treckerreifen', 'Riesig. Wo der herkommt, weiß keiner. Dennis meint, daraus wird mal ein Sandkasten.', []];
+      case 'kicker':
+        return ['Kicker', 'Alter Tischkicker. Ein Bein ab, eine Stange fehlt, die Roten haben trotzdem gewonnen.', []];
+      case 'gitterbox':
+        return ['Gitterbox', 'Randvoll: Kleinteile oder alte Felgen. Sortiert hat das nie jemand.', []];
+      case 'container':
+        return ['Container', 'Blauer Container, an der Längsseite aufgeschnitten. Drin liegt Material: Träger, Vierkant, Rohre, Flachstahl, alles 6 Meter. Passt gerade so rein.', []];
+      case 'carportHinten':
+        return ['Carport hinterm Haus', 'Drei Plätze: Paletten, Pritsche, Weidemann. Die Pritsche fehlt noch.', []];
       case 'weidemann':
         return ['Hoflader', 'Roter Hoflader mit geschlossener Kabine und Palettengabel. Schlüssel steckt nicht.', []];
       case 'minijeep':

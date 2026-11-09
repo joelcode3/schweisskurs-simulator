@@ -1,13 +1,20 @@
 // Wege für die Figuren: nie durch Wände. Werkstatt, Bad und draußen sind über Türen verbunden
 // (Schlupftür im Tor, WC-Tür); draußen geht es außen um Werkstatt und Bad-Anbau herum.
 import { RAUM, BAD } from './world.js';
+import { HINTERTUER, SCHROTT_KAESTEN, CARPORT_PFOSTEN, CONTAINER } from './platzhinten.js';
 
 const TUER_INNEN = { x: -0.35, z: 3.2 }, TUER_AUSSEN = { x: -0.35, z: 5.0 };
+// Hintertür an der Rückwand (Paket E2a): führt zum Schrottplatz und zum Carport hinterm Haus
+const HT_INNEN = { x: HINTERTUER.mitte, z: RAUM.zMin + 0.75 }, HT_AUSSEN = { x: HINTERTUER.mitte, z: RAUM.zMin - 0.9 };
 const WC_WERKSTATT = { x: 1.4, z: 3.4 }, WC_BAD = { x: 1.4, z: 4.6 };
 // Hindernisse draußen (Mauern mit etwas Abstand) und Eckpunkte drumherum
 const KAESTEN = [
   { xMin: RAUM.xMin - 0.45, xMax: RAUM.xMax + 0.45, zMin: RAUM.zMin - 0.45, zMax: RAUM.zMax + 0.4 },
   { xMin: BAD.xMin - 0.45, xMax: BAD.xMax + 0.45, zMin: RAUM.zMax, zMax: BAD.zMax + 0.45 },
+  // Schrottplatz hinterm Haus (der Gang von der Hintertür bleibt frei) und die Pfosten vom Carport
+  ...SCHROTT_KAESTEN.map((k) => ({ xMin: k.xMin - 0.3, xMax: k.xMax + 0.3, zMin: k.zMin - 0.3, zMax: k.zMax + 0.3 })),
+  { xMin: CONTAINER.xMin - 0.3, xMax: CONTAINER.xMax + 0.3, zMin: CONTAINER.zMin - 0.3, zMax: RAUM.zMin }, // Container an der Rückwand
+  ...CARPORT_PFOSTEN.map((p) => ({ xMin: p.x - 0.4, xMax: p.x + 0.4, zMin: p.z - 0.4, zMax: p.z + 0.4 })),
 ];
 const ECKEN = [];
 for (const k of KAESTEN) for (const x of [k.xMin - 0.35, k.xMax + 0.35]) for (const z of [k.zMin - 0.35, k.zMax + 0.35]) ECKEN.push({ x, z });
@@ -155,11 +162,19 @@ export function wegNach(von, nach) {
   const hin = (p) => { if (abst(hier, p) > 0.12) weg.push(p); hier = p; };
   // in der Werkstatt um Möbel herum zum Wegpunkt
   const hinInnen = (p) => { for (const q of innenWeg(hier, p)) hin(q); };
+  // hinterm Haus (Schrottplatz, Carport) geht es durch die Hintertür, sonst durchs Tor
+  const hinten = (p) => p.z < RAUM.zMin + 0.5;
   // erst raus in die Werkstatt, dann weiter
   if (wo === 'bad') { hin(WC_BAD); hin(WC_WERKSTATT); wo = 'werkstatt'; }
-  if (wo === 'draussen') { for (const p of aussenWeg(hier, TUER_AUSSEN)) hin(p); hin(TUER_INNEN); wo = 'werkstatt'; }
+  if (wo === 'draussen') {
+    const [ti, ta] = hinten(a) ? [HT_INNEN, HT_AUSSEN] : [TUER_INNEN, TUER_AUSSEN];
+    for (const p of aussenWeg(hier, ta)) hin(p); hin(ti); wo = 'werkstatt';
+  }
   if (bb === 'bad') { hinInnen(WC_WERKSTATT); hin(WC_BAD); }
-  if (bb === 'draussen') { hinInnen(TUER_INNEN); hin(TUER_AUSSEN); for (const p of aussenWeg(hier, b)) hin(p); return weg; }
+  if (bb === 'draussen') {
+    const [ti, ta] = hinten(b) ? [HT_INNEN, HT_AUSSEN] : [TUER_INNEN, TUER_AUSSEN];
+    hinInnen(ti); hin(ta); for (const p of aussenWeg(hier, b)) hin(p); return weg;
+  }
   if (bb === 'werkstatt') { for (const q of innenWeg(hier, b)) hin(q); }
   else hin(b);
   if (!weg.length || abst(weg[weg.length - 1], b) > 0.01) weg.push(b);
