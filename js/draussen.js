@@ -666,11 +666,11 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
     strecke(kippZyl, KIPP_A, mitte2, Y); strecke(kippStange, mitte2, _n, Y);
   }
   hydraulik();
-  // parkt im Carport hinterm Haus in der Bucht „Weidemann“, Schnauze zum Schrottplatz (Paket E2a)
-  setze(lader, BUCHTEN.weidemann.x - 0.1, 0, BUCHTEN.weidemann.z, 0, Math.PI / 2, 0);
+  // parkt im Carport hinterm Haus in der Bucht „Weidemann“, vorwärts eingeparkt (Schnauze nach hinten, Paket E2a)
+  setze(lader, BUCHTEN.weidemann.x + 0.1, 0, BUCHTEN.weidemann.z, 0, -Math.PI / 2, 0);
   scene.add(lader);
   merke(lader, 'weidemann', 'Hoflader', null);
-  const laderHindernis = hindernis(BUCHTEN.weidemann.x - 1.8, BUCHTEN.weidemann.x + 2.0, BUCHTEN.weidemann.z - 0.8, BUCHTEN.weidemann.z + 0.8);
+  const laderHindernis = hindernis(BUCHTEN.weidemann.x - 1.9, BUCHTEN.weidemann.x + 1.8, BUCHTEN.weidemann.z - 0.8, BUCHTEN.weidemann.z + 0.8);
 
   const profilTex = leinwandTextur(128, 32, (g, b, h) => { g.fillStyle = '#1b1b1d'; g.fillRect(0, 0, b, h); g.fillStyle = '#323236'; for (let x = 0; x < b; x += 16) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + 10, h / 2); g.lineTo(x, h); g.lineTo(x + 5, h / 2); g.fill(); } }, [3, 1]);
   // ---------- rosa Mini-Jeep (großes Elektro-Spaßauto im Wrangler-Look, ohne Dach, zwei Sitze) ----------

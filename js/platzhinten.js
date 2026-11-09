@@ -1,18 +1,23 @@
-// Platz hinter der Werkstatt (Paket E2a): Schotterfläche, Weg vom alten Hoflader-Platz nach hinten, Carport mit drei
-// beschrifteten Buchten (Paletten, Weidemann, Pritsche) und dazwischen ein Schrottplatz mit schmalem Gang von der
-// Hintertür (grüne Tür an der Rückwand) bis zur Fahrspur, die zum Carport führt.
-// Blick von hinten auf die Werkstatt: das Carport steht rechts neben dem Schrottplatz (Welt -x).
+// Platz hinter der Werkstatt (Paket E2a): Schotterfläche (organischer Rand), Weg vom alten Hoflader-Platz nach hinten,
+// Schrottplatz direkt hinterm Haus mit schmalem Gang von der Hintertür (grüne Tür an der Rückwand) bis vorne ans Carport,
+// dahinter das Carport mit drei beschrifteten Buchten (Paletten, Pritsche, Weidemann). Blauer Container an der Rückwand.
 import * as THREE from 'three';
 import { toon, teil, quader, zylinder, setze, leinwandTextur, zufall } from './toon.js';
 
 // Hintertür in der Rückwand (z = -4): Öffnung x -3,45 … -2,35, 2,15 m hoch (dort hing früher der Hula-Hoop-Reifen)
 export const HINTERTUER = { x0: -3.45, x1: -2.35, hoehe: 2.15, mitte: -2.9 };
-// Schotter hinter dem Haus und der Weg rechts am Haus entlang (dort parkte früher der Hoflader)
-export const SCHOTTER = { x0: -17.0, x1: 10.4, z0: -26.0, z1: -4.1 };
-export const SCHOTTER_WEG = { x0: 5.6, x1: 10.0, z0: -4.1, z1: 3.8 };
+// Schotterfläche (Welt x, z): Umriss mit organischen Rändern; fest = gerade Kante (an der Hauswand und an der Betonplatte).
+// Läuft rechts am Haus entlang (dort parkte früher der Hoflader) bis an die Betonplatte vorne, hinterm Haus über
+// Schrottplatz und Carport; links neben dem Carport (Welt -x) kein Schotter.
+export const SCHOTTER_UMRISS = [
+  [5.25, -4.12, true], [5.25, 4.0, true], [7.5, 4.0], [8.8, 2.6], [9.5, 0.2], [9.7, -3.5], [9.9, -8.5], [9.0, -13.0],
+  [7.2, -17.0], [5.2, -21.0], [3.0, -23.2], [0.0, -23.5], [-3.5, -23.0], [-6.5, -22.5], [-6.7, -17.5], [-6.6, -12.2],
+  [-8.8, -11.2], [-11.0, -11.0], [-11.9, -8.5], [-11.9, -5.8], [-11.2, -4.3], [-5.2, -4.12, true],
+];
 // Carport: Reihenfolge vom Haus weg Werkstatt, Schrottplatz, Carport (Betreiber 9.11.); längs gestellt, drei Buchten
-// hintereinander (vom Haus weg): Pritsche, Paletten, Weidemann. Offen zum Gang (Welt +x, Schilder an dieser Seite) und
-// nach hinten (Welt -x). Der Gang von der Hintertür endet direkt am Carport. Gebaut wird es lokal (Länge entlang lokal x, Öffnung lokal +z) und gedreht:
+// hintereinander (vom Haus weg): Paletten, Pritsche, Weidemann. Offen zur Seite (Welt +x, Schilder dort) und nach hinten
+// (Welt -x), Schotterboden (kein Beton). Der Gang von der Hintertür endet vorne am Carport. Gebaut wird es lokal
+// (Länge entlang lokal x, Öffnung lokal +z) und gedreht:
 // lokal (X, Z) -> Welt (CX + Z, CZ - X).
 export const CARPORT = { x0: -6.0, x1: -1.4, z0: -21.6, z1: -11.1, hoehe: 3.2 };
 const CL = CARPORT.z1 - CARPORT.z0, CD = CARPORT.x1 - CARPORT.x0;
@@ -20,7 +25,7 @@ const CX = (CARPORT.x0 + CARPORT.x1) / 2, CZ = (CARPORT.z0 + CARPORT.z1) / 2;
 const BB = CL / 3;
 const zuWelt = (X, Z) => ({ x: CX + Z, z: CZ - X });
 const bucht = (i) => ({ x: CX, z: CZ - (-CL / 2 + BB * (i + 0.5)), hx: CD / 2, hz: BB / 2 - 0.15 });
-export const BUCHTEN = { pritsche: bucht(0), paletten: bucht(1), weidemann: bucht(2) };
+export const BUCHTEN = { paletten: bucht(0), pritsche: bucht(1), weidemann: bucht(2) };
 // Pfosten (Welt), für Hindernisse und Wege
 export const CARPORT_PFOSTEN = [0, 1, 2, 3].flatMap((i) => [CD / 2, -CD / 2].map((Z) => zuWelt(-CL / 2 + i * BB, Z)));
 // Schrottplatz: Kästen, in denen Schrott liegt (Figuren und Fahrzeuge kommen da nicht durch). Dazwischen bleibt der
@@ -29,7 +34,7 @@ export const CARPORT_PFOSTEN = [0, 1, 2, 3].flatMap((i) => [CD / 2, -CD / 2].map
 // Längsseite zum Hof ganz offen; innen Metalllängen bis 6 m (Paket E2a, noch ohne Funktion)
 export const CONTAINER = { xMin: -1.6, xMax: 4.46, zMin: -6.6, zMax: -4.1, hoehe: 2.59 };
 export const SCHROTT_KAESTEN = [
-  { xMin: -14.8, xMax: -3.75, zMin: -10.4, zMax: -4.5 },
+  { xMin: -11.2, xMax: -3.75, zMin: -10.5, zMax: -4.5 },
   { xMin: -1.95, xMax: 2.6, zMin: -10.4, zMax: -8.6 },
 ]
 
@@ -47,46 +52,83 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     for (let i = 0; i < 25; i++) { g.fillStyle = 'rgba(80,120,50,0.55)'; const x = r() * b, y = r() * h; for (let k = 0; k < 6; k++) g.fillRect(x + (r() - 0.5) * 6, y + (r() - 0.5) * 6, 1, 3); }
   });
   schotterTex.wrapS = schotterTex.wrapT = THREE.RepeatWrapping;
-  const flaeche = (f, y) => {
-    const t = schotterTex.clone();
-    t.needsUpdate = true;
-    t.repeat.set((f.x1 - f.x0) / 4, (f.z1 - f.z0) / 4);
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(f.x1 - f.x0, f.z1 - f.z0), toon(0xffffff, { map: t }));
+  const schotterMat = toon(0xffffff, { map: schotterTex });
+  schotterTex.repeat.set(0.25, 0.25);
+  // Umriss mit wackligen Rändern (feste Kanten bleiben gerade); Shape in x/-z, flach hingelegt
+  const umriss = [];
+  SCHOTTER_UMRISS.forEach(([x0, z0, fest], i) => {
+    const [x1, z1] = SCHOTTER_UMRISS[(i + 1) % SCHOTTER_UMRISS.length];
+    const l = Math.hypot(x1 - x0, z1 - z0), n = fest ? 1 : Math.max(2, Math.ceil(l / 0.6));
+    const nx = -(z1 - z0) / l, nz = (x1 - x0) / l;
+    for (let k = 0; k < n; k++) {
+      const t = k / n, w = fest || k === 0 ? 0 : (Math.sin(i * 7.3 + k * 1.7) * 0.22 + (r() - 0.5) * 0.3);
+      umriss.push({ x: x0 + (x1 - x0) * t + nx * w, z: z0 + (z1 - z0) * t + nz * w, fest: !!fest });
+    }
+  });
+  const innen = (x, z) => {
+    let drin = false;
+    for (let i = 0, j = umriss.length - 1; i < umriss.length; j = i++) {
+      const a = umriss[i], b = umriss[j];
+      if ((a.z > z) !== (b.z > z) && x < ((b.x - a.x) * (z - a.z)) / (b.z - a.z) + a.x) drin = !drin;
+    }
+    return drin;
+  };
+  {
+    const form = new THREE.Shape(umriss.map((p) => new THREE.Vector2(p.x, -p.z)));
+    const m = new THREE.Mesh(new THREE.ShapeGeometry(form), schotterMat);
     m.rotation.x = -Math.PI / 2;
-    m.position.set((f.x0 + f.x1) / 2, y, (f.z0 + f.z1) / 2);
+    m.position.y = 0.008;
     m.receiveShadow = true;
     gruppe.add(m);
-  };
-  flaeche(SCHOTTER, 0.008);
-  flaeche(SCHOTTER_WEG, 0.009);
-  // Fahrspuren im Schotter (dunkler, festgefahren): den Weg runter, hinterm Haus entlang zum Carport
+  }
+  // fließender Übergang zum Rasen: lose Schotterflecken nach außen, immer durchsichtiger; Grasbüschel im Schotter
+  const fleckMats = [0.7, 0.5, 0.3].map((o) => toon(0xffffff, { map: schotterTex, transparent: true, opacity: o, depthWrite: false }));
+  const buschel = toon(0x5d8a3a);
+  umriss.forEach((p, i) => {
+    if (p.fest) return;
+    const q = umriss[(i + 1) % umriss.length];
+    const l = Math.hypot(q.x - p.x, q.z - p.z) || 1;
+    let nx = -(q.z - p.z) / l, nz = (q.x - p.x) / l;
+    if (innen(p.x + nx * 0.4, p.z + nz * 0.4)) { nx = -nx; nz = -nz; }
+    for (let k = 0; k < 3; k++) {
+      const d = 0.1 + k * 0.35 + r() * 0.25, rr = 0.35 - k * 0.07 + r() * 0.2;
+      const f = new THREE.Mesh(new THREE.CircleGeometry(rr, 9), fleckMats[k]);
+      f.rotation.x = -Math.PI / 2;
+      f.position.set(p.x + nx * d + (q.x - p.x) * r(), 0.006 - k * 0.0005, p.z + nz * d + (q.z - p.z) * r());
+      f.scale.set(1, 0.6 + r() * 0.6, 1);
+      gruppe.add(f);
+    }
+    if (r() < 0.5) {
+      // flaches Grasbüschel (mehrere kleine Halme), eher außen am Rand
+      const d = 0.05 + r() * 0.5, bx = p.x + nx * d + (q.x - p.x) * r(), bz = p.z + nz * d + (q.z - p.z) * r();
+      for (let k = 0; k < 4; k++) {
+        const b = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.09 + r() * 0.06, 4), buschel);
+        b.position.set(bx + (r() - 0.5) * 0.12, 0.05, bz + (r() - 0.5) * 0.12);
+        b.rotation.set((r() - 0.5) * 0.5, 0, (r() - 0.5) * 0.5);
+        gruppe.add(b);
+      }
+    }
+  });
+  // Fahrspuren im Schotter (dunkler, festgefahren): den Weg runter und zum Carport
   const spur = (x0, z0, x1, z1) => {
     const l = Math.hypot(x1 - x0, z1 - z0);
     for (const s of [-0.55, 0.55]) {
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(0.34, l), toon(0x7d776b, { transparent: true, opacity: 0.55 }));
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(0.34, l), toon(0x7d776b, { transparent: true, opacity: 0.5, depthWrite: false }));
       m.rotation.set(-Math.PI / 2, 0, Math.atan2(x1 - x0, z1 - z0));
       const nx = (z1 - z0) / l, nz = -(x1 - x0) / l;
       m.position.set((x0 + x1) / 2 + nx * s, 0.011, (z0 + z1) / 2 + nz * s);
       gruppe.add(m);
     }
   };
-  spur(7.8, 3.2, 8.6, -7.5);
-  spur(8.6, -7.5, 4.5, -15.0);
-  spur(4.5, -15.0, CARPORT.x1 + 0.2, BUCHTEN.weidemann.z);
-  // Rand: ein paar Grasbüschel und Steine, wo der Schotter an die Wiese stößt
-  const buschel = toon(0x5d8a3a);
-  for (let i = 0; i < 90; i++) {
-    const seite = Math.floor(r() * 3);
-    const x = seite === 0 ? SCHOTTER.x0 + r() * 0.5 : seite === 1 ? SCHOTTER.x1 - r() * 0.5 : SCHOTTER.x0 + r() * (SCHOTTER.x1 - SCHOTTER.x0);
-    const z = seite === 2 ? SCHOTTER.z0 + r() * 0.5 : SCHOTTER.z0 + r() * (SCHOTTER.z1 - SCHOTTER.z0);
-    const b = new THREE.Mesh(new THREE.ConeGeometry(0.08 + r() * 0.07, 0.18 + r() * 0.15, 5), buschel);
-    b.position.set(x, 0.08, z);
-    gruppe.add(b);
-  }
+  spur(7.6, 3.6, 8.8, -7.5);
+  spur(8.8, -7.5, 6.4, -14.5);
+  spur(6.4, -14.5, 3.5, -18.6);
+  spur(3.5, -18.6, -1.2, BUCHTEN.weidemann.z);
 
-  // ---------- Carport: Holzpfosten, Pfetten, Wellplatten-Dach (leicht nach hinten geneigt), Betonplatten, Schilder ----------
+  // ---------- Carport: Holzpfosten mit Stahlfüßen, Pfetten, Sparren, Wellplatten-Dach (vorne hoch, hinten tief),
+  // Stirnbrett, Regenrinne mit Fallrohr, Kopfbänder, Lampe, Radstopper, Schilder unter der Pfette; Schotterboden ----------
   // lokal gebaut: Länge entlang x (-L/2 … L/2), Tiefe entlang z, vorne (offen, Schilder) bei +z; dann gedreht
-  const HOLZ = 0x8a6440, HOLZ_D = 0x6e4f33;
+  const HOLZ = 0x8a6440, HOLZ_D = 0x6e4f33, STAHL_V = 0x8c8f94;
   const cp = new THREE.Group();
   cp.position.set(CX, 0, CZ);
   cp.rotation.y = Math.PI / 2;
@@ -94,45 +136,67 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
   const L = CL, D = CD;
   const pfostenX = [0, 1, 2, 3].map((i) => -L / 2 + i * BB);
   const hVorne = CARPORT.hoehe, hHinten = CARPORT.hoehe - 0.35;
-  for (const x of pfostenX) for (const [z, h] of [[D / 2, hVorne], [-D / 2, hHinten]]) {
-    cp.add(setze(quader(0.14, h, 0.14, HOLZ, { umriss: 0.004 }), x, h / 2, z));
-    cp.add(setze(quader(0.3, 0.08, 0.3, 0x8f8d86, { umriss: 0.002 }), x, 0.04, z)); // Fuß
+  const PF = 0.2; // Pfettenhöhe
+  for (const x of pfostenX) for (const [z, h] of [[D / 2, hVorne - PF], [-D / 2, hHinten - PF]]) {
+    cp.add(setze(quader(0.14, h - 0.12, 0.14, HOLZ, { umriss: 0.004 }), x, 0.12 + (h - 0.12) / 2, z));
+    // H-Pfostenträger aus Stahl, einbetoniert
+    cp.add(setze(quader(0.2, 0.02, 0.2, STAHL_V, { umriss: 0.002 }), x, 0.02, z));
+    for (const s of [-1, 1]) cp.add(setze(quader(0.01, 0.2, 0.16, STAHL_V, { umriss: 0.002 }), x + s * 0.075, 0.12, z));
+    cp.add(setze(zylinder(0.012, 0.012, 0.18, 0x3a3a3c, { umriss: false }, 6), x, 0.15, z, 0, 0, Math.PI / 2));
   }
   for (const p of CARPORT_PFOSTEN) hindernis(p.x - 0.16, p.x + 0.16, p.z - 0.16, p.z + 0.16);
-  // Pfetten vorne und hinten, Sparren quer
-  cp.add(setze(quader(L + 0.5, 0.2, 0.14, HOLZ_D, { umriss: 0.004 }), 0, hVorne - 0.1, D / 2));
-  cp.add(setze(quader(L + 0.5, 0.2, 0.14, HOLZ_D, { umriss: 0.004 }), 0, hHinten - 0.1, -D / 2));
-  const tiefe = D + 0.6, neigung = Math.atan2(hVorne - hHinten, D);
+  // Pfetten (liegen auf den Pfosten), Stirnbrett vorne
+  cp.add(setze(quader(L + 0.5, PF, 0.14, HOLZ_D, { umriss: 0.004 }), 0, hVorne - PF / 2, D / 2));
+  cp.add(setze(quader(L + 0.5, PF, 0.14, HOLZ_D, { umriss: 0.004 }), 0, hHinten - PF / 2, -D / 2));
+  // Dachneigung: vorne (lokal +z) hoch, hinten tief; Sparren liegen auf den Pfetten, Dach auf den Sparren
+  const neigung = Math.atan2(hVorne - hHinten, D); // Drehung um x: -neigung hebt +z an
+  const SP = 0.14, ueber = 0.35;
+  const tiefe = D / Math.cos(neigung) + 2 * ueber;
+  const hoeheBeiZ = (z) => hHinten + (z + D / 2) * Math.tan(neigung);
   for (let k = 0; k <= 9; k++) {
     const x = -L / 2 - 0.2 + k * (L + 0.4) / 9;
-    cp.add(setze(quader(0.08, 0.14, tiefe, HOLZ, { umriss: 0.003 }), x, (hVorne + hHinten) / 2 + 0.07, 0, neigung, 0, 0));
+    cp.add(setze(quader(0.08, SP, tiefe, HOLZ, { umriss: 0.003 }), x, hoeheBeiZ(0) + SP / 2, 0, -neigung, 0, 0));
   }
-  // Dach: Wellplatten (graugrün)
   const wellTex = leinwandTextur(256, 64, (g, b, h) => {
     for (let x = 0; x < b; x++) { const v = 150 + Math.sin(x / b * Math.PI * 16) * 30; g.fillStyle = `rgb(${v * 0.72},${v * 0.8},${v * 0.74})`; g.fillRect(x, 0, 1, h); }
     for (let i = 0; i < 30; i++) { g.fillStyle = 'rgba(60,70,50,0.25)'; g.fillRect(r() * b, r() * h, 2 + r() * 8, 1 + r() * 3); }
+    // Moos und Laub am unteren Rand
+    for (let i = 0; i < 40; i++) { g.fillStyle = `rgba(${70 + r() * 40},${100 + r() * 40},40,0.5)`; g.fillRect(r() * b, h - 6 - r() * 10, 2 + r() * 5, 2 + r() * 4); }
   });
   wellTex.wrapS = wellTex.wrapT = THREE.RepeatWrapping;
   wellTex.repeat.set((L + 0.8) / 2, 1);
-  const dach = new THREE.Mesh(new THREE.BoxGeometry(L + 0.8, 0.04, tiefe + 0.2), toon(0xffffff, { map: wellTex }));
-  dach.position.set(0, (hVorne + hHinten) / 2 + 0.17, 0);
-  dach.rotation.x = neigung;
+  const dach = new THREE.Mesh(new THREE.BoxGeometry(L + 0.8, 0.04, tiefe + 0.1), toon(0xffffff, { map: wellTex }));
+  dach.position.set(0, hoeheBeiZ(0) + SP + 0.02, 0);
+  dach.rotation.x = -neigung;
   dach.castShadow = true; dach.receiveShadow = true;
   cp.add(dach);
   merke(dach, 'carportHinten', 'Carport hinterm Haus', null);
-  // Kopfbänder (schräge Streben) an den Pfosten vorne
-  for (const x of pfostenX) for (const s of [-1, 1]) {
+  // Stirnbrett vorne am Dachrand (deckt die Sparrenköpfe ab)
+  const zVorn = D / 2 + ueber * Math.cos(neigung), yVorn = hoeheBeiZ(0) + (D / 2 + ueber) * Math.sin(neigung);
+  cp.add(setze(quader(L + 0.85, 0.22, 0.04, 0xa07850, { umriss: 0.003 }), 0, yVorn + 0.03, zVorn + 0.02, -neigung, 0, 0));
+  // Regenrinne hinten (am tiefen Rand) mit Fallrohr an der Ecke
+  const zHint = -D / 2 - ueber * Math.cos(neigung), yHint = hoeheBeiZ(0) - (D / 2 + ueber) * Math.sin(neigung);
+  cp.add(setze(zylinder(0.07, 0.07, L + 0.8, 0x7a7e82, { umriss: 0.002 }, 10), 0, yHint - 0.02, zHint - 0.06, 0, 0, Math.PI / 2));
+  cp.add(setze(zylinder(0.045, 0.045, yHint, 0x7a7e82, { umriss: 0.002 }, 10), L / 2 + 0.25, yHint / 2, zHint - 0.06));
+  cp.add(setze(zylinder(0.045, 0.06, 0.25, 0x7a7e82, { umriss: 0.002 }, 10), L / 2 + 0.35, 0.1, zHint - 0.06, 0, 0, -1.1));
+  // Kopfbänder (schräge Streben) vorne und hinten
+  for (const [z, h] of [[D / 2, hVorne - PF], [-D / 2, hHinten - PF]]) for (const x of pfostenX) for (const s of [-1, 1]) {
     if ((x === pfostenX[0] && s < 0) || (x === pfostenX[3] && s > 0)) continue;
-    cp.add(setze(quader(0.08, 0.6, 0.08, HOLZ, { umriss: 0.003 }), x + s * 0.24, hVorne - 0.42, D / 2, 0, 0, -s * 0.78));
+    cp.add(setze(quader(0.08, 0.62, 0.08, HOLZ, { umriss: 0.003 }), x + s * 0.22, h - 0.22, z, 0, 0, -s * 0.78));
   }
-  // Betonplatte unter dem Carport, weiße Trennstriche zwischen den Buchten
-  const platte = new THREE.Mesh(new THREE.PlaneGeometry(L + 0.4, D + 0.4), toon(0xa8a49a));
-  platte.rotation.x = -Math.PI / 2;
-  platte.position.set(0, 0.014, 0);
-  platte.receiveShadow = true;
-  cp.add(platte);
-  for (const x of pfostenX.slice(1, 3)) cp.add(setze(quader(0.1, 0.01, D - 0.3, 0xece8dc, { umriss: false }), x, 0.02, 0));
-  // Schilder oben an der vorderen Pfette (zum Schrottplatz hin), je Bucht eins
+  // Lampe unter dem Dach in der mittleren Bucht, Kabel an der Pfette entlang
+  cp.add(setze(quader(0.3, 0.08, 0.12, 0xe8e4da, { umriss: 0.002 }), 0, hoeheBeiZ(0.6) - 0.06, 0.6));
+  cp.add(setze(quader(0.26, 0.02, 0.09, 0xfff4c0, { umriss: false }), 0, hoeheBeiZ(0.6) - 0.105, 0.6));
+  cp.add(setze(zylinder(0.006, 0.006, L, 0x1d1d1f, { umriss: false }, 4), 0, hVorne - PF - 0.02, D / 2 - 0.1, 0, 0, Math.PI / 2));
+  // Radstopper (Holzbalken) hinten in jeder Bucht, Ölfleck in der Weidemann-Bucht
+  for (let i = 0; i < 3; i++) cp.add(setze(quader(1.6, 0.12, 0.14, 0x7a5a3a, { umriss: 0.003 }), -L / 2 + BB * (i + 0.5), 0.07, -D / 2 + 0.55));
+  {
+    const fleck = new THREE.Mesh(new THREE.CircleGeometry(0.55, 14), toon(0x2a2622, { transparent: true, opacity: 0.55, depthWrite: false }));
+    fleck.rotation.x = -Math.PI / 2; fleck.scale.set(1.3, 0.8, 1);
+    fleck.position.set(-L / 2 + BB * 2.5 + 0.2, 0.013, 0.2);
+    cp.add(fleck);
+  }
+  // Schilder unter der vorderen Pfette (zwei Ketten), je Bucht eins
   const schild = (text, i, id, name) => {
     const tex = leinwandTextur(320, 96, (g, b, h) => {
       g.fillStyle = '#f4efe0'; g.fillRect(0, 0, b, h);
@@ -144,24 +208,25 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     const vorn = teil(new THREE.PlaneGeometry(1.44, 0.42), 0, { material: toon(0xffffff, { map: tex }), umriss: false });
     vorn.position.z = 0.017;
     s.add(vorn);
-    s.position.set(-L / 2 + BB * (i + 0.5), hVorne - 0.42, D / 2 + 0.1);
-    s.rotation.x = -0.08;
+    for (const x of [-0.6, 0.6]) s.add(setze(zylinder(0.006, 0.006, 0.18, 0x5a5a5c, { umriss: false }, 4), x, 0.32, 0));
+    s.position.set(-L / 2 + BB * (i + 0.5), hVorne - PF - 0.45, D / 2 + 0.02);
     cp.add(s);
     if (id) merke(s, id, name, null);
     return s;
   };
-  schild('PRITSCHE', 0, null);
-  schild('PALETTEN', 1, 'palettenSchild', 'Schild: Paletten');
+  schild('PALETTEN', 0, 'palettenSchild', 'Schild: Paletten');
+  schild('PRITSCHE', 1, null);
   schild('WEIDEMANN', 2, null);
-  // hinten in der Pritschen-Bucht (am Hausende): ein altes Kanister-Regal (nur Deko)
+  // hinten in der Pritschen-Bucht: ein altes Kanister-Regal (nur Deko)
   {
     const regal = new THREE.Group();
     for (const x of [-0.45, 0.45]) for (const z of [-0.18, 0.18]) regal.add(setze(quader(0.05, 1.4, 0.05, 0x6a6e72, { umriss: 0.002 }), x, 0.7, z));
     for (const y of [0.15, 0.7, 1.25]) regal.add(setze(quader(0.96, 0.03, 0.42, 0x7a7e82, { umriss: 0.002 }), 0, y, 0));
     for (const [x, y, f] of [[-0.25, 0.32, 0xc8382c], [0.15, 0.32, 0x2f6b3a], [-0.1, 0.87, 0x2f5fa8], [0.28, 1.42, 0xd8b23a]]) regal.add(setze(quader(0.24, 0.32, 0.16, f, { umriss: 0.003 }), x, y, 0));
-    regal.position.set(-L / 2 + 0.6, 0, -D / 2 + 0.35);
+    const RX = -L / 2 + BB + 0.7, RZ = -D / 2 + 0.25;
+    regal.position.set(RX, 0, RZ);
     cp.add(regal);
-    const m = zuWelt(-L / 2 + 0.6, -D / 2 + 0.35);
+    const m = zuWelt(RX, RZ);
     hindernis(m.x - 0.25, m.x + 0.25, m.z - 0.5, m.z + 0.5);
   }
 
@@ -378,33 +443,93 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     return legen(g, x, z, ry);
   }
 
+  // Gitterbox (Stahl-Gitterkiste wie im Lager), randvoll mit Kleinteilen: Schrauben, Muttern, Federn, Lager, Winkel
+  const gitterTex = leinwandTextur(128, 128, (g, b, h) => {
+    g.clearRect(0, 0, b, h);
+    g.strokeStyle = '#8c8f94'; g.lineWidth = 3;
+    for (let x = 2; x < b; x += 16) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); }
+    for (let y = 2; y < h; y += 16) { g.beginPath(); g.moveTo(0, y); g.lineTo(b, y); g.stroke(); }
+  });
+  gitterTex.wrapS = gitterTex.wrapT = THREE.RepeatWrapping;
+  function gitterbox(x, z, ry, oben = 0) {
+    const g = new THREE.Group();
+    const GB = 1.24, GT = 0.835, GH = 0.97, FUSS = 0.12;
+    const wand = (w, h, px, pz, wry) => {
+      const t = gitterTex.clone(); t.needsUpdate = true; t.repeat.set(w / 0.5, h / 0.5);
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), toon(0xffffff, { map: t, transparent: true, alphaTest: 0.4, side: THREE.DoubleSide }));
+      m.position.set(px, FUSS + h / 2, pz); m.rotation.y = wry; g.add(m);
+    };
+    wand(GB, GH - FUSS, 0, GT / 2, 0); wand(GB, GH - FUSS, 0, -GT / 2, 0);
+    wand(GT, GH - FUSS, GB / 2, 0, Math.PI / 2); wand(GT, GH - FUSS, -GB / 2, 0, Math.PI / 2);
+    const STAHL_G = 0x6e7276;
+    // Rahmen: Bodenwanne, Eckpfosten, oberer Rahmen, Füße
+    g.add(setze(quader(GB, 0.05, GT, 0x5a5e62, { umriss: 0.002 }), 0, FUSS + 0.025, 0));
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+      g.add(setze(quader(0.04, GH - FUSS, 0.04, STAHL_G, { umriss: 0.002 }), sx * GB / 2, FUSS + (GH - FUSS) / 2, sz * GT / 2));
+      g.add(setze(quader(0.1, FUSS, 0.1, STAHL_G, { umriss: 0.002 }), sx * (GB / 2 - 0.05), FUSS / 2, sz * (GT / 2 - 0.05)));
+    }
+    for (const sz of [-1, 1]) g.add(setze(quader(GB, 0.035, 0.035, STAHL_G, { umriss: 0.002 }), 0, GH, sz * GT / 2));
+    for (const sx of [-1, 1]) g.add(setze(quader(0.035, 0.035, GT, STAHL_G, { umriss: 0.002 }), sx * GB / 2, GH, 0));
+    // Klappe vorne (halbhoch, etwas dunkler) und gelbes Schild
+    g.add(setze(quader(0.3, 0.16, 0.01, 0xd8b23a, { umriss: 0.002 }), 0.3, GH - 0.2, GT / 2 + 0.01));
+    // Füllung: Kleinteile-Haufen bis knapp unter den Rand, teils drüber
+    // Inhalt durchs Gitter sichtbar: gesprenkelte Kleinteile-Masse bis oben
+    const fuellTex = leinwandTextur(128, 128, (cg, b, h) => {
+      cg.fillStyle = '#4a3e36'; cg.fillRect(0, 0, b, h);
+      const farben = ['#8a4a2a', '#7c7670', '#9a9da2', '#6e5a4a', '#b79a3c', '#2a2622'];
+      for (let i = 0; i < 500; i++) { cg.fillStyle = farben[Math.floor(r() * farben.length)]; cg.fillRect(r() * b, r() * h, 2 + r() * 5, 2 + r() * 4); }
+    });
+    const fuell = new THREE.Mesh(new THREE.BoxGeometry(GB - 0.08, GH - FUSS - 0.12, GT - 0.08), toon(0xffffff, { map: fuellTex }));
+    fuell.position.y = FUSS + 0.05 + (GH - FUSS - 0.12) / 2; g.add(fuell);
+    const teile = [0x8a4a2a, 0x7c7670, 0x9a9da2, 0x6e5a4a, 0xb79a3c];
+    for (let i = 0; i < 70; i++) {
+      const art = r(), f = teile[Math.floor(r() * teile.length)];
+      let m;
+      if (art < 0.3) m = zylinder(0.012, 0.012, 0.08 + r() * 0.1, f, { umriss: false }, 6); // Schraube
+      else if (art < 0.5) m = teil(new THREE.TorusGeometry(0.025, 0.01, 4, 6), f, { umriss: false }); // Mutter
+      else if (art < 0.65) m = teil(new THREE.TorusGeometry(0.035, 0.008, 4, 10), f, { umriss: false }); // Ring, Lager
+      else if (art < 0.8) m = quader(0.05 + r() * 0.1, 0.012, 0.03 + r() * 0.05, f, { umriss: false }); // Winkel, Blechstück
+      else if (art < 0.9) m = zylinder(0.02, 0.02, 0.1, f, { umriss: false }, 6); // Feder (vereinfacht)
+      else m = quader(0.07, 0.05, 0.05, f, { umriss: 0.001 }); // Kleinteil
+      const rx = (r() - 0.5) * (GB - 0.15), rz = (r() - 0.5) * (GT - 0.15);
+      m.position.set(rx, GH - 0.09 + r() * 0.06 + (1 - Math.hypot(rx / GB, rz / GT) * 2) * 0.06, rz);
+      m.rotation.set(r() * 3, r() * 3, r() * 3);
+      g.add(m);
+    }
+    g.position.y = oben;
+    const h = new THREE.Group();
+    h.add(g);
+    merke(h, 'gitterbox', 'Gitterbox', null);
+    return legen(h, x, z, ry);
+  }
+
   // Haufen und Teile im Schrottplatz (der Gang bei x -3,5 … -2,3 bleibt frei): dicht an dicht, gehäuft
-  altmetall(-12.4, -7.6, 2.2, 2.4, 70, 1.4);
-  altmetall(-8.2, -8.4, 2.0, 1.7, 60, 1.2);
+  altmetall(-8.0, -7.9, 2.2, 2.0, 70, 1.4);
   altmetall(-5.6, -6.2, 1.5, 1.4, 40, 0.9);
-  altmetall(-9.6, -5.4, 1.4, 0.8, 26, 0.7);
-  felgenStapel(-10.4, -9.9, 6); felgenStapel(-9.85, -10.0, 4); felgenStapel(-4.25, -4.95, 5); felgenStapel(-4.85, -5.0, 3);
-  felgenStapel(-14.2, -5.0, 5);
-  reifenStapel(-13.4, -10.0, 5); reifenStapel(-12.8, -9.95, 3); reifenStapel(-6.9, -4.95, 4); reifenStapel(-11.3, -5.0, 2, true);
-  fahrrad(-13.9, -6.4, 0.4, true, 0x2f5fa8);
-  fahrrad(-7.0, -9.9, 2.6, true, 0xc8382c);
+  altmetall(-10.0, -5.6, 1.1, 0.9, 24, 0.7);
+  felgenStapel(-10.6, -9.9, 6); felgenStapel(-10.05, -10.0, 4); felgenStapel(-4.25, -4.95, 5);
+  reifenStapel(-10.9, -8.6, 5); reifenStapel(-10.85, -7.9, 3); reifenStapel(-6.9, -4.95, 4); reifenStapel(-10.6, -4.9, 2, true);
+  fahrrad(-10.6, -6.8, 1.6, true, 0x2f5fa8);
+  fahrrad(-7.0, -10.0, 2.6, true, 0xc8382c);
   fahrrad(-4.2, -7.4, Math.PI / 2, false, 0x2f6b3a);
-  fahrrad(-10.8, -7.0, 1.1, true, 0xd8b23a);
   schuessel(-8.2, -5.2, 0.8);
-  schuessel(-14.0, -8.6, -0.5);
   gasflasche(-4.3, -9.0, 0x8c8f94, false); gasflasche(-4.7, -9.3, 0xc8382c, false); gasflasche(-4.3, -9.6, 0x8c8f94, true);
-  gasflasche(-6.3, -4.85, 0x8c8f94, false); gasflasche(-11.6, -10.0, 0x6a8a5a, true); gasflasche(-7.6, -10.0, 0xc8382c, false);
-  fass(-12.2, -5.0, false); fass(-14.3, -9.6, true); fass(-5.6, -9.8, false); fass(-6.15, -9.85, false);
-  heizkoerper(-13.0, -10.1, 0.2);
-  waschmaschine(-9.2, -9.9, 0.3);
+  gasflasche(-6.3, -4.85, 0x8c8f94, false); gasflasche(-9.5, -10.1, 0x6a8a5a, true);
+  fass(-11.0, -5.6, false); fass(-11.0, -9.4, true);
+  heizkoerper(-8.6, -4.85, 0.1);
+  waschmaschine(-9.0, -10.1, 0.3);
   autotuer(-4.3, -8.2, Math.PI / 2, 0x3a6aa8); autotuer(-7.6, -5.0, 0.1, 0xc8382c);
   motorblock(-5.1, -9.2, 0.6);
-  badewanne(-12.9, -5.5, 0.1);
-  motorhaube(-10.9, -9.6, 2.9, 0x2f6b3a);
-  auspuff(-8.9, -4.9, 0.2); auspuff(-14.4, -7.3, 1.5);
+  badewanne(-10.0, -7.4, 1.5);
+  motorhaube(-8.9, -9.3, 2.9, 0x2f6b3a);
+  auspuff(-9.4, -4.75, 0.2);
+  // Gitterkisten voller Kleinteile (eine steht auf einer anderen)
+  gitterbox(-6.0, -9.85, 0.05); gitterbox(-7.6, -9.9, -0.04); gitterbox(-6.0, -9.85, 0.05, 0.97);
+  gitterbox(-5.3, -4.95, 0.0);
   // hinter dem Container (zwischen Container und Carport), mit Abstand zur offenen Containerseite
   altmetall(0.3, -9.5, 1.9, 0.75, 28, 0.7);
   reifenStapel(2.3, -9.9, 4); felgenStapel(-1.6, -9.9, 4); gasflasche(-1.6, -9.0, 0x8c8f94, false);
+  gitterbox(1.2, -9.95, 0.03);
   for (const k of SCHROTT_KAESTEN) hindernis(k.xMin, k.xMax, k.zMin, k.zMax);
 
   // ---------- Blauer Container mit Metalllängen ----------

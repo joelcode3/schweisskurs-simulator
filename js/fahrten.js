@@ -20,13 +20,12 @@ const WEG_RAUS = FELDWEG.slice(1, 9), WEG_REIN = FELDWEG.slice(0, 8).reverse();
 // Runden über den Hof (Routen enden kurz vor der Anfahrt zum Parkplatz, siehe fz.mitAnfahrt)
 const RUNDE_JEEP = [{ x: 4.4, z: 7.5 }, { x: 6.2, z: 8.8 }, { x: 5.0, z: 10.9 }, { x: -2.5, z: 11.2 }, { x: -8.5, z: 10.2 }, { x: -9.5, z: 6.8 }, { x: -6.5, z: 6.2 },
   { x: -2.0, z: 6.4 }, { x: -0.6, z: 8.6 }, { x: -0.2, z: 10.6 }];
-// Hoflader (Paket E2a): parkt im Carport hinter dem Schrottplatz (Bucht „Weidemann“ ganz hinten, Schnauze zum Gang).
-// Raus: vorwärts nach rechts über den Schotter zum Weg rechts am Haus. Rein: denselben Weg zurück, hinten ums Carport
-// herum und von der offenen Rückseite vorwärts in die Bucht (rückwärts fahren die Figuren nicht).
-export const LADER_RAUS = [{ x: 0.5, z: -19.6 }, { x: 3.5, z: -17.5 }, { x: 6.5, z: -13.5 }, { x: 8.4, z: -9.5 }, { x: 8.9, z: -1.5 },
-  { x: 8.4, z: 2.6 }];
-export const LADER_REIN = [{ x: 8.9, z: 0.0 }, { x: 8.8, z: -8.0 }, { x: 6.5, z: -15.5 }, { x: 3.5, z: -22.0 }, { x: -1.0, z: -24.3 },
-  { x: -6.5, z: -24.4 }, { x: -9.4, z: -23.2 }, { x: -9.8, z: -21.0 }, { x: -8.6, z: -19.9 }];
+// Hoflader (Paket E2a): parkt im Carport hinter dem Schrottplatz (Bucht „Weidemann“ ganz hinten), vorwärts eingeparkt.
+// Raus: erst rückwärts aus der Bucht (Heck schwenkt nach hinten, LADER_RUECK), dann vorwärts zum Weg rechts am Haus.
+// Rein: denselben Weg zurück und vorwärts in die Bucht.
+export const LADER_RUECK = [{ x: -0.8, z: -19.85 }, { x: 1.4, z: -20.5 }, { x: 2.6, z: -22.2 }];
+export const LADER_RAUS = [{ x: 3.4, z: -18.4 }, { x: 5.8, z: -14.0 }, { x: 8.4, z: -9.5 }, { x: 8.9, z: -1.5 }, { x: 8.4, z: 2.6 }];
+export const LADER_REIN = [{ x: 8.9, z: 0.0 }, { x: 8.8, z: -8.0 }, { x: 6.2, z: -14.6 }, { x: 3.6, z: -18.6 }];
 export const RUNDE_LADER = [...LADER_RAUS, { x: 7.3, z: 4.8 }, { x: 7.6, z: 8.0 }, { x: 5.0, z: 11.0 }, { x: -2.0, z: 11.3 }, { x: -8.5, z: 10.0 }, { x: -9.5, z: 6.6 }, { x: -6.5, z: 6.3 },
   { x: -2.0, z: 6.5 }, { x: -0.8, z: 9.6 }, { x: 4.6, z: 10.7 }, { x: 8.3, z: 8.6 }, { x: 8.9, z: 4.0 }, ...LADER_REIN];
 // weg vom Hof und zurück
@@ -347,6 +346,8 @@ export function baueFahrten(c) {
         if (wer === 'torben') { setTimeout(() => ui.torbenSagt(sag(TORBEN.rums)), 700); if (Math.random() < 0.4) tw.nachRums = true; }
       },
     };
+    // Hoflader steht vorwärts im Carport: erst rückwärts raus
+    if (f.art === 'lader' && fz.rueckwaerts && Math.hypot(f.x - f.park.x, f.z - f.park.z) < 1.0) await fz.rueckwaerts(f, LADER_RUECK);
     if (weg) {
       await fz.fahreRoute(f, WEG[f.art], stil, opt);
       fz.verstecken(f, true);

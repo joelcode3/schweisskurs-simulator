@@ -519,13 +519,31 @@ export function baueFahrzeuge(scene, welt) {
       anwenden(f, 0);
     }
   }
+  // Rückwärts aus der Parkbucht (Paket E2a, Hoflader im Carport): weiche Bahn durch die Punkte, Schnauze zeigt dabei
+  // entgegen der Fahrtrichtung
+  async function rueckwaerts(f, punkte, tempo = 1.1) {
+    while (f.aufGabel) await naechsterSchritt();
+    const pts = [new THREE.Vector3(f.x, 0, f.z), ...punkte.map((p) => new THREE.Vector3(p.x, 0, p.z))];
+    const k = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
+    const L = k.getLength();
+    for (let s = 0; s < L; ) {
+      const dt = await naechsterSchritt();
+      const ds = Math.min(L - s, tempo * dt);
+      s += ds;
+      const p = k.getPointAt(s / L), t = k.getTangentAt(s / L);
+      f.x = p.x; f.z = p.z; f.psi = Math.atan2(-t.x, -t.z); f.v = -tempo;
+      if (f.art === 'lader') f.knick *= 0.9;
+      anwenden(f, -ds);
+    }
+    f.v = 0;
+  }
   let warteListe = [];
   function naechsterSchritt() { return new Promise((res) => warteListe.push(res)); }
   // weg vom Hof (nach rechts den Feldweg runter) und unsichtbar; später zurück
   function verstecken(f, an) { f.g.visible = !an; if (an) Object.assign(f.hindernis, AUS, { boxen: null }); else anwenden(f, 0); }
 
   return {
-    jeep, lader, paletten, alle, palettenAmPlatz, PALETTEN_PLATZ, palettenSetzen, boxenVon, obbTiefe,
+    jeep, lader, paletten, alle, palettenAmPlatz, PALETTEN_PLATZ, rueckwaerts, palettenSetzen, boxenVon, obbTiefe,
     // Höhe, auf der man an (x, z) steht (Paletten), für die Kamera
     bodenHoehe: (x, z) => stuetzHoehe(x, z),
     schritt, gabel, anwenden, fahreRoute, einparken, mitAnfahrt, verstecken, figurRein, figurRaus,

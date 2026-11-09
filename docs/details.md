@@ -302,24 +302,28 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   (hand.js AUSSEN = GELAENDE).
 
 ## Platz hinten (Paket E2a)
-- js/platzhinten.js (`bauePlatzHinten`, aus draussen.js aufgerufen): hinter der Werkstatt Schotterfläche (x -17 … 10,4, z -26 … -4,1)
-  und ein Schotterweg rechts am Haus entlang (x 5,6 … 10, wo früher der Hoflader parkte), festgefahrene Spuren.
+- js/platzhinten.js (`bauePlatzHinten`, aus draussen.js aufgerufen): Schotterfläche als ein Umriss (SCHOTTER_UMRISS) mit
+  organischen Rändern und weichem Übergang (lose, durchsichtige Schotterflecken, kleine Grasbüschel). Läuft rechts am Haus
+  entlang (wo früher der Hoflader parkte) bis an die Betonplatte vorne (dort kann man langfahren), hinterm Haus über
+  Schrottplatz und Carport; neben dem Carport auf der Wohnwagen-Seite kein Schotter. Festgefahrene Spuren zum Carport.
 - Carport (CARPORT x -6 … -1,4, z -21,6 … -11,1) hinter der Werkstatt, dazwischen der Schrottplatz (Reihenfolge vom Haus weg:
-  Werkstatt, Schrottplatz, Carport; Betreiber 9.11.). Längs gestellt, Holzpfosten, Wellplatten-Dach, Betonplatte, offen zur
-  Seite (Welt +x, Schilder dort) und nach hinten. Drei Buchten vom Haus weg: PRITSCHE (leer, für E2b, Kanister-Regal), PALETTEN,
-  WEIDEMANN (BUCHTEN, CARPORT_PFOSTEN). Der Gang von der Hintertür endet vorne am Carport. Anklickbar: Schild Paletten
-  (palettenSchild), Dach (carportHinten), Schrotthaufen (schrott).
-- Hoflader parkt zu Spielbeginn in der Bucht „Weidemann“ (ganz hinten), Schnauze zur offenen Seite. Figuren fahren raus
-  vorwärts über den Schotter zum Weg rechts am Haus; zurück denselben Weg, hinten ums Carport herum und von der offenen
-  Rückseite vorwärts in die Bucht (fahrten.js LADER_RAUS/LADER_REIN; rückwärts fahren die Figuren nicht).
+  Werkstatt, Schrottplatz, Carport; Betreiber 9.11.). Längs gestellt, offen zur Seite (Welt +x, Schilder dort) und nach
+  hinten, Schotterboden (kein Beton). Holzpfosten auf Stahl-Pfostenträgern, Pfetten, Sparren, Wellplatten-Dach (vorne hoch,
+  hinten tief, liegt auf den Sparren), Stirnbrett, Regenrinne mit Fallrohr, Kopfbänder vorne und hinten, Lampe mit Kabel,
+  Radstopper in jeder Bucht, Ölfleck. Schilder hängen an Ketten unter der Pfette. Buchten vom Haus weg: PALETTEN, PRITSCHE
+  (leer, für E2b, Kanister-Regal), WEIDEMANN (BUCHTEN, CARPORT_PFOSTEN). Der Gang von der Hintertür endet vorne am Carport.
+  Anklickbar: Schild Paletten (palettenSchild), Dach (carportHinten), Schrotthaufen (schrott), Gitterboxen (gitterbox).
+- Hoflader steht zu Spielbeginn vorwärts eingeparkt in der Bucht „Weidemann“ (Schnauze nach hinten). Figuren setzen erst
+  rückwärts heraus (fz.rueckwaerts, fahrten.js LADER_RUECK, Heck schwenkt nach hinten), fahren dann vorwärts zum Weg rechts
+  am Haus (LADER_RAUS); zurück denselben Weg und vorwärts in die Bucht (LADER_REIN + mitAnfahrt).
 - Paletten: alter Platz (x -1, z -7) samt freistehendem Schild ist weg. Die beiden Stapel vom alten Platz neben der Werkstatt
   (3er und einzelne) stehen jetzt in der Bucht „Paletten“; PALETTEN_PLATZ = diese Bucht. Was am Start schon dort steht, zählt
   nicht als gebracht (z.palettenRekord wird beim Start gesetzt).
 - Schrottplatz zwischen Werkstatt und Carport (SCHROTT_KAESTEN, Hindernisse für Spieler, Fahrzeuge und Wege), dicht gehäuft:
   Schrotthügel (aufgeschüttete rostige Erde, darauf Bleche, Rohre, Vierkant, Träger, Winkel, Baustahlgitter, Klötze, Scheiben),
-  Felgen- und Altreifenstapel, kaputte Fahrräder, Satellitenschüsseln, alte Gasflaschen, Ölfässer, Heizkörper, Waschmaschine,
-  Autotüren, Motorblock, Badewanne, Motorhaube, Auspuffe. Freier Gang von der Hintertür (x ≈ -2,9) zwischen Schrott und
-  Container bis vorne ans Carport.
+  Gitterboxen randvoll mit Kleinteilen (eine gestapelt), Felgen- und Altreifenstapel, kaputte Fahrräder, Satellitenschüssel,
+  alte Gasflaschen, Ölfässer, Heizkörper, Waschmaschine, Autotüren, Motorblock, Badewanne, Motorhaube, Auspuff. Freier Gang
+  von der Hintertür (x ≈ -2,9) zwischen Schrott und Container bis vorne ans Carport.
 - Blauer 20-Fuß-Container (CONTAINER x -1,6 … 4,46, z -6,6 … -4,1) Rücken an Rücken an der Rückwand, von hinten gesehen links
   neben der Hintertür (Gang bleibt frei). Längsseite zum Hof ganz offen; innen auf Kanthölzern Metalllängen (5,85 m: Doppel-T,
   Vierkant, Rundrohre, Flachstahl). Noch ohne Funktion (später Metall einladen). Anklickbar (container), Hindernis, in wege.js.
