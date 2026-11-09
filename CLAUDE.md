@@ -7,7 +7,7 @@
   (Betreiber-Wunsch): ist der letzte PR noch offen, einen neuen Zweig (Name vom Arbeitszweig abgeleitet, z. B. `…-draussen`)
   von `origin/main` anlegen. Nur kleine Nachbesserungen zum offenen PR kommen in diesen PR.
   Hängt ein neues Update vom noch offenen PR ab, den neuen Zweig auf dessen Stand aufsetzen und im PR vermerken: erst den alten mergen.
-- Projektchat (Session session_0136ircvAvU3aCzRamNp3F96, pflegt die Projektliste) schickt To-dos: OHNE Go des Betreibers umsetzen
+- Projektchat (Session session_0136irctrTCA3M7n4aU75GVP, pflegt die Projektliste) schickt To-dos: OHNE Go des Betreibers umsetzen
   (Betreiber-Wunsch). Nach jedem erstellten Pull Request dem Projektchat per send_message Bescheid geben (Link + was drin ist).
 - Immer nur EIN Paket auf einmal (Betreiber-Wunsch, Limit sparen): nach jedem Paket (PR gemeldet bzw. Vorschau geschickt)
   stoppen und warten, bis der Projektchat „weiter <Paketname>“ schickt. Nie selbst das nächste Paket anfangen.
@@ -90,5 +90,5 @@
 - Alles bis #66 gemergt. Offen: #67 F3 David. Neue Zweige immer von `origin/main`.
 - Versionsnummer zuletzt `v=20261104-12`.
 - Nächste freie Satz-Nummern (aus stimme/zuordnung.csv): dennis505, jonny58, waldo43, torben32, kumpel8, david19.
-- Projektchat-Session: `session_0136ircvAvU3aCzRamNp3F96` (1.11.; die alte ID `session_01KZ18oujuEFnsAskwuMiw8Y` oben ist veraltet).
+- Projektchat-Session: `session_0136irctrTCA3M7n4aU75GVP` (1.11.; die alte ID `session_01KZ18oujuEFnsAskwuMiw8Y` oben ist veraltet).
 - Offene Fäden und Ungetestetes: `docs/details.md`, Abschnitt „Offene Fäden und Ungetestetes“ (zuerst lesen, wenn ein neuer Chat startet).
