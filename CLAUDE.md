@@ -12,7 +12,8 @@
 - Immer nur EIN Paket auf einmal (Betreiber-Wunsch, Limit sparen): nach jedem Paket (PR gemeldet bzw. Vorschau geschickt)
   stoppen und warten, bis der Projektchat „weiter <Paketname>“ schickt. Nie selbst das nächste Paket anfangen.
   Der Betreiber wählt pro Paket das Modell (/model).
-- Dauerhafte Arbeitsregeln (Betreiber/Projektchat, Stand 1.11.):
+- Dauerhafte Arbeitsregeln (Betreiber/Projektchat, Stand 9.11.):
+  - Bei ALLEN Paketen zuerst Vorschau (Screenshots, nummeriert 01, 02 …) an den Betreiber, PR erst nach Abnahme.
   - Pakete einzeln; nach jedem Paket stoppen, bis der Projektchat „weiter <Paket>“ schickt (außer der Betreiber sagt „durchziehen“).
   - Je Paket eigener Zweig und eigener PR. Pro Paket die Modellempfehlung (Opus oder Sonnet) nennen.
   - Optik und neue Minispiele: erst Vorschau (Screenshots) an den Betreiber, PR erst nach Abnahme.
@@ -86,9 +87,9 @@
   nur DENNIS und löst verschachtelte Listen wie telefon nicht auf).
 - KI-Stimmklon ist in dieser Umgebung nicht möglich (huggingface.co gesperrt). Stimmproben nie ins Repo (öffentlich).
 
-## Stand der Pull Requests (1.11.2026)
-- Alles bis #66 gemergt. Offen: #67 F3 David. Neue Zweige immer von `origin/main`.
-- Versionsnummer zuletzt `v=20261104-12`.
+## Stand der Pull Requests (9.11.2026)
+- Alles bis #67 gemergt. Offen: #68 E2a Platz hinten (Hintertür, Schrottplatz, Carport, Container). Neue Zweige immer von `origin/main`.
+- Versionsnummer zuletzt `v=20261109-1`. Testmenü bis T94, nächste freie T95.
 - Nächste freie Satz-Nummern (aus stimme/zuordnung.csv): dennis505, jonny58, waldo43, torben32, kumpel8, david19.
-- Projektchat-Session: `session_0136irctrTCA3M7n4aU75GVP` (1.11.; die alte ID `session_01KZ18oujuEFnsAskwuMiw8Y` oben ist veraltet).
+- Projektchat-Session: `session_0136irctrTCA3M7n4aU75GVP` (seit 9.11., Projektchat Nr. 4).
 - Offene Fäden und Ungetestetes: `docs/details.md`, Abschnitt „Offene Fäden und Ungetestetes“ (zuerst lesen, wenn ein neuer Chat startet).
