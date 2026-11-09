@@ -20,11 +20,20 @@ const WEG_RAUS = FELDWEG.slice(1, 9), WEG_REIN = FELDWEG.slice(0, 8).reverse();
 // Runden über den Hof (Routen enden kurz vor der Anfahrt zum Parkplatz, siehe fz.mitAnfahrt)
 const RUNDE_JEEP = [{ x: 4.4, z: 7.5 }, { x: 6.2, z: 8.8 }, { x: 5.0, z: 10.9 }, { x: -2.5, z: 11.2 }, { x: -8.5, z: 10.2 }, { x: -9.5, z: 6.8 }, { x: -6.5, z: 6.2 },
   { x: -2.0, z: 6.4 }, { x: -0.6, z: 8.6 }, { x: -0.2, z: 10.6 }];
-const RUNDE_LADER = [{ x: 7.3, z: 4.8 }, { x: 7.6, z: 8.0 }, { x: 5.0, z: 11.0 }, { x: -2.0, z: 11.3 }, { x: -8.5, z: 10.0 }, { x: -9.5, z: 6.6 }, { x: -6.5, z: 6.3 },
-  { x: -2.0, z: 6.5 }, { x: -0.8, z: 9.6 }, { x: 4.6, z: 10.7 }, { x: 8.3, z: 8.6 }, { x: 8.9, z: 4.0 }, { x: 8.9, z: 0.0 }, { x: 8.0, z: -1.6 }];
+// Hoflader (Paket E2a): parkt im Carport hinterm Haus (rechts neben dem Schrottplatz, Bucht „Weidemann“ ganz hinten,
+// Schnauze zum Schrottplatz). Raus: vorwärts auf die Fahrspur hinterm Haus, den Schotterweg rechts am Haus vor. Rein:
+// denselben Weg zurück, dann hinten ums Carport herum und von der offenen Rückseite vorwärts in die Bucht
+// (rückwärts fahren die Figuren nicht).
+export const LADER_RAUS = [{ x: -14.4, z: -12.7 }, { x: -12.0, z: -11.4 }, { x: -8.0, z: -11.0 }, { x: -3.0, z: -11.0 }, { x: 3.0, z: -11.0 },
+  { x: 7.2, z: -9.8 }, { x: 8.7, z: -6.5 }, { x: 8.9, z: -1.5 }, { x: 8.4, z: 2.6 }];
+export const LADER_REIN = [{ x: 8.9, z: 0.0 }, { x: 8.8, z: -6.0 }, { x: 7.0, z: -10.6 }, { x: 2.0, z: -11.6 }, { x: -4.0, z: -12.0 },
+  { x: -10.0, z: -13.2 }, { x: -14.0, z: -16.3 }, { x: -18.0, z: -17.0 }, { x: -21.4, z: -16.0 }, { x: -22.2, z: -13.8 },
+  { x: -21.6, z: -12.9 }];
+export const RUNDE_LADER = [...LADER_RAUS, { x: 7.3, z: 4.8 }, { x: 7.6, z: 8.0 }, { x: 5.0, z: 11.0 }, { x: -2.0, z: 11.3 }, { x: -8.5, z: 10.0 }, { x: -9.5, z: 6.6 }, { x: -6.5, z: 6.3 },
+  { x: -2.0, z: 6.5 }, { x: -0.8, z: 9.6 }, { x: 4.6, z: 10.7 }, { x: 8.3, z: 8.6 }, { x: 8.9, z: 4.0 }, ...LADER_REIN];
 // weg vom Hof und zurück
-const WEG = { jeep: [{ x: 4.4, z: 7.5 }, { x: 6.0, z: 8.9 }, ...WEG_RAUS], lader: [{ x: 7.3, z: 4.8 }, { x: 7.4, z: 8.2 }, ...WEG_RAUS] };
-const ZURUECK = { jeep: [...WEG_REIN.slice(1), { x: 4.0, z: 11.3 }, { x: -0.6, z: 11.0 }], lader: [...WEG_REIN.slice(1), { x: 8.4, z: 8.6 }, { x: 8.9, z: 4.0 }, { x: 8.9, z: 0.0 }, { x: 8.0, z: -1.6 }] };
+const WEG = { jeep: [{ x: 4.4, z: 7.5 }, { x: 6.0, z: 8.9 }, ...WEG_RAUS], lader: [...LADER_RAUS, { x: 7.3, z: 4.8 }, { x: 7.4, z: 8.2 }, ...WEG_RAUS] };
+const ZURUECK = { jeep: [...WEG_REIN.slice(1), { x: 4.0, z: 11.3 }, { x: -0.6, z: 11.0 }], lader: [...WEG_REIN.slice(1), { x: 8.4, z: 8.6 }, { x: 8.9, z: 4.0 }, ...LADER_REIN] };
 // Fahrstile
 const STIL = {
   jonny: { jeep: { v: 1.3, wackeln: 0.15 }, lader: { v: 2.0, wackeln: 0.1 } },
@@ -42,6 +51,9 @@ export function baueFahrten(c) {
   const fz2 = { aktiv: null, meckerAb: 0, rumsAb: 0, ersteFahrt: true, npc: false,
     naechsteFahrt: 150 + Math.random() * 60, grill: 'steht', grillSeit: 0, tonnen: 'stehen', tonnenSeit: 0,
     torben: { da: false, naechsterBesuch: 110 + Math.random() * 80, bisWeg: 0, naechsteFahrt: 0, unterwegs: false } };
+
+  // im Carport stehen von Anfang an schon Paletten (Paket E2a): die zählen nicht als „neu gebracht“
+  if (z.palettenRekord === undefined) z.palettenRekord = fz.palettenAmPlatz();
 
   // ---------- Spieler fährt ----------
   function fussgaenger() {
@@ -61,7 +73,7 @@ export function baueFahrten(c) {
       ? 'W/S fahren · A/D knicken · R/F Gabel hoch/runter · Leertaste hupen · E aussteigen'
       : `W/S fahren · A/D lenken · Leertaste hupen · E aussteigen${f.gedrosselt ? ' · (gedrosselt: nur Schritttempo)' : ''}`);
     blip(f.art === 'lader' ? 120 : 520, 0.25, 0.12);
-    if (f.art === 'lader' && !fz2.palettenTipp) { fz2.palettenTipp = true; setTimeout(() => ui.hinweis('Tipp: Herumliegende Paletten einsammeln und hinterm Haus beim Schild „Paletten“ stapeln. Dennis freut sich.', 6000), 1500); }
+    if (f.art === 'lader' && !fz2.palettenTipp) { fz2.palettenTipp = true; setTimeout(() => ui.hinweis('Tipp: Herumliegende Paletten einsammeln und hinterm Haus im Carport beim Schild „Paletten“ stapeln. Dennis freut sich.', 6000), 1500); }
     // über die Fahrweise meckert Dennis erst, wenn der Jeep entdrosselt ist (Schritttempo ist ihm egal); Hoflader immer
     if (sekunden() > fz2.meckerAb && !(f.art === 'jeep' && f.gedrosselt)) {
       fz2.meckerAb = sekunden() + 35 + Math.random() * 15;
@@ -304,11 +316,13 @@ export function baueFahrten(c) {
     fz2.npc = true;
     const ein = einstiegPunkt(f);
     if (wer === 'waldo') waldo.haltung('stehen');
-    if (drinnen) await geheWeg(figur, [TUER_INNEN, TUER_AUSSEN]);
+    // zum Hoflader (Carport hinterm Haus) sucht sich die Figur den Weg selbst (Hintertür, wege.js), zum Jeep durchs Tor
+    const vorne = f.art !== 'lader';
+    if (drinnen && vorne) await geheWeg(figur, [TUER_INNEN, TUER_AUSSEN]);
     await geheWeg(figur, [ein]);
     if (f.fahrer || !parkt(f)) {
       // jemand war schneller (der Spieler)
-      if (drinnen) await geheWeg(figur, [TUER_AUSSEN, TUER_INNEN]);
+      if (drinnen && vorne) await geheWeg(figur, [TUER_AUSSEN, TUER_INNEN]);
       fz2.npc = false;
       return false;
     }
@@ -359,8 +373,8 @@ export function baueFahrten(c) {
     fz.figurRaus(f, figur, sitzVon[wer], aus.x, aus.z);
     blip(200, 0.15, 0.08);
     fz2.npc = false;
-    if (wer === 'jonny') { await geheWeg(jonny, [TUER_AUSSEN, TUER_INNEN]); await jonny.heim(); }
-    if (wer === 'waldo') { await geheWeg(waldo, [TUER_AUSSEN, TUER_INNEN, { x: 2.6, z: 2.75 }]); waldo.haltung('handy'); wz.ort = 'stehen'; }
+    if (wer === 'jonny') { if (vorne) await geheWeg(jonny, [TUER_AUSSEN, TUER_INNEN]); await jonny.heim(); }
+    if (wer === 'waldo') { await geheWeg(waldo, [...(vorne ? [TUER_AUSSEN, TUER_INNEN] : []), { x: 2.6, z: 2.75 }]); waldo.haltung('handy'); wz.ort = 'stehen'; }
     if (wer === 'torben') await geheWeg(torben, [TORBEN_PLATZ]);
     return true;
   }
@@ -562,7 +576,7 @@ export function baueFahrten(c) {
         return null;
       case 'palettenSchild': {
         const n = fz.palettenAmPlatz();
-        return ['Schild: Paletten', `Hier hinterm Haus werden die Paletten gestapelt. Mit dem Hoflader einsammeln (Gabel: R hoch, F runter) und hier absetzen. Schon da: ${n} von ${fz.paletten.length}.`, []];
+        return ['Schild: Paletten', `Hier im Carport hinterm Haus werden die Paletten gestapelt. Mit dem Hoflader einsammeln (Gabel: R hoch, F runter) und hier absetzen. Schon da: ${n} von ${fz.paletten.length}.`, []];
       }
       case 'muellStueck': {
         // ein Teil aufheben und in die Tonne; ist alles weg, freut sich Dennis; nach ein paar Minuten liegt wieder was rum

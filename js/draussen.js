@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { toon, teil, quader, rundQuader, zylinder, kugel, setze, leinwandTextur, zufall } from './toon.js';
 import { FELDWEG, baueLandschaft, imKreis } from './landschaft.js';
+import { bauePlatzHinten, HINTERTUER, BUCHTEN } from './platzhinten.js';
 
 // Begehbare Flächen draußen (Rechtecke): rund um die Werkstatt, Carport, Wohnwagen und Benz. Das Bad-Häuschen vorne
 // rechts ist ausgespart, die Werkstatt selbst sowieso.
@@ -12,6 +13,7 @@ export { GELAENDE, FELDWEG } from './landschaft.js';
 export const BAD_FENSTER = { x0: 1.95, x1: 2.65, y0: 1.45, y1: 2.05 };
 const BAD_HAUS = { xMin: 0.55, xMax: 4.05, zMin: 3.9, zMax: 6.95 };
 const DURCHGANG = { xMin: -0.68, xMax: -0.02, zMin: 3.4, zMax: 4.7 }; // Schlupftür im Tor
+const DURCHGANG_HINTEN = { xMin: HINTERTUER.x0 + 0.05, xMax: HINTERTUER.x1 - 0.05, zMin: -4.7, zMax: -3.4 }; // Hintertür (Paket E2a)
 const WEG_BREITE = 2.4;
 const wegKurve = new THREE.CatmullRomCurve3(FELDWEG.map((p) => new THREE.Vector3(p.x, 0, p.z)), false, 'centripetal');
 const wegPunkte = wegKurve.getSpacedPoints(700);
@@ -181,6 +183,8 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   }, [60, 60]);
   // Wiese mit Hügeln, Hauptstraße, Lühmanns Hof usw. (js/landschaft.js)
   const landschaft = baueLandschaft(scene, { merke, hindernis, grasTex });
+  // Platz hinter der Werkstatt: Schotter, Carport, Schrottplatz (js/platzhinten.js, Paket E2a)
+  const platzHinten = bauePlatzHinten(scene, { merke, hindernis });
 
   // ---------- Betonfläche vor der Werkstatt (rissig, Stücke rausgebrochen, Unkraut in den Fugen) ----------
   const BETON = { x0: -7.5, x1: 7.5, z0: 4.0, z1: 10.5 };
@@ -257,6 +261,12 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
     if (mitTor) { s.lineTo(T0, 0); s.lineTo(T0, TH); s.lineTo(T1, TH); s.lineTo(T1, 0); }
     s.lineTo(x1, 0); s.lineTo(x1, TRAUFE); s.lineTo(0, FIRST); s.lineTo(x0, TRAUFE); s.closePath();
     // im Bad (BAD in world.js) keine Außenmauer (sie stünde ein paar cm im Bad vor Fliesen und WC-Tür)
+    if (!mitTor) {
+      // Hintertür: die Rückwand ist um 180° gedreht, Form-x = -Welt-x
+      const l = new THREE.Path();
+      l.moveTo(-HINTERTUER.x1, 0.01); l.lineTo(-HINTERTUER.x1, HINTERTUER.hoehe); l.lineTo(-HINTERTUER.x0, HINTERTUER.hoehe); l.lineTo(-HINTERTUER.x0, 0.01); l.closePath();
+      s.holes.push(l);
+    }
     if (mitTor) {
       const l = new THREE.Path();
       l.moveTo(0.7, 0.01); l.lineTo(0.7, 2.6); l.lineTo(3.9, 2.6); l.lineTo(3.9, 0.01); l.closePath();
@@ -298,6 +308,14 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
     const putz = toon(0xd8d2c4, { side: THREE.DoubleSide });
     for (const y of [L.y0, L.y1]) { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.09, L.z1 - L.z0), putz); m.rotation.set(-Math.PI / 2, 0, 0); m.position.set(x, y, (L.z0 + L.z1) / 2); scene.add(m); }
     for (const z of [L.z0, L.z1]) { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.09, L.y1 - L.y0), putz); m.position.set(x, (L.y0 + L.y1) / 2, z); scene.add(m); }
+  }
+  // Laibung der Hintertür (Paket E2a)
+  {
+    const putz = toon(0xd8d2c4, { side: THREE.DoubleSide }), z = RAUM.zMin - 0.04, T = HINTERTUER;
+    for (const x of [T.x0, T.x1]) { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.09, T.hoehe), putz); m.rotation.y = Math.PI / 2; m.position.set(x, T.hoehe / 2, z); scene.add(m); }
+    const o = new THREE.Mesh(new THREE.PlaneGeometry(T.x1 - T.x0, 0.09), putz); o.rotation.x = Math.PI / 2; o.position.set((T.x0 + T.x1) / 2, T.hoehe, z); scene.add(o);
+    // Schwelle
+    scene.add(setze(quader(T.x1 - T.x0, 0.03, 0.2, 0x8f8d86, { umriss: 0.002 }), (T.x0 + T.x1) / 2, 0.015, RAUM.zMin - 0.05));
   }
   // Laibung im Tor (Mauerdicke) und Sturz
   const laibung = (b, h, x, y, z, ry) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(b, h), steinMatSeite); m.position.set(x, y, z); m.rotation.y = ry; scene.add(m); };
@@ -648,10 +666,11 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
     strecke(kippZyl, KIPP_A, mitte2, Y); strecke(kippStange, mitte2, _n, Y);
   }
   hydraulik();
-  setze(lader, 7.0, 0, 1.4, 0, 0.15, 0);
+  // parkt im Carport hinterm Haus in der Bucht „Weidemann“, Schnauze zum Schrottplatz (Paket E2a)
+  setze(lader, BUCHTEN.weidemann.x - 0.1, 0, BUCHTEN.weidemann.z, 0, Math.PI / 2, 0);
   scene.add(lader);
   merke(lader, 'weidemann', 'Hoflader', null);
-  const laderHindernis = hindernis(6.2, 7.85, -0.1, 3.1);
+  const laderHindernis = hindernis(BUCHTEN.weidemann.x - 1.8, BUCHTEN.weidemann.x + 2.0, BUCHTEN.weidemann.z - 0.8, BUCHTEN.weidemann.z + 0.8);
 
   const profilTex = leinwandTextur(128, 32, (g, b, h) => { g.fillStyle = '#1b1b1d'; g.fillRect(0, 0, b, h); g.fillStyle = '#323236'; for (let x = 0; x < b; x += 16) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + 10, h / 2); g.lineTo(x, h); g.lineTo(x + 5, h / 2); g.fill(); } }, [3, 1]);
   // ---------- rosa Mini-Jeep (großes Elektro-Spaßauto im Wrangler-Look, ohne Dach, zwei Sitze) ----------
@@ -879,11 +898,13 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
 
   return {
     landschaft,
+    platzHinten,
     update: landschaft.update,
     // Ist (x, z) draußen mit Abstand r begehbar? Überall innerhalb der Ringstraße (und ein paar Meter dahinter),
     // nur nicht in der Werkstatt und im Bad-Anbau; in die Werkstatt geht es nur durch die Schlupftür
     begehbar(x, z, rr) {
       if (x > DURCHGANG.xMin && x < DURCHGANG.xMax && z > DURCHGANG.zMin && z < DURCHGANG.zMax) return true;
+      if (x > DURCHGANG_HINTEN.xMin && x < DURCHGANG_HINTEN.xMax && z > DURCHGANG_HINTEN.zMin && z < DURCHGANG_HINTEN.zMax) return true;
       if (x > BAD_HAUS.xMin - rr && x < BAD_HAUS.xMax + rr && z < BAD_HAUS.zMax + rr && z > 3.0) return false;
       if (x > RAUM.xMin - 0.08 - rr && x < RAUM.xMax + 0.08 + rr && z > RAUM.zMin - 0.08 - rr && z < RAUM.zMax + 0.08 + rr) return false;
       return imKreis(x, z, rr);

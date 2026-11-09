@@ -1,12 +1,14 @@
 // Die Werkstatt: Raum, Möbel, Werkzeuge, Gasflasche.
 import * as THREE from 'three';
 import { toon, teil, quader, zylinder, kugel, setze, leinwandTextur, zufall, umriss } from './toon.js';
+import { HINTERTUER } from './platzhinten.js';
 import { baueDraussen, BAD_FENSTER } from './draussen.js';
 import { baueCarport } from './carport.js';
 import { gelaendeHoehe } from './landschaft.js';
 
 export const RAUM = { xMin: -5, xMax: 5, zMin: -4, zMax: 4, hoehe: 3.9 };
 // Bad hinter der WC-Tür (vorne rechts), begehbar
+export const HULA_WAND_Z = 0.4;
 export const BAD = { xMin: 0.7, xMax: 3.9, zMin: 4.0, zMax: 6.8, hoehe: 2.6 };
 const KLO_TUER = { xMin: 0.975, xMax: 1.825, hoehe: 2.05 };
 export const AUGENHOEHE = 1.65;
@@ -191,7 +193,13 @@ export function baueWelt(scene) {
     w.receiveShadow = true;
     scene.add(w);
   };
-  wandStueck(10, 0, RAUM.zMin, 0, 11);
+  // Rückwand mit Öffnung für die Hintertür (Paket E2a): links, rechts daneben und Sturz darüber
+  {
+    const T = HINTERTUER;
+    wandStueck(T.x0 - RAUM.xMin, (RAUM.xMin + T.x0) / 2, RAUM.zMin, 0, 11);
+    wandStueck(RAUM.xMax - T.x1, (T.x1 + RAUM.xMax) / 2, RAUM.zMin, 0, 19);
+    wandStueck(T.x1 - T.x0, (T.x0 + T.x1) / 2, RAUM.zMin, 0, 20, RAUM.hoehe - T.hoehe, T.hoehe);
+  }
   // Vorderwand mit Öffnung für die WC-Tür
   // links vom Tor, zwischen Tor und WC-Tür, Sturz über dem Tor (das Tor steht offen, dahinter ist draußen)
   const TOR_L = -0.85 - 1.3, TOR_R = -0.85 + 1.3, TOR_HOEHE = 3.0;
@@ -443,6 +451,31 @@ export function baueWelt(scene) {
   setze(tuer, -0.85, 0, RAUM.zMax - 0.05, 0, Math.PI, 0);
   scene.add(tuer);
 
+  // ---------- Hintertür (Paket E2a): grüne Brettertür an der Rückwand, steht offen nach draußen zum Schrottplatz ----------
+  {
+    const T = HINTERTUER, B = T.x1 - T.x0;
+    // Zarge innen (grün) mit Sturzbrett
+    for (const x of [T.x0 - 0.04, T.x1 + 0.04]) scene.add(setze(quader(0.08, T.hoehe + 0.04, 0.06, torGruen, { umriss: 0.002 }), x, (T.hoehe + 0.04) / 2, RAUM.zMin + 0.02));
+    scene.add(setze(quader(B + 0.16, 0.08, 0.06, torGruen, { umriss: 0.002 }), (T.x0 + T.x1) / 2, T.hoehe + 0.04, RAUM.zMin + 0.02));
+    // Türblatt: Bretter mit Z-Strebe, schwarze Bänder, Drücker; Band links (von innen gesehen), offen nach draußen
+    const dreh = new THREE.Group();
+    dreh.position.set(T.x0 + 0.02, 0, RAUM.zMin - 0.1);
+    const blattB = B - 0.06, blattH = T.hoehe - 0.05;
+    const blatt = teil(new THREE.BoxGeometry(blattB, blattH, 0.045), 0, { material: brettMat, umriss: 0.003 });
+    blatt.position.set(blattB / 2, blattH / 2 + 0.02, 0);
+    dreh.add(blatt);
+    for (const sz of [-1, 1]) {
+      for (const y of [0.3, blattH - 0.3]) dreh.add(setze(quader(blattB - 0.1, 0.11, 0.025, torGruen, { umriss: 0.002 }), blattB / 2, y, sz * 0.033));
+      dreh.add(setze(quader(0.1, blattH - 0.7, 0.025, torGruen, { umriss: 0.002 }), blattB / 2, blattH / 2 + 0.02, sz * 0.033, 0, 0, sz * 0.36));
+      for (const y of [0.3, blattH - 0.3]) dreh.add(setze(quader(0.42, 0.04, 0.01, 0x1d1d1f, { umriss: false }), 0.22, y, sz * 0.05));
+      dreh.add(setze(quader(0.03, 0.14, 0.02, 0x1d1d1f, { umriss: false }), blattB - 0.09, 1.05, sz * 0.05));
+      dreh.add(setze(quader(0.12, 0.025, 0.025, 0x3a3a3c, { umriss: false }), blattB - 0.13, 1.1, sz * 0.065));
+    }
+    dreh.rotation.y = Math.PI * 0.56;
+    scene.add(dreh);
+    merke(blatt, 'hintertuer', 'Hintertür', null);
+  }
+
   // ---------- Draußen (js/draussen.js) ----------
   const draussen = baueDraussen(scene, { merke, hindernis, RAUM });
   if (draussen.update) animiert.push(draussen.update);
@@ -474,11 +507,12 @@ export function baueWelt(scene) {
   objekte.ersteHilfe = ersteHilfe;
   ersteHilfe.userData.wand = { pos: ersteHilfe.position.clone(), rot: ersteHilfe.rotation.clone() };
 
-  // Hula-Hoop-Reifen an der Rückwand zwischen Regal und Werkbank
+  // Hula-Hoop-Reifen an der rechten Wand zwischen Erste-Hilfe-Kasten und Spüle (früher an der Rückwand, dort ist
+  // jetzt die Hintertür, Paket E2a)
   const reifen = baueReifen();
-  setze(reifen, -2.9, 1.55, RAUM.zMin + 0.06);
+  setze(reifen, RAUM.xMax - 0.06, 1.55, HULA_WAND_Z, 0, -Math.PI / 2, 0);
   scene.add(reifen);
-  scene.add(setze(zylinder(0.008, 0.008, 0.08, 0x7a7a7a, {}, 6), -2.9, 1.98, RAUM.zMin + 0.03, Math.PI / 2, 0, 0));
+  scene.add(setze(zylinder(0.008, 0.008, 0.08, 0x7a7a7a, {}, 6), RAUM.xMax - 0.03, 1.98, HULA_WAND_Z, 0, 0, Math.PI / 2));
   merke(reifen, 'hulahup', 'Hula-Hoop-Reifen', null);
   reifen.userData.liegend = true;
   objekte.hulahup = reifen;
@@ -3281,6 +3315,7 @@ export function baueWelt(scene) {
     // Türmitte für WC-Tür oder Schlupftür im Tor (-0,68 bis -0,02): man rutscht beim Durchgehen zur Mitte statt an der Kante zu hängen
     tuerMitte(x, z) {
       if (x > -1.25 && x < 0.55 && z > RAUM.zMax - 1.0 && z < RAUM.zMax + 1.1) return -0.35;
+      if (x > HINTERTUER.x0 - 0.5 && x < HINTERTUER.x1 + 0.5 && z > RAUM.zMin - 1.1 && z < RAUM.zMin + 1.0) return HINTERTUER.mitte;
       return this.kloTuerMitte(x, z);
     },
     kloTuerMitte(x, z) { return kloOffen && x > KLO_TUER.xMin - 0.5 && x < KLO_TUER.xMax + 0.5 && z > RAUM.zMax - 1.0 && z < BAD.zMin + 1.0 ? (KLO_TUER.xMin + KLO_TUER.xMax) / 2 : null; },
@@ -3367,7 +3402,7 @@ export function baueWelt(scene) {
     },
     // Freier Boden für die Hüfte (liegend ca. 2,3 m lang, Kopf Richtung Werkstattmitte)
     HUEFTE_PLATZ: { x: -1.6, z: 1.1, dreh: -Math.PI / 2 },
-    HULA_PLATZ: { x: -2.9, z: -3.2 },
+    HULA_PLATZ: { x: RAUM.xMax - 0.75, z: HULA_WAND_Z },
     SOFA: { x: -3.2, z: RAUM.zMax - 0.45, sitzZ: RAUM.zMax - 0.5, vorneZ: RAUM.zMax - 1.15 },
     update(dt) {
       for (const a of animiert) a(dt);

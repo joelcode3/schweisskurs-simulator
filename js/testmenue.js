@@ -10,7 +10,7 @@ export function testMenueAktiv() {
   return new URLSearchParams(location.search).has('test');
 }
 
-export function baueTestMenue({ spiel, welt, kamera, fahrten, fz }) {
+export function baueTestMenue({ spiel, welt, kamera, steuerung, fahrten, fz }) {
   if (!testMenueAktiv() || document.getElementById('testmenue')) return;
   const t = spiel.test;
   const z = t.z;
@@ -237,6 +237,12 @@ export function baueTestMenue({ spiel, welt, kamera, fahrten, fz }) {
   knopf('T79', 'Jeep wieder drosseln', () => { if (fz) fz.jeep.gedrosselt = true; }, {
     sperre: () => (fz && fz.jeep.gedrosselt ? 'Jeep ist schon gedrosselt' : null),
   });
+
+  ueberschrift('Orte (hinspringen)');
+  // Paket E2a: direkt hinter die Werkstatt (vor die Hintertür, Blick auf Schrottplatz und Carport)
+  const springen = (pos, blick) => () => { if (steuerung) steuerung.setze([pos[0], kamera.position.y, pos[1]], [blick[0], 1.2, blick[1]]); };
+  const nichtBeimFahren = () => (fahrten?.faehrt ? 'Erst aussteigen (E)' : null);
+  knopf('T94', 'Platz hinten: vor die Hintertür', springen([-2.9, -5.3], [-12.0, -11.5]), { sperre: nichtBeimFahren });
 
   ueberschrift('Wut und Zeit');
   knopf('T56', 'Wut auf 0', () => t.setzeWut(0));

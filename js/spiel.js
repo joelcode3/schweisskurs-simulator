@@ -4063,6 +4063,12 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
         return ['Turnmatte', 'Vom Carport-Dach geweht. Die Gehwegplatte, die drauf lag, ist jetzt im Benz.', []];
       case 'muelltonnen':
         return ['Mülltonnen', 'Restmüll, Papier, Bio. Die blaue geht nicht mehr zu.', []];
+      case 'hintertuer':
+        return ['Hintertür', 'Geht raus auf den Schrottplatz. Dahinter steht das Carport für Hoflader, Paletten und Pritsche.', []];
+      case 'schrott':
+        return ['Schrott', 'Altmetall, Felgen, kaputte Fahrräder, alte Gasflaschen. Dennis sagt, das ist alles noch was wert.', []];
+      case 'carportHinten':
+        return ['Carport hinterm Haus', 'Drei Plätze: Paletten, Weidemann, Pritsche. Die Pritsche fehlt noch.', []];
       case 'weidemann':
         return ['Hoflader', 'Roter Hoflader mit geschlossener Kabine und Palettengabel. Schlüssel steckt nicht.', []];
       case 'minijeep':

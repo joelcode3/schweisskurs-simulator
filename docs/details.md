@@ -296,10 +296,31 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   (Hügel + Waldrand), Himmel mit Wolken (Kamera-Sichtweite 1500, Nebel ab 260 m, siehe Landschaft). Mülltonnen (grau, blau, braun, detailliert, OHNE
   Schilder, Müllsack daneben) links vom Tor, kein großes Fassadenschild mehr, roter Hoflader OHNE Logo/Schrift (detailliert:
   Kühlergrill, Gegengewicht, Knicklenkung, Kabine mit Sitz/Joystick, Rundumleuchte, Stollenreifen, Hubzylinder) mit Palettengabel
-  rechts neben der Werkstatt, rosa Mini-Jeep (Wrangler-Look, ohne Dach, Elektro-Kinderauto), Feuerschale (flach, graue Asche mit Häufchen, verkohlte Holzreste) mit Dreibein, Kette,
+  im Carport hinterm Haus (Paket E2a, früher rechts neben der Werkstatt), rosa Mini-Jeep (Wrangler-Look, ohne Dach, Elektro-Kinderauto), Feuerschale (flach, graue Asche mit Häufchen, verkohlte Holzreste) mit Dreibein, Kette,
   rundem Grillrost und alter schwarzer Bratwurst. Begehbar: draußen überall innerhalb der Ringstraße (imKreis in landschaft.js),
   in die Werkstatt nur durch die Schlupftür, Bad-Anbau ausgespart. Würfe draußen prallen an der Hauswand und am Geländerand ab
   (hand.js AUSSEN = GELAENDE).
+
+## Platz hinten (Paket E2a)
+- js/platzhinten.js (`bauePlatzHinten`, aus draussen.js aufgerufen): hinter der Werkstatt Schotterfläche (x -24 … 10,4, z -19,5 … -4,1)
+  und ein Schotterweg rechts am Haus entlang (x 5,6 … 10, wo früher der Hoflader parkte), festgefahrene Spuren.
+- Carport (CARPORT x -19,8 … -15,2, z -14,6 … -4,1), von hinten aufs Haus gesehen rechts neben dem Schrottplatz, längs gestellt
+  (Betreiber 9.11.: um 90° gedreht). Holzpfosten, Wellplatten-Dach, Betonplatte, offen zum Schrottplatz (Schilder an dieser Seite)
+  und nach hinten. Drei Buchten vom Haus weg: PRITSCHE (leer, für E2b, hinten ein Kanister-Regal), PALETTEN, WEIDEMANN
+  (BUCHTEN, CARPORT_PFOSTEN). Anklickbar: Schild Paletten (palettenSchild), Dach (carportHinten), Schrotthaufen (schrott).
+- Hoflader parkt zu Spielbeginn in der Bucht „Weidemann“, Schnauze zum Schrottplatz. Figuren fahren raus vorwärts auf die
+  Fahrspur hinterm Haus (z ≈ -11), den Schotterweg vor; zurück denselben Weg, dann hinten ums Carport herum und von der
+  offenen Rückseite vorwärts in die Bucht (fahrten.js LADER_RAUS/LADER_REIN; rückwärts fahren die Figuren nicht).
+- Paletten: alter Platz (x -1, z -7) samt freistehendem Schild ist weg. Die beiden Stapel vom alten Platz neben der Werkstatt
+  (3er und einzelne) stehen jetzt in der Bucht „Paletten“; PALETTEN_PLATZ = diese Bucht. Was am Start schon dort steht, zählt
+  nicht als gebracht (z.palettenRekord wird beim Start gesetzt).
+- Schrottplatz hinter der Werkstatt, links neben dem Carport (SCHROTT_KAESTEN, Hindernisse für Spieler, Fahrzeuge und Wege): Altmetall-Haufen,
+  Felgenstapel, kaputte Fahrräder, Satellitenschüsseln, alte Gasflaschen, Ölfässer, Heizkörper, Waschmaschine. Freier Gang von der
+  Hintertür (x ≈ -2,9) bis zur Fahrspur, die direkt zum Carport führt.
+- Hintertür (HINTERTUER x -3,45 … -2,35, 2,15 m): grüne Brettertür an der Rückwand, steht offen nach draußen; dort hing früher der
+  Hula-Hoop. Reifen hängt jetzt an der rechten Wand zwischen Erste-Hilfe-Kasten und Spüle (HULA_WAND_Z, HULA_PLATZ).
+  wege.js: Ziele hinterm Haus (z < -3,5) gehen durch die Hintertür, sonst durchs Tor; Figuren zum Hoflader laufen selbst
+  dorthin (kein fester Weg durchs Tor mehr). Testmenü T94: vor die Hintertür springen.
 
 ## Carport, Wohnwagen, Benz
 - Dennis' Wohnwagen (js/carport.js, `baueCarport`): links auf der Wiese neben der Betonfläche unter einer Eiche ein großes Carport
@@ -733,6 +754,8 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
 - Die Gerte sieht noch wie eine Peitsche aus.
 - Aufgaben-Icons (Paket B) nur teilweise: Wäsche, Akkuschrauber, Bitsatz, Müll und Leiter fehlen noch.
 - Geänderte Satzwortlaute ohne Neuaufnahme: dennis434–436 und dennis442–446 (die Aufnahmen passen nicht mehr zum Text).
+- E2a Platz hinten (9.11.): Optik nur per Screenshot geprüft; Hoflader-Fahrt von Waldo (raus, Runde, rein) im Test gelaufen, siehe
+  PR. Spieler fährt den Hoflader selbst in die Bucht: nicht ausprobiert (Kollision mit den Pfosten sollte greifen).
 - Test-Tricks: Waldos/Jonnys Timer stören Tests (`wz.beschaeftigt = true; wz.naechsterBesuch = 1e9`); kleine Teile in der Ferne
   erscheinen erst nach ca. 9 s (`fernUpdate`); `setPointerCapture` unter Pointer-Lock in try/catch; JS-Syntax prüfen mit
   `node --input-type=module --check < datei.js`.
