@@ -310,10 +310,10 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Werkstatt, Schrottplatz, Carport; Betreiber 9.11.). Längs gestellt, offen zur Seite (Welt +x, Schilder dort) und nach
   hinten, Schotterboden (kein Beton). Holzpfosten auf Stahl-Pfostenträgern, Pfetten, Sparren, Wellplatten-Dach (vorne hoch,
   hinten tief, liegt auf den Sparren), Stirnbrett, Regenrinne mit Fallrohr, Kopfbänder vorne und hinten, Lampe mit Kabel,
-  Radstopper in den Buchten Paletten und Weidemann, Ölfleck. Schilder hängen an Ketten unter der Pfette. Buchten vom Haus weg:
+  Radstopper nur in der Paletten-Bucht (in der Weidemann-Bucht stieß die Gabel daran), Ölfleck. Schilder hängen an Ketten unter der Pfette. Buchten vom Haus weg:
   PALETTEN, PRITSCHE (ganz leer, dort muss man später durchfahren können, E2b), WEIDEMANN. Herumliegender Kram (nicht in der
   Pritschen-Bucht): 2 Tassen (eine auf dem Palettenstapel), leere Bierflasche, Farbdosen (eine umgekippt, Pfütze), Autobatterie,
-  ein orangefarbenes Verlängerungskabel in Schlaufen (Stecker, Kupplung mit Klappdeckel), Farbdosen mit Etikett, Falz, Läufern und Pinsel. Liegende Teile werden beim Hinlegen angehoben, bis sie aufliegen (legen()). WEIDEMANN (BUCHTEN, CARPORT_PFOSTEN). Der Gang von der Hintertür endet vorne am Carport.
+  ein schwarzes Verlängerungskabel in Schlaufen (Stecker, Kupplung mit Klappdeckel), Farbdosen mit Etikett, Falz, Läufern und Pinsel. Liegende Teile werden beim Hinlegen angehoben, bis sie aufliegen (legen()). WEIDEMANN (BUCHTEN, CARPORT_PFOSTEN). Der Gang von der Hintertür endet vorne am Carport.
   Anklickbar: Schild Paletten (palettenSchild), Dach (carportHinten), Schrotthaufen (schrott), Gitterboxen (gitterbox).
 - Hoflader steht zu Spielbeginn vorwärts eingeparkt in der Bucht „Weidemann“ (Schnauze nach hinten). Figuren setzen erst
   rückwärts heraus (fz.rueckwaerts, fahrten.js LADER_RUECK, Heck schwenkt nach hinten), fahren dann vorwärts zum Weg rechts
@@ -326,7 +326,7 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Baustahlgitter, Töpfe, Pfannen, Grillroste, rostiges Werkzeug (kleinteil()); Kleinkram am Fuß. Gitterboxen randvoll mit
   Kleinteilen (Schrauben mit Sechskantkopf, Muttern, Scheiben, Federn, Kugellager, Zahnräder, Winkel, Scharniere, Ketten; eine
   gestapelt; größere Einzelteile wie Zahnräder, Flansche, Wellen, Winkel, Ketten, Lager, Zwingen, keine durchgehende Füllung),
-  eine Gitterbox nur mit schwarzen, rostigen Stahlfelgen und eine voller Autofedern, chaotisch drin. Kaputter Betonmischer
+  eine Gitterbox nur mit schwarzen, rostigen Stahlfelgen (fest neben der Hintertür) und eine voller Autofedern, chaotisch drin. Kaputter Betonmischer
   (hohle Trommel mit Tiefe, innen Betonkruste und Schrott, Zahnkranz, Kipphebel, Handrad, Motor ausgebaut, ein Rad fehlt, Ziegel),
   umgefallener Standventilator (Flügel ab), Mofa ohne Motor (Kabelreste), Felgen- und Altreifenstapel, kaputte Fahrräder (Lenker
   mit Vorbau, Griffen, Bremshebeln, Klingel), Satellitenschüssel, Gasflaschen, Heizkörper, Waschmaschine, Autotüren, Motorblock,
@@ -339,8 +339,10 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   schichten sich auf; nicht ganz streng (Prüfkasten verkleinert, Teile sinken etwas ein, Betreiber-Wunsch). Danach werden die
   Teile jedes Gegenstands zu wenigen Meshes zusammengefasst (zusammenfassen(), Leistung: ca. 2.900 statt 7.100 Zeichenaufrufe). Freier Gang von der Hintertür (x ≈ -2,9) bis vorne ans Carport.
 - Blauer 20-Fuß-Container (CONTAINER x -1,6 … 4,46, z -6,6 … -4,1) Rücken an Rücken an der Rückwand, von hinten gesehen links
-  neben der Hintertür (Gang bleibt frei). Längsseite zum Hof ganz offen; innen auf Kanthölzern Metalllängen (5,85 m: Doppel-T,
-  Vierkant, Rundrohre, Flachstahl). Noch ohne Funktion (später Metall einladen). Anklickbar (container), Hindernis, in wege.js.
+  neben der Hintertür (Gang bleibt frei). Längsseite zum Hof ganz offen. Innen an der Rückwand drei gelbe Fachbodenregale
+  (Kisten mit Schraubenschlüsseln, Vierzylinder-Motor, Hinterachse, Kanister, Ölflaschen), davor ein Kragarmregal mit den
+  Metalllängen (5,85 m: Doppel-T, Vierkant, Rundrohre, Flachstahl). Noch ohne Funktion (später Metall einladen). Anklickbar
+  (container), Hindernis, in wege.js.
   Vor der offenen Seite liegt kein Schrott (frei für später).
 - Hintertür (HINTERTUER x -3,45 … -2,35, 2,15 m): grüne Brettertür an der Rückwand, steht offen nach draußen; dort hing früher der
   Hula-Hoop. Reifen hängt jetzt an der rechten Wand zwischen Erste-Hilfe-Kasten und Spüle (HULA_WAND_Z, HULA_PLATZ).

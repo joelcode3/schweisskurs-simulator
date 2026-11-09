@@ -190,7 +190,7 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
   cp.add(setze(zylinder(0.006, 0.006, L, 0x1d1d1f, { umriss: false }, 4), 0, hVorne - PF - 0.02, D / 2 - 0.1, 0, 0, Math.PI / 2));
   // Radstopper (Holzbalken) hinten in den Buchten Paletten und Weidemann (die Pritschen-Bucht bleibt frei zum Durchfahren),
   // Ölfleck in der Weidemann-Bucht
-  for (const i of [0, 2]) cp.add(setze(quader(1.6, 0.12, 0.14, 0x7a5a3a, { umriss: 0.003 }), -L / 2 + BB * (i + 0.5), 0.07, -D / 2 + 0.55));
+  for (const i of [0]) cp.add(setze(quader(1.6, 0.12, 0.14, 0x7a5a3a, { umriss: 0.003 }), -L / 2 + BB * (i + 0.5), 0.07, -D / 2 + 0.55));
   {
     const fleck = new THREE.Mesh(new THREE.CircleGeometry(0.55, 14), toon(0x2a2622, { transparent: true, opacity: 0.55, depthWrite: false }));
     fleck.rotation.x = -Math.PI / 2; fleck.scale.set(1.3, 0.8, 1);
@@ -316,7 +316,7 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     const g = new THREE.Group();
     const pkt = [[-1.1, 0.2], [-0.6, 0.45], [-0.1, 0.2], [0.1, -0.3], [-0.2, -0.6], [-0.6, -0.4], [-0.4, 0.0], [0.2, 0.1], [0.7, -0.1], [0.9, -0.5], [0.6, -0.75], [0.3, -0.5], [0.6, -0.2], [1.2, 0.1]];
     const kurve = new THREE.CatmullRomCurve3(pkt.map(([x, z], i) => new THREE.Vector3(x, 0.022 + (i === 7 || i === 12 ? 0.012 : 0), z)), false, 'centripetal');
-    const kabel = new THREE.Mesh(new THREE.TubeGeometry(kurve, 220, 0.009, 6, false), toon(0xe06a1a));
+    const kabel = new THREE.Mesh(new THREE.TubeGeometry(kurve, 220, 0.009, 6, false), toon(0x1d1d1f));
     kabel.castShadow = true;
     g.add(kabel);
     // Stecker
@@ -470,6 +470,16 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
   // großes Teil am Boden hinlegen (sucht einen freien Platz in der Nähe)
   const legen = (obj, x, z, ry = r() * Math.PI * 2) => {
     if (!platziere(schrottReg, gruppe, obj, x, z, ry, { suche: true, drin: imSchrott, sf: 0.7 })) weggelassen++;
+    else zusammenfassen(obj);
+    return obj;
+  };
+  // fest an diese Stelle (Grundriss nur im Kasten, nicht in der Rundung), z. B. die Felgen-Box neben der Hintertür
+  const imKastenEckig = (e) => {
+    const [ux, uz] = achsen(e.yaw);
+    return [[1, 1], [1, -1], [-1, 1], [-1, -1]].every(([a, b]) => { const px = e.cx + ux[0] * e.hx * a + uz[0] * e.hz * b, pz = e.cz + ux[1] * e.hx * a + uz[1] * e.hz * b; return SCHROTT_KAESTEN.some((k) => px > k.xMin && px < k.xMax && pz > k.zMin && pz < k.zMax); });
+  };
+  const legenFest = (obj, x, z, ry) => {
+    if (!platziere(schrottReg, gruppe, obj, x, z, ry, { suche: true, drin: imKastenEckig, sf: 0.7 })) weggelassen++;
     else zusammenfassen(obj);
     return obj;
   };
@@ -807,7 +817,16 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     tr.add(innen);
     tr.add(setze(teil(new THREE.TorusGeometry(0.205, 0.022, 8, 24), 0xb8601e, { umriss: 0.002 }), 0, 0.42, 0, Math.PI / 2, 0, 0)); // Rand
     // Betonkruste am Rand und innen, Rost außen, Delle
-    for (let i = 0; i < 10; i++) { const w = r() * 6.28; tr.add(setze(quader(0.05 + r() * 0.06, 0.03, 0.03, 0xb8b4aa, { umriss: false }), Math.cos(w) * 0.2, 0.42, Math.sin(w) * 0.2, 0, -w, 0)); }
+    // Betonkruste: unregelmäßiger grauer Belag innen am Rand (flach), keine Klötze
+    for (let i = 0; i < 6; i++) { const w0 = r() * 6.28, kr = new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.012, 4, 10, 0.5 + r() * 0.8), toon(0x8a867c)); kr.rotation.set(Math.PI / 2, 0, w0); kr.position.y = 0.4; kr.scale.set(1, 1, 0.5); tr.add(kr); }
+    // Schweißnähte, Verstärkungsringe, Lippe dunkler
+    for (const [y, rr] of [[-0.05, 0.372], [0.24, 0.302]]) tr.add(setze(teil(new THREE.TorusGeometry(rr, 0.008, 4, 28), 0xb8601e, { umriss: false }), 0, y, 0, Math.PI / 2, 0, 0));
+    // Betonspritzer außen: flache, graue Flecken auf dem Bauch
+    for (let i = 0; i < 7; i++) { const w = r() * 6.28, y = -0.25 + r() * 0.2; const f = new THREE.Mesh(new THREE.CircleGeometry(0.03 + r() * 0.04, 7), toon(0x9a968c, { side: THREE.DoubleSide })); f.position.set(Math.cos(w) * 0.352, y, Math.sin(w) * 0.352); f.lookAt(Math.cos(w) * 2, y, Math.sin(w) * 2); tr.add(f); }
+    // Schrauben am Zahnkranz
+    for (let k = 0; k < 12; k++) { const w = k / 12 * 6.28; tr.add(setze(zylinder(0.009, 0.009, 0.03, 0x7a7e84, { umriss: false }, 6), Math.cos(w) * 0.37, 0.005, Math.sin(w) * 0.37)); }
+    // Typenschild
+    tr.add(setze(quader(0.08, 0.05, 0.004, 0xc0c4c8, { umriss: false }), 0.0, 0.1, 0.345, 0, 0, 0));
     for (let i = 0; i < 8; i++) { const w = r() * 6.28, y = -0.2 + r() * 0.35; tr.add(setze(quader(0.07 + r() * 0.08, 0.05 + r() * 0.08, 0.008, 0x8a4a2a, { umriss: false }), Math.cos(w) * 0.375, y, Math.sin(w) * 0.375, 0, -w + Math.PI / 2, 0)); }
     tr.add(setze(quader(0.14, 0.1, 0.02, 0xa85818, { umriss: false }), 0.36, 0.0, 0.1, 0, 0.3, 0.2));
     // Mischflügel innen
@@ -827,6 +846,14 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     tr.add(drin);
     tr.position.set(0.1, 1.05, 0); tr.rotation.z = -0.75;
     g.add(tr);
+    // Trommelbügel: U-Bügel vom Lagerbock unter die Trommel, mit Lagerschale; Schmiernippel
+    for (const sz of [-1, 1]) stab(0.1, 1.05, sz * 0.36, -0.12, 0.72, sz * 0.36, 0.022, RAHMEN);
+    stab(-0.12, 0.72, -0.36, -0.12, 0.72, 0.36, 0.022, RAHMEN);
+    g.add(setze(zylinder(0.05, 0.05, 0.06, 0x3a3a3c, { umriss: 0.001 }, 12), -0.12, 0.72, 0, Math.PI / 2, 0, 0));
+    for (const sz of [-1, 1]) g.add(setze(zylinder(0.008, 0.008, 0.03, 0xd8b23a, { umriss: false }, 6), 0.1, 1.12, sz * 0.32));
+    // Kurbel am Handrad
+    stab(0.1, 1.05, 0.46, 0.1, 1.17, 0.5, 0.01, RAHMEN);
+    g.add(setze(zylinder(0.016, 0.016, 0.07, 0x1d1d1f, { umriss: 0.001 }, 8), 0.1, 1.19, 0.54, Math.PI / 2, 0, 0));
     // Ritzel am Zahnkranz, Kipphebel und Handrad
     g.add(setze(zylinder(0.06, 0.06, 0.05, 0x3a3a3c, { umriss: 0.002 }, 12), -0.18, 0.72, 0.0, 0, 0, Math.PI / 2 - 0.75));
     stab(0.1, 1.05, 0.4, 0.5, 1.45, 0.42, 0.018, 0x7a7e84);
@@ -845,8 +872,8 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     g.add(kasten);
     g.add(setze(quader(0.08, 0.3, 0.22, 0x5a5e62, { umriss: 0.002 }), -0.12, 0.55, -0.2, 0, 0, 0.5)); // Riemenschutz
     // Betonspritzer am Gestell und auf dem Boden
-    for (let i = 0; i < 8; i++) g.add(setze(quader(0.03 + r() * 0.05, 0.02, 0.03 + r() * 0.04, 0xb8b4aa, { umriss: false }), (r() - 0.5) * 1.0, 0.31, (r() < 0.5 ? -1 : 1) * 0.28));
-    for (let i = 0; i < 4; i++) { const f = new THREE.Mesh(new THREE.CircleGeometry(0.06 + r() * 0.08, 8), toon(0xb8b4aa)); f.rotation.x = -Math.PI / 2; f.position.set((r() - 0.5) * 1.2, 0.012, (r() - 0.5) * 0.8); g.add(f); }
+    for (let i = 0; i < 8; i++) g.add(setze(quader(0.03 + r() * 0.05, 0.012, 0.03 + r() * 0.04, 0x8a867c, { umriss: false }), (r() - 0.5) * 1.0, 0.318, (r() < 0.5 ? -1 : 1) * 0.28));
+    for (let i = 0; i < 4; i++) { const f = new THREE.Mesh(new THREE.CircleGeometry(0.06 + r() * 0.08, 8), toon(0x9a968c)); f.rotation.x = -Math.PI / 2; f.position.set((r() - 0.5) * 1.2, 0.012, (r() - 0.5) * 0.8); g.add(f); }
     g.rotation.x = 0.06; // hängt etwas schief (Ziegel statt Rad)
     const h = new THREE.Group(); h.add(g);
     merke(h, 'betonmischer', 'Betonmischer', null);
@@ -1132,7 +1159,7 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     g.add(m);
     return g;
   }
-  function gitterbox(x, z, ry, oben = 0, inhalt = 'kleinteile', randFrei = false) {
+  function gitterbox(x, z, ry, oben = 0, inhalt = 'kleinteile', randFrei = false, fest = false) {
     const g = new THREE.Group();
     const GB = 1.24, GT = 0.835, GH = 0.97, FUSS = 0.12;
     const wand = (w, h, px, pz, wry) => {
@@ -1228,12 +1255,13 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     const h = new THREE.Group();
     h.add(g);
     merke(h, 'gitterbox', 'Gitterbox', null);
-    return oben ? draufstellen(h, x, z, ry) : legen(h, x, z, ry);
+    return oben ? draufstellen(h, x, z, ry) : fest ? legenFest(h, x, z, ry) : legen(h, x, z, ry);
   }
 
   // Haufen und Teile im Schrottplatz (der Gang bei x -3,5 … -2,3 bleibt frei): dicht an dicht, gehäuft
+  gitterbox(-4.45, -4.95, 0.0, 0, 'felgen', false, true); // neben der Hintertür
   treckerreifen(-9.9, -9.4); // zuerst: braucht am meisten Platz
-  felgenStapel(-10.6, -9.9, 6); felgenStapel(-10.05, -10.0, 4); felgenStapel(-4.25, -4.95, 5);
+  felgenStapel(-10.6, -9.9, 6); felgenStapel(-10.05, -10.0, 4); felgenStapel(-5.6, -4.95, 5);
   reifenStapel(-10.9, -8.6, 5); reifenStapel(-10.85, -7.9, 3); reifenStapel(-10.6, -4.9, 2, true);
   fahrrad(-10.85, -6.2, 0.1, true, 0x2f5fa8);
   fahrrad(-10.8, -9.3, 0.2, true, 0xc8382c);
@@ -1359,12 +1387,11 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
   kicker(-5.6, -6.6, 0.3);
   // Gitterkisten voller Kleinteile (eine steht auf einer anderen)
   gitterbox(-6.0, -9.85, 0.05, 0, 'kleinteile', true); gitterbox(-7.6, -9.9, -0.04); gitterbox(-6.0, -9.85, 0.05, 1);
-  gitterbox(-5.3, -4.95, 0.0, 0, 'felgen');
   // hinter dem Container (zwischen Container und Carport), mit Abstand zur offenen Containerseite
   reifenStapel(2.3, -9.9, 4); felgenStapel(-1.6, -9.9, 4); gasflasche(-1.6, -9.0, 0x8c8f94, false);
   gitterbox(1.2, -9.95, 0.03, 0, 'federn');
   // zuletzt die Haufen: Profile und Rohre schichten sich um und auf das, was schon steht
-  altmetall(-8.0, -7.9, 2.2, 2.0, 130, 1.2);
+  altmetall(-8.0, -7.9, 2.0, 1.8, 75, 1.0);
   altmetall(-6.3, -6.7, 1.1, 1.1, 50, 0.8);
   altmetall(-10.0, -5.6, 1.1, 0.9, 38, 0.7);
   altmetall(0.3, -9.5, 1.9, 0.75, 36, 0.6);
@@ -1398,30 +1425,108 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     for (const sx of [-1, 1]) for (const y of [0.07, H - 0.1]) c.add(setze(quader(0.12, 0.14, T, BLAU_D, { umriss: 0.003 }), sx * (B / 2 - 0.06), y, 0));
     // Eckbeschläge (grau)
     for (const sx of [-1, 1]) for (const sz of [-1, 1]) for (const y of [0.08, H - 0.08]) c.add(setze(quader(0.18, 0.12, 0.18, 0x8c8f94, { umriss: 0.002 }), sx * (B / 2 - 0.09), y, sz * (T / 2 - 0.09)));
-    // Kanthölzer quer als Auflage, darauf Metalllängen (5,85 m: passen gerade so rein)
+    // Innen: an der Rückwand drei gelbe Fachbodenregale mit größeren Teilen (Kisten mit Schraubenschlüsseln, Motor,
+    // Hinterachse, Kanister); davor ein Kragarmregal mit den Metalllängen (5,85 m: passen gerade so rein)
+    const GELB = 0xe8b820, BODEN0 = 0.165;
+    const RT = 0.5, RH = 2.05, RB = 1.8, RZ = T / 2 - 0.12 - RT / 2;
+    const regalAn = (cx) => {
+      const rg = new THREE.Group();
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+        rg.add(setze(quader(0.05, RH, 0.05, GELB, { umriss: 0.002 }), sx * (RB / 2 - 0.025), RH / 2, sz * (RT / 2 - 0.025)));
+        for (let k = 0; k < 14; k++) rg.add(setze(quader(0.012, 0.025, 0.004, 0x1d1d1f, { umriss: false }), sx * (RB / 2 - 0.025), 0.15 + k * 0.13, sz * (RT / 2 - 0.025) - sz * 0.027)); // Lochung
+      }
+      for (const sx of [-1, 1]) for (const y of [0.4, 1.4]) rg.add(setze(quader(0.012, 0.6, 0.012, GELB, { umriss: false }), sx * (RB / 2 - 0.025), y, 0, 0.7, 0, 0)); // Diagonalen
+      const ebenen = [0.12, 0.72, 1.32, 1.92];
+      for (const y of ebenen) {
+        for (const sz of [-1, 1]) rg.add(setze(quader(RB, 0.05, 0.03, GELB, { umriss: 0.002 }), 0, y, sz * (RT / 2 - 0.02)));
+        rg.add(setze(quader(RB - 0.06, 0.02, RT - 0.04, 0x9a9da2, { umriss: 0.002 }), 0, y + 0.035, 0));
+      }
+      rg.position.set(cx, BODEN0, RZ);
+      c.add(rg);
+      return ebenen.map((y) => BODEN0 + y + 0.045);
+    };
+    const eb = [-2.0, 0, 2.0].map(regalAn);
+    // Kiste (Eurobox) mit Schraubenschlüsseln, die herausschauen
+    const kiste = (x, y, z, farbe) => {
+      const k = new THREE.Group();
+      k.add(setze(quader(0.4, 0.02, 0.3, farbe, { umriss: 0.002 }), 0, 0.01, 0));
+      for (const sz of [-1, 1]) k.add(setze(quader(0.4, 0.22, 0.015, farbe, { umriss: 0.002 }), 0, 0.11, sz * 0.145));
+      for (const sx of [-1, 1]) k.add(setze(quader(0.015, 0.22, 0.3, farbe, { umriss: 0.002 }), sx * 0.195, 0.11, 0));
+      for (let i = 0; i < 7; i++) {
+        const sk = new THREE.Group(), l = 0.2 + r() * 0.12;
+        sk.add(setze(quader(0.022, l, 0.006, 0xc0c4c8, { umriss: 0.001 }), 0, l / 2, 0));
+        sk.add(setze(teil(new THREE.TorusGeometry(0.02, 0.007, 4, 8, Math.PI * 1.4), 0xc0c4c8, { umriss: false }), 0, l + 0.012, 0, 0, 0, 0.9));
+        sk.position.set(-0.15 + i * 0.05, 0.05, (r() - 0.5) * 0.18); sk.rotation.z = (r() - 0.5) * 0.4;
+        k.add(sk);
+      }
+      k.position.set(x, y, z);
+      c.add(k);
+    };
+    kiste(-2.5, eb[0][1], RZ, 0x2f5fa8); kiste(-2.0, eb[0][1], RZ, 0xc8382c); kiste(-1.5, eb[0][1], RZ, 0x5a5e62);
+    kiste(-2.4, eb[0][2], RZ, 0x5a5e62); kiste(-1.85, eb[0][2], RZ, 0x2f5fa8);
+    kiste(1.6, eb[2][2], RZ, 0xc8382c); kiste(2.2, eb[2][3], RZ, 0x2f5fa8); kiste(-0.5, eb[1][3], RZ, 0x5a5e62);
+    // Motor (Vierzylinder) auf dem untersten Boden des mittleren Regals
+    {
+      const mo = new THREE.Group(), GUSS = 0x6e6a64;
+      mo.add(setze(quader(0.55, 0.3, 0.32, GUSS, { umriss: 0.003 }), 0, 0.2, 0)); // Block
+      mo.add(setze(quader(0.53, 0.1, 0.26, 0x5a5650, { umriss: 0.002 }), 0, 0.4, 0)); // Kopf
+      mo.add(setze(quader(0.5, 0.06, 0.2, 0x2a2a2c, { umriss: 0.002 }), 0, 0.48, 0)); // Ventildeckel
+      mo.add(setze(zylinder(0.015, 0.015, 0.04, 0xd8b23a, { umriss: false }, 8), 0.1, 0.53, 0)); // Öldeckel
+      mo.add(setze(quader(0.48, 0.08, 0.26, 0x3a3a3c, { umriss: 0.002 }), 0, 0.03, 0)); // Ölwanne
+      for (let k = 0; k < 4; k++) mo.add(setze(zylinder(0.025, 0.025, 0.14, 0x7a7e84, { umriss: false }, 8), -0.18 + k * 0.12, 0.38, 0.19, Math.PI / 2 - 0.4, 0, 0)); // Krümmer
+      mo.add(setze(zylinder(0.08, 0.08, 0.04, 0x3a3a3c, { umriss: 0.001 }, 14), 0.3, 0.2, 0, 0, 0, Math.PI / 2)); // Riemenscheibe
+      mo.add(setze(zylinder(0.15, 0.15, 0.03, 0x5a5e62, { umriss: 0.001 }, 18), -0.3, 0.2, 0, 0, 0, Math.PI / 2)); // Schwungscheibe
+      mo.add(setze(teil(new THREE.TorusGeometry(0.06, 0.008, 4, 12), 0x1d1d1f, { umriss: false }), 0.3, 0.3, 0.03, 0, Math.PI / 2, 0)); // Keilriemen
+      mo.position.set(0, eb[1][0], RZ);
+      c.add(mo);
+    }
+    // Hinterachse auf dem untersten Boden des rechten Regals: Achsrohr, Differenzial, Trommeln, Federaufnahmen
+    {
+      const ha = new THREE.Group();
+      ha.add(setze(zylinder(0.04, 0.045, 1.6, 0x3a3634, { umriss: 0.002 }, 12), 0, 0.15, 0, 0, 0, Math.PI / 2));
+      const diff = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 12), toon(0x3a3634)); diff.scale.set(0.8, 1, 1); diff.position.set(0.15, 0.15, 0); umrissLinie(diff, 0.002); ha.add(diff);
+      ha.add(setze(zylinder(0.14, 0.14, 0.03, 0x5a5650, { umriss: 0.001 }, 16), 0.15, 0.15, -0.1, Math.PI / 2, 0, 0)); // Deckel
+      ha.add(setze(zylinder(0.03, 0.035, 0.14, 0x5a5650, { umriss: 0.001 }, 10), 0.15, 0.15, 0.17, Math.PI / 2, 0, 0)); // Flansch
+      for (const sx of [-1, 1]) {
+        ha.add(setze(zylinder(0.12, 0.12, 0.08, 0x7a3e22, { umriss: 0.002 }, 16), sx * 0.8, 0.15, 0, 0, 0, Math.PI / 2)); // Trommel
+        for (let k = 0; k < 5; k++) { const w = k / 5 * 6.28; ha.add(setze(zylinder(0.008, 0.008, 0.04, 0x9a9da2, { umriss: false }, 6), sx * 0.85, 0.15 + Math.cos(w) * 0.06, Math.sin(w) * 0.06, 0, 0, Math.PI / 2)); }
+        ha.add(setze(quader(0.08, 0.04, 0.12, 0x3a3634, { umriss: 0.001 }), sx * 0.5, 0.2, 0)); // Federaufnahme
+      }
+      ha.position.set(2.0, eb[2][0] - 0.03, RZ);
+      c.add(ha);
+    }
+    // Kanister und Ölflaschen
+    for (const [x, f] of [[-0.6, 0xc8382c], [-0.25, 0x2f6b3a]]) c.add(setze(quader(0.18, 0.3, 0.28, f, { umriss: 0.002 }), x, eb[1][1] + 0.15, RZ));
+    for (let k = 0; k < 5; k++) c.add(setze(zylinder(0.04, 0.04, 0.24, [0x1d1d1f, 0xd8b23a, 0x2f5fa8][k % 3], { umriss: 0.001 }, 10), 0.3 + k * 0.1, eb[1][2] + 0.12, RZ + 0.05));
+    // Kragarmregal davor: Säulen mit Fuß nach vorn, Arme mit hochgebogener Spitze, darauf die Längen
+    const KZ = RZ - RT / 2 - 0.12, ARM = 0.75, KR = 0x3a4a5a;
+    const armY = [0.55, 1.05, 1.55];
+    for (const x of [-2.5, -0.85, 0.85, 2.5]) {
+      c.add(setze(quader(0.12, 1.75, 0.14, KR, { umriss: 0.002 }), x, BODEN0 + 0.875, KZ));
+      c.add(setze(quader(0.1, 0.1, ARM + 0.2, KR, { umriss: 0.002 }), x, BODEN0 + 0.05, KZ - (ARM + 0.2) / 2)); // Fuß
+      for (const y of armY) {
+        c.add(setze(quader(0.06, 0.06, ARM, KR, { umriss: 0.002 }), x, BODEN0 + y, KZ - ARM / 2 - 0.07));
+        c.add(setze(quader(0.06, 0.08, 0.04, KR, { umriss: 0.001 }), x, BODEN0 + y + 0.06, KZ - ARM - 0.05)); // Spitze
+      }
+    }
     const LANG = 5.85;
-    for (const x of [-2.3, -0.8, 0.8, 2.3]) c.add(setze(quader(0.1, 0.1, T - 0.4, 0x8a6440, { umriss: 0.002 }), x, 0.22, 0));
     const STAHL = [0x6e6a64, 0x5e5a56, 0x7c7670, 0x8a5a3a];
-    let y0 = 0.27;
-    // Lage 1: Doppel-T-Träger
+    const auf = (y) => BODEN0 + y + 0.03;
+    // unten: Doppel-T-Träger
     for (let i = 0; i < 4; i++) {
-      const z = -T / 2 + 0.45 + i * 0.32, f = STAHL[i % 4];
+      const z = KZ - 0.15 - i * 0.16, f = STAHL[i % 4];
       const tr = new THREE.Group();
       tr.add(setze(quader(LANG, 0.012, 0.12, f, { umriss: 0.002 }), 0, 0.006, 0));
       tr.add(setze(quader(LANG, 0.012, 0.12, f, { umriss: 0.002 }), 0, 0.154, 0));
       tr.add(setze(quader(LANG, 0.14, 0.008, f, { umriss: false }), 0, 0.08, 0));
-      tr.position.set((r() - 0.5) * 0.04, y0, z);
+      tr.position.set((r() - 0.5) * 0.04, auf(armY[0]), z);
       c.add(tr);
     }
-    y0 += 0.17;
-    // Lage 2: Vierkantrohre
-    for (let i = 0; i < 9; i++) c.add(setze(quader(LANG, 0.08, 0.08, STAHL[(i + 1) % 4], { umriss: 0.002 }), (r() - 0.5) * 0.03, y0 + 0.04, -T / 2 + 0.4 + i * 0.16));
-    y0 += 0.09;
-    // Lage 3: Rundrohre
-    for (let i = 0; i < 12; i++) c.add(setze(zylinder(0.045, 0.045, LANG, STAHL[(i + 2) % 4], { umriss: 0.002 }, 10), (r() - 0.5) * 0.03, y0 + 0.045, -T / 2 + 0.38 + i * 0.12, 0, 0, Math.PI / 2));
-    y0 += 0.1;
-    // Lage 4: Flachstahl und Winkel, nicht ganz so ordentlich
-    for (let i = 0; i < 10; i++) c.add(setze(quader(LANG - r() * 0.8, 0.012, 0.06, STAHL[i % 4], { umriss: 0.001 }), (r() - 0.5) * 0.4, y0 + 0.01 + i * 0.012, -T / 2 + 0.5 + r() * (T - 1.0), 0, (r() - 0.5) * 0.04, 0));
+    // Mitte: Vierkantrohre und Rundrohre
+    for (let i = 0; i < 5; i++) c.add(setze(quader(LANG, 0.08, 0.08, STAHL[(i + 1) % 4], { umriss: 0.002 }), (r() - 0.5) * 0.03, auf(armY[1]) + 0.04, KZ - 0.13 - i * 0.1));
+    for (let i = 0; i < 6; i++) c.add(setze(zylinder(0.04, 0.04, LANG, STAHL[(i + 2) % 4], { umriss: 0.002 }, 10), (r() - 0.5) * 0.03, auf(armY[1]) + 0.12, KZ - 0.15 - i * 0.09, 0, 0, Math.PI / 2));
+    // oben: Flachstahl und Winkel
+    for (let i = 0; i < 8; i++) c.add(setze(quader(LANG - r() * 0.6, 0.012, 0.06, STAHL[i % 4], { umriss: 0.001 }), (r() - 0.5) * 0.3, auf(armY[2]) + 0.006 + (i % 3) * 0.012, KZ - 0.12 - i * 0.07, 0, (r() - 0.5) * 0.02, 0));
     merke(c, 'container', 'Container', null);
     hindernis(K.xMin, K.xMax, K.zMin, K.zMax);
   }
