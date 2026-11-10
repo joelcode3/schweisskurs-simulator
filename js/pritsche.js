@@ -1,12 +1,14 @@
 // Paket E2b: Joels Pritsche abschleppen.
-// Ablauf: Joel kommt in die Werkstatt und bittet um Hilfe. Man holt den Schlupf vom Haken im Carport, legt ihn auf den
+// Ablauf: Joel kommt in die Werkstatt und bittet um Hilfe. Man holt einen Schlupf (neu im Regal auf dem Karton im unteren Fach oder alt an der Wand
+// bei den Stahlträgern, mit Warnzettel), legt ihn auf den
 // Weidemann (Hoflader anklicken) und steigt ein. Joel stellt sich außen auf den Tritt und fährt mit. An der umgekippten
 // Pritsche (VW T5 an der großen Straße) springt er ab: B = Minispiel „Pritsche bergen“ (anheben, kippen, Schlupf an die
 // Öse). Danach B = Abschleppen: Weidemann vorn, Pritsche am Schlupf hinten, Joel sitzt drin und lenkt. In der grün
 // leuchtenden Bucht „PRITSCHE“ im Carport: B = abstellen. Schäden (Spiegel, Kühler, Ölwanne, Achse, Stoßstange …) ärgern
 // Dennis, ein sauberer Job freut ihn.
 import * as THREE from 'three';
-import { toon, quader, zylinder, setze } from './toon.js';
+import { toon, quader, zylinder, setze, leinwandTextur, zufall } from './toon.js';
+import { RAUM } from './world.js';
 import { BUCHTEN, CARPORT_PFOSTEN } from './platzhinten.js';
 import { baueSchlupf } from './schlupf.js';
 import { inHindernis } from './draussen.js';
@@ -31,20 +33,56 @@ export function bauePritsche(c) {
   const pz = { phase: 'aus', naechsterBesuch: 480 + Math.random() * 300, schaeden: [], spurAb: 0, spur: 0 };
   const T5_START = { pos: t5.position.clone(), ry: t5.rotation.y };
 
-  // ---------- Schlupf: hängt im Carport am Pfosten zwischen Pritschen- und Weidemann-Bucht ----------
-  const schlupf = baueSchlupf(scene, { variante: 'alt' });
+  // ---------- Zwei Schlupfe (Baustein schlupf.js, auch für E3) ----------
+  // neu: liegt im Regal (unteres Brett, vorn), alt: hängt an der Wand über den Stahlträgern, daneben ein Warnzettel.
+  // In E2b funktionieren beide; der Unterschied (alter reißt) kommt in E3 (schlupf.reisst, belastbar).
+  const schlupfNeu = baueSchlupf(scene, { variante: 'neu', station: 'regal' });
+  schlupfNeu.setzeHaken(new THREE.Vector3(-4.64, 0.48 + 0.025, -1.0), new THREE.Euler(-Math.PI / 2, 0, 0.4)); // liegt oben auf dem Karton im unteren Fach
+  schlupfNeu.anHaken();
   {
-    const p = CARPORT_PFOSTEN.slice().sort((a, b) => Math.hypot(a.x - BUCHTEN.pritsche.x - 2.3, a.z - (BUCHTEN.pritsche.z + BUCHTEN.weidemann.z) / 2) - Math.hypot(b.x - BUCHTEN.pritsche.x - 2.3, b.z - (BUCHTEN.pritsche.z + BUCHTEN.weidemann.z) / 2))[0];
-    // Haken (Winkel aus Flachstahl) am Pfosten, Schlupf hängt davor
+    // Schild am Regalbrett: Platz des neuen Schlupfs (anklicken, um ihn zurückzulegen)
+    const tex = leinwandTextur(160, 56, (g, b, h) => { g.fillStyle = '#f2c21c'; g.fillRect(0, 0, b, h); g.fillStyle = '#1d1d1f'; g.font = 'bold 30px Arial'; g.textAlign = 'center'; g.fillText('SCHLUPF', b / 2, 39); });
+    const schild = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 0.052), toon(0xffffff, { map: tex }));
+    schild.position.set(-4.474, 0.212, -1.02); schild.rotation.y = Math.PI / 2;
+    schild.userData.interaktiv = { id: 'schlupfPlatz', name: 'Platz für den Schlupf', station: 'regal' };
+    scene.add(schild);
+    welt.interaktiv?.push(schild);
+  }
+  const schlupfAlt = baueSchlupf(scene, { variante: 'alt' });
+  const WAND_Z = RAUM.zMax - 0.03;
+  {
+    // Haken (Winkel aus Flachstahl) in der Wand, Schlupf hängt davor
     const haken = new THREE.Group();
     haken.add(setze(quader(0.04, 0.1, 0.03, 0x5a5e62, { umriss: 0.001 }), 0, 0, 0));
-    haken.add(setze(quader(0.12, 0.025, 0.03, 0x5a5e62, { umriss: 0.001 }), 0.06, -0.04, 0));
-    haken.position.set(p.x + 0.09, 1.55, p.z);
+    haken.add(setze(quader(0.03, 0.025, 0.1, 0x5a5e62, { umriss: 0.001 }), 0, -0.04, -0.05));
+    haken.position.set(4.35, 1.72, WAND_Z - 0.015);
     scene.add(haken);
-    schlupf.setzeHaken(new THREE.Vector3(p.x + 0.2, 1.38, p.z), Math.PI / 2);
-    schlupf.anHaken();
-    welt.interaktiv?.push(schlupf.obj);
+    schlupfAlt.setzeHaken(new THREE.Vector3(4.35, 1.55, WAND_Z - 0.09), Math.PI);
+    schlupfAlt.anHaken();
+    // dreckiger Zettel daneben, mit Klebeband
+    const tex = leinwandTextur(256, 192, (g, b, h) => {
+      g.fillStyle = '#e9e1c8'; g.fillRect(0, 0, b, h);
+      const r = zufall(31);
+      for (let i = 0; i < 26; i++) { g.fillStyle = `rgba(${70 + r() * 30},${55 + r() * 20},${35 + r() * 15},${0.08 + r() * 0.22})`; g.beginPath(); g.ellipse(r() * b, r() * h, 4 + r() * 26, 3 + r() * 14, r() * 3, 0, Math.PI * 2); g.fill(); }
+      g.fillStyle = 'rgba(40,30,20,0.35)'; g.beginPath(); g.ellipse(190, 150, 34, 22, 0.4, 0, Math.PI * 2); g.fill(); // Ölfinger
+      g.fillStyle = '#b3241c'; g.font = 'bold 34px Arial'; g.textAlign = 'center';
+      g.fillText('Nicht mehr', b / 2, 56); g.fillText('benutzen!', b / 2, 96);
+      g.fillStyle = '#1d1d1f'; g.font = 'bold 30px Arial'; g.fillText('Lebensgefährlich!', b / 2, 148);
+      g.strokeStyle = '#b3241c'; g.lineWidth = 4; g.beginPath(); g.moveTo(40, 162); g.lineTo(216, 158); g.stroke();
+    });
+    const zettel = new THREE.Mesh(new THREE.PlaneGeometry(0.26, 0.195), toon(0xffffff, { map: tex }));
+    zettel.position.set(3.95, 1.5, WAND_Z - 0.005); zettel.rotation.set(0, Math.PI, 0.05);
+    const klebe = setze(quader(0.08, 0.025, 0.003, 0xd8cfa8, { umriss: false }), 0, 0.095, 0.002, 0, 0, -0.1);
+    zettel.add(klebe);
+    zettel.userData.interaktiv = { id: 'schlupfZettel', name: 'Zettel', station: null };
+    scene.add(zettel);
+    welt.interaktiv?.push(zettel);
   }
+  welt.interaktiv?.push(schlupfNeu.obj, schlupfAlt.obj);
+  const SCHLUPFE = [schlupfNeu, schlupfAlt];
+  let schlupf = schlupfNeu; // der gerade benutzte (in der Hand / auf dem Weidemann / gespannt)
+  let alterKommentiert = false;
+  const schlupfVon = (obj) => SCHLUPFE.find((s) => { for (let o = obj; o; o = o.parent) if (o === s.obj) return true; return false; });
   // Schlupf auf dem Weidemann: aufgerollt hinten auf dem Hinterwagen
   const SCHLUPF_AUF_LADER = new THREE.Vector3(0.0, 1.32, -1.5);
   const HAKEN_LADER = new THREE.Vector3(0, 0.55, -1.78); // Anhängekupplung hinten
@@ -337,16 +375,31 @@ export function bauePritsche(c) {
       return ['Joel', { zumLader: 'Wartet am Weidemann.', unterwegs: 'Steht außen auf dem Weidemann und hält sich fest.', amT5: 'Wartet an der Pritsche.', schleppt: 'Sitzt in der Pritsche und lenkt.' }[pz.phase] || 'Joel.', []];
     }
     if (id === 'schlupf') {
-      if (schlupf.zustand === 'haken') return [schlupf.obj.userData.interaktiv.name, 'Rundschlinge zum Abschleppen. Schon ganz schön dreckig.', [A('In die Hand nehmen', 'hand', () => {
+      const sl = schlupfVon(obj) || schlupf;
+      const titel = sl.obj.userData.interaktiv.name;
+      if (sl.zustand === 'haken') return [titel, sl.variante === 'neu' ? 'Neue Rundschlinge zum Abschleppen, noch sauber.' : 'Alte Rundschlinge, dreckig und ausgefranst. Daneben hängt ein Zettel.', [A('In die Hand nehmen', 'hand', () => {
         if (hand.item) { ui.hinweis(`Du hast schon ${hand.item.cfg.name} in der Hand.`, 2400); return; }
-        schlupf.inHand();
-        hand.nimm('schlupf', schlupf.obj);
+        schlupf = sl;
+        sl.inHand();
+        hand.nimm('schlupf', sl.obj);
         blip(520, 0.05);
         handleisteZeigen();
         if (pz.phase !== 'aus' && pz.phase !== 'fertig') ui.hinweis('Jetzt den Weidemann anklicken: der Schlupf kommt hinten drauf.', 3500);
+        if (sl.variante === 'alt' && !alterKommentiert && pz.phase !== 'aus' && pz.phase !== 'fertig') {
+          alterKommentiert = true;
+          setTimeout(() => dennisSagt(sag(DENNIS.pritsche.alterSchlupf), true, { prio: 1 }), 900);
+        }
       })]];
-      if (schlupf.zustand === 'fahrzeug') return ['Schlupf', 'Liegt hinten auf dem Weidemann.', pz.phase === 'schleppt' || pz.phase === 'bereit' ? [] : [A('Zurück an den Haken hängen', 'hand', () => { schlupf.anHaken(); klonk(0.2); })]];
+      if (sl.zustand === 'fahrzeug') return [titel, 'Liegt hinten auf dem Weidemann.', pz.phase === 'schleppt' || pz.phase === 'bereit' ? [] : [A(sl.variante === 'neu' ? 'Zurück ins Regal legen' : 'Zurück an den Haken hängen', 'hand', () => { sl.anHaken(); klonk(0.2); })]];
       return null;
+    }
+    if (id === 'schlupfPlatz') {
+      const zurueck = hand.item?.id === 'schlupf' && schlupf === schlupfNeu;
+      return ['Platz für den Schlupf', schlupfNeu.zustand === 'haken' ? 'Hier liegt der neue Schlupf.' : 'Hier gehört der neue Schlupf hin.', zurueck ? [A('Neuen Schlupf zurücklegen', 'hand', () => { hand.weg(); schlupfNeu.anHaken(); handleisteZeigen(); klonk(0.2); })] : []];
+    }
+    if (id === 'schlupfZettel') {
+      const zurueck = hand.item?.id === 'schlupf' && schlupf === schlupfAlt;
+      return ['Zettel', '„Nicht mehr benutzen! Lebensgefährlich!“ Dreckig, mit Ölfingern drauf.', zurueck ? [A('Alten Schlupf wieder aufhängen', 'hand', () => { hand.weg(); schlupfAlt.anHaken(); handleisteZeigen(); klonk(0.2); })] : []];
     }
     if (id === 'weidemann' && hand.item?.id === 'schlupf' && !lader.fahrer) {
       return ['Hoflader', 'Den Schlupf hinten drauflegen und einsteigen?', [
@@ -366,7 +419,8 @@ export function bauePritsche(c) {
 
   // ---------- Test (Testmenü) ----------
   function zuruecksetzen() {
-    schlupf.loesen(); schlupf.anHaken();
+    for (const sl of SCHLUPFE) { if (hand.item?.obj === sl.obj) { hand.weg(); handleisteZeigen(); } sl.loesen(); sl.anHaken(); }
+    schlupf = schlupfNeu; alterKommentiert = false;
     if (joel.wurzel.parent !== scene) { joel.sitzen(null); scene.attach(joel.wurzel); }
     joel.sichtbar(false);
     modell.rotation.z = Math.PI / 2; modell.position.y = 0.97;
@@ -418,5 +472,8 @@ export function bauePritsche(c) {
     t5Boden(); t5Hindernis(); schlupf.update();
   }
 
-  return { pz, update, menue, joelKommt, helfen, schlupf, test: { zuruecksetzen, testAnDiePritsche, testAbschleppen, testVorDemCarport, bergen, abstellen, imZiel, nachSpiel: (schaeden = []) => { pz.phase = 'minispiel'; return nachSpiel({ abgebrochen: false, schaeden }); } } };
+  return { pz, update, menue, joelKommt, helfen, get schlupf() { return schlupf; }, schlupfNeu, schlupfAlt,
+    // Schlupf in der Hand an seinen Stammplatz zurück (Regal / Haken)
+    schlupfZurueck() { if (hand.item?.id !== 'schlupf') return false; const sl = schlupfVon(hand.item.obj) || schlupf; hand.weg(); sl.anHaken(); handleisteZeigen(); klonk(0.2); return true; },
+    test: { zuruecksetzen, testAnDiePritsche, testAbschleppen, testVorDemCarport, bergen, abstellen, imZiel, nachSpiel: (schaeden = []) => { pz.phase = 'minispiel'; return nachSpiel({ abgebrochen: false, schaeden }); } } };
 }

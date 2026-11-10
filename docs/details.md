@@ -357,8 +357,13 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   `pritscheSpiel` in minispiele.js. Joel (bisher Platzhalter in kumpels.js) hat jetzt eine Rolle, eigene Sätze JOEL (texte.js),
   Sprechblase ui.joelSagt.
 - Ablauf: Joel kommt einmal pro Spiel (nach 8–13 min, ruhige Lage, nicht während man fährt) über den Feldweg in die Werkstatt,
-  bittet um Hilfe (Menü an Joel: „Helfen“). Der Schlupf hängt im Carport am vorderen Pfosten zwischen Pritschen- und Weidemann-
-  Bucht (anklicken = in die Hand). Mit dem Schlupf in der Hand den Weidemann anklicken: Schlupf kommt hinten drauf (aufgerollt
+  bittet um Hilfe (Menü an Joel: „Helfen“). Es gibt zwei Schlupfe (Baustein schlupf.js, Datenmodell variante neu/alt,
+  belastbar, verschleiss, reisst(last) für E3): der NEUE (gelb, sauber) liegt im Regal oben auf dem Karton im unteren Fach,
+  gelbes Schild „SCHLUPF“ am Brett (anklicken = zurücklegen); der ALTE (dreckig, ausgefranst) hängt an der Wand über den
+  Stahlträgern an einem Haken, daneben ein dreckiger Zettel „Nicht mehr benutzen! Lebensgefährlich!“ (Zettel anklicken =
+  alten wieder aufhängen). In E2b funktionieren beide gleich; nimmt man während des Auftrags den alten, sagt Dennis einmal
+  was (pritsche.alterSchlupf, dennis513). Reißen/Last fallen lassen kommt erst in E3. Anklicken = in die Hand.
+  Mit dem Schlupf in der Hand den Weidemann anklicken: Schlupf kommt hinten drauf (aufgerollt
   auf dem Hinterwagen), dann einsteigen. Joel läuft zum Weidemann und stellt sich außen auf den Tritt (fährt mit, sagt bei
   über 3,5 m/s was). Fahrhilfe zeigt die Entfernung zur Pritsche; an der Pritsche liegt ein grüner Ring.
 - Die Pritsche = der umgekippte VW T5 an der großen Straße (ca. 165 m südlich). Unter 9 m und stehend: Joel springt ab,
@@ -372,7 +377,7 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Weidemann stehen. Weidemann und Pritsche können nicht ineinanderfahren. Mit kaputter Ölwanne: Ölfleck und Ölspur.
 - Ziel: Bucht PRITSCHE im Carport leuchtet grün. Durch die Bucht durchfahren (hinten offen), bis die Pritsche drinsteht:
   B = abstellen. Joel bedankt sich und geht hinten weg; Schlupf liegt wieder auf dem Weidemann (Weidemann anklicken = zurück
-  an den Haken; mit dem Schlupf in der Hand: Carport-Dach anklicken = aufhängen). Dennis: Lob und Wut -6 ohne Schäden,
+  an seinen Platz). Dennis: Lob und Wut -6 ohne Schäden,
   Ärger (+3 je Schaden) und ein Spruch bei Schäden. Während des Auftrags fahren die Figuren den Weidemann nicht (lader.gesperrt).
 - Hooks: fahrten.js fz2.nachSchritt (nach jedem Fahrschritt, Tasten), fz2.vorEinsteigen (Ding aus der Hand aufs Fahrzeug),
   fz2.pause (Minispiel), LADER_HILFE; fahrzeuge.js vMax (lader.schleppt), Hindernis-Flag ohneFahrzeug; landschaft.js t5.userData

@@ -78,7 +78,7 @@
 - Alle Dennis-Sätze stehen in `js/texte.js` (IDs = Dateinamen der Aufnahmen), `spiel.js` nutzt nur diese.
 - `stimme/stimme.json` + `stimme/<id>.mp3`: Aufnahmen pro Satz, Mund bewegt sich nach Lautstärke.
   Pflege mit `node tools/stimme.mjs liste|eintragen`, siehe `stimme/LIESMICH.md`.
-- Die Jungs sprechen ALLE Sätze ein. Dateinamen kurz: dennis1 … dennis512 (505–512 Pritsche, 502–504 David, 498–501 Torben wirft, 491–497 Torben-Unfall, 489–490 Pömpel gespritzt, 487–488 Gurte geworfen, 485–486 Flaschen räumen, 483–484 Bierflasche werfen, 469–475 Spanngurt, 476–478 Paletten, 479–482 Hofladen), jonny1 … jonny56, waldo1 … waldo41, torben1 … torben31 (25–31 wütet/isst), kumpel1 … kumpel7 (KUMPEL), david1 … david18 (DAVID), joel1 … joel13 (JOEL) (Endung
+- Die Jungs sprechen ALLE Sätze ein. Dateinamen kurz: dennis1 … dennis513 (505–513 Pritsche, 502–504 David, 498–501 Torben wirft, 491–497 Torben-Unfall, 489–490 Pömpel gespritzt, 487–488 Gurte geworfen, 485–486 Flaschen räumen, 483–484 Bierflasche werfen, 469–475 Spanngurt, 476–478 Paletten, 479–482 Hofladen), jonny1 … jonny56, waldo1 … waldo41, torben1 … torben31 (25–31 wütet/isst), kumpel1 … kumpel7 (KUMPEL), david1 … david18 (DAVID), joel1 … joel13 (JOEL) (Endung
   .mp3/.m4a/.wav, Groß-/Kleinschreibung egal). Zuordnung Kurzname -> Satz-ID steht in stimme/zuordnung.csv (vom Projektchat).
   Nummern sind fest und verschieben sich NIE; neue Sätze bekommen die nächste freie Nummer (dennis367 …) und eine neue Zeile.
   Schlüssel in texte.js NIE umbenennen, neue Sätze nur ergänzen. IDs: Dennis wie alleSaetze(), telefon.G.Z = Gespräch G,
@@ -89,7 +89,7 @@
 
 ## Stand der Pull Requests (9.11.2026)
 - Alles bis #68 gemergt. In Arbeit: E2b Pritsche abschleppen (Zweig e2b-pritsche, Vorschau, noch kein PR). Neue Zweige immer von `origin/main`.
-- Versionsnummer zuletzt `v=20261110-1`. Testmenü bis T100, nächste freie T101.
-- Nächste freie Satz-Nummern (aus stimme/zuordnung.csv): dennis513, jonny58, waldo43, torben32, kumpel8, david19, joel14.
+- Versionsnummer zuletzt `v=20261110-2`. Testmenü bis T100, nächste freie T101.
+- Nächste freie Satz-Nummern (aus stimme/zuordnung.csv): dennis514, jonny58, waldo43, torben32, kumpel8, david19, joel14.
 - Projektchat-Session: `session_0136irctrTCA3M7n4aU75GVP` (seit 9.11., Projektchat Nr. 4).
 - Offene Fäden und Ungetestetes: `docs/details.md`, Abschnitt „Offene Fäden und Ungetestetes“ (zuerst lesen, wenn ein neuer Chat startet).

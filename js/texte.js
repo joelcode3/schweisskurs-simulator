@@ -382,6 +382,7 @@ export const DENNIS = {
     geborgen: ['Steht wieder auf den Rädern. Gut gemacht.'],
     abgestellt: ['Da steht sie. Ordentlich. Respekt.', 'Na also, geht doch. Pritsche im Carport.'],
     abgestelltSchaden: ['Steht da, aber guck dir die Ölspur an. Na toll.'],
+    alterSchlupf: ['Den alten? Steht doch dran: lebensgefährlich! Für die Pritsche hält der vielleicht noch. Vielleicht.'],
   },
 };
 

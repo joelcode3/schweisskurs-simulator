@@ -41,7 +41,7 @@ const HALTUNG = {
   kaese: { pos: [0.2, -0.26, -0.5], rot: [0.5, 0.5, 0], skala: 1.4, name: 'Käse (Emmentaler)', benutzen: 'Dennis geben (auf Dennis klicken)' },
   wurst: { pos: [0.2, -0.24, -0.5], rot: [0.9, 0.4, 0.3], skala: 2.2, name: 'Eine einzelne Mettwurst', benutzen: 'Dennis geben (auf Dennis klicken)' },
   mettenden: { pos: [0.2, -0.24, -0.5], rot: [0.45, 0.4, 0], skala: 1.1, name: 'Mettenden (3 Stück)', benutzen: 'Dennis geben (auf Dennis klicken)' },
-  schlupf: { pos: [0.24, -0.3, -0.55], rot: [0.2, 0.6, 0.1], skala: 1.0, name: 'Schlupf (Abschleppseil)', benutzen: 'Auf den Weidemann legen (Weidemann anklicken)', nichtWerfen: true, nichtAblegen: true, ablegenHinweis: 'Den Schlupf legst du auf den Weidemann (anklicken) oder hängst ihn im Carport an den Haken (Carport-Dach anklicken).' },
+  schlupf: { pos: [0.24, -0.3, -0.55], rot: [0.2, 0.6, 0.1], skala: 1.0, name: 'Schlupf', benutzen: 'Auf den Weidemann legen (Weidemann anklicken)', nichtWerfen: true, nichtAblegen: true, ablegenHinweis: 'Den Schlupf legst du auf den Weidemann (anklicken) oder bringst ihn an seinen Platz zurück: der neue ins Regal (gelbes Schild am Brett anklicken), der alte an den Haken (Zettel daneben anklicken).' },
   kaffee: { pos: [0.2, -0.17, -0.45], rot: [0.1, 2.2, 0], skala: 1.3, name: 'Kaffee für Dennis', nichtAblegen: true, ablegenHinweis: 'Den Kaffee bringst du Dennis. Oder weg damit (Q oder G).' },
 };
 

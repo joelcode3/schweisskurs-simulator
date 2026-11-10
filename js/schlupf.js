@@ -5,6 +5,8 @@
 //   fahrzeug  – liegt aufgerollt auf einem Fahrzeug (z. B. hinten auf dem Weidemann), fährt mit
 //   gespannt  – als Seil zwischen zwei Punkten (Funktionen, die Weltpunkte liefern), hängt durch, wenn es locker ist
 // Kein Spielablauf hier drin: wer den Schlupf benutzt, ruft die Zustände auf.
+// Datenmodell für E3 schon da: variante ('neu'/'alt'), belastbar (Anteil der Nennlast, die er sicher hält), verschleiss
+// (0 = neu, 1 = durch), reisst(last) sagt, ob er bei dieser Last reißt. In E2b reißen beide nicht (Pritsche ist leicht genug).
 import * as THREE from 'three';
 import { toon, teil, quader, setze } from './toon.js';
 
@@ -13,7 +15,12 @@ const FARBEN = {
   neu: { gurt: 0xf2c21c, dunkel: 0xc89a10, naht: 0x1d1d1f, dreck: null },
 };
 
-export function baueSchlupf(scene, { variante = 'alt', name } = {}) {
+const DATEN = {
+  neu: { belastbar: 1.0, verschleiss: 0, beschreibung: 'Neue Rundschlinge, noch sauber und knallgelb.' },
+  alt: { belastbar: 0.35, verschleiss: 0.85, beschreibung: 'Alte Rundschlinge, dreckig und ausgefranst.' },
+};
+
+export function baueSchlupf(scene, { variante = 'alt', name, station = null } = {}) {
   const F = FARBEN[variante] || FARBEN.alt;
   const gurtMat = toon(F.gurt), dunkelMat = toon(F.dunkel);
   // ---------- aufgerolltes Modell (Haken, Hand, Fahrzeug) ----------
@@ -27,7 +34,7 @@ export function baueSchlupf(scene, { variante = 'alt', name } = {}) {
     rolle.add(setze(quader(0.05, 0.06, 0.006, variante === 'neu' ? 0x2f5fa8 : 0x7a7a6a, { umriss: false }), 0.12, -0.1, 0.03, 0, 0, 0.5)); // Etikett
     if (F.dreck) for (let i = 0; i < 8; i++) { const w = i / 8 * Math.PI * 2; rolle.add(setze(quader(0.03, 0.02, 0.005, F.dreck, { umriss: false }), Math.cos(w) * 0.15, Math.sin(w) * 0.15, 0.025, 0, 0, w)); }
   }
-  rolle.userData.interaktiv = { id: 'schlupf', name: name || (variante === 'neu' ? 'Neuer Schlupf' : 'Schlupf (Abschleppseil)'), station: null };
+  rolle.userData.interaktiv = { id: 'schlupf', name: name || (variante === 'neu' ? 'Neuer Schlupf' : 'Alter Schlupf'), station };
   scene.add(rolle);
 
   // ---------- gespanntes Seil ----------
@@ -41,15 +48,21 @@ export function baueSchlupf(scene, { variante = 'alt', name } = {}) {
 
   const api = {
     variante,
+    ...DATEN[variante === 'neu' ? 'neu' : 'alt'],
+    // E3: reißt er bei dieser Last (1 = Nennlast)? Alter Schlupf nur bis ca. ein Drittel.
+    reisst(last) { return last > api.belastbar; },
     obj: rolle,
     zustand: 'haken',
     haken: null,
-    // an einen Haken hängen (Weltposition, Blickrichtung)
-    setzeHaken(pos, ry = 0) { api.haken = { pos: pos.clone(), ry }; rolle.userData.wand = { pos: pos.clone(), rot: new THREE.Euler(0, ry, 0) }; },
+    // Stammplatz (Haken oder Regalbrett): Weltposition, Blickrichtung (Zahl) oder ganze Drehung (Euler, z. B. liegend)
+    setzeHaken(pos, ry = 0) {
+      const rot = ry instanceof THREE.Euler ? ry.clone() : new THREE.Euler(0, ry, 0);
+      api.haken = { pos: pos.clone(), rot }; rolle.userData.wand = { pos: pos.clone(), rot: rot.clone() };
+    },
     anHaken() {
       api.loesen();
       scene.add(rolle);
-      if (api.haken) { rolle.position.copy(api.haken.pos); rolle.rotation.set(0, api.haken.ry, 0); }
+      if (api.haken) { rolle.position.copy(api.haken.pos); rolle.rotation.copy(api.haken.rot); }
       rolle.scale.setScalar(1);
       rolle.visible = true;
       api.zustand = 'haken';

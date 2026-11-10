@@ -3754,7 +3754,6 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     if (id === 'torben' && TU.zustand === 'sofa') return ['Torben', 'Liegt auf dem Sofa, den Finger hoch. Lass ihn mal.', []];
     const ausPritsche = pritsche.menue(id, obj);
     if (ausPritsche) return ausPritsche;
-    if (id === 'carportHinten' && hand.item?.id === 'schlupf') return ['Carport hinterm Haus', 'Der Schlupf gehört an den Haken am Pfosten.', [A('Schlupf an den Haken hängen', 'hand', () => { hand.weg(); pritsche.schlupf.anHaken(); handleisteZeigen(); klonk(0.2); })]];
     const ausFahrten = fahrten.menue(id, obj);
     if (ausFahrten) return ausFahrten;
     // Platzhalter-Kumpels (noch ohne Aufgabe)
