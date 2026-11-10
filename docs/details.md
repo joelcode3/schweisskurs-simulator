@@ -382,6 +382,11 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
 - Hooks: fahrten.js fz2.nachSchritt (nach jedem Fahrschritt, Tasten), fz2.vorEinsteigen (Ding aus der Hand aufs Fahrzeug),
   fz2.pause (Minispiel), LADER_HILFE; fahrzeuge.js vMax (lader.schleppt), Hindernis-Flag ohneFahrzeug; landschaft.js t5.userData
   (modell, hindernis).
+- Optik (Betreiber 10.11.): T5 (landschaft.js baueT5) 4,9 m lang, 1,8 m breit, runde Karosserie, kurze schräge Haube,
+  durchsichtige Scheiben mit Innenraum (Sitze, Rückbank, Lenkrad, Armaturen), Radhäuser mit Radlauf, Beulen/Kratzer links und
+  am Dach, Seitenwand hängt aufgesprungen runter. Maße in pritsche.js (T5_VORN 2,55, Hinterachse 1,35, Kasten 0,98 x 2,55).
+  Joel steht seitlich auf dem Tritt (Körper zum Weidemann, hält sich fest, guckt nach vorn: jonny.js festhalten/blickFest).
+  Minispiel: Weidemann von der Seite wie im Spiel (zeichneLader, Arm mit fester Länge, Lader rollt mit), T5-Front zeichneT5Front.
 - Testmenü: T95 Joel kommt, T96 im Weidemann an der Pritsche (mit Joel und Schlupf), T97 Minispiel direkt, T98 steht, direkt
   abschleppen, T99 Gespann kurz vor der Bucht, T100 zurücksetzen.
 
