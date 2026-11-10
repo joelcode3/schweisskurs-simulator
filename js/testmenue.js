@@ -243,6 +243,7 @@ export function baueTestMenue({ spiel, welt, kamera, steuerung, fahrten, fz }) {
   const phase = () => pr?.pz.phase;
   knopf('T95', 'Joel kommt (Pritsche liegt um)', () => pr.joelKommt(), { sperre: () => (phase() !== 'aus' && phase() !== 'fertig' ? 'läuft schon (T100 zurücksetzen)' : null) });
   knopf('T96', 'Im Weidemann an der Pritsche (Joel, Schlupf dabei)', () => pr.test.testAnDiePritsche());
+  knopf('T101', 'Joel fällt vom Weidemann (Aufprall)', () => pr.test.joelFaellt());
   knopf('T97', 'Minispiel Pritsche bergen (direkt)', mini(() => M.pritscheSpiel()), { laeuft: titelEnthaelt('Pritsche bergen') });
   knopf('T98', 'Pritsche steht, direkt abschleppen', () => pr.test.testAbschleppen());
   knopf('T99', 'Gespann kurz vor der Bucht PRITSCHE', () => pr.test.testVorDemCarport());

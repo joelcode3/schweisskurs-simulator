@@ -986,7 +986,8 @@ function baueT5() {
   const scheibe = new THREE.MeshBasicMaterial({ color: 0xb8dcf0, transparent: true, opacity: 0.28, side: THREE.DoubleSide, depthWrite: false });
   const W = 1.8, LGES = 4.9, HW = W / 2;
   // Balken zwischen zwei Punkten (für Fenstersäulen)
-  const strebe = (a, b, d, farbe) => { const v = b.clone().sub(a), m = quader(d, v.length(), d, farbe, { umriss: 0.003 }); m.position.copy(a).addScaledVector(v, 0.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), v.normalize()); t.add(m); return m; };
+  const strebe = (a, b, d, farbe) => // (nur noch für Kleinteile)
+    { const v = b.clone().sub(a), m = quader(d, v.length(), d, farbe, { umriss: 0.003 }); m.position.copy(a).addScaledVector(v, 0.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), v.normalize()); t.add(m); return m; };
   const V = (x, y, z) => new THREE.Vector3(x, y, z);
   // Rahmen
   t.add(setze(quader(1.05, 0.16, LGES - 0.7, 0x2a2c30, { umriss: 0.003 }), 0, 0.45, 0));
@@ -995,23 +996,44 @@ function baueT5() {
   const BL = 1.3; // Gürtellinie: Unterkante der Seitenscheiben (Türen hoch gezogen)
   t.add(setze(rundQuader(W, BL - 0.47, 2.04, LACK, { umriss: 0.005 }, 0.16), 0, (0.47 + BL) / 2, KZ0 + 1.02));
   t.add(setze(rundQuader(W - 0.03, 0.56, 0.62, LACK, { umriss: 0.004 }, 0.17), 0, 0.75, KZ1 - 0.31)); // runde Schnauze, tiefer
-  t.add(setze(rundQuader(W - 0.1, 0.09, 0.56, LACK, { umriss: 0.004 }, 0.045), 0, 1.15, KZ1 - 0.26, 0.54, 0, 0)); // kurze Haube, fällt nach vorn ab
-  // Säulen: A (schräg), B, C kräftig; Dach leicht gewölbt
+  // Motorhaube aus mehreren Teilen: Haubenblech (leicht gewölbt, Sicke), Kotflügel links/rechts etwas höher, Fugen, Windlauf
+  const HAUBE = 0.54, haubeY = 1.15, haubeZ = KZ1 - 0.26;
+  const haube = setze(rundQuader(W - 0.42, 0.08, 0.55, LACK, { umriss: 0.003 }, 0.04), 0, haubeY, haubeZ, HAUBE, 0, 0); t.add(haube);
+  const wölbH = setze(teil(new THREE.CylinderGeometry(1, 1, 0.5, 16, 1, false, -0.5, 1.0), LACK, { umriss: false }), 0, 0, 0.0, Math.PI / 2, 0, 0);
+  wölbH.scale.set(0.62, 1, 0.035); wölbH.position.set(0, 0.04 - 0.035 * Math.cos(0.5), 0); haube.add(wölbH);
   for (const sx of [-1, 1]) {
-    strebe(V(sx * (HW - 0.07), BL - 0.03, 1.95), V(sx * (HW - 0.12), 1.84, 1.48), 0.13, LACK);
-    strebe(V(sx * (HW - 0.05), BL - 0.03, 0.98), V(sx * (HW - 0.08), 1.84, 0.98), 0.17, LACK);
-    strebe(V(sx * (HW - 0.06), BL - 0.03, KZ0 + 0.1), V(sx * (HW - 0.09), 1.84, KZ0 + 0.1), 0.22, LACK);
-    t.add(setze(quader(0.03, 0.03, 2.0, SCHW, { umriss: false }), sx * (HW - 0.02), BL + 0.01, 0.98)); // Fensterdichtung unten
+    haube.add(setze(quader(0.012, 0.012, 0.5, 0x9aa0a6, { umriss: false }), sx * 0.22, 0.05, 0)); // Sicken
+    t.add(setze(rundQuader(0.2, 0.13, 0.58, LACK, { umriss: 0.003 }, 0.05), sx * (HW - 0.11), haubeY + 0.015, haubeZ, HAUBE, 0, 0)); // Kotflügel
+    t.add(setze(quader(0.012, 0.03, 0.56, 0x3a3c40, { umriss: false }), sx * (HW - 0.215), haubeY + 0.01, haubeZ, HAUBE, 0, 0)); // Fuge Haube/Kotflügel
   }
-  t.add(setze(rundQuader(W - 0.08, 0.1, 1.56, LACK, { umriss: 0.004 }, 0.05), 0, 1.86, KZ0 + 0.76));
-  const wölbung = setze(teil(new THREE.CylinderGeometry(1, 1, 1.46, 20, 1, false, -0.6, 1.2), LACK, { umriss: false }), 0, 0, KZ0 + 0.76, Math.PI / 2, 0, 0);
-  wölbung.scale.set(0.86, 1, 0.06); wölbung.position.y = 1.9 - 0.06 * Math.cos(0.6); t.add(wölbung);
+  t.add(setze(quader(W - 0.45, 0.025, 0.02, 0x3a3c40, { umriss: false }), 0, 1.03, KZ1 - 0.02)); // Fuge vorn über dem Grill
+  t.add(setze(rundQuader(W - 0.16, 0.06, 0.16, 0x2a2c30, { umriss: 0.002 }, 0.025), 0, BL + 0.005, 1.95, 0.3, 0, 0)); // Windlauf (schwarzes Plastik)
+  for (const sx of [-1, 1]) t.add(setze(kugel(0.014, 0x1d1d1f, { umriss: false }, 6), sx * 0.2, 1.24, 2.08)); // Waschdüsen
+  // Säulen rund statt eckig: A-Säule schräg (abgeflachte Rundstange), B/C als abgerundete Profile, leicht nach innen geneigt
+  const saeule = (a, b, dick, flach) => { const v = b.clone().sub(a), L = v.length(); const m = teil(new THREE.CapsuleGeometry(dick / 2, Math.max(0.01, L - dick), 4, 10), LACK, { umriss: 0.003 }); m.scale.x = flach; m.position.copy(a).addScaledVector(v, 0.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), v.normalize()); t.add(m); return m; };
+  for (const sx of [-1, 1]) {
+    saeule(V(sx * (HW - 0.08), BL - 0.02, 1.96), V(sx * (HW - 0.14), 1.82, 1.5), 0.12, 0.7);
+    t.add(setze(rundQuader(0.08, 1.84 - BL + 0.04, 0.17, LACK, { umriss: 0.003 }, 0.04), sx * (HW - 0.065), (BL + 1.84) / 2, 0.98, 0, 0, sx * 0.05));
+    t.add(setze(rundQuader(0.09, 1.84 - BL + 0.04, 0.24, LACK, { umriss: 0.003 }, 0.05), sx * (HW - 0.07), (BL + 1.84) / 2, KZ0 + 0.1, 0, 0, sx * 0.05));
+    t.add(setze(rundQuader(0.035, 0.03, 2.0, SCHW, { umriss: false }, 0.012), sx * (HW - 0.02), BL + 0.01, 0.98)); // Fensterdichtung unten
+    t.add(setze(rundQuader(0.03, 0.025, 1.5, SCHW, { umriss: false }, 0.01), sx * (HW - 0.1), 1.77, 0.76)); // Dichtung oben
+    t.add(setze(rundQuader(0.04, 0.035, 1.58, LACK_D, { umriss: 0.0015 }, 0.015), sx * (HW - 0.06), 1.83, 0.76)); // Regenrinne
+  }
+  // Dach: gewölbtes Blech mit runden Kanten vorn und hinten, Antenne, dritte Bremsleuchte
+  t.add(setze(rundQuader(W - 0.14, 0.08, 1.56, LACK, { umriss: 0.004 }, 0.04), 0, 1.86, KZ0 + 0.76));
+  for (const z of [1.53, KZ0 - 0.01]) t.add(setze(zylinder(0.05, 0.05, W - 0.16, LACK, { umriss: 0.003 }, 12), 0, 1.84, z, 0, 0, Math.PI / 2));
+  t.add(setze(zylinder(0.008, 0.012, 0.45, SCHW, { umriss: false }, 6), 0.55, 2.08, 1.35, -0.35, 0, 0));
+  t.add(setze(quader(0.3, 0.05, 0.03, 0xc8352a, { umriss: 0.001 }), 0, 1.86, KZ0 - 0.06));
+  const wölbung = setze(teil(new THREE.CylinderGeometry(1, 1, 1.5, 20, 1, false, -0.6, 1.2), LACK, { umriss: false }), 0, 0, KZ0 + 0.76, Math.PI / 2, 0, 0);
+  wölbung.scale.set(0.82, 1, 0.05); wölbung.position.y = 1.9 - 0.05 * Math.cos(0.6); t.add(wölbung);
   t.add(setze(quader(W - 0.2, 0.08, 0.05, LACK, { umriss: 0.002 }), 0, 1.8, KZ0 + 0.04)); // Rahmen Heckscheibe oben
   t.add(setze(quader(W - 0.2, 0.06, 0.05, LACK, { umriss: 0.002 }), 0, BL + 0.02, KZ0 + 0.04)); // und unten
   // Scheiben (durchsichtig, kleiner): Front (schräg), Seiten (vorn mit Schräge zur A-Säule, hinten), Heck
   const front = new THREE.Mesh(new THREE.PlaneGeometry(W - 0.3, 0.68), scheibe);
   front.position.set(0, 1.56, 1.73); front.rotation.x = -0.72;
   t.add(front);
+  for (const [x, y, b, h] of [[0, 0.34, W - 0.28, 0.03], [0, -0.34, W - 0.28, 0.03], [-(W - 0.3) / 2, 0, 0.03, 0.7], [(W - 0.3) / 2, 0, 0.03, 0.7]]) front.add(setze(quader(b, h, 0.02, SCHW, { umriss: false }), x, y, 0.005));
+  for (const x of [-0.42, 0.12]) front.add(setze(quader(0.5, 0.018, 0.018, SCHW, { umriss: false }), x + 0.25, -0.29, 0.02, 0, 0, 0.18)); // Wischer
   for (const sx of [-1, 1]) {
     const vorn = new THREE.Shape(); vorn.moveTo(1.08, BL + 0.03); vorn.lineTo(1.86, BL + 0.03); vorn.lineTo(1.52, 1.76); vorn.lineTo(1.08, 1.76); vorn.closePath();
     const sv = new THREE.Mesh(new THREE.ShapeGeometry(vorn), scheibe); sv.rotation.y = -Math.PI / 2; sv.position.x = sx * (HW - 0.035); t.add(sv);

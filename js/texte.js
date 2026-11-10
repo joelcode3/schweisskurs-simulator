@@ -382,6 +382,7 @@ export const DENNIS = {
     geborgen: ['Steht wieder auf den Rädern. Gut gemacht.'],
     abgestellt: ['Da steht sie. Ordentlich. Respekt.', 'Na also, geht doch. Pritsche im Carport.'],
     abgestelltSchaden: ['Steht da, aber guck dir die Ölspur an. Na toll.'],
+    sicherheit: ['Spinnst du?! Joel ist runtergefallen! Wenn einer außen mitfährt, fährt man vorsichtig!', 'Hallo?! Sicherheit! Mit Leuten auf dem Tritt fährt man nicht gegen alles, was rumsteht!'],
     alterSchlupf: ['Den alten? Steht doch dran: lebensgefährlich! Für die Pritsche hält der vielleicht noch. Vielleicht.'],
   },
 };
@@ -507,4 +508,5 @@ export const JOEL = {
   gut: ['Super! Sie steht wieder.'],
   abschleppen: ['Ich setz mich rein und lenk. Fahr langsam an!'],
   abgestellt: ['Danke dir! Das Bier geht auf mich.'],
+  nixPassiert: ['Nix passiert! Alles gut.', 'Geht schon, geht schon. Nur der Ellenbogen.'],
 };

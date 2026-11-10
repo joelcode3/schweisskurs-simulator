@@ -2960,9 +2960,9 @@ export function pritscheSpiel() {
   const sagen = (t, s = 2.2) => { meldung = t; meldungBis = zeit + s; };
   const schaden = (was, text) => { if (!schaeden.includes(was)) { schaeden.push(was); blip(140, 0.25, 0.2); sagen(text, 2.8); } };
   const ZIELE = [
-    { id: 'oese', name: 'Abschleppöse', u: 0.8, v: 0.235, gut: true },
-    { id: 'stossstange', name: 'Stoßstange', u: 0.42, v: 0.265 },
-    { id: 'spurstange', name: 'Spurstange', u: 0.5, v: 0.075 },
+    { id: 'oese', name: 'Abschleppöse', u: 0.8, v: 0.265, gut: true },
+    { id: 'stossstange', name: 'Stoßstange', u: 0.42, v: 0.3 },
+    { id: 'spurstange', name: 'Spurstange', u: 0.5, v: 0.12 },
     { id: 'grill', name: 'Kühlergrill', u: 0.5, v: 0.475 },
   ];
   document.body.dataset.vollbild = '1'; // deckt alles: 3D-Welt pausiert (main.js)
@@ -3118,9 +3118,8 @@ function zeichneT5Front(ctx, W, H, schaeden = [], gross = false) {
   ctx.strokeStyle = '#111'; ctx.lineWidth = lw; ctx.lineJoin = 'round';
   // Schatten unterm Wagen (nur wenn er steht), Unterboden
   if (gross) { ctx.fillStyle = 'rgba(0,0,0,0.22)'; ctx.beginPath(); ctx.ellipse(X(0.5), 0, W * 0.55, H * 0.03, 0, 0, Math.PI * 2); ctx.fill(); }
-  rr(0.12, 0.06, 0.88, 0.2, 0.02, '#2a2c30');
   // Spurstange zwischen den Rädern
-  ctx.strokeStyle = '#3d3f44'; ctx.lineWidth = gross ? 9 : 4; ctx.beginPath(); ctx.moveTo(X(0.17), Y(0.08)); ctx.lineTo(X(0.83), Y(0.08)); ctx.stroke();
+  ctx.strokeStyle = '#3d3f44'; ctx.lineWidth = gross ? 9 : 4; ctx.beginPath(); ctx.moveTo(X(0.17), Y(0.12)); ctx.lineTo(X(0.83), Y(0.12)); ctx.stroke();
   ctx.strokeStyle = '#111'; ctx.lineWidth = lw;
   // Reifen (vorn sieht man die Lauffläche): hoch, rund, mit Profilrillen
   for (const [u0, u1] of [[0.05, 0.21], [0.79, 0.95]]) {
@@ -3131,9 +3130,9 @@ function zeichneT5Front(ctx, W, H, schaeden = [], gross = false) {
     ctx.strokeStyle = '#111'; ctx.lineWidth = lw;
   }
   // Karosserie unten (Kotflügel bis Haube), oben schmaler (Kabine), Dach rund
-  poly([[0.0, 0.3], [1.0, 0.3], [1.0, 0.56], [0.97, 0.6], [0.03, 0.6], [0.0, 0.56]], '#c6cacd');
+  poly([[0.0, 0.34], [1.0, 0.34], [1.0, 0.56], [0.97, 0.6], [0.03, 0.6], [0.0, 0.56]], '#c6cacd');
   // Radhäuser (dunkel, über den Reifen)
-  for (const u0 of [0.03, 0.77]) { ctx.fillStyle = '#26282c'; ctx.beginPath(); ctx.roundRect(X(u0), Y(0.4), W * 0.2, H * 0.1, [W * 0.05, W * 0.05, 0, 0]); ctx.fill(); }
+  for (const u0 of [0.03, 0.77]) { ctx.fillStyle = '#26282c'; ctx.beginPath(); ctx.roundRect(X(u0), Y(0.42), W * 0.2, H * 0.08, [W * 0.05, W * 0.05, 0, 0]); ctx.fill(); }
   poly([[0.05, 0.6], [0.95, 0.6], [0.9, 0.95], [0.84, 0.995], [0.16, 0.995], [0.1, 0.95]], '#c6cacd');
   // Frontscheibe mit Spiegelung, Wischer
   poly([[0.1, 0.63], [0.9, 0.63], [0.86, 0.92], [0.14, 0.92]], '#9cc7e6');
@@ -3152,8 +3151,8 @@ function zeichneT5Front(ctx, W, H, schaeden = [], gross = false) {
   ctx.strokeStyle = '#9aa0a6'; ctx.lineWidth = gross ? 3 : 1.5; ctx.beginPath(); ctx.moveTo(X(0.04), Y(0.575)); ctx.lineTo(X(0.96), Y(0.575)); ctx.stroke();
   ctx.strokeStyle = '#111'; ctx.lineWidth = lw;
   // Scheinwerfer (schräg innen) mit Blinker, Grill mit Chromleisten und VW-Logo
-  poly([[0.03, 0.43], [0.27, 0.43], [0.3, 0.53], [0.04, 0.54]], '#e8eef2');
-  poly([[0.97, 0.43], [0.73, 0.43], [0.7, 0.53], [0.96, 0.54]], '#e8eef2');
+  rr(0.04, 0.445, 0.28, 0.535, 0.015, '#e8eef2');
+  rr(0.72, 0.445, 0.96, 0.535, 0.015, '#e8eef2');
   for (const [u0, u1] of [[0.05, 0.1], [0.9, 0.95]]) rr(u0, 0.445, u1, 0.52, 0.01, '#f2a21c', false);
   rr(0.31, 0.42, 0.69, 0.53, 0.015, schaeden.includes('Kühlergrill') ? '#55575c' : '#1d1d1f');
   ctx.strokeStyle = '#b8bcc0'; ctx.lineWidth = gross ? 4 : 2;
@@ -3164,11 +3163,11 @@ function zeichneT5Front(ctx, W, H, schaeden = [], gross = false) {
   if (schaeden.includes('Kühler')) { ctx.strokeStyle = '#7a7a7a'; ctx.lineWidth = gross ? 3 : 1.5; for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.moveTo(X(0.36 + k * 0.08), Y(0.52)); ctx.lineTo(X(0.39 + k * 0.08), Y(0.43)); ctx.stroke(); } }
   ctx.strokeStyle = '#111'; ctx.lineWidth = lw;
   // Stoßstange mit Lufteinlass und Nebelscheinwerfern, Kennzeichen
-  rr(-0.015, 0.19, 1.015, 0.33, 0.04, schaeden.includes('Stoßstange') ? '#6a6c70' : '#3a3c40');
-  rr(0.32, 0.205, 0.68, 0.245, 0.01, '#1d1d1f', false);
-  for (const u of [0.1, 0.9]) { ctx.fillStyle = '#d8dde0'; ctx.beginPath(); ctx.arc(X(u), Y(0.235), W * 0.022, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
-  rr(0.37, 0.27, 0.63, 0.32, 0.005, '#f4f4f0');
-  ctx.fillStyle = '#2f5fa8'; ctx.fillRect(X(0.37), Y(0.32), W * 0.025, H * 0.05);
+  rr(-0.015, 0.23, 1.015, 0.36, 0.04, schaeden.includes('Stoßstange') ? '#6a6c70' : '#3a3c40');
+  rr(0.32, 0.24, 0.68, 0.275, 0.01, '#1d1d1f', false);
+  for (const u of [0.1, 0.9]) { ctx.fillStyle = '#d8dde0'; ctx.beginPath(); ctx.arc(X(u), Y(0.265), W * 0.022, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+  rr(0.37, 0.295, 0.63, 0.345, 0.005, '#f4f4f0');
+  ctx.fillStyle = '#2f5fa8'; ctx.fillRect(X(0.37), Y(0.345), W * 0.025, H * 0.05);
   // Beule am Kotflügel links (vom Umkippen)
   ctx.strokeStyle = '#8f959a'; ctx.lineWidth = gross ? 3 : 1.5; ctx.beginPath(); ctx.arc(X(0.12), Y(0.36), W * 0.05, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
 }

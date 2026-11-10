@@ -39,15 +39,13 @@ export function bauePritsche(c) {
   const schlupfNeu = baueSchlupf(scene, { variante: 'neu', station: 'regal' });
   schlupfNeu.setzeHaken(new THREE.Vector3(-4.68, 0.25 + 0.015 + 0.012, -0.72), new THREE.Euler(Math.PI / 2, 0, 0.1), 0.62); // liegt im unteren Fach (umgeschlagen), Länge nach hinten (-z)
   schlupfNeu.anHaken();
-  {
-    // Schild am Regalbrett: Platz des neuen Schlupfs (anklicken, um ihn zurückzulegen)
-    const tex = leinwandTextur(160, 56, (g, b, h) => { g.fillStyle = '#f2c21c'; g.fillRect(0, 0, b, h); g.fillStyle = '#1d1d1f'; g.font = 'bold 30px Arial'; g.textAlign = 'center'; g.fillText('SCHLUPF', b / 2, 39); });
-    const schild = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 0.052), toon(0xffffff, { map: tex }));
-    schild.position.set(-4.474, 0.212, -1.0); schild.rotation.y = Math.PI / 2;
-    schild.userData.interaktiv = { id: 'schlupfPlatz', name: 'Platz für den Schlupf', station: 'regal' };
-    scene.add(schild);
-    welt.interaktiv?.push(schild);
-  }
+  // Platz im Regal (unsichtbar, nur anklickbar, wenn man den neuen Schlupf in der Hand hat: zurücklegen)
+  const regalPlatz = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.2, 0.62), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
+  regalPlatz.position.set(-4.68, 0.37, -1.0);
+  regalPlatz.userData.interaktiv = { id: 'schlupfPlatz', name: 'Platz für den Schlupf', station: 'regal' };
+  regalPlatz.visible = false;
+  scene.add(regalPlatz);
+  welt.interaktiv?.push(regalPlatz);
   const schlupfAlt = baueSchlupf(scene, { variante: 'alt' });
   const WAND_Z = RAUM.zMax - 0.03;
   {
@@ -65,10 +63,24 @@ export function bauePritsche(c) {
       const r = zufall(31);
       for (let i = 0; i < 26; i++) { g.fillStyle = `rgba(${70 + r() * 30},${55 + r() * 20},${35 + r() * 15},${0.08 + r() * 0.22})`; g.beginPath(); g.ellipse(r() * b, r() * h, 4 + r() * 26, 3 + r() * 14, r() * 3, 0, Math.PI * 2); g.fill(); }
       g.fillStyle = 'rgba(40,30,20,0.35)'; g.beginPath(); g.ellipse(190, 150, 34, 22, 0.4, 0, Math.PI * 2); g.fill(); // Ölfinger
-      g.fillStyle = '#b3241c'; g.font = 'bold 34px Arial'; g.textAlign = 'center';
-      g.fillText('Nicht mehr', b / 2, 56); g.fillText('benutzen!', b / 2, 96);
-      g.fillStyle = '#1d1d1f'; g.font = 'bold 30px Arial'; g.fillText('Lebensgefährlich!', b / 2, 148);
-      g.strokeStyle = '#b3241c'; g.lineWidth = 4; g.beginPath(); g.moveTo(40, 162); g.lineTo(216, 158); g.stroke();
+      // handgeschrieben (dicker Edding, schief, Buchstaben tanzen)
+      const hand = (text, x0, y0, groesse, farbe, w0) => {
+        g.fillStyle = farbe; g.font = `bold ${groesse}px "Segoe Print", "Bradley Hand", "Comic Sans MS", "Marker Felt", cursive`;
+        g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+        let x = x0;
+        for (const ch of text) {
+          g.save(); g.translate(x, y0 + (r() - 0.5) * 5); g.rotate(w0 + (r() - 0.5) * 0.18);
+          const gr = groesse * (0.9 + r() * 0.2); g.font = `bold ${gr}px "Segoe Print", "Bradley Hand", "Comic Sans MS", "Marker Felt", cursive`;
+          g.fillText(ch, 0, 0); g.restore();
+          x += g.measureText(ch).width * 1.02;
+        }
+      };
+      hand('Nicht mehr', 26, 52, 34, '#1e2a6e', -0.06);
+      hand('benutzen!!', 34, 94, 34, '#1e2a6e', -0.03);
+      hand('Lebensgefährlich!', 8, 146, 26, '#b3241c', -0.05);
+      g.strokeStyle = '#b3241c'; g.lineWidth = 3.5; g.lineCap = 'round'; g.beginPath(); g.moveTo(14, 160);
+      for (let x = 14; x <= 236; x += 14) g.lineTo(x, 160 - x * 0.05 + (r() - 0.5) * 4);
+      g.stroke();
     });
     const zettel = new THREE.Mesh(new THREE.PlaneGeometry(0.26, 0.195), toon(0xffffff, { map: tex }));
     zettel.position.set(3.95, 1.5, WAND_Z - 0.005); zettel.rotation.set(0, Math.PI, 0.05);
@@ -128,21 +140,59 @@ export function bauePritsche(c) {
 
   // ---------- Joel ----------
   const joelBlick = new THREE.Vector3();
+  // Drehpunkt an den Händen (Griff an der Kabine): Joel hängt daran und schwingt in Kurven nach außen
+  const tritt = new THREE.Group();
+  tritt.position.set(1.04, 1.55, -0.55);
+  lader.g.add(tritt);
+  const schwing = { w: 0, v: 0, psi: 0 };
   function joelAufLader(an) {
     if (an) {
       joel.halt?.();
-      lader.g.add(joel.wurzel);
+      tritt.add(joel.wurzel);
       // seitlich auf dem Tritt: Körper zum Weidemann, hält sich mit beiden Händen fest, guckt nach vorn
-      joel.wurzel.position.set(1.04, 0.39, -0.55);
+      joel.wurzel.position.set(0, 0.39 - 1.55, 0);
       joel.wurzel.rotation.set(0, -Math.PI / 2 + 0.3, 0);
       joel.festhalten?.(true);
       joel.blickFest?.(joelBlick);
+      Object.assign(schwing, { w: 0, v: 0, psi: lader.psi });
     } else {
       joel.festhalten?.(false);
       joel.blickFest?.(null);
       scene.attach(joel.wurzel);
       joel.wurzel.rotation.set(0, joel.wurzel.rotation.y, 0);
+      tritt.rotation.set(0, 0, 0);
     }
+  }
+  function joelSchwingt(dt) {
+    if (joel.wurzel.parent !== tritt || dt <= 0) return;
+    if (schwing.halt != null) { tritt.rotation.z = schwing.halt; return; } // nur Test (Vorschaubild)
+    // Fliehkraft in der Kurve (Gierrate x Tempo) drückt ihn nach außen, gedämpfte Feder holt ihn zurück; Ruckeln bei Tempo
+    let dpsi = lader.psi - schwing.psi; dpsi = Math.atan2(Math.sin(dpsi), Math.cos(dpsi)); schwing.psi = lader.psi;
+    const ziel = THREE.MathUtils.clamp(-(dpsi / dt) * lader.v * 0.09, -0.3, 0.3);
+    schwing.v += (-(schwing.w - ziel) * 26 - schwing.v * 4.5) * dt;
+    schwing.w += schwing.v * dt;
+    const ruckel = Math.sin(markeZeit.t * 11) * 0.012 * Math.min(1, Math.abs(lader.v) / 4);
+    tritt.rotation.z = THREE.MathUtils.clamp(schwing.w, -0.35, 0.35) + ruckel;
+  }
+  // Weidemann knallt irgendwo gegen: Joel fällt runter, Dennis meckert (Sicherheit), Joel steht auf und steigt wieder auf
+  async function joelFaelltRunter() {
+    if (pz.runter) return;
+    pz.runter = true;
+    const fall = lader.g.localToWorld(new THREE.Vector3(2.4, 0, 0.2));
+    joelAufLader(false);
+    pz.phase = 'zumLader'; pz.gehAb = Infinity;
+    joel.wurzel.position.set(fall.x, gelaendeHoehe(fall.x, fall.z) + 0.15, fall.z);
+    joel.wurzel.rotation.set(-Math.PI / 2, lader.psi + Math.PI / 2, 0, 'YXZ');
+    klonk(0.7);
+    aerger(4);
+    setTimeout(() => dennisSagt(sag(DENNIS.pritsche.sicherheit), true, { prio: 1 }), 700);
+    await warte(3400);
+    joel.wurzel.rotation.set(0, lader.psi, 0, 'XYZ');
+    joel.wurzel.position.y = gelaendeHoehe(joel.wurzel.position.x, joel.wurzel.position.z);
+    ui.joelSagt(sag(JOEL.nixPassiert), 3200);
+    await warte(1500);
+    pz.gehAb = 0; pz.runter = false;
+    if (fz2.aktiv === lader) ui.hinweis('Joel steigt wieder auf, sobald du stehst.', 3000);
   }
   function joelInT5(an) {
     if (an) {
@@ -290,6 +340,7 @@ export function bauePritsche(c) {
   }
   fz2.nachSchritt = (f, neu, pose, dt) => {
     if (f !== lader) return;
+    if (pz.phase === 'unterwegs' && joel.wurzel.parent === tritt && Math.abs(pose.v) > 2.2 && Math.abs(pose.v) - Math.abs(f.v) > Math.max(1.6, 12 * dt)) joelFaelltRunter();
     if (neu.has('b')) {
       if (pz.phase === 'amT5') bergen();
       else if (pz.phase === 'bereit') abschleppen();
@@ -341,12 +392,14 @@ export function bauePritsche(c) {
   const markeZeit = { t: 0 };
   function update(dt) {
     markeZeit.t += dt;
-    if (joel.wurzel.parent === lader.g) joelBlick.copy(lader.g.localToWorld(new THREE.Vector3(1.0, 1.6, 8)));
+    if (joel.wurzel.parent === tritt) joelBlick.copy(lader.g.localToWorld(new THREE.Vector3(1.0, 1.6, 8)));
+    joelSchwingt(dt);
+    regalPlatz.visible = hand.item?.obj === schlupfNeu.obj;
     markMat.opacity = 0.25 + Math.sin(markeZeit.t * 3) * 0.12;
     if (z.vorbei) return;
     const t = sekunden();
     if (pz.phase === 'aus' && t > pz.naechsterBesuch && ruhigeLage() && !fz2.aktiv) { pz.naechsterBesuch = Infinity; joelKommt(); }
-    if (pz.phase === 'zumLader') {
+    if (pz.phase === 'zumLader' && !pz.runter) {
       // Joel läuft zum Weidemann (auch wenn der woanders steht) und steigt außen auf, sobald er steht
       const ziel = lader.g.localToWorld(new THREE.Vector3(1.5, 0, -0.5));
       if (t > pz.gehAb) { pz.gehAb = t + 3; joel.gehZu(ziel.x, ziel.z, 1.3); }
@@ -428,7 +481,8 @@ export function bauePritsche(c) {
   function zuruecksetzen() {
     for (const sl of SCHLUPFE) { if (hand.item?.obj === sl.obj) { hand.weg(); handleisteZeigen(); } sl.loesen(); sl.anHaken(); }
     schlupf = schlupfNeu; alterKommentiert = false;
-    if (joel.wurzel.parent !== scene) { joel.sitzen(null); scene.attach(joel.wurzel); }
+    if (joel.wurzel.parent !== scene) { joelAufLader(false); joel.sitzen(null); scene.attach(joel.wurzel); }
+    pz.runter = false;
     joel.sichtbar(false);
     modell.rotation.z = Math.PI / 2; modell.position.y = 0.92;
     t5.position.copy(T5_START.pos); t5.rotation.set(0, T5_START.ry, 0);
@@ -479,8 +533,8 @@ export function bauePritsche(c) {
     t5Boden(); t5Hindernis(); schlupf.update();
   }
 
-  return { pz, update, menue, joelKommt, helfen, get schlupf() { return schlupf; }, schlupfNeu, schlupfAlt,
+  return { pz, update, menue, joelKommt, helfen, joelFaelltRunter, get schlupf() { return schlupf; }, schlupfNeu, schlupfAlt,
     // Schlupf in der Hand an seinen Stammplatz zurück (Regal / Haken)
     schlupfZurueck() { if (hand.item?.id !== 'schlupf') return false; const sl = schlupfVon(hand.item.obj) || schlupf; hand.weg(); sl.anHaken(); handleisteZeigen(); klonk(0.2); return true; },
-    test: { zuruecksetzen, testAnDiePritsche, testAbschleppen, testVorDemCarport, bergen, abstellen, imZiel, nachSpiel: (schaeden = []) => { pz.phase = 'minispiel'; return nachSpiel({ abgebrochen: false, schaeden }); } } };
+    test: { schwingHalten(w) { schwing.halt = w; }, joelFaellt() { if (joel.wurzel.parent !== tritt) { joel.sichtbar(true); joelAufLader(true); } pz.phase = 'unterwegs'; lader.gesperrt = true; joelFaelltRunter(); }, zuruecksetzen, testAnDiePritsche, testAbschleppen, testVorDemCarport, bergen, abstellen, imZiel, nachSpiel: (schaeden = []) => { pz.phase = 'minispiel'; return nachSpiel({ abgebrochen: false, schaeden }); } } };
 }
