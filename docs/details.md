@@ -391,7 +391,9 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Gierrate x Tempo). Knallt der Weidemann über 2,2 m/s irgendwo gegen (Tempo fällt schlagartig), fällt Joel runter, liegt kurz,
   Dennis meckert (pritsche.sicherheit, dennis514/515, Wut +4), Joel: „Nix passiert“ (joel14/15) und steigt wieder auf, wenn der
   Weidemann steht. Neuer Schlupf: Platz im Regal ohne Schild (unsichtbarer Klickbereich, nur mit dem Schlupf in der Hand).
-  Warnzettel handgeschrieben (Schrift Segoe Print/Comic Sans, auf Rechnern ohne diese Schrift nur schräge Ersatzschrift).
+  Warnzettel handgeschrieben in Caveat wie das Schild „Schweisskurs, nicht stören!“ an der Tür (neu gemalt, wenn die Schrift geladen ist).
+  T5-Kabine aus einem Guss: Seitenwand = ein Profil (Heck, Dach, A-Säule, Haube, Schnauze, Radlauf) mit Fensterausschnitten,
+  dazwischen bündige Füllteile ohne Umriss; VW-Logo als Textur (vwLogoTextur), Scheinwerfer vor dem Blech.
   T101 Joel fällt vom Weidemann.
 - Testmenü: T95 Joel kommt, T96 im Weidemann an der Pritsche (mit Joel und Schlupf), T97 Minispiel direkt, T98 steht, direkt
   abschleppen, T99 Gespann kurz vor der Bucht, T100 zurücksetzen.

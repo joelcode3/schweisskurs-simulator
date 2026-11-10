@@ -58,30 +58,26 @@ export function bauePritsche(c) {
     schlupfAlt.setzeHaken(new THREE.Vector3(4.35, 1.82, WAND_Z - 0.06), Math.PI);
     schlupfAlt.anHaken();
     // dreckiger Zettel daneben, mit Klebeband
-    const tex = leinwandTextur(256, 192, (g, b, h) => {
+    // handgeschrieben wie das Schild „Schweisskurs, nicht stören!“ an der Werkstatttür (Schrift Caveat, nach dem Laden neu gemalt)
+    const malZettel = (g, b, h) => {
       g.fillStyle = '#e9e1c8'; g.fillRect(0, 0, b, h);
       const r = zufall(31);
-      for (let i = 0; i < 26; i++) { g.fillStyle = `rgba(${70 + r() * 30},${55 + r() * 20},${35 + r() * 15},${0.08 + r() * 0.22})`; g.beginPath(); g.ellipse(r() * b, r() * h, 4 + r() * 26, 3 + r() * 14, r() * 3, 0, Math.PI * 2); g.fill(); }
-      g.fillStyle = 'rgba(40,30,20,0.35)'; g.beginPath(); g.ellipse(190, 150, 34, 22, 0.4, 0, Math.PI * 2); g.fill(); // Ölfinger
-      // handgeschrieben (dicker Edding, schief, Buchstaben tanzen)
-      const hand = (text, x0, y0, groesse, farbe, w0) => {
-        g.fillStyle = farbe; g.font = `bold ${groesse}px "Segoe Print", "Bradley Hand", "Comic Sans MS", "Marker Felt", cursive`;
-        g.textAlign = 'left'; g.textBaseline = 'alphabetic';
-        let x = x0;
-        for (const ch of text) {
-          g.save(); g.translate(x, y0 + (r() - 0.5) * 5); g.rotate(w0 + (r() - 0.5) * 0.18);
-          const gr = groesse * (0.9 + r() * 0.2); g.font = `bold ${gr}px "Segoe Print", "Bradley Hand", "Comic Sans MS", "Marker Felt", cursive`;
-          g.fillText(ch, 0, 0); g.restore();
-          x += g.measureText(ch).width * 1.02;
-        }
+      for (let i = 0; i < 26; i++) { g.fillStyle = `rgba(${70 + r() * 30},${55 + r() * 20},${35 + r() * 15},${0.08 + r() * 0.2})`; g.beginPath(); g.ellipse(r() * b, r() * h, 4 + r() * 26, 3 + r() * 14, r() * 3, 0, Math.PI * 2); g.fill(); }
+      g.fillStyle = 'rgba(40,30,20,0.3)'; g.beginPath(); g.ellipse(200, 160, 30, 20, 0.4, 0, Math.PI * 2); g.fill(); // Ölfinger
+      g.textAlign = 'center';
+      const zeile = (text, y, drehung, farbe, groesse) => {
+        let px = groesse;
+        g.font = `bold ${px}px Caveat, "Comic Sans MS", cursive`;
+        while (px > 16 && g.measureText(text).width > b - 30) { px -= 2; g.font = `bold ${px}px Caveat, "Comic Sans MS", cursive`; }
+        g.fillStyle = farbe; g.save(); g.translate(b / 2, y); g.rotate(drehung); g.fillText(text, 0, 0); g.restore();
       };
-      hand('Nicht mehr', 26, 52, 34, '#1e2a6e', -0.06);
-      hand('benutzen!!', 34, 94, 34, '#1e2a6e', -0.03);
-      hand('Lebensgefährlich!', 8, 146, 26, '#b3241c', -0.05);
-      g.strokeStyle = '#b3241c'; g.lineWidth = 3.5; g.lineCap = 'round'; g.beginPath(); g.moveTo(14, 160);
-      for (let x = 14; x <= 236; x += 14) g.lineTo(x, 160 - x * 0.05 + (r() - 0.5) * 4);
-      g.stroke();
-    });
+      zeile('Nicht mehr', 50, -0.05, '#1d1d1f', 50);
+      zeile('benutzen!', 98, -0.03, '#1d1d1f', 50);
+      zeile('Lebensgefährlich!', 150, -0.04, '#b3241c', 46);
+      g.strokeStyle = '#b3241c'; g.lineWidth = 3.5; g.lineCap = 'round'; g.beginPath(); g.moveTo(24, 166); g.quadraticCurveTo(128, 160, 232, 158); g.stroke();
+    };
+    const tex = leinwandTextur(256, 192, malZettel);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { malZettel(tex.image.getContext('2d'), 256, 192); tex.needsUpdate = true; });
     const zettel = new THREE.Mesh(new THREE.PlaneGeometry(0.26, 0.195), toon(0xffffff, { map: tex }));
     zettel.position.set(3.95, 1.5, WAND_Z - 0.005); zettel.rotation.set(0, Math.PI, 0.05);
     const klebe = setze(quader(0.08, 0.025, 0.003, 0xd8cfa8, { umriss: false }), 0, 0.095, 0.002, 0, 0, -0.1);

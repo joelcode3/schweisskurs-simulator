@@ -2960,10 +2960,10 @@ export function pritscheSpiel() {
   const sagen = (t, s = 2.2) => { meldung = t; meldungBis = zeit + s; };
   const schaden = (was, text) => { if (!schaeden.includes(was)) { schaeden.push(was); blip(140, 0.25, 0.2); sagen(text, 2.8); } };
   const ZIELE = [
-    { id: 'oese', name: 'Abschleppöse', u: 0.8, v: 0.265, gut: true },
-    { id: 'stossstange', name: 'Stoßstange', u: 0.42, v: 0.3 },
-    { id: 'spurstange', name: 'Spurstange', u: 0.5, v: 0.12 },
-    { id: 'grill', name: 'Kühlergrill', u: 0.5, v: 0.475 },
+    { id: 'oese', name: 'Abschleppöse', u: 0.8, v: 0.235, gut: true },
+    { id: 'stossstange', name: 'Stoßstange', u: 0.42, v: 0.29 },
+    { id: 'spurstange', name: 'Spurstange', u: 0.5, v: 0.1 },
+    { id: 'grill', name: 'Kühlergrill', u: 0.5, v: 0.52 },
   ];
   document.body.dataset.vollbild = '1'; // deckt alles: 3D-Welt pausiert (main.js)
   const { api, versprechen } = spielRahmen('Pritsche bergen', 'Gabel vorsichtig anheben (W oder Maus gedrückt halten, S senkt), beim Kippen gegenhalten (S oder rechte Maustaste), dann den Schlupf auf die Abschleppöse ziehen. Grob = es geht noch mehr kaputt.', {
@@ -3118,58 +3118,49 @@ function zeichneT5Front(ctx, W, H, schaeden = [], gross = false) {
   ctx.strokeStyle = '#111'; ctx.lineWidth = lw; ctx.lineJoin = 'round';
   // Schatten unterm Wagen (nur wenn er steht), Unterboden
   if (gross) { ctx.fillStyle = 'rgba(0,0,0,0.22)'; ctx.beginPath(); ctx.ellipse(X(0.5), 0, W * 0.55, H * 0.03, 0, 0, Math.PI * 2); ctx.fill(); }
-  // Spurstange zwischen den Rädern
-  ctx.strokeStyle = '#3d3f44'; ctx.lineWidth = gross ? 9 : 4; ctx.beginPath(); ctx.moveTo(X(0.17), Y(0.12)); ctx.lineTo(X(0.83), Y(0.12)); ctx.stroke();
-  ctx.strokeStyle = '#111'; ctx.lineWidth = lw;
   // Reifen (vorn sieht man die Lauffläche): hoch, rund, mit Profilrillen
   for (const [u0, u1] of [[0.05, 0.21], [0.79, 0.95]]) {
-    rr(u0, 0, u1, 0.34, 0.05, '#1d1d1f');
+    rr(u0, 0, u1, 0.32, 0.05, '#1d1d1f');
     ctx.strokeStyle = '#3a3a40'; ctx.lineWidth = gross ? 3 : 1.5;
-    for (let k = 1; k < 7; k++) { const v = k * 0.045; ctx.beginPath(); ctx.moveTo(X(u0 + 0.025), Y(v)); ctx.lineTo(X((u0 + u1) / 2), Y(v + 0.015)); ctx.lineTo(X(u1 - 0.025), Y(v)); ctx.stroke(); }
-    ctx.strokeStyle = '#4a4a52'; ctx.beginPath(); ctx.moveTo(X((u0 + u1) / 2), Y(0.02)); ctx.lineTo(X((u0 + u1) / 2), Y(0.32)); ctx.stroke();
+    for (let k = 1; k < 7; k++) { const v = k * 0.042; ctx.beginPath(); ctx.moveTo(X(u0 + 0.025), Y(v)); ctx.lineTo(X((u0 + u1) / 2), Y(v + 0.015)); ctx.lineTo(X(u1 - 0.025), Y(v)); ctx.stroke(); }
+    ctx.strokeStyle = '#4a4a52'; ctx.beginPath(); ctx.moveTo(X((u0 + u1) / 2), Y(0.02)); ctx.lineTo(X((u0 + u1) / 2), Y(0.3)); ctx.stroke();
     ctx.strokeStyle = '#111'; ctx.lineWidth = lw;
   }
-  // Karosserie unten (Kotflügel bis Haube), oben schmaler (Kabine), Dach rund
-  poly([[0.0, 0.34], [1.0, 0.34], [1.0, 0.56], [0.97, 0.6], [0.03, 0.6], [0.0, 0.56]], '#c6cacd');
-  // Radhäuser (dunkel, über den Reifen)
-  for (const u0 of [0.03, 0.77]) { ctx.fillStyle = '#26282c'; ctx.beginPath(); ctx.roundRect(X(u0), Y(0.42), W * 0.2, H * 0.08, [W * 0.05, W * 0.05, 0, 0]); ctx.fill(); }
-  poly([[0.05, 0.6], [0.95, 0.6], [0.9, 0.95], [0.84, 0.995], [0.16, 0.995], [0.1, 0.95]], '#c6cacd');
-  // Frontscheibe mit Spiegelung, Wischer
-  poly([[0.1, 0.63], [0.9, 0.63], [0.86, 0.92], [0.14, 0.92]], '#9cc7e6');
-  ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = gross ? 10 : 5; ctx.beginPath(); ctx.moveTo(X(0.22), Y(0.66)); ctx.lineTo(X(0.34), Y(0.89)); ctx.stroke();
-  ctx.lineWidth = gross ? 5 : 2.5; ctx.beginPath(); ctx.moveTo(X(0.42), Y(0.66)); ctx.lineTo(X(0.48), Y(0.8)); ctx.stroke();
+  // Karosserie unten bis zur (höheren) Haubenkante, darüber die schmalere Kabine mit kleinerer Frontscheibe
+  poly([[0.0, 0.3], [1.0, 0.3], [1.0, 0.62], [0.97, 0.665], [0.03, 0.665], [0.0, 0.62]], '#c6cacd');
+  for (const u0 of [0.03, 0.77]) { ctx.fillStyle = '#26282c'; ctx.beginPath(); ctx.roundRect(X(u0), Y(0.38), W * 0.2, H * 0.07, [W * 0.05, W * 0.05, 0, 0]); ctx.fill(); }
+  poly([[0.05, 0.665], [0.95, 0.665], [0.9, 0.95], [0.84, 0.995], [0.16, 0.995], [0.1, 0.95]], '#c6cacd');
+  poly([[0.11, 0.695], [0.89, 0.695], [0.855, 0.925], [0.145, 0.925]], '#9cc7e6');
+  ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = gross ? 10 : 5; ctx.beginPath(); ctx.moveTo(X(0.22), Y(0.72)); ctx.lineTo(X(0.32), Y(0.9)); ctx.stroke();
+  ctx.lineWidth = gross ? 5 : 2.5; ctx.beginPath(); ctx.moveTo(X(0.42), Y(0.72)); ctx.lineTo(X(0.47), Y(0.83)); ctx.stroke();
   ctx.strokeStyle = '#111'; ctx.lineWidth = gross ? 3 : 1.5;
-  for (const u of [0.3, 0.62]) { ctx.beginPath(); ctx.moveTo(X(u), Y(0.64)); ctx.lineTo(X(u + 0.17), Y(0.69)); ctx.stroke(); }
+  for (const u of [0.3, 0.62]) { ctx.beginPath(); ctx.moveTo(X(u), Y(0.705)); ctx.lineTo(X(u + 0.17), Y(0.745)); ctx.stroke(); }
   ctx.lineWidth = lw;
-  // Risse in der Frontscheibe (er lag ja auf der Seite)
   ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = gross ? 2 : 1;
-  for (let k = 0; k < 7; k++) { const w = k * 0.9; ctx.beginPath(); ctx.moveTo(X(0.78), Y(0.86)); ctx.lineTo(X(0.78 + Math.cos(w) * 0.09), Y(0.86 + Math.sin(w) * 0.06)); ctx.stroke(); }
+  for (let k = 0; k < 7; k++) { const w = k * 0.9; ctx.beginPath(); ctx.moveTo(X(0.78), Y(0.86)); ctx.lineTo(X(0.78 + Math.cos(w) * 0.08), Y(0.86 + Math.sin(w) * 0.05)); ctx.stroke(); }
   ctx.strokeStyle = '#111'; ctx.lineWidth = lw;
-  // Spiegel (rechts fehlt bei Schaden), Haubenkante
-  rr(-0.07, 0.64, 0.01, 0.74, 0.02, '#1d1d1f');
-  if (!schaeden.includes('Spiegel')) rr(0.99, 0.64, 1.07, 0.74, 0.02, '#1d1d1f');
-  ctx.strokeStyle = '#9aa0a6'; ctx.lineWidth = gross ? 3 : 1.5; ctx.beginPath(); ctx.moveTo(X(0.04), Y(0.575)); ctx.lineTo(X(0.96), Y(0.575)); ctx.stroke();
+  rr(-0.07, 0.7, 0.01, 0.8, 0.02, '#1d1d1f');
+  if (!schaeden.includes('Spiegel')) rr(0.99, 0.7, 1.07, 0.8, 0.02, '#1d1d1f');
+  ctx.strokeStyle = '#9aa0a6'; ctx.lineWidth = gross ? 3 : 1.5; ctx.beginPath(); ctx.moveTo(X(0.04), Y(0.64)); ctx.lineTo(X(0.96), Y(0.64)); ctx.stroke();
   ctx.strokeStyle = '#111'; ctx.lineWidth = lw;
-  // Scheinwerfer (schräg innen) mit Blinker, Grill mit Chromleisten und VW-Logo
-  rr(0.04, 0.445, 0.28, 0.535, 0.015, '#e8eef2');
-  rr(0.72, 0.445, 0.96, 0.535, 0.015, '#e8eef2');
-  for (const [u0, u1] of [[0.05, 0.1], [0.9, 0.95]]) rr(u0, 0.445, u1, 0.52, 0.01, '#f2a21c', false);
-  rr(0.31, 0.42, 0.69, 0.53, 0.015, schaeden.includes('Kühlergrill') ? '#55575c' : '#1d1d1f');
+  // Scheinwerfer rechteckig (höher), Blinker außen, Grill mit Chromleisten und VW-Logo
+  rr(0.04, 0.48, 0.28, 0.575, 0.015, '#e8eef2');
+  rr(0.72, 0.48, 0.96, 0.575, 0.015, '#e8eef2');
+  for (const [u0, u1] of [[0.05, 0.1], [0.9, 0.95]]) rr(u0, 0.49, u1, 0.565, 0.01, '#f2a21c', false);
+  rr(0.31, 0.46, 0.69, 0.58, 0.015, schaeden.includes('Kühlergrill') ? '#55575c' : '#1d1d1f');
   ctx.strokeStyle = '#b8bcc0'; ctx.lineWidth = gross ? 4 : 2;
-  for (const v of [0.445, 0.475, 0.505]) { ctx.beginPath(); ctx.moveTo(X(0.34), Y(v)); ctx.lineTo(X(0.66), Y(v)); ctx.stroke(); }
-  ctx.fillStyle = '#e8eaec'; ctx.beginPath(); ctx.arc(X(0.5), Y(0.475), W * 0.04, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = '#3a3c40'; ctx.lineWidth = gross ? 3 : 1.5; ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(X(0.48), Y(0.495)); ctx.lineTo(X(0.5), Y(0.455)); ctx.lineTo(X(0.52), Y(0.495)); ctx.stroke();
-  if (schaeden.includes('Kühler')) { ctx.strokeStyle = '#7a7a7a'; ctx.lineWidth = gross ? 3 : 1.5; for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.moveTo(X(0.36 + k * 0.08), Y(0.52)); ctx.lineTo(X(0.39 + k * 0.08), Y(0.43)); ctx.stroke(); } }
+  for (const v of [0.485, 0.52, 0.555]) { ctx.beginPath(); ctx.moveTo(X(0.34), Y(v)); ctx.lineTo(X(0.66), Y(v)); ctx.stroke(); }
+  vwLogo(ctx, X(0.5), Y(0.52), W * 0.05, gross);
+  if (schaeden.includes('Kühler')) { ctx.strokeStyle = '#7a7a7a'; ctx.lineWidth = gross ? 3 : 1.5; for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.moveTo(X(0.36 + k * 0.08), Y(0.57)); ctx.lineTo(X(0.39 + k * 0.08), Y(0.47)); ctx.stroke(); } }
   ctx.strokeStyle = '#111'; ctx.lineWidth = lw;
-  // Stoßstange mit Lufteinlass und Nebelscheinwerfern, Kennzeichen
-  rr(-0.015, 0.23, 1.015, 0.36, 0.04, schaeden.includes('Stoßstange') ? '#6a6c70' : '#3a3c40');
-  rr(0.32, 0.24, 0.68, 0.275, 0.01, '#1d1d1f', false);
-  for (const u of [0.1, 0.9]) { ctx.fillStyle = '#d8dde0'; ctx.beginPath(); ctx.arc(X(u), Y(0.265), W * 0.022, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
-  rr(0.37, 0.295, 0.63, 0.345, 0.005, '#f4f4f0');
-  ctx.fillStyle = '#2f5fa8'; ctx.fillRect(X(0.37), Y(0.345), W * 0.025, H * 0.05);
+  // Stoßstange (etwas tiefer: weniger Bodenfreiheit), Nebelscheinwerfer, Kennzeichen
+  rr(-0.015, 0.2, 1.015, 0.33, 0.04, schaeden.includes('Stoßstange') ? '#6a6c70' : '#3a3c40');
+  rr(0.32, 0.21, 0.68, 0.245, 0.01, '#1d1d1f', false);
+  for (const u of [0.1, 0.9]) { ctx.fillStyle = '#d8dde0'; ctx.beginPath(); ctx.arc(X(u), Y(0.235), W * 0.022, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+  rr(0.37, 0.265, 0.63, 0.315, 0.005, '#f4f4f0');
+  ctx.fillStyle = '#2f5fa8'; ctx.fillRect(X(0.37), Y(0.315), W * 0.025, H * 0.05);
   // Beule am Kotflügel links (vom Umkippen)
-  ctx.strokeStyle = '#8f959a'; ctx.lineWidth = gross ? 3 : 1.5; ctx.beginPath(); ctx.arc(X(0.12), Y(0.36), W * 0.05, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
+  ctx.strokeStyle = '#8f959a'; ctx.lineWidth = gross ? 3 : 1.5; ctx.beginPath(); ctx.arc(X(0.12), Y(0.4), W * 0.05, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
 }
 
 // Weidemann-Hoflader von der Seite (Minispiel Pritsche), Blick nach rechts. lx = hinteres Ende, boden = Bodenlinie,
@@ -3226,3 +3217,14 @@ function zeichneLader(ctx, lx, boden, s, traeger, spitze, piv) {
   ctx.fillRect(traeger.x - 2 * s, spitze.y - 2 * s, 8 * s, 30 * s);
 }
 
+// VW-Logo (Kreis, V über W) für die Minispiel-Zeichnung
+function vwLogo(ctx, x, y, r, gross) {
+  ctx.save();
+  ctx.fillStyle = '#e8eaec'; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#1f3c78'; ctx.beginPath(); ctx.arc(x, y, r * 0.84, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#e8eaec'; ctx.lineWidth = Math.max(1.2, r * 0.14); ctx.lineJoin = 'round';
+  const P = (u, v) => [x + u * r, y + v * r];
+  ctx.beginPath(); ctx.moveTo(...P(-0.47, -0.56)); ctx.lineTo(...P(-0.16, 0.2)); ctx.lineTo(...P(0, -0.16)); ctx.lineTo(...P(0.16, 0.2)); ctx.lineTo(...P(0.47, -0.56)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(...P(-0.66, -0.2)); ctx.lineTo(...P(-0.32, 0.62)); ctx.lineTo(...P(0, 0.12)); ctx.lineTo(...P(0.32, 0.62)); ctx.lineTo(...P(0.66, -0.2)); ctx.stroke();
+  ctx.restore();
+}
