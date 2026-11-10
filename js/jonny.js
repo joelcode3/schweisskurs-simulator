@@ -610,6 +610,7 @@ export function baueJonny(scene, opts = {}) {
   let blinzeln = 3;
   let raucht = false;
   let blickZiel = null;
+  let blickFix = null;
   let ziel = null;
   let zielFertig = null;
   let weg = []; // restliche Wegpunkte (um Wände herum, durch Türen)
@@ -634,7 +635,18 @@ export function baueJonny(scene, opts = {}) {
         rechts.ellbogen.rotation.set(-1.9, 0, -0.5);
       } else ruhe();
     },
-    schauZu(punkt) { blickZiel = punkt; },
+    schauZu(punkt) { if (!blickFix) blickZiel = punkt; },
+    // fester Blick (z. B. Joel außen auf dem Weidemann guckt nach vorn), Kopf darf sich dann weiter drehen; null = aus
+    blickFest(punkt) { blickFix = punkt; if (punkt) blickZiel = punkt; },
+    // mit beiden Händen vor sich festhalten (Griff am Fahrzeug); false = wieder normal
+    festhalten(an) {
+      if (an) {
+        haendeGerade();
+        links.schulter.rotation.set(-1.85, 0, 0.12); links.ellbogen.rotation.set(-0.45, 0, 0);
+        rechts.schulter.rotation.set(-1.45, 0, -0.12); rechts.ellbogen.rotation.set(-0.5, 0, 0);
+        links.hand.rotation.set(0, 0, -0.4); rechts.hand.rotation.set(0, 0, 0.4);
+      } else ruhe();
+    },
     heimPlatz: PLATZ.clone(),
     gehZu(x, z, t = 1.1) {
       if (zielFertig) zielFertig(false);
@@ -741,7 +753,8 @@ export function baueJonny(scene, opts = {}) {
       if (blickZiel) {
         const lokal = wurzel.worldToLocal(blickZiel.clone());
         // beim Trinken guckt er geradeaus (Flasche am Mund)
-        const ziel = trinkPhase > 0.02 ? 0 : THREE.MathUtils.clamp(Math.atan2(lokal.x, lokal.z), -0.9, 0.9);
+        const grenze = blickFix ? 1.45 : 0.9;
+        const ziel = trinkPhase > 0.02 ? 0 : THREE.MathUtils.clamp(Math.atan2(lokal.x, lokal.z), -grenze, grenze);
         kopf.rotation.y += (ziel - kopf.rotation.y) * Math.min(1, dt * 3);
       }
       blinzeln -= dt;

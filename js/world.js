@@ -759,7 +759,7 @@ export function baueWelt(scene) {
   const deko = [
     [zylinder(0.07, 0.07, 0.16, 0x2f7d4f), 0, 0.85, -0.5],
     [zylinder(0.07, 0.07, 0.16, 0xd9a21c), 0, 0.85, -0.32],
-    [quader(0.3, 0.22, 0.34, 0xb88a52), 0, 0.37, -0.4],
+    // (rechter Karton unten weg: da liegt seit E2b der neue Schlupf, pritsche.js)
     [quader(0.3, 0.18, 0.3, 0xa8794a), 0, 0.35, 0.35],
     [quader(0.24, 0.12, 0.3, 0x335c99), 0, 0.82, 0.38],
     [quader(0.28, 0.2, 0.3, 0xb88a52), 0, 1.86, -0.3],

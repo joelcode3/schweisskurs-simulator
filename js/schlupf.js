@@ -1,8 +1,8 @@
 // Schlupf (Abschleppseil / Rundschlinge), eigener Baustein für E2b (Pritsche abschleppen) und später E3 (Metall-Lieferung).
 // Varianten: 'alt' (dreckig, verblasst orange, ausgefranst) und 'neu' (sauber, leuchtend gelb). Zustände:
-//   haken     – hängt aufgerollt an einem Haken (Position frei wählbar), anklickbar
-//   hand      – in der Hand des Spielers (hand.js, Eintrag 'schlupf'; das Objekt ist das aufgerollte Modell)
-//   fahrzeug  – liegt aufgerollt auf einem Fahrzeug (z. B. hinten auf dem Weidemann), fährt mit
+//   haken     – hängt zusammengelegt an einem Haken oder liegt an seinem Platz (Position frei wählbar), anklickbar
+//   hand      – in der Hand des Spielers (hand.js, Eintrag 'schlupf'; das Objekt ist das zusammengelegte Modell)
+//   fahrzeug  – liegt zusammengelegt auf einem Fahrzeug (z. B. hinten auf dem Weidemann), fährt mit
 //   gespannt  – als Seil zwischen zwei Punkten (Funktionen, die Weltpunkte liefern), hängt durch, wenn es locker ist
 // Kein Spielablauf hier drin: wer den Schlupf benutzt, ruft die Zustände auf.
 // Datenmodell für E3 schon da: variante ('neu'/'alt'), belastbar (Anteil der Nennlast, die er sicher hält), verschleiss
@@ -23,16 +23,38 @@ const DATEN = {
 export function baueSchlupf(scene, { variante = 'alt', name, station = null } = {}) {
   const F = FARBEN[variante] || FARBEN.alt;
   const gurtMat = toon(F.gurt), dunkelMat = toon(F.dunkel);
-  // ---------- aufgerolltes Modell (Haken, Hand, Fahrzeug) ----------
+  // ---------- Modell (Haken, Hand, Fahrzeug): zusammengelegter Rundschlupf, hängt länglich nach unten ----------
+  // Ursprung = Aufhängepunkt oben; mehrere flache Gurtschlaufen hängen ungleich lang herunter (ca. 0,55 m), unten etwas
+  // breiter auseinander, Etikett eingenäht. Liegend (Regal, Weidemann) wird das Ganze einfach flach hingelegt.
   const rolle = new THREE.Group();
   {
-    // flacher Gurt in mehreren Lagen gewickelt, eine Schlaufe hängt raus, Etikett
-    for (let k = 0; k < 5; k++) rolle.add(setze(teil(new THREE.TorusGeometry(0.13 + k * 0.012, 0.02, 4, 22), 0, { material: k % 2 ? dunkelMat : gurtMat, umriss: 0.002 }), 0, 0, (k - 2) * 0.008));
-    const schlaufe = teil(new THREE.TorusGeometry(0.07, 0.016, 4, 14, Math.PI * 1.5), 0, { material: gurtMat, umriss: 0.002 });
-    schlaufe.position.set(0.02, -0.19, 0.01); schlaufe.rotation.z = Math.PI * 0.75;
-    rolle.add(schlaufe);
-    rolle.add(setze(quader(0.05, 0.06, 0.006, variante === 'neu' ? 0x2f5fa8 : 0x7a7a6a, { umriss: false }), 0.12, -0.1, 0.03, 0, 0, 0.5)); // Etikett
-    if (F.dreck) for (let i = 0; i < 8; i++) { const w = i / 8 * Math.PI * 2; rolle.add(setze(quader(0.03, 0.02, 0.005, F.dreck, { umriss: false }), Math.cos(w) * 0.15, Math.sin(w) * 0.15, 0.025, 0, 0, w)); }
+    const r = (() => { let x = variante === 'neu' ? 7 : 3; return () => (x = (x * 9301 + 49297) % 233280) / 233280; })();
+    for (let k = 0; k < 5; k++) {
+      const L = 0.48 + r() * 0.12, w = 0.09 + r() * 0.07, dz = (k - 2) * 0.006, dx = (r() - 0.5) * 0.04;
+      const pts = [
+        new THREE.Vector3(0, 0, dz),
+        new THREE.Vector3(w * 0.45, -0.06, dz),
+        new THREE.Vector3(w * 0.55 + dx, -L * 0.55, dz + 0.004),
+        new THREE.Vector3(w * 0.35 + dx, -L * 0.93, dz),
+        new THREE.Vector3(dx, -L, dz),
+        new THREE.Vector3(-w * 0.35 + dx, -L * 0.93, dz),
+        new THREE.Vector3(-w * 0.5 + dx, -L * 0.55, dz - 0.004),
+        new THREE.Vector3(-w * 0.4, -0.06, dz),
+      ];
+      const kurve = new THREE.CatmullRomCurve3(pts, true, 'centripetal');
+      const m = teil(new THREE.TubeGeometry(kurve, 40, 0.022, 6, true), 0, { material: k % 2 ? dunkelMat : gurtMat, umriss: 0.002 });
+      m.scale.z = 0.3; // flacher Gurt
+      rolle.add(m);
+    }
+    // oben zusammengefasst (über dem Haken gebündelt)
+    rolle.add(setze(teil(new THREE.TorusGeometry(0.03, 0.016, 5, 12), 0, { material: gurtMat, umriss: 0.002 }), 0, -0.015, 0, 0, Math.PI / 2, 0));
+    // Etikett (eingenäht, hängt seitlich raus)
+    rolle.add(setze(quader(0.05, 0.07, 0.006, variante === 'neu' ? 0x2f5fa8 : 0x7a7a6a, { umriss: false }), 0.045, -0.24, 0.02, 0, 0, 0.2));
+    if (F.dreck) {
+      // Dreck- und Ölflecken, ausgefranste Stellen
+      for (let i = 0; i < 9; i++) rolle.add(setze(quader(0.018, 0.015 + r() * 0.02, 0.022, F.dreck, { umriss: false }), (r() - 0.5) * 0.12, -0.08 - r() * 0.45, 0.012, 0, 0, r() * 2));
+      for (let i = 0; i < 4; i++) rolle.add(setze(quader(0.004, 0.03, 0.004, 0xd9b27a, { umriss: false }), 0.05 + (r() - 0.5) * 0.03, -0.15 - r() * 0.35, 0.01, 0, 0, 0.6 + r()));
+    }
   }
   rolle.userData.interaktiv = { id: 'schlupf', name: name || (variante === 'neu' ? 'Neuer Schlupf' : 'Alter Schlupf'), station };
   scene.add(rolle);
@@ -70,7 +92,7 @@ export function baueSchlupf(scene, { variante = 'alt', name, station = null } = 
     // in der Hand: hand.js übernimmt das Objekt (hand.nimm('schlupf', schlupf.obj)); hier nur vermerken
     inHand() { api.loesen(); api.zustand = 'hand'; },
     // aufgerollt auf ein Fahrzeug legen (Gruppe des Fahrzeugs, lokale Lage)
-    aufFahrzeug(gruppe, lokal = new THREE.Vector3(), rot = new THREE.Euler(Math.PI / 2, 0, 0)) {
+    aufFahrzeug(gruppe, lokal = new THREE.Vector3(), rot = new THREE.Euler(Math.PI / 2, 0, Math.PI)) {
       api.loesen();
       gruppe.add(rolle);
       rolle.position.copy(lokal); rolle.rotation.copy(rot); rolle.scale.setScalar(1);

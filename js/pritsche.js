@@ -1,5 +1,5 @@
 // Paket E2b: Joels Pritsche abschleppen.
-// Ablauf: Joel kommt in die Werkstatt und bittet um Hilfe. Man holt einen Schlupf (neu im Regal auf dem Karton im unteren Fach oder alt an der Wand
+// Ablauf: Joel kommt in die Werkstatt und bittet um Hilfe. Man holt einen Schlupf (neu im Regal im unteren Fach oder alt an der Wand
 // bei den Stahlträgern, mit Warnzettel), legt ihn auf den
 // Weidemann (Hoflader anklicken) und steigt ein. Joel stellt sich außen auf den Tritt und fährt mit. An der umgekippten
 // Pritsche (VW T5 an der großen Straße) springt er ab: B = Minispiel „Pritsche bergen“ (anheben, kippen, Schlupf an die
@@ -17,7 +17,7 @@ import { DENNIS, JOEL } from './texte.js';
 import { pritscheSpiel } from './minispiele.js';
 import { LADER_HILFE } from './fahrten.js';
 
-const T5_VORN = 2.78, T5_ACHSE_HINTEN = 1.45; // vom Mittelpunkt: Öse vorn, Hinterachse
+const T5_VORN = 2.55, T5_ACHSE_HINTEN = 1.35; // vom Mittelpunkt: Öse vorn, Hinterachse
 const SEIL = 3.2;
 
 export function bauePritsche(c) {
@@ -37,13 +37,13 @@ export function bauePritsche(c) {
   // neu: liegt im Regal (unteres Brett, vorn), alt: hängt an der Wand über den Stahlträgern, daneben ein Warnzettel.
   // In E2b funktionieren beide; der Unterschied (alter reißt) kommt in E3 (schlupf.reisst, belastbar).
   const schlupfNeu = baueSchlupf(scene, { variante: 'neu', station: 'regal' });
-  schlupfNeu.setzeHaken(new THREE.Vector3(-4.64, 0.48 + 0.025, -1.0), new THREE.Euler(-Math.PI / 2, 0, 0.4)); // liegt oben auf dem Karton im unteren Fach
+  schlupfNeu.setzeHaken(new THREE.Vector3(-4.68, 0.25 + 0.015 + 0.012, -0.72), new THREE.Euler(Math.PI / 2, 0, 0.1)); // liegt im unteren Fach, Länge nach hinten (-z)
   schlupfNeu.anHaken();
   {
     // Schild am Regalbrett: Platz des neuen Schlupfs (anklicken, um ihn zurückzulegen)
     const tex = leinwandTextur(160, 56, (g, b, h) => { g.fillStyle = '#f2c21c'; g.fillRect(0, 0, b, h); g.fillStyle = '#1d1d1f'; g.font = 'bold 30px Arial'; g.textAlign = 'center'; g.fillText('SCHLUPF', b / 2, 39); });
     const schild = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 0.052), toon(0xffffff, { map: tex }));
-    schild.position.set(-4.474, 0.212, -1.02); schild.rotation.y = Math.PI / 2;
+    schild.position.set(-4.474, 0.212, -1.0); schild.rotation.y = Math.PI / 2;
     schild.userData.interaktiv = { id: 'schlupfPlatz', name: 'Platz für den Schlupf', station: 'regal' };
     scene.add(schild);
     welt.interaktiv?.push(schild);
@@ -57,7 +57,7 @@ export function bauePritsche(c) {
     haken.add(setze(quader(0.03, 0.025, 0.1, 0x5a5e62, { umriss: 0.001 }), 0, -0.04, -0.05));
     haken.position.set(4.35, 1.72, WAND_Z - 0.015);
     scene.add(haken);
-    schlupfAlt.setzeHaken(new THREE.Vector3(4.35, 1.55, WAND_Z - 0.09), Math.PI);
+    schlupfAlt.setzeHaken(new THREE.Vector3(4.35, 1.69, WAND_Z - 0.06), Math.PI);
     schlupfAlt.anHaken();
     // dreckiger Zettel daneben, mit Klebeband
     const tex = leinwandTextur(256, 192, (g, b, h) => {
@@ -86,7 +86,7 @@ export function bauePritsche(c) {
   // Schlupf auf dem Weidemann: aufgerollt hinten auf dem Hinterwagen
   const SCHLUPF_AUF_LADER = new THREE.Vector3(0.0, 1.32, -1.5);
   const HAKEN_LADER = new THREE.Vector3(0, 0.55, -1.78); // Anhängekupplung hinten
-  const OESE_T5 = new THREE.Vector3(0.55, 0.42, T5_VORN + 0.1); // im Modell (stehend)
+  const OESE_T5 = new THREE.Vector3(0.55, 0.45, T5_VORN + 0.02); // im Modell (stehend)
   // Abschleppöse am T5 (rechts unter der Stoßstange)
   modell.add(setze(teil2(), OESE_T5.x, OESE_T5.y, OESE_T5.z));
   function teil2() { const g = new THREE.Group(); g.add(setze(zylinder(0.03, 0.03, 0.12, 0x8c8f94, { umriss: 0.001 }, 8), 0, 0, -0.05, Math.PI / 2, 0, 0)); const r = new THREE.Mesh(new THREE.TorusGeometry(0.04, 0.012, 6, 12), toon(0x8c8f94)); r.position.z = 0.02; g.add(r); return g; }
@@ -111,7 +111,7 @@ export function bauePritsche(c) {
   const ladeHaken = () => lader.g.localToWorld(HAKEN_LADER.clone());
   const t5Oese = () => modell.localToWorld(OESE_T5.clone());
   function t5Hindernis() {
-    const psi = t5.rotation.y, hx = 1.05, hz = 2.75;
+    const psi = t5.rotation.y, hx = 0.98, hz = 2.55;
     const ex = Math.abs(Math.cos(psi)) * hx + Math.abs(Math.sin(psi)) * hz, ez = Math.abs(Math.sin(psi)) * hx + Math.abs(Math.cos(psi)) * hz;
     Object.assign(t5H, { xMin: t5.position.x - ex, xMax: t5.position.x + ex, zMin: t5.position.z - ez, zMax: t5.position.z + ez, boxen: [{ x: t5.position.x, z: t5.position.z, psi, hx, hz }] });
   }
@@ -127,13 +127,19 @@ export function bauePritsche(c) {
   function hilfe(extra) { if (fz2.aktiv === lader) ui.fahrHilfe(extra ? `${LADER_HILFE} · ${extra}` : LADER_HILFE); }
 
   // ---------- Joel ----------
+  const joelBlick = new THREE.Vector3();
   function joelAufLader(an) {
     if (an) {
       joel.halt?.();
       lader.g.add(joel.wurzel);
-      joel.wurzel.position.set(0.95, 0.42, -0.55);
-      joel.wurzel.rotation.set(0, 0, 0);
+      // seitlich auf dem Tritt: Körper zum Weidemann, hält sich mit beiden Händen fest, guckt nach vorn
+      joel.wurzel.position.set(1.0, 0.42, -0.55);
+      joel.wurzel.rotation.set(0, -Math.PI / 2 + 0.3, 0);
+      joel.festhalten?.(true);
+      joel.blickFest?.(joelBlick);
     } else {
+      joel.festhalten?.(false);
+      joel.blickFest?.(null);
       scene.attach(joel.wurzel);
       joel.wurzel.rotation.set(0, joel.wurzel.rotation.y, 0);
     }
@@ -142,7 +148,7 @@ export function bauePritsche(c) {
     if (an) {
       joel.halt?.();
       modell.add(joel.wurzel);
-      joel.wurzel.position.set(0.42, 0.16, 1.05);
+      joel.wurzel.position.set(0.42, 0.18, 1.15);
       joel.wurzel.rotation.set(0, 0, 0);
       joel.sitzen(0.5);
     } else {
@@ -269,7 +275,7 @@ export function bauePritsche(c) {
   }
 
   // ---------- Anhänger: Pritsche folgt am Seil ----------
-  const BOX = [[-1.0, 2.7], [1.0, 2.7], [-1.0, -2.6], [1.0, -2.6], [-1.0, 0], [1.0, 0], [0, 2.75], [0, -2.65]];
+  const BOX = [[-0.95, 2.5], [0.95, 2.5], [-0.95, -2.45], [0.95, -2.45], [-0.95, 0], [0.95, 0], [0, 2.58], [0, -2.5]];
   function t5Frei(x, zz, psi) {
     const c0 = Math.cos(psi), s0 = Math.sin(psi);
     for (const [lx, lz] of BOX) {
@@ -291,7 +297,7 @@ export function bauePritsche(c) {
     }
     if (pz.phase !== 'schleppt') return;
     // Weidemann darf nicht in die Pritsche (beim Schleppen zählt sie für ihn sonst nicht als Hindernis)
-    const t5Box = { x: t5.position.x, z: t5.position.z, psi: t5.rotation.y, hx: 1.0, hz: 2.75 };
+    const t5Box = { x: t5.position.x, z: t5.position.z, psi: t5.rotation.y, hx: 0.95, hz: 2.55 };
     if (fz.boxenVon(lader, lader.x, lader.z, lader.psi, lader.knick || 0).some((b) => fz.obbTiefe(b, t5Box) > 0.01)) {
       const vorher = fz.boxenVon(lader, pose.x, pose.z, pose.psi, pose.knick).some((b) => fz.obbTiefe(b, t5Box) > 0.01);
       if (!vorher) { Object.assign(lader, { x: pose.x, z: pose.z, psi: pose.psi, knick: pose.knick, v: 0 }); fz.anwenden(lader, 0); klonk(0.3); return; }
@@ -335,6 +341,7 @@ export function bauePritsche(c) {
   const markeZeit = { t: 0 };
   function update(dt) {
     markeZeit.t += dt;
+    if (joel.wurzel.parent === lader.g) joelBlick.copy(lader.g.localToWorld(new THREE.Vector3(1.0, 1.6, 8)));
     markMat.opacity = 0.25 + Math.sin(markeZeit.t * 3) * 0.12;
     if (z.vorbei) return;
     const t = sekunden();
@@ -423,7 +430,7 @@ export function bauePritsche(c) {
     schlupf = schlupfNeu; alterKommentiert = false;
     if (joel.wurzel.parent !== scene) { joel.sitzen(null); scene.attach(joel.wurzel); }
     joel.sichtbar(false);
-    modell.rotation.z = Math.PI / 2; modell.position.y = 0.97;
+    modell.rotation.z = Math.PI / 2; modell.position.y = 0.92;
     t5.position.copy(T5_START.pos); t5.rotation.set(0, T5_START.ry, 0);
     t5Hindernis(); t5H.ohneFahrzeug = false;
     oelFleck.visible = false; zielMarke.visible = false; t5Marke.visible = false;
