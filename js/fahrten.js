@@ -31,6 +31,8 @@ export const RUNDE_LADER = [...LADER_RAUS, { x: 7.3, z: 4.8 }, { x: 7.6, z: 8.0 
 // weg vom Hof und zurück
 const WEG = { jeep: [{ x: 4.4, z: 7.5 }, { x: 6.0, z: 8.9 }, ...WEG_RAUS], lader: [...LADER_RAUS, { x: 7.3, z: 4.8 }, { x: 7.4, z: 8.2 }, ...WEG_RAUS] };
 const ZURUECK = { jeep: [...WEG_REIN.slice(1), { x: 4.0, z: 11.3 }, { x: -0.6, z: 11.0 }], lader: [...WEG_REIN.slice(1), { x: 8.4, z: 8.6 }, { x: 8.9, z: 4.0 }, ...LADER_REIN] };
+// Fahrhilfe im Hoflader (pritsche.js hängt eigene Tasten an)
+export const LADER_HILFE = 'W/S fahren · A/D knicken · R/F Gabel hoch/runter · Leertaste hupen · E aussteigen';
 // Fahrstile
 const STIL = {
   jonny: { jeep: { v: 1.3, wackeln: 0.15 }, lader: { v: 2.0, wackeln: 0.1 } },
@@ -61,13 +63,14 @@ export function baueFahrten(c) {
   }
   function einsteigen(f) {
     if (f.fahrer) return ui.hinweis('Da sitzt gerade jemand drin.');
+    if (hand.item && fz2.vorEinsteigen && fz2.vorEinsteigen(f)) { /* Ding wurde aufs Fahrzeug gelegt */ }
     if (hand.item) return ui.hinweis('Erst die Hände frei machen, dann einsteigen.');
     f.fahrer = 'spieler';
     fz2.aktiv = f;
     fz2.eingestiegen = performance.now(); // derselbe E-Druck soll nicht gleich wieder aussteigen
     steuerung.fahrModus({ steuern: (tasten, dt, neu) => steuern(f, tasten, dt, neu) }, f.art === 'lader' ? f.psi : f.psi);
     ui.fahrHilfe(f.art === 'lader'
-      ? 'W/S fahren · A/D knicken · R/F Gabel hoch/runter · Leertaste hupen · E aussteigen'
+      ? LADER_HILFE
       : `W/S fahren · A/D lenken · Leertaste hupen · E aussteigen${f.gedrosselt ? ' · (gedrosselt: nur Schritttempo)' : ''}`);
     blip(f.art === 'lader' ? 120 : 520, 0.25, 0.12);
     if (f.art === 'lader' && !fz2.palettenTipp) { fz2.palettenTipp = true; setTimeout(() => ui.hinweis('Tipp: Herumliegende Paletten einsammeln und hinterm Haus im Carport beim Schild „Paletten“ stapeln. Dennis freut sich.', 6000), 1500); }
@@ -157,6 +160,9 @@ export function baueFahrten(c) {
   }
   let vAlt = 0;
   function steuern(f, tasten, dt, neu) {
+    // E2b: während eines Minispiels steht das Fahrzeug
+    if (fz2.pause) { f.v = 0; return { dpsi: 0, auge: f.g.localToWorld(f.auge.clone()) }; }
+    const pose = { x: f.x, z: f.z, psi: f.psi, knick: f.knick || 0, v: f.v };
     const gas = (tasten.has('w') || tasten.has('arrowup') ? 1 : 0) - (tasten.has('s') || tasten.has('arrowdown') ? 1 : 0);
     const lenk = (tasten.has('a') || tasten.has('arrowleft') ? 1 : 0) - (tasten.has('d') || tasten.has('arrowright') ? 1 : 0);
     if (f.art === 'lader') {
@@ -201,6 +207,8 @@ export function baueFahrten(c) {
     vAlt = f.v;
     // beim Fahren meckert Dennis ab und zu
     if (Math.abs(f.v) > 0.4 && sekunden() > fz2.meckerAb && !(f.art === 'jeep' && f.gedrosselt)) { fz2.meckerAb = sekunden() + 35 + Math.random() * 15; dennisSagt(sag(DENNIS.fahrenSpieler), true, { prio: 0 }); }
+    // E2b (pritsche.js): Anhänger nachziehen, Tasten für Bergen/Abschleppen/Abstellen
+    if (fz2.nachSchritt) fz2.nachSchritt(f, neu, pose, dt);
     if (neu.has(' ')) hupe(f.art);
     if (neu.has('e') && performance.now() - (fz2.eingestiegen || 0) > 400) setTimeout(aussteigen, 0);
     return { dpsi, auge: f.g.localToWorld(f.auge.clone()) };
@@ -301,7 +309,7 @@ export function baueFahrten(c) {
   }
 
   // ---------- Figuren fahren ----------
-  function parkt(f) { return !f.fahrer && Math.hypot(f.x - f.park.x, f.z - f.park.z) < 1.0 && f.g.visible; }
+  function parkt(f) { return !f.fahrer && !f.gesperrt && Math.hypot(f.x - f.park.x, f.z - f.park.z) < 1.0 && f.g.visible; }
   function einstiegPunkt(f) { return f.g.localToWorld(new THREE.Vector3(f.art === 'lader' ? 1.0 : 1.05, 0, f.sitz.z)); }
   async function geheWeg(figur, punkte, tempo = 1.3) {
     for (const p of punkte) if (!(await Promise.race([figur.gehZu(p.x, p.z, tempo), warte(12000).then(() => false)]))) return false;

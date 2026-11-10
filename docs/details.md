@@ -352,6 +352,34 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   wege.js: Ziele hinterm Haus (z < -3,5) gehen durch die Hintertür, sonst durchs Tor; Figuren zum Hoflader laufen selbst
   dorthin (kein fester Weg durchs Tor mehr). Testmenü T94: vor die Hintertür springen.
 
+## Pritsche abschleppen (Paket E2b)
+- js/pritsche.js (`bauePritsche`, aus spiel.js), js/schlupf.js (`baueSchlupf`, eigener Baustein, auch für E3), Minispiel
+  `pritscheSpiel` in minispiele.js. Joel (bisher Platzhalter in kumpels.js) hat jetzt eine Rolle, eigene Sätze JOEL (texte.js),
+  Sprechblase ui.joelSagt.
+- Ablauf: Joel kommt einmal pro Spiel (nach 8–13 min, ruhige Lage, nicht während man fährt) über den Feldweg in die Werkstatt,
+  bittet um Hilfe (Menü an Joel: „Helfen“). Der Schlupf hängt im Carport am vorderen Pfosten zwischen Pritschen- und Weidemann-
+  Bucht (anklicken = in die Hand). Mit dem Schlupf in der Hand den Weidemann anklicken: Schlupf kommt hinten drauf (aufgerollt
+  auf dem Hinterwagen), dann einsteigen. Joel läuft zum Weidemann und stellt sich außen auf den Tritt (fährt mit, sagt bei
+  über 3,5 m/s was). Fahrhilfe zeigt die Entfernung zur Pritsche; an der Pritsche liegt ein grüner Ring.
+- Die Pritsche = der umgekippte VW T5 an der großen Straße (ca. 165 m südlich). Unter 9 m und stehend: Joel springt ab,
+  B = Minispiel „Pritsche bergen“ (ohne Schlupf auf dem Weidemann: Joel meckert). Minispiel (deckt den Bildschirm, 3D pausiert:
+  body[data-vollbild], main.js): 1. Gabel heben (W/Maus), Hebetempo im roten Bereich = Spiegel, dann Kühler kaputt.
+  2. Ab dem Kipppunkt (38°) fällt er auf die Räder, S/rechte Maus = gegenhalten (bremst, hält ihn nie fest); zu hart = Ölwanne,
+  sehr hart = Achse. 3. Schlaufe auf die Abschleppöse ziehen; Stoßstange, Spurstange, Kühlergrill = kaputt, nochmal.
+- Danach steht der T5 (Animation), Schlupf gespannt von der Anhängekupplung hinten am Weidemann zur Öse vorn rechts (Seil hängt
+  durch, wenn locker). B = Abschleppen: Joel setzt sich rein und lenkt, Weidemann max. 2,2 m/s, Pritsche folgt am Seil
+  (Anhänger-Kinematik: Öse wird gezogen, Hinterachse rollt nach), Gelände-Neigung. Hängt sie fest (Hindernis), bleibt der
+  Weidemann stehen. Weidemann und Pritsche können nicht ineinanderfahren. Mit kaputter Ölwanne: Ölfleck und Ölspur.
+- Ziel: Bucht PRITSCHE im Carport leuchtet grün. Durch die Bucht durchfahren (hinten offen), bis die Pritsche drinsteht:
+  B = abstellen. Joel bedankt sich und geht hinten weg; Schlupf liegt wieder auf dem Weidemann (Weidemann anklicken = zurück
+  an den Haken; mit dem Schlupf in der Hand: Carport-Dach anklicken = aufhängen). Dennis: Lob und Wut -6 ohne Schäden,
+  Ärger (+3 je Schaden) und ein Spruch bei Schäden. Während des Auftrags fahren die Figuren den Weidemann nicht (lader.gesperrt).
+- Hooks: fahrten.js fz2.nachSchritt (nach jedem Fahrschritt, Tasten), fz2.vorEinsteigen (Ding aus der Hand aufs Fahrzeug),
+  fz2.pause (Minispiel), LADER_HILFE; fahrzeuge.js vMax (lader.schleppt), Hindernis-Flag ohneFahrzeug; landschaft.js t5.userData
+  (modell, hindernis).
+- Testmenü: T95 Joel kommt, T96 im Weidemann an der Pritsche (mit Joel und Schlupf), T97 Minispiel direkt, T98 steht, direkt
+  abschleppen, T99 Gespann kurz vor der Bucht, T100 zurücksetzen.
+
 ## Carport, Wohnwagen, Benz
 - Dennis' Wohnwagen (js/carport.js, `baueCarport`): links auf der Wiese neben der Betonfläche unter einer Eiche ein großes Carport
   (Holz, Wellplatten-Dach) mit Wohnwagen (Deichsel zur Werkstatt hin), kleiner Holzterrasse OHNE Geländer (kleines altes
@@ -786,6 +814,12 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
 - Geänderte Satzwortlaute ohne Neuaufnahme: dennis434–436 und dennis442–446 (die Aufnahmen passen nicht mehr zum Text).
 - E2a Platz hinten (9.11.): Optik nur per Screenshot geprüft; Hoflader-Fahrt von Waldo (raus, Runde, rein) im Test gelaufen, siehe
   PR. Spieler fährt den Hoflader selbst in die Bucht: nicht ausprobiert (Kollision mit den Pfosten sollte greifen).
+- E2b Pritsche (10.11.): im Testbrowser nur ca. 2 Bilder/s, deshalb Joels Fußweg zum Weidemann nicht in Echtzeit abgewartet
+  (Aufsteigen getestet, indem er danebengestellt wurde) und die lange Fahrt (ca. 165 m) mit Gespann nur auf kurzer Strecke
+  gefahren; Abschleppen über T98/T99 und Abstellen in der Bucht getestet. Minispiel einzeln durchgespielt (mit Schäden).
+  Nicht getestet: Gespann über Hügel/enge Kurven, Figuren laufen um das fahrende Gespann (Pritsche ist kein bewegtes Hindernis
+  in wege.js-Dynamik, nur ihr Hindernis-Kasten), Torben/Jonny/Waldo während des Auftrags. Pritsche bleibt nach dem Abstellen
+  dauerhaft im Carport (bis neu laden); E3 kann daran anknüpfen.
 - Test-Tricks: Waldos/Jonnys Timer stören Tests (`wz.beschaeftigt = true; wz.naechsterBesuch = 1e9`); kleine Teile in der Ferne
   erscheinen erst nach ca. 9 s (`fernUpdate`); `setPointerCapture` unter Pointer-Lock in try/catch; JS-Syntax prüfen mit
   `node --input-type=module --check < datei.js`.

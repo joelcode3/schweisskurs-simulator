@@ -220,6 +220,13 @@ export function davidSagt(text, ms = 4500) {
   $('lobblase').querySelector('b').textContent = 'DAVID';
   $('lob-gesicht').innerHTML = DAVID_MINI;
 }
+// Joel (E2b): Cap, voller brauner Bart, orange Weste
+const JOEL_MINI = '<circle cx="20" cy="22" r="13" fill="#eebda0" stroke="#111" stroke-width="2"/><path d="M8 27 Q20 44 32 27 Q30 37 20 38 Q10 37 8 27z" fill="#5a3a22" stroke="#111" stroke-width="1.5"/><path d="M6 16 Q20 2 34 16 Z" fill="#2a2a2e" stroke="#111" stroke-width="2"/><circle cx="15" cy="21" r="1.8" fill="#111"/><circle cx="25" cy="21" r="1.8" fill="#111"/><path d="M6 40 L13 34 L27 34 L34 40z" fill="#b0702a" stroke="#111" stroke-width="1.5"/>';
+export function joelSagt(text, ms = 4500) {
+  blaseRechts(text, ms, 'normal');
+  $('lobblase').querySelector('b').textContent = 'JOEL';
+  $('lob-gesicht').innerHTML = JOEL_MINI;
+}
 // Fahrhilfe unten: Tasten beim Fahren
 export function fahrHilfe(text) {
   const el = $('fahrhilfe');

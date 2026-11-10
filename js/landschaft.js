@@ -880,7 +880,9 @@ export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
   t5Gruppe.rotation.y = zurStrasse + 1.9;
   scene.add(t5Gruppe);
   merke(t5Gruppe, 'vw_t5', 'Umgekippter VW T5');
-  drehHindernis(t5Gruppe, 0, 0, 1.1, 2.75);
+  // E2b: der T5 wird aufgestellt und abgeschleppt (pritsche.js bewegt Gruppe und Hindernis)
+  t5Gruppe.userData.modell = t5;
+  t5Gruppe.userData.hindernis = drehHindernis(t5Gruppe, 0, 0, 1.1, 2.75);
   // Scherben und Teile auf der Wiese
   for (let i = 0; i < 18; i++) {
     const w = r() * Math.PI * 2, d = 2 + r() * 4;

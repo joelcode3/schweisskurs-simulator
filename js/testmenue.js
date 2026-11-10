@@ -238,6 +238,16 @@ export function baueTestMenue({ spiel, welt, kamera, steuerung, fahrten, fz }) {
     sperre: () => (fz && fz.jeep.gedrosselt ? 'Jeep ist schon gedrosselt' : null),
   });
 
+  ueberschrift('E2b Pritsche abschleppen (Joel)');
+  const pr = t.pritsche;
+  const phase = () => pr?.pz.phase;
+  knopf('T95', 'Joel kommt (Pritsche liegt um)', () => pr.joelKommt(), { sperre: () => (phase() !== 'aus' && phase() !== 'fertig' ? 'läuft schon (T100 zurücksetzen)' : null) });
+  knopf('T96', 'Im Weidemann an der Pritsche (Joel, Schlupf dabei)', () => pr.test.testAnDiePritsche());
+  knopf('T97', 'Minispiel Pritsche bergen (direkt)', mini(() => M.pritscheSpiel()), { laeuft: titelEnthaelt('Pritsche bergen') });
+  knopf('T98', 'Pritsche steht, direkt abschleppen', () => pr.test.testAbschleppen());
+  knopf('T99', 'Gespann kurz vor der Bucht PRITSCHE', () => pr.test.testVorDemCarport());
+  knopf('T100', 'Pritsche zurücksetzen (liegt wieder um)', () => { if (ft.aussteigen && fahrten?.faehrt) ft.aussteigen(); pr.test.zuruecksetzen(); });
+
   ueberschrift('Orte (hinspringen)');
   // Paket E2a: direkt hinter die Werkstatt (vor die Hintertür, Blick auf Schrottplatz und Carport)
   const springen = (pos, blick) => () => { if (steuerung) steuerung.setze([pos[0], kamera.position.y, pos[1]], [blick[0], 1.2, blick[1]]); };

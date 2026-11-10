@@ -2944,3 +2944,180 @@ export function fingerSpiel() {
   });
   return versprechen;
 }
+
+// E2b Pritsche bergen (mit dem Weidemann): Blick von vorn auf den umgekippten T5. Drei Schritte:
+// 1. Anheben: W (oder Maus gedrückt) hebt die Gabel unter der Dachkante, S senkt. Zu schnell = es knirscht (Spiegel, Kühler).
+// 2. Kippen: über dem Kipppunkt fällt der Wagen von selbst auf die Räder. S (oder rechte Maustaste) = mit der Gabel gegenhalten.
+//    Kommt er zu hart auf, reißt die Ölwanne oder es knackt an der Achse.
+// 3. Schlupf anbringen: die Schlaufe mit der Maus auf die Abschleppöse ziehen. Stoßstange, Spurstange oder Grill = kaputt.
+// Ergebnis: { schaeden: ['Spiegel', …], abgebrochen }
+export function pritscheSpiel() {
+  let f;
+  let phase = 'heben', winkel = 90, w = 0, gabel = 0, gabelV = 0, knirsch = 0, zeit = 0, meldung = '', meldungBis = 0;
+  let maus = null, mausLinks = false, mausRechts = false, zieht = false, schlaufe = null;
+  const tasten = new Set(), schaeden = [];
+  const KIPP = 38; // Grad: darunter fällt er von selbst
+  const sagen = (t, s = 2.2) => { meldung = t; meldungBis = zeit + s; };
+  const schaden = (was, text) => { if (!schaeden.includes(was)) { schaeden.push(was); blip(140, 0.25, 0.2); sagen(text, 2.8); } };
+  const ZIELE = [
+    { id: 'oese', name: 'Abschleppöse', x: 0.36, y: 0.86, gut: true },
+    { id: 'stossstange', name: 'Stoßstange', x: -0.05, y: 0.8 },
+    { id: 'spurstange', name: 'Spurstange', x: 0.0, y: 0.96 },
+    { id: 'grill', name: 'Kühlergrill', x: 0.0, y: 0.58 },
+  ];
+  document.body.dataset.vollbild = '1'; // deckt alles: 3D-Welt pausiert (main.js)
+  const { api, versprechen } = spielRahmen('Pritsche bergen', 'Gabel vorsichtig anheben (W oder Maus gedrückt halten, S senkt), beim Kippen gegenhalten (S oder rechte Maustaste), dann den Schlupf auf die Abschleppöse ziehen. Grob = es geht noch mehr kaputt.', {
+    beiGroesse(m) { f = flaeche(m); },
+    events: {
+      keydown(e) { const k = e.key.toLowerCase(); if (['w', 's', 'arrowup', 'arrowdown'].includes(k)) { tasten.add(k); e.preventDefault(); } },
+      keyup(e) { tasten.delete(e.key.toLowerCase()); },
+      contextmenu(e) { e.preventDefault(); },
+      pointerdown(e) {
+        maus = zeigerPos(api.canvas, e);
+        if (e.button === 2) mausRechts = true; else mausLinks = true;
+        if (phase === 'schlupf' && schlaufe && Math.hypot(maus.x - schlaufe.x, maus.y - schlaufe.y) < 40) zieht = true;
+      },
+      pointermove(e) { maus = zeigerPos(api.canvas, e); if (zieht && schlaufe) { schlaufe.x = maus.x; schlaufe.y = maus.y; } },
+      pointerup(e) {
+        if (e.button === 2) mausRechts = false; else mausLinks = false;
+        if (phase === 'schlupf' && zieht) {
+          zieht = false;
+          const t = ZIELE.map((z) => ({ z, d: Math.hypot(schlaufe.x - zx(z), schlaufe.y - zy(z)) })).sort((a, b) => a.d - b.d)[0];
+          if (t.d < 34) {
+            if (t.z.gut) { phase = 'fertig'; blip(880, 0.15); sagen('Schlupf sitzt an der Öse.', 3); api.fertig({ schaeden: [...schaeden] }); }
+            else {
+              if (t.z.id === 'stossstange') schaden('Stoßstange', 'Nicht an die Stoßstange! Die reißt doch ab. Ab an die Öse.');
+              else if (t.z.id === 'spurstange') schaden('Spurstange', 'Die Spurstange! Jetzt ist die Lenkung krumm. An die Öse!');
+              else schaden('Kühlergrill', 'Am Grill? Der bricht raus! An die Öse damit.');
+              schlaufeZurueck();
+            }
+          } else schlaufeZurueck();
+        }
+      },
+    },
+    schritt(dt) {
+      zeit += dt;
+      if (api.istFertig) return;
+      const hoch = tasten.has('w') || tasten.has('arrowup') || mausLinks;
+      const runter = tasten.has('s') || tasten.has('arrowdown') || mausRechts;
+      if (phase === 'heben') {
+        // Gabel beschleunigt weich; Tempo zählt
+        const soll = hoch ? 1 : runter ? -0.6 : 0;
+        gabelV += (soll - gabelV) * Math.min(1, dt * 1.6);
+        gabel = Math.max(0, gabel + gabelV * dt * 0.32);
+        winkel = 90 - gabel * 60;
+        if (gabelV > 0.72) { knirsch += dt; if (knirsch > 0.35) { knirsch = 0; schaden(schaeden.includes('Spiegel') ? 'Kühler' : 'Spiegel', schaeden.includes('Spiegel') ? 'Krrk! Der Kühler hat was abgekriegt. Langsamer!' : 'Knack! Der Spiegel ist ab. Langsamer heben!'); gabelV = 0.3; } }
+        else knirsch = Math.max(0, knirsch - dt);
+        if (winkel <= KIPP) { phase = 'kippen'; w = -gabelV * 22; sagen('Er kippt! Gegenhalten (S)!', 2); }
+      } else if (phase === 'kippen') {
+        // Schwerkraft zieht ihn auf die Räder (schneller, je weiter er ist), Gegenhalten bremst
+        const zug = 26 + (KIPP - winkel) * 2.2;
+        w -= zug * dt;
+        if (runter) w = Math.min(w + 70 * dt, -9); // bremst, hält ihn aber nicht fest: er kippt immer weiter
+        winkel += w * dt;
+        if (winkel <= 0) {
+          winkel = 0;
+          const v = -w;
+          if (v > 58) { schaden('Ölwanne', 'Rumms! Viel zu hart aufgesetzt, die Ölwanne ist gerissen.'); if (v > 85) schaden('Achse', 'Und die Achse hat auch was abgekriegt.'); }
+          else if (v > 40) sagen('Etwas hart, aber hält.');
+          else sagen('Sauber aufgesetzt!');
+          klonk(Math.min(1, v / 80));
+          phase = 'schlupf';
+          schlaufeZurueck();
+        }
+      }
+    },
+    zeichnen() {
+      const { ctx, m } = api;
+      ctx.fillStyle = '#bcd6e4'; ctx.fillRect(0, 0, m.b, m.h);
+      const boden = f.y + f.h * 0.88;
+      ctx.fillStyle = '#7fa04f'; ctx.fillRect(0, boden, m.b, m.h - boden);
+      const s = f.h / 360;
+      const W = 190 * s, H = 200 * s; // Wagen von vorn: Breite, Höhe
+      const px = f.x + f.b * 0.66, py = boden; // Drehpunkt: untere linke Kante (Räder Fahrerseite)
+      if (phase !== 'schlupf' && phase !== 'fertig') {
+        // Wagen von vorn: Drehpunkt = untere linke Kante (Räder Fahrerseite). Aufrecht: x 0…W, y -H…0. Liegt (a = 90°) nach links.
+        const a = (winkel * Math.PI) / 180;
+        const welt = (lx, ly) => ({ x: px + lx * Math.cos(a) + ly * Math.sin(a), y: py - lx * Math.sin(a) + ly * Math.cos(a) });
+        const ecke = welt(W, -H); // obere rechte Ecke (Dach, Beifahrerseite): da drückt die Gabel
+        // Weidemann links, Hubarm zur Ecke, Zinken darunter
+        const wx = f.x + f.b * 0.03, wy = boden;
+        ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
+        ctx.fillStyle = '#c8382c'; ctx.beginPath(); ctx.roundRect(wx, wy - 120 * s, 150 * s, 80 * s, 12); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#3a3c40'; ctx.beginPath(); ctx.roundRect(wx + 15 * s, wy - 200 * s, 75 * s, 82 * s, 6); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#9fc3d8'; ctx.fillRect(wx + 22 * s, wy - 192 * s, 61 * s, 62 * s); ctx.strokeRect(wx + 22 * s, wy - 192 * s, 61 * s, 62 * s);
+        ctx.fillStyle = '#1d1d1f'; for (const dx of [32, 118]) { ctx.beginPath(); ctx.arc(wx + dx * s, wy - 30 * s, 30 * s, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#8c8f94'; ctx.beginPath(); ctx.arc(wx + dx * s, wy - 30 * s, 12 * s, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#1d1d1f'; }
+        const gx = ecke.x - 6 * s, gy = ecke.y + 4 * s;
+        ctx.strokeStyle = '#c8382c'; ctx.lineWidth = 16 * s; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(wx + 140 * s, wy - 100 * s); ctx.lineTo(gx - 40 * s, gy - 30 * s); ctx.stroke(); ctx.lineCap = 'butt';
+        ctx.fillStyle = '#5a5e62'; ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
+        ctx.fillRect(gx - 46 * s, gy - 46 * s, 12 * s, 52 * s); ctx.strokeRect(gx - 46 * s, gy - 46 * s, 12 * s, 52 * s);
+        ctx.fillRect(gx - 46 * s, gy, 52 * s, 8 * s); ctx.strokeRect(gx - 46 * s, gy, 52 * s, 8 * s);
+        // Wagen: Boden mit Rädern, Kabine, Fenster, Spiegel
+        ctx.save(); ctx.translate(px, py); ctx.rotate(-a);
+        ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
+        ctx.fillStyle = '#c6cacd'; ctx.beginPath(); ctx.roundRect(0, -H, W, H * 0.86, 14); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#9cc7e6'; ctx.fillRect(W * 0.1, -H * 0.94, W * 0.8, H * 0.34); ctx.strokeRect(W * 0.1, -H * 0.94, W * 0.8, H * 0.34);
+        ctx.fillStyle = '#3a3c40'; ctx.fillRect(-W * 0.02, -H * 0.3, W * 1.04, H * 0.1); ctx.strokeRect(-W * 0.02, -H * 0.3, W * 1.04, H * 0.1);
+        ctx.fillStyle = '#1d1d1f'; for (const dx of [0.14, 0.86]) { ctx.beginPath(); ctx.roundRect(W * dx - 20 * s, -H * 0.16, 40 * s, H * 0.16, 6); ctx.fill(); }
+        if (!schaeden.includes('Spiegel')) { ctx.fillStyle = '#1d1d1f'; ctx.fillRect(W, -H * 0.62, 16 * s, 26 * s); ctx.strokeRect(W, -H * 0.62, 16 * s, 26 * s); }
+        if (schaeden.includes('Kühler')) { ctx.strokeStyle = '#7a7a7a'; ctx.lineWidth = 2; for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.moveTo(W * 0.3 + k * 10, -H * 0.5); ctx.lineTo(W * 0.35 + k * 12, -H * 0.38); ctx.stroke(); } }
+        ctx.restore();
+        // Joel steht rechts daneben und guckt (Cap, Bart, orange Weste)
+        const jx = f.x + f.b * 0.92, jy = boden;
+        ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
+        ctx.fillStyle = '#1f2024'; ctx.fillRect(jx - 14 * s, jy - 60 * s, 28 * s, 60 * s); ctx.strokeRect(jx - 14 * s, jy - 60 * s, 28 * s, 60 * s);
+        ctx.fillStyle = '#8a9aa8'; ctx.beginPath(); ctx.roundRect(jx - 20 * s, jy - 125 * s, 40 * s, 68 * s, 8); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#b0702a'; ctx.fillRect(jx - 20 * s, jy - 122 * s, 12 * s, 62 * s); ctx.fillRect(jx + 8 * s, jy - 122 * s, 12 * s, 62 * s);
+        ctx.fillStyle = '#eebda0'; ctx.beginPath(); ctx.arc(jx, jy - 142 * s, 16 * s, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#5a3a22'; ctx.beginPath(); ctx.arc(jx, jy - 136 * s, 13 * s, 0.1 * Math.PI, 0.9 * Math.PI); ctx.fill();
+        ctx.fillStyle = '#2a2a2e'; ctx.beginPath(); ctx.arc(jx, jy - 148 * s, 16 * s, Math.PI, 0); ctx.fill(); ctx.fillRect(jx - 20 * s, jy - 150 * s, 22 * s, 5 * s);
+        // Anzeigen: Hebetempo und Neigung
+        const bx = f.x + f.b * 0.15, bb = f.b * 0.5, by = boden + 20;
+        if (phase === 'heben') {
+          ctx.fillStyle = '#5b5b5b'; ctx.fillRect(bx, by, bb, 14);
+          ctx.fillStyle = '#4caf50'; ctx.fillRect(bx, by, bb * 0.72, 14);
+          ctx.fillStyle = '#d0453a'; ctx.fillRect(bx + bb * 0.72, by, bb * 0.28, 14);
+          ctx.fillStyle = '#ffc81e'; ctx.fillRect(bx + Math.max(0, Math.min(1, gabelV)) * bb - 4, by - 6, 8, 26);
+          textMitte(ctx, 'Hebetempo', bx + bb / 2, by + 40, 16, '#fff');
+        } else {
+          ctx.fillStyle = '#5b5b5b'; ctx.fillRect(bx, by, bb, 14);
+          ctx.fillStyle = '#4caf50'; ctx.fillRect(bx, by, bb * (40 / 100), 14);
+          ctx.fillStyle = '#d0453a'; ctx.fillRect(bx + bb * (58 / 100), by, bb * (42 / 100), 14);
+          ctx.fillStyle = '#ffc81e'; ctx.fillRect(bx + Math.min(1, -w / 100) * bb - 4, by - 6, 8, 26);
+          textMitte(ctx, 'Fallgeschwindigkeit (S = gegenhalten)', bx + bb / 2, by + 40, 16, '#fff');
+        }
+      } else {
+        // Schlupf anbringen: Front des T5 groß, Ziele, Schlaufe zum Ziehen
+        const cx = f.x + f.b / 2, fy = f.y + f.h * 0.08, FB = f.h * 1.1, FH = f.h * 0.8;
+        ctx.fillStyle = '#c6cacd'; ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.roundRect(cx - FB / 2, fy, FB, FH * 0.75, 18); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#9cc7e6'; ctx.fillRect(cx - FB * 0.42, fy + FH * 0.05, FB * 0.84, FH * 0.3); ctx.strokeRect(cx - FB * 0.42, fy + FH * 0.05, FB * 0.84, FH * 0.3);
+        ctx.fillStyle = schaeden.includes('Kühlergrill') ? '#555' : '#1d1d1f'; ctx.fillRect(cx - FB * 0.25, fy + FH * 0.48, FB * 0.5, FH * 0.14);
+        for (const sx of [-1, 1]) { ctx.fillStyle = '#e8eef2'; ctx.beginPath(); ctx.roundRect(cx + sx * FB * 0.36 - FB * 0.09, fy + FH * 0.47, FB * 0.18, FH * 0.1, 8); ctx.fill(); ctx.stroke(); }
+        ctx.fillStyle = schaeden.includes('Stoßstange') ? '#6a6c70' : '#3a3c40'; ctx.beginPath(); ctx.roundRect(cx - FB * 0.52, fy + FH * 0.72, FB * 1.04, FH * 0.13, 10); ctx.fill(); ctx.stroke();
+        ctx.strokeStyle = '#2a2c30'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(cx - FB * 0.38, fy + FH * 0.95); ctx.lineTo(cx + FB * 0.38, fy + FH * 0.95); ctx.stroke(); // Spurstange
+        ctx.fillStyle = '#1d1d1f'; for (const sx of [-1, 1]) { ctx.beginPath(); ctx.ellipse(cx + sx * FB * 0.44, fy + FH * 0.95, FB * 0.07, FH * 0.11, 0, 0, Math.PI * 2); ctx.fill(); }
+        ctx.strokeStyle = '#b8bcc0'; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(zx(ZIELE[0]), zy(ZIELE[0]), 12, 0, Math.PI * 2); ctx.stroke(); // Öse
+        for (const z of ZIELE) {
+          const nah = schlaufe && Math.hypot(schlaufe.x - zx(z), schlaufe.y - zy(z)) < 34;
+          ctx.strokeStyle = nah ? '#ffc81e' : 'rgba(255,255,255,0.6)'; ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
+          ctx.beginPath(); ctx.arc(zx(z), zy(z), 26, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+          textMitte(ctx, z.name, zx(z), zy(z) - 32, 14, '#fff');
+        }
+        // Schlupf: Gurt von unten links zur Schlaufe
+        if (schlaufe) {
+          ctx.strokeStyle = '#b8742e'; ctx.lineWidth = 10; ctx.beginPath(); ctx.moveTo(f.x, f.y + f.h); ctx.quadraticCurveTo(f.x + 60, schlaufe.y + 80, schlaufe.x, schlaufe.y); ctx.stroke();
+          ctx.lineWidth = 8; ctx.beginPath(); ctx.arc(schlaufe.x, schlaufe.y, 16, 0, Math.PI * 2); ctx.stroke();
+        }
+        if (phase === 'schlupf') textMitte(ctx, 'Schlaufe mit der Maus auf die Abschleppöse ziehen', cx, f.y + f.h + 26, 18, '#fff');
+      }
+      if (schaeden.length) textMitte(ctx, `Schäden: ${schaeden.join(', ')}`, f.x + f.b / 2, f.y - 30, 18, '#ffb0a0');
+      if (zeit < meldungBis) textMitte(ctx, meldung, f.x + f.b / 2, f.y - 4, 22, '#fff');
+    },
+  });
+  function zx(z) { return f.x + f.b / 2 + z.x * f.h * 1.1; }
+  function zy(z) { return f.y + f.h * 0.08 + z.y * f.h * 0.8; }
+  function schlaufeZurueck() { schlaufe = { x: f.x + f.b * 0.12, y: f.y + f.h * 0.8 }; }
+  return versprechen.then((e) => { delete document.body.dataset.vollbild; return e; });
+}

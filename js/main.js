@@ -198,6 +198,8 @@ function schleife(jetzt) {
   sicher('hand', () => hand.update(dt, steuerung.geht, dennis.position, welt.hindernisse));
   sicher('fern', fernUpdate);
   sicher('schatten', () => { if (++schattenTakt % 2 === 0) renderer.shadowMap.needsUpdate = true; });
+  // Ein Minispiel, das den ganzen Bildschirm deckt (data-vollbild), braucht die 3D-Welt nicht: nicht zeichnen (spart Leistung)
+  if (document.body.dataset.vollbild) return;
   renderer.render(scene, kamera);
   sicher('handBild', () => hand.render(renderer));
 }

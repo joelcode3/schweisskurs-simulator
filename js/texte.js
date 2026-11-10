@@ -375,6 +375,14 @@ export const DENNIS = {
     flasche: ['Torben! Die Flasche war noch halb voll!'],
     spaghetti: ['Torben! Die Nudeln liegen jetzt auf meinem Boden! Wer macht das weg?!'],
   },
+  // E2b: Joels Pritsche abschleppen
+  pritsche: {
+    joel: ['Joel und seine Pritsche. Nimm den Weidemann, aber fahr bloß vorsichtig!'],
+    schaden: ['Was war das?! Das war die Ölwanne, oder?', 'Vorsichtig! Das ist kein Bagger-Wettbewerb!', 'Der Kühler! Jetzt ist auch noch der Kühler hin.'],
+    geborgen: ['Steht wieder auf den Rädern. Gut gemacht.'],
+    abgestellt: ['Da steht sie. Ordentlich. Respekt.', 'Na also, geht doch. Pritsche im Carport.'],
+    abgestelltSchaden: ['Steht da, aber guck dir die Ölspur an. Na toll.'],
+  },
 };
 
 // Alle Sätze flach mit ID, z. B. { id: 'fehler.brille.1', text: '...' }
@@ -484,4 +492,18 @@ export const KUMPEL = {
   hallo: ['Moin! Ich hol mir nur kurz nen Kaffee.', 'Na? Alles klar hier?'],
   quatschen: ['Läuft bei dir? Sieht gut aus.', 'Ich bin nur kurz hier, Kaffee holen.', 'Dennis guckt schon wieder so. Ich sag nix.'],
   spueldienst: ['Ja, ja, ich mach ja schon. Gib her.', 'Oh Mann. Okay, ich nehm die mit in die Küche.'],
+};
+
+// E2b: Joel (bisher Platzhalter) braucht Hilfe mit seiner umgekippten Pritsche
+export const JOEL = {
+  hallo: ['Moin! Ich brauch mal kurz Hilfe. Meine Pritsche liegt noch auf der Seite.'],
+  bitte: ['Kannst du mit dem Weidemann kommen? Ich stell mich außen drauf.', 'Den Schlupf nicht vergessen, der hängt im Carport am Pfosten.'],
+  aufsteigen: ['Ich halt mich hier fest. Los geht’s!'],
+  fahrt: ['Nicht so schnell! Ich fall hier gleich runter!', 'Uiii, das ist besser als Kirmes.'],
+  angekommen: ['Da liegt sie. Vorsichtig anheben, ja?'],
+  ohneSchlupf: ['Ohne Schlupf wird das nix. Der hängt im Carport am Pfosten.'],
+  schaden: ['Autsch. Das war teuer.', 'Oh nee, nicht der Kühler!'],
+  gut: ['Super! Sie steht wieder.'],
+  abschleppen: ['Ich setz mich rein und lenk. Fahr langsam an!'],
+  abgestellt: ['Danke dir! Das Bier geht auf mich.'],
 };
