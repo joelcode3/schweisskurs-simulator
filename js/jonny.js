@@ -611,6 +611,7 @@ export function baueJonny(scene, opts = {}) {
   let raucht = false;
   let blickZiel = null;
   let blickFix = null;
+  let lehnt = false;
   let ziel = null;
   let zielFertig = null;
   let weg = []; // restliche Wegpunkte (um Wände herum, durch Türen)
@@ -639,13 +640,15 @@ export function baueJonny(scene, opts = {}) {
     // fester Blick (z. B. Joel außen auf dem Weidemann guckt nach vorn), Kopf darf sich dann weiter drehen; null = aus
     blickFest(punkt) { blickFix = punkt; if (punkt) blickZiel = punkt; },
     // mit beiden Händen vor sich festhalten (Griff am Fahrzeug); false = wieder normal
+    // dabei an der Hüfte eingeknickt: Füße vorn am Fahrzeug, Hintern raus, Oberkörper lehnt zum Griff
     festhalten(an) {
+      lehnt = !!an;
       if (an) {
         haendeGerade();
-        links.schulter.rotation.set(-1.85, 0, 0.12); links.ellbogen.rotation.set(-0.45, 0, 0);
-        rechts.schulter.rotation.set(-1.45, 0, -0.12); rechts.ellbogen.rotation.set(-0.5, 0, 0);
+        links.schulter.rotation.set(-1.45, 0, 0.12); links.ellbogen.rotation.set(-0.45, 0, 0);
+        rechts.schulter.rotation.set(-1.05, 0, -0.12); rechts.ellbogen.rotation.set(-0.5, 0, 0);
         links.hand.rotation.set(0, 0, -0.4); rechts.hand.rotation.set(0, 0, 0.4);
-      } else ruhe();
+      } else { rumpf.rotation.x = 0; ruhe(); }
     },
     heimPlatz: PLATZ.clone(),
     gehZu(x, z, t = 1.1) {
@@ -713,6 +716,9 @@ export function baueJonny(scene, opts = {}) {
         // sitzen: Oberschenkel nach vorn, Unterschenkel nach unten, Becken auf der Sitzfläche
         for (const b of beine) { b.huefte.rotation.x = -Math.PI / 2 + 0.1; b.k.rotation.x = Math.PI / 2 - 0.1; }
         koerper.position.y = (sitzHoehe + 0.06) / SKALA - (HUEFT + 0.02);
+      } else if (lehnt) {
+        for (const b of beine) { b.huefte.rotation.x = -0.34; b.k.rotation.x = 0.12; }
+        rumpf.rotation.x = 0.42;
       } else {
         beine[0].huefte.rotation.x += (schwung - beine[0].huefte.rotation.x) * Math.min(1, dt * 10);
         beine[1].huefte.rotation.x += (-schwung - beine[1].huefte.rotation.x) * Math.min(1, dt * 10);

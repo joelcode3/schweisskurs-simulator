@@ -37,7 +37,7 @@ export function bauePritsche(c) {
   // neu: liegt im Regal (unteres Brett, vorn), alt: hängt an der Wand über den Stahlträgern, daneben ein Warnzettel.
   // In E2b funktionieren beide; der Unterschied (alter reißt) kommt in E3 (schlupf.reisst, belastbar).
   const schlupfNeu = baueSchlupf(scene, { variante: 'neu', station: 'regal' });
-  schlupfNeu.setzeHaken(new THREE.Vector3(-4.68, 0.25 + 0.015 + 0.012, -0.72), new THREE.Euler(Math.PI / 2, 0, 0.1)); // liegt im unteren Fach, Länge nach hinten (-z)
+  schlupfNeu.setzeHaken(new THREE.Vector3(-4.68, 0.25 + 0.015 + 0.012, -0.72), new THREE.Euler(Math.PI / 2, 0, 0.1), 0.62); // liegt im unteren Fach (umgeschlagen), Länge nach hinten (-z)
   schlupfNeu.anHaken();
   {
     // Schild am Regalbrett: Platz des neuen Schlupfs (anklicken, um ihn zurückzulegen)
@@ -55,9 +55,9 @@ export function bauePritsche(c) {
     const haken = new THREE.Group();
     haken.add(setze(quader(0.04, 0.1, 0.03, 0x5a5e62, { umriss: 0.001 }), 0, 0, 0));
     haken.add(setze(quader(0.03, 0.025, 0.1, 0x5a5e62, { umriss: 0.001 }), 0, -0.04, -0.05));
-    haken.position.set(4.35, 1.72, WAND_Z - 0.015);
+    haken.position.set(4.35, 1.85, WAND_Z - 0.015);
     scene.add(haken);
-    schlupfAlt.setzeHaken(new THREE.Vector3(4.35, 1.69, WAND_Z - 0.06), Math.PI);
+    schlupfAlt.setzeHaken(new THREE.Vector3(4.35, 1.82, WAND_Z - 0.06), Math.PI);
     schlupfAlt.anHaken();
     // dreckiger Zettel daneben, mit Klebeband
     const tex = leinwandTextur(256, 192, (g, b, h) => {
@@ -133,7 +133,7 @@ export function bauePritsche(c) {
       joel.halt?.();
       lader.g.add(joel.wurzel);
       // seitlich auf dem Tritt: Körper zum Weidemann, hält sich mit beiden Händen fest, guckt nach vorn
-      joel.wurzel.position.set(1.0, 0.42, -0.55);
+      joel.wurzel.position.set(1.04, 0.39, -0.55);
       joel.wurzel.rotation.set(0, -Math.PI / 2 + 0.3, 0);
       joel.festhalten?.(true);
       joel.blickFest?.(joelBlick);

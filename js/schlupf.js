@@ -8,7 +8,7 @@
 // Datenmodell für E3 schon da: variante ('neu'/'alt'), belastbar (Anteil der Nennlast, die er sicher hält), verschleiss
 // (0 = neu, 1 = durch), reisst(last) sagt, ob er bei dieser Last reißt. In E2b reißen beide nicht (Pritsche ist leicht genug).
 import * as THREE from 'three';
-import { toon, teil, quader, setze } from './toon.js';
+import { toon, teil, setze, leinwandTextur } from './toon.js';
 
 const FARBEN = {
   alt: { gurt: 0xb8742e, dunkel: 0x6e4a2a, naht: 0x3a2a1a, dreck: 0x5a4a38 },
@@ -22,38 +22,39 @@ const DATEN = {
 
 export function baueSchlupf(scene, { variante = 'alt', name, station = null } = {}) {
   const F = FARBEN[variante] || FARBEN.alt;
-  const gurtMat = toon(F.gurt), dunkelMat = toon(F.dunkel);
-  // ---------- Modell (Haken, Hand, Fahrzeug): zusammengelegter Rundschlupf, hängt länglich nach unten ----------
-  // Ursprung = Aufhängepunkt oben; mehrere flache Gurtschlaufen hängen ungleich lang herunter (ca. 0,55 m), unten etwas
-  // breiter auseinander, Etikett eingenäht. Liegend (Regal, Weidemann) wird das Ganze einfach flach hingelegt.
+  // Gurtmaterial mit Textur: neu sauber mit Webstreifen, alt verblasst mit Dreck- und Ölflecken (nur Flecken, keine Anbauteile)
+  const r = (() => { let x = variante === 'neu' ? 7 : 3; return () => (x = (x * 9301 + 49297) % 233280) / 233280; })();
+  const hex = (c) => '#' + c.toString(16).padStart(6, '0');
+  const gurtTextur = (grund) => leinwandTextur(256, 32, (g, b, h) => {
+    g.fillStyle = hex(grund); g.fillRect(0, 0, b, h);
+    g.fillStyle = 'rgba(0,0,0,0.08)'; for (let y = 3; y < h; y += 6) g.fillRect(0, y, b, 1.5); // Webstruktur
+    if (F.dreck) for (let i = 0; i < 26; i++) {
+      g.fillStyle = i % 4 === 0 ? 'rgba(25,20,15,0.55)' : `rgba(${60 + r() * 30},${48 + r() * 20},${32 + r() * 12},${0.35 + r() * 0.35})`;
+      g.beginPath(); g.ellipse(r() * b, r() * h, 3 + r() * 12, 2 + r() * 7, r() * 3, 0, Math.PI * 2); g.fill();
+    }
+  }, [3, 1]);
+  const gurtMat = toon(0xffffff, { map: gurtTextur(F.gurt) }), dunkelMat = toon(0xffffff, { map: gurtTextur(F.dunkel) });
+  // ---------- Modell (Haken, Hand, Fahrzeug): zusammengelegter Rundschlupf, hängt lang nach unten ----------
+  // Ursprung = Aufhängepunkt oben; mehrere flache Gurtschlaufen hängen ungleich lang herunter (ca. 0,8 m), schmal.
+  // Liegend (Regal, Weidemann) wird das Ganze flach hingelegt (und dabei einmal umgeschlagen = kürzer, skala).
   const rolle = new THREE.Group();
   {
-    const r = (() => { let x = variante === 'neu' ? 7 : 3; return () => (x = (x * 9301 + 49297) % 233280) / 233280; })();
     for (let k = 0; k < 5; k++) {
-      const L = 0.48 + r() * 0.12, w = 0.09 + r() * 0.07, dz = (k - 2) * 0.006, dx = (r() - 0.5) * 0.04;
+      const L = 0.74 + r() * 0.14, w = 0.055 + r() * 0.04, dz = (k - 2) * 0.006, dx = (r() - 0.5) * 0.03;
       const pts = [
         new THREE.Vector3(0, 0, dz),
-        new THREE.Vector3(w * 0.45, -0.06, dz),
-        new THREE.Vector3(w * 0.55 + dx, -L * 0.55, dz + 0.004),
-        new THREE.Vector3(w * 0.35 + dx, -L * 0.93, dz),
+        new THREE.Vector3(w * 0.4, -0.05, dz),
+        new THREE.Vector3(w * 0.5 + dx * 0.5, -L * 0.5, dz + 0.004),
+        new THREE.Vector3(w * 0.4 + dx, -L * 0.94, dz),
         new THREE.Vector3(dx, -L, dz),
-        new THREE.Vector3(-w * 0.35 + dx, -L * 0.93, dz),
-        new THREE.Vector3(-w * 0.5 + dx, -L * 0.55, dz - 0.004),
-        new THREE.Vector3(-w * 0.4, -0.06, dz),
+        new THREE.Vector3(-w * 0.4 + dx, -L * 0.94, dz),
+        new THREE.Vector3(-w * 0.5 + dx * 0.5, -L * 0.5, dz - 0.004),
+        new THREE.Vector3(-w * 0.4, -0.05, dz),
       ];
       const kurve = new THREE.CatmullRomCurve3(pts, true, 'centripetal');
-      const m = teil(new THREE.TubeGeometry(kurve, 40, 0.022, 6, true), 0, { material: k % 2 ? dunkelMat : gurtMat, umriss: 0.002 });
+      const m = teil(new THREE.TubeGeometry(kurve, 48, 0.022, 6, true), 0, { material: k % 2 ? dunkelMat : gurtMat, umriss: 0.002 });
       m.scale.z = 0.3; // flacher Gurt
       rolle.add(m);
-    }
-    // oben zusammengefasst (über dem Haken gebündelt)
-    rolle.add(setze(teil(new THREE.TorusGeometry(0.03, 0.016, 5, 12), 0, { material: gurtMat, umriss: 0.002 }), 0, -0.015, 0, 0, Math.PI / 2, 0));
-    // Etikett (eingenäht, hängt seitlich raus)
-    rolle.add(setze(quader(0.05, 0.07, 0.006, variante === 'neu' ? 0x2f5fa8 : 0x7a7a6a, { umriss: false }), 0.045, -0.24, 0.02, 0, 0, 0.2));
-    if (F.dreck) {
-      // Dreck- und Ölflecken, ausgefranste Stellen
-      for (let i = 0; i < 9; i++) rolle.add(setze(quader(0.018, 0.015 + r() * 0.02, 0.022, F.dreck, { umriss: false }), (r() - 0.5) * 0.12, -0.08 - r() * 0.45, 0.012, 0, 0, r() * 2));
-      for (let i = 0; i < 4; i++) rolle.add(setze(quader(0.004, 0.03, 0.004, 0xd9b27a, { umriss: false }), 0.05 + (r() - 0.5) * 0.03, -0.15 - r() * 0.35, 0.01, 0, 0, 0.6 + r()));
     }
   }
   rolle.userData.interaktiv = { id: 'schlupf', name: name || (variante === 'neu' ? 'Neuer Schlupf' : 'Alter Schlupf'), station };
@@ -77,25 +78,25 @@ export function baueSchlupf(scene, { variante = 'alt', name, station = null } = 
     zustand: 'haken',
     haken: null,
     // Stammplatz (Haken oder Regalbrett): Weltposition, Blickrichtung (Zahl) oder ganze Drehung (Euler, z. B. liegend)
-    setzeHaken(pos, ry = 0) {
+    setzeHaken(pos, ry = 0, laenge = 1) {
       const rot = ry instanceof THREE.Euler ? ry.clone() : new THREE.Euler(0, ry, 0);
-      api.haken = { pos: pos.clone(), rot }; rolle.userData.wand = { pos: pos.clone(), rot: rot.clone() };
+      api.haken = { pos: pos.clone(), rot, laenge }; rolle.userData.wand = { pos: pos.clone(), rot: rot.clone() };
     },
     anHaken() {
       api.loesen();
       scene.add(rolle);
-      if (api.haken) { rolle.position.copy(api.haken.pos); rolle.rotation.copy(api.haken.rot); }
       rolle.scale.setScalar(1);
+      if (api.haken) { rolle.position.copy(api.haken.pos); rolle.rotation.copy(api.haken.rot); rolle.scale.y = api.haken.laenge; }
       rolle.visible = true;
       api.zustand = 'haken';
     },
     // in der Hand: hand.js übernimmt das Objekt (hand.nimm('schlupf', schlupf.obj)); hier nur vermerken
     inHand() { api.loesen(); api.zustand = 'hand'; },
     // aufgerollt auf ein Fahrzeug legen (Gruppe des Fahrzeugs, lokale Lage)
-    aufFahrzeug(gruppe, lokal = new THREE.Vector3(), rot = new THREE.Euler(Math.PI / 2, 0, Math.PI)) {
+    aufFahrzeug(gruppe, lokal = new THREE.Vector3(), rot = new THREE.Euler(Math.PI / 2, 0, Math.PI), laenge = 0.6) {
       api.loesen();
       gruppe.add(rolle);
-      rolle.position.copy(lokal); rolle.rotation.copy(rot); rolle.scale.setScalar(1);
+      rolle.position.copy(lokal); rolle.rotation.copy(rot); rolle.scale.set(1, laenge, 1);
       rolle.visible = true;
       api.zustand = 'fahrzeug';
     },
