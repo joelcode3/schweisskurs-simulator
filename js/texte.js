@@ -499,11 +499,11 @@ export const KUMPEL = {
 // E2b: Joel (bisher Platzhalter) braucht Hilfe mit seiner umgekippten Pritsche
 export const JOEL = {
   hallo: ['Moin! Ich brauch mal kurz Hilfe. Meine Pritsche liegt noch auf der Seite.'],
-  bitte: ['Kannst du mit dem Weidemann kommen? Ich stell mich außen drauf.', 'Den Schlupf nicht vergessen, der hängt im Carport am Pfosten.'],
+  bitte: ['Kannst du mit dem Weidemann kommen? Ich stell mich außen drauf.', 'Den Schlupf nicht vergessen! Der neue liegt in der Werkstatt im Regal, unten.'],
   aufsteigen: ['Ich halt mich hier fest. Los geht’s!'],
   fahrt: ['Nicht so schnell! Ich fall hier gleich runter!', 'Uiii, das ist besser als Kirmes.'],
   angekommen: ['Da liegt sie. Vorsichtig anheben, ja?'],
-  ohneSchlupf: ['Ohne Schlupf wird das nix. Der hängt im Carport am Pfosten.'],
+  ohneSchlupf: ['Ohne Schlupf wird das nix. Hol den neuen aus dem Regal in der Werkstatt.'],
   schaden: ['Autsch. Das war teuer.', 'Oh nee, nicht der Kühler!'],
   gut: ['Super! Sie steht wieder.'],
   abschleppen: ['Ich setz mich rein und lenk. Fahr langsam an!'],
