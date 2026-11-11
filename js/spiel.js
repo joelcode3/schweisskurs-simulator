@@ -12,6 +12,7 @@ import * as ui from './ui.js';
 import { DENNIS, JONNY, WALDO, TORBEN, KUMPEL, satzId, DAVID } from './texte.js';
 import { SYMBOL } from './gesicht.js';
 import { baueFahrten } from './fahrten.js';
+import { bauePritsche } from './pritsche.js';
 
 const zufallAus = (liste) => liste[Math.floor(Math.random() * liste.length)];
 // Text aus einer Liste zufällig wählen (oder den einzelnen Text nehmen): mehr Abwechslung bei Dennis
@@ -3751,6 +3752,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     const A = (text, symbol, tun) => ({ text, symbol, tun });
     if (id === 'torben' && TU.zustand === 'liegt') return ['Torben', 'Liegt am Boden und hält sich den Finger. Erste-Hilfe-Kasten holen (rechte Wand)!', []];
     if (id === 'torben' && TU.zustand === 'sofa') return ['Torben', 'Liegt auf dem Sofa, den Finger hoch. Lass ihn mal.', []];
+    const ausPritsche = pritsche.menue(id, obj);
+    if (ausPritsche) return ausPritsche;
     const ausFahrten = fahrten.menue(id, obj);
     if (ausFahrten) return ausFahrten;
     // Platzhalter-Kumpels (noch ohne Aufgabe)
@@ -4337,12 +4340,15 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     sekunden: sekundenSeitStart, warte,
     dennisFrei: () => dennis.modus === 'normal' && dennis.wurzel.visible && !z.aufKlo && !z.hula && !z.beschaeftigt && !buehneBelegt()
       && z.mittag !== 'gerade' && !z.dennisFegt && !z.dennisLoescht && !z.dennisRaeumt,
-  });
+  });  // ---------- E2b: Joels Pritsche abschleppen (js/pritsche.js) ----------
+  const pritsche = bauePritsche({ welt, scene: dennis.wurzel.parent, fz, fahrten, kumpels, hand, kamera, steuerung, ui, z, sag, dennisSagt, aerger, lob,
+    sekunden: sekundenSeitStart, warte, reinkommen, rausgehen, ruhigeLage, handleisteZeigen, klonk, blip, sd });
+
 
   return {
     zustand: z,
     klick,
-    test: { dv, davidKommt, davidGeht, davidGassi, davidRohrzange, davidLoescher, davidTischgestell, davidRauchtMitJonny, get z() { return z; }, OFEN_SCHRITTE, ofenStand, schutzAn, armAnpassen, setzeWut(w) { z.wut = w; aktualisieren(); }, zeitVor(sek) { z.start -= sek * 1000; }, waescheUebernehmen, kaffeeKochen, hulaHoop, einkaufen, kiwiEssen, TU, torbenUnfall, torbenVerarzten, torbenVerbandAn, spanngurtEreignis, gurteHinwerfen, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
+    test: { pritsche, dv, davidKommt, davidGeht, davidGassi, davidRohrzange, davidLoescher, davidTischgestell, davidRauchtMitJonny, get z() { return z; }, OFEN_SCHRITTE, ofenStand, schutzAn, armAnpassen, setzeWut(w) { z.wut = w; aktualisieren(); }, zeitVor(sek) { z.start -= sek * 1000; }, waescheUebernehmen, kaffeeKochen, hulaHoop, einkaufen, kiwiEssen, TU, torbenUnfall, torbenVerarzten, torbenVerbandAn, spanngurtEreignis, gurteHinwerfen, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
     stationWaehlen,
     intro,
     aktualisieren,
@@ -4354,6 +4360,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       fegeUpdate(dt);
       if (z.vorbei) return;
       fahrten.update();
+      pritsche.update(dt);
       wutUndVorzeichen(dt);
       waescheUpdate(dt);
       jonnyUpdate();

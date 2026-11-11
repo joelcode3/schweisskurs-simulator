@@ -190,7 +190,7 @@ export function baueFahrzeuge(scene, welt) {
     if (!welt.draussen.fahrbar(x, z)) { treffer = 'rand'; return false; }
     if (befreien) return true;
     for (const h of welt.hindernisse) {
-      if (h === f.hindernis || fzH.has(h) || palH.has(h) || (ohne && ohne.has(h))) continue;
+      if (h === f.hindernis || h.ohneFahrzeug || fzH.has(h) || palH.has(h) || (ohne && ohne.has(h))) continue;
       if (inHindernis(h, x, z)) { treffer = h; return false; }
     }
     // Paletten: Jeep gar nicht, Hoflader nur über eine einzelne
@@ -543,7 +543,7 @@ export function baueFahrzeuge(scene, welt) {
   function verstecken(f, an) { f.g.visible = !an; if (an) Object.assign(f.hindernis, AUS, { boxen: null }); else anwenden(f, 0); }
 
   return {
-    jeep, lader, paletten, alle, palettenAmPlatz, PALETTEN_PLATZ, rueckwaerts, palettenSetzen, boxenVon, obbTiefe,
+    jeep, lader, paletten, alle, palettenAmPlatz, PALETTEN_PLATZ, rueckwaerts, anwenden, palettenSetzen, boxenVon, obbTiefe,
     // Höhe, auf der man an (x, z) steht (Paletten), für die Kamera
     bodenHoehe: (x, z) => stuetzHoehe(x, z),
     schritt, gabel, anwenden, fahreRoute, einparken, mitAnfahrt, verstecken, figurRein, figurRaus,
@@ -551,7 +551,7 @@ export function baueFahrzeuge(scene, welt) {
     // Jeep entdrosseln (Torben)
     entdrosseln() { jeep.gedrosselt = false; },
     // entdrosselt auf der Hauptstraße (Ringstraße) geht noch mehr: 17 m/s
-    vMax(f) { return f.art === 'jeep' ? (f.gedrosselt ? 1.4 : aufRing(f.x, f.z) ? 17 : 11) : 4.2; },
+    vMax(f) { return f.art === 'jeep' ? (f.gedrosselt ? 1.4 : aufRing(f.x, f.z) ? 17 : 11) : f.schleppt ? 2.2 : 4.2; },
     zeitraffer: 1, // nur für Tests
     update(dt) {
       dt *= this.zeitraffer;
