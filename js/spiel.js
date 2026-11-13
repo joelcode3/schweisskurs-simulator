@@ -13,6 +13,7 @@ import { DENNIS, JONNY, WALDO, TORBEN, KUMPEL, satzId, DAVID } from './texte.js'
 import { SYMBOL } from './gesicht.js';
 import { baueFahrten } from './fahrten.js';
 import { bauePritsche } from './pritsche.js';
+import { baueMetall } from './metall.js';
 
 const zufallAus = (liste) => liste[Math.floor(Math.random() * liste.length)];
 // Text aus einer Liste zufällig wählen (oder den einzelnen Text nehmen): mehr Abwechslung bei Dennis
@@ -151,6 +152,10 @@ const FEHLER = {
   getroffen: {
     stufe: 'voll', wut: 35, nebensache: true, ton: 'stimme/abwerfen-1.mp3', clip: 'ausraster', name: 'Dennis abgeworfen',
     texte: [DENNIS.hand.getroffen],
+  },
+  metallGefallen: {
+    stufe: 'voll', wut: 30, clip: 'ausraster', name: 'Stahl mit dem alten Schlupf fallen gelassen',
+    texte: DENNIS.metall.gerissen,
   },
   gespruehrt: {
     stufe: 'voll', wut: 30, clip: 'ausraster', name: 'Dennis mit dem Feuerlöscher eingesprüht',
@@ -2346,7 +2351,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   }
   // Jonas, David oder Joel (wer Spüldienst hat) kommt ab und zu kurz auf einen Kaffee vorbei
   function spueldienstUpdate() {
-    if (!kumpels || !kumpels.alle[sd.id] || sd.kumpelDa || sd.unterwegs || (sd.id === 'david' && dv.da)) return;
+    if (!kumpels || !kumpels.alle[sd.id] || sd.kumpelDa || sd.unterwegs || (sd.id === 'david' && dv.da) || (sd.id === 'jonas' && metall.jonasDa)) return;
     const t = sekundenSeitStart();
     if (t < sd.kumpelAb) return;
     sd.kumpelAb = t + 150 + Math.random() * 90;
@@ -3752,6 +3757,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     const A = (text, symbol, tun) => ({ text, symbol, tun });
     if (id === 'torben' && TU.zustand === 'liegt') return ['Torben', 'Liegt am Boden und hält sich den Finger. Erste-Hilfe-Kasten holen (rechte Wand)!', []];
     if (id === 'torben' && TU.zustand === 'sofa') return ['Torben', 'Liegt auf dem Sofa, den Finger hoch. Lass ihn mal.', []];
+    const ausMetall = metall.menue(id, obj);
+    if (ausMetall) return ausMetall;
     const ausPritsche = pritsche.menue(id, obj);
     if (ausPritsche) return ausPritsche;
     const ausFahrten = fahrten.menue(id, obj);
@@ -4342,13 +4349,16 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       && z.mittag !== 'gerade' && !z.dennisFegt && !z.dennisLoescht && !z.dennisRaeumt,
   });  // ---------- E2b: Joels Pritsche abschleppen (js/pritsche.js) ----------
   const pritsche = bauePritsche({ welt, scene: dennis.wurzel.parent, fz, fahrten, kumpels, hand, kamera, steuerung, ui, z, sag, dennisSagt, aerger, lob,
+    sekunden: sekundenSeitStart, warte, reinkommen, rausgehen, ruhigeLage, handleisteZeigen, klonk, blip, sd, andererAuftrag: () => metall.aktiv });
+  // ---------- E3: Metall-Lieferung (js/metall.js) ----------
+  const metall = baueMetall({ welt, scene: dennis.wurzel.parent, fz, fahrten, kumpels, pritsche, hand, kamera, steuerung, ui, z, sag, dennisSagt, aerger, lob, fehler,
     sekunden: sekundenSeitStart, warte, reinkommen, rausgehen, ruhigeLage, handleisteZeigen, klonk, blip, sd });
 
 
   return {
     zustand: z,
     klick,
-    test: { pritsche, dv, davidKommt, davidGeht, davidGassi, davidRohrzange, davidLoescher, davidTischgestell, davidRauchtMitJonny, get z() { return z; }, OFEN_SCHRITTE, ofenStand, schutzAn, armAnpassen, setzeWut(w) { z.wut = w; aktualisieren(); }, zeitVor(sek) { z.start -= sek * 1000; }, waescheUebernehmen, kaffeeKochen, hulaHoop, einkaufen, kiwiEssen, TU, torbenUnfall, torbenVerarzten, torbenVerbandAn, spanngurtEreignis, gurteHinwerfen, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
+    test: { pritsche, metall, dv, davidKommt, davidGeht, davidGassi, davidRohrzange, davidLoescher, davidTischgestell, davidRauchtMitJonny, get z() { return z; }, OFEN_SCHRITTE, ofenStand, schutzAn, armAnpassen, setzeWut(w) { z.wut = w; aktualisieren(); }, zeitVor(sek) { z.start -= sek * 1000; }, waescheUebernehmen, kaffeeKochen, hulaHoop, einkaufen, kiwiEssen, TU, torbenUnfall, torbenVerarzten, torbenVerbandAn, spanngurtEreignis, gurteHinwerfen, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
     stationWaehlen,
     intro,
     aktualisieren,
@@ -4361,6 +4371,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       if (z.vorbei) return;
       fahrten.update();
       pritsche.update(dt);
+      metall.update(dt);
       wutUndVorzeichen(dt);
       waescheUpdate(dt);
       jonnyUpdate();

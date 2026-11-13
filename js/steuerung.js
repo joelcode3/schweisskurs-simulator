@@ -43,6 +43,8 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
   }
 
   function fahreZu(pos, blick, dauer = 0.9) {
+    // im Fahrzeug bleibt man sitzen (sonst wartet die Kamerafahrt bis zum Aussteigen und zieht einen dann zurück)
+    if (fahrer) return Promise.resolve();
     const start = { pos: kamera.position.clone(), gier, nick };
     const w = winkelZu(new THREE.Vector3(...pos), new THREE.Vector3(...blick));
     const ziel = { pos: new THREE.Vector3(...pos), gier: kurz(gier, w.gier), nick: w.nick };
@@ -53,6 +55,8 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
 
   function dreheZu(punkt, dauer = 0.45) {
     const w = winkelZu(kamera.position, punkt);
+    // im Fahrzeug: nur den Blick drehen, sofort fertig (E3: Ausraster, während man im Weidemann sitzt)
+    if (fahrer) { gier = kurz(gier, w.gier); nick = THREE.MathUtils.clamp(w.nick, -0.6, 0.4); return Promise.resolve(); }
     const start = { pos: kamera.position.clone(), gier, nick };
     const ziel = { pos: kamera.position.clone(), gier: kurz(gier, w.gier), nick: THREE.MathUtils.clamp(w.nick, -0.6, 0.4) };
     return new Promise((res) => { fahrt = { start, ziel, t: 0, d: dauer, res }; });

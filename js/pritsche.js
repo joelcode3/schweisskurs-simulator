@@ -394,7 +394,7 @@ export function bauePritsche(c) {
     markMat.opacity = 0.25 + Math.sin(markeZeit.t * 3) * 0.12;
     if (z.vorbei) return;
     const t = sekunden();
-    if (pz.phase === 'aus' && t > pz.naechsterBesuch && ruhigeLage() && !fz2.aktiv) { pz.naechsterBesuch = Infinity; joelKommt(); }
+    if (pz.phase === 'aus' && t > pz.naechsterBesuch && ruhigeLage() && !fz2.aktiv && !(c.andererAuftrag && c.andererAuftrag())) { pz.naechsterBesuch = Infinity; joelKommt(); }
     if (pz.phase === 'zumLader' && !pz.runter) {
       // Joel läuft zum Weidemann (auch wenn der woanders steht) und steigt außen auf, sobald er steht
       const ziel = lader.g.localToWorld(new THREE.Vector3(1.5, 0, -0.5));
@@ -530,6 +530,8 @@ export function bauePritsche(c) {
   }
 
   return { pz, update, menue, joelKommt, helfen, joelFaelltRunter, get schlupf() { return schlupf; }, schlupfNeu, schlupfAlt,
+    // E3: einen bestimmten Schlupf in die Hand nehmen (z. B. von der Gabel abnehmen)
+    nimmSchlupf(sl) { schlupf = sl; sl.inHand(); sl.obj.scale.setScalar(1); hand.nimm('schlupf', sl.obj); blip(520, 0.05); handleisteZeigen(); },
     // Schlupf in der Hand an seinen Stammplatz zurück (Regal / Haken)
     schlupfZurueck() { if (hand.item?.id !== 'schlupf') return false; const sl = schlupfVon(hand.item.obj) || schlupf; hand.weg(); sl.anHaken(); handleisteZeigen(); klonk(0.2); return true; },
     test: { schwingHalten(w) { schwing.halt = w; }, joelFaellt() { if (joel.wurzel.parent !== tritt) { joel.sichtbar(true); joelAufLader(true); } pz.phase = 'unterwegs'; lader.gesperrt = true; joelFaelltRunter(); }, zuruecksetzen, testAnDiePritsche, testAbschleppen, testVorDemCarport, bergen, abstellen, imZiel, nachSpiel: (schaeden = []) => { pz.phase = 'minispiel'; return nachSpiel({ abgebrochen: false, schaeden }); } } };
