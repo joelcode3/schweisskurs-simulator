@@ -156,6 +156,7 @@ export function baueMetall(c) {
   function schlupfAnGabel(sl) {
     if (hand.item?.obj === sl.obj) { hand.weg(); handleisteZeigen(); }
     sl.aufFahrzeug(lader.gabel, GABEL_PUNKT.clone(), new THREE.Euler(0, 0, 0), 0.7); // Schlaufe quer zur Zinke, oben drüber gelegt
+    sl.obj.scale.x = 2.4; // breiter: liegt richtig über der Zinke (8 cm) und hängt beidseitig runter
     anGabel = sl;
     traverse.visible = true;
     klonk(0.2);
