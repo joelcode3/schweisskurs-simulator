@@ -385,6 +385,17 @@ export const DENNIS = {
     sicherheit: ['Spinnst du?! Joel ist runtergefallen! Wenn einer außen mitfährt, fährt man vorsichtig!', 'Hallo?! Sicherheit! Mit Leuten auf dem Tritt fährt man nicht gegen alles, was rumsteht!'],
     alterSchlupf: ['Den alten? Steht doch dran: lebensgefährlich! Für die Pritsche hält der vielleicht noch. Vielleicht.'],
   },
+  // E3: Metall-Lieferung (Eisen Meyer), Jonas mit Augenklappe, Stangen mit Weidemann und Schlupf holen
+  metall: {
+    jonas: ['Ohne Brille flexen! Ich fass es nicht. Jetzt läuft er rum wie ein Pirat.'],
+    wo: ['Wo bleibt eigentlich die Metalllieferung?', 'Eisen Meyer wollte doch heute liefern. Wo ist mein Stahl?', 'Hat einer von euch meinen Stahl gesehen?'],
+    anstoss: ['Pass auf mit den Stangen! Die sind sechs Meter breit!', 'Klong, klong, klong. Fahr doch nicht überall gegen!'],
+    gerissen: ['Der alte Schlupf?! Da hängt ein Zettel dran! Lebensgefährlich steht da! Kannst du nicht lesen?!', 'Sechs Meter Stahl auf meinem Hof verteilt! Mit dem alten Schlupf! Ich dreh durch!'],
+    fertigGut: ['Stahl ist da, sauber einsortiert. So macht man das. Danke dir!', 'Na bitte. Alles im Container, alles am Platz. Top.'],
+    fertigNaja: ['Ist ja jetzt drin. Aber frag nicht, wie.', 'Na endlich. Hätte man auch gleich richtig machen können.'],
+    falschSortiert: ['Wer hat denn die Träger zu den Flacheisen gelegt? Das sortier ich nachher selber um.'],
+    gerutscht: ['Was scheppert da draußen? Hast du die Stangen verloren?'],
+  },
 };
 
 // Alle Sätze flach mit ID, z. B. { id: 'fehler.brille.1', text: '...' }
@@ -509,4 +520,15 @@ export const JOEL = {
   abschleppen: ['Ich setz mich rein und lenk. Fahr langsam an!'],
   abgestellt: ['Danke dir! Das Bier geht auf mich.'],
   nixPassiert: ['Nix passiert! Alles gut.', 'Geht schon, geht schon. Nur der Ellenbogen.'],
+};
+
+// E3: Jonas (bisher Platzhalter) sagt Bescheid, dass das Eisen da ist. Er trägt eine weiße Augenklappe (ohne Brille geflext).
+export const JONAS = {
+  hallo: ['Moin! Das Eisen ist da. Eisen Meyer hat es oben an der Straße abgeladen.'],
+  bitte: ['Kannst du das holen? Ich seh gerade nicht so gut.', 'Hab ohne Brille geflext. Dennis hat mir schon den Einlauf des Jahres verpasst.'],
+  tipp: ['Nimm den Weidemann und häng einen Schlupf vorne an die Gabel. Den neuen aus dem Regal, ne?'],
+  nachfrage: ['Und, hast du den Stahl schon geholt?', 'Liegt das Eisen immer noch oben an der Straße?', 'Ich würd ja helfen, aber ich seh nur die Hälfte.'],
+  danke: ['Stark, danke dir! Dafür geb ich einen aus, wenn ich wieder gucken kann.'],
+  gerissen: ['Ach du Scheiße. War das der alte Schlupf?'],
+  auge: ['Frag nicht. Funke ins Auge. Die Brille lag daneben.'],
 };

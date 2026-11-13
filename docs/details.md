@@ -398,6 +398,44 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
 - Testmenü: T95 Joel kommt, T96 im Weidemann an der Pritsche (mit Joel und Schlupf), T97 Minispiel direkt, T98 steht, direkt
   abschleppen, T99 Gespann kurz vor der Bucht, T100 zurücksetzen.
 
+## Metall-Lieferung (Paket E3)
+- js/metall.js (`baueMetall`, aus spiel.js, nach pritsche.js), Minispiele `ankoppelSpiel` und `einsortierSpiel` in minispiele.js,
+  Sätze DENNIS.metall und JONAS (texte.js), Sprechblase ui.jonasSagt. Nutzt die beiden Schlupfe aus pritsche.js (schlupf.js).
+- Ablauf: Jonas (Platzhalter-Figur aus kumpels.js, jetzt mit weißer Augenklappe: `jonas.augenklappe`, eine Gruppe am Kopf, später
+  austauschbar) kommt einmal pro Spiel (nach 5–9 min, ruhige Lage, nicht beim Fahren, nicht während E2b läuft) über den Feldweg,
+  sagt Bescheid („Das Eisen ist da“), Dennis meckert über ihn (ohne Brille geflext). Menü an Jonas: „Okay, ich hol das Eisen“.
+  Jonas bleibt in der Werkstatt stehen und fragt alle 100–160 s nach (nur wenn man in der Nähe und zu Fuß ist); Dennis fragt
+  alle 150–240 s, wo die Lieferung bleibt. Kein Zeitlimit, kein Ring-Icon. E2b (Joel) und E3 laufen nie gleichzeitig.
+- Lieferplatz (LIEFERPLATZ): neben dem Feldweg kurz vor der Hauptstraße (ca. x 125, z 16,5), acht Stangen à 6 m auf Kanthölzern,
+  zwei Stahlbänder, Anhänger „EISEN MEYER“. Grüner Ring drum herum.
+- Schlupf an die Gabel: mit dem Schlupf in der Hand den Weidemann anklicken („vorne an die Gabel hängen“) oder einfach
+  einsteigen. Er hängt an einer Traverse quer über beiden Zinken und wird so lang, wie Platz bis zum Boden ist. Abnehmen: Schlupf
+  an der Gabel anklicken. Im Weidemann quer vor die Stangen fahren (Gabel drüber), dann Gabel bewegen (R/F) oder B = Minispiel.
+- Minispiel 1 „Stangen ankoppeln“: Weidemann von vorn, Stangen quer davor. Schlupf mit Maus oder A/D verschieben, mit W/Maus
+  anheben. Der Schwerpunkt liegt 15–30 cm neben der Mitte (Stangen verschieden lang, Seite zufällig). Wasserwaage zeigt die
+  Neigung. Unter 12 cm daneben = gut; bis 30 cm = hängt schief (absetzen und neu, oder mit Leertaste so lassen); darüber
+  schleift ein Ende und es geht nicht höher. Ergebnis { versatz, schief, versuche }.
+- Transport: Bündel hängt quer unter der Gabel (eigene Gruppe in der Szene, folgt dem Punkt GABEL_PUNKT), Weidemann max. 2,2 m/s.
+  Stößt ein Stangenende irgendwo an (Hindernisse, Wände), dreht sich das Bündel weg (mz.gier, bis ca. 70°), geht das nicht,
+  bleibt der Weidemann stehen. Frei dreht es langsam zurück. Gabel zu tief = Stangen schleifen (nur 0,7 m/s). Schief
+  angekoppelt: über 1,5 m/s länger als 1,6 s oder harter Stoß = rutscht raus (Panne, Wut +3, neu ankoppeln).
+- Alter Schlupf: `anGabel.reisst(1)` ist wahr; sobald der Weidemann näher als 15 m an die Werkstatt kommt (Einfahrt Hof),
+  reißt er: Stangen liegen verstreut, Schlupf liegt gerissen daneben (zustand 'gerissen', nicht mehr benutzbar), Dennis rastet
+  aus (FEHLER.metallGefallen, Stufe voll, Wut +30, kommt angerannt). Danach den neuen Schlupf holen und an Ort und Stelle neu
+  ankoppeln (Minispiel).
+- Abladen: grüne Fläche vor der offenen Seite des blauen Containers; Bündel dort längs zum Container, B = Minispiel 2 „Stahl
+  einsortieren“: Schnitt durch den Container, Weidemann von der Seite, jede der 8 Stangen (Querschnitt) hängt am Schlupf und
+  pendelt. Höhe mit Maus oder W/S, einschieben mit Klick/Leertaste. Unten Träger, Mitte Rohre, oben Flach und Winkel. Gegen einen
+  Arm = Klong (nochmal), falsches Fach zählt als falsch. Ergebnis { falsch, klong }.
+- Dennis am Ende: happy (Lob, Wut -8) nur ohne Panne (nichts gefallen/gerutscht), nichts falsch einsortiert und höchstens
+  1 Klong. Falsch einsortiert: Wut +2 und Spruch. Sonst (z. B. nach gerissenem Schlupf): nur ein „Na endlich“-Spruch.
+  Die gelieferten Stangen liegen danach sichtbar vorn im Kragarmregal. Jonas bedankt sich und geht.
+- Nebenbei behoben (steuerung.js): Kamerafahrten (dreheZu/fahreZu) während man im Fahrzeug sitzt, blieben hängen und zogen
+  einen beim Aussteigen zurück; jetzt wird im Fahrzeug nur der Blick gedreht.
+- Testmenü: T102 Jonas kommt, T103 Weidemann am Stahl (neuer Schlupf an der Gabel), T104 Minispiel Ankoppeln, T105 Stangen dran
+  am Hof, T106 Stangen dran kurz vor der Werkstatt mit ALTEM Schlupf (reißt nach ein paar Metern), T107 vor dem Container,
+  T108 Minispiel Einsortieren, T109 Auftrag läuft zu Fuß, T110 zurücksetzen.
+
 ## Carport, Wohnwagen, Benz
 - Dennis' Wohnwagen (js/carport.js, `baueCarport`): links auf der Wiese neben der Betonfläche unter einer Eiche ein großes Carport
   (Holz, Wellplatten-Dach) mit Wohnwagen (Deichsel zur Werkstatt hin), kleiner Holzterrasse OHNE Geländer (kleines altes
@@ -838,6 +876,14 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Nicht getestet: Gespann über Hügel/enge Kurven, Figuren laufen um das fahrende Gespann (Pritsche ist kein bewegtes Hindernis
   in wege.js-Dynamik, nur ihr Hindernis-Kasten), Torben/Jonny/Waldo während des Auftrags. Pritsche bleibt nach dem Abstellen
   dauerhaft im Carport (bis neu laden); E3 kann daran anknüpfen.
+- E3 Metall-Lieferung (13.11.): im Testbrowser nur ca. 2 Bilder/s. Getestet: alle Menüs, Jonas kommt (Laufweg abgekürzt),
+  Schlupf an die Gabel/abnehmen, beide Minispiele einzeln durchgespielt, Ankoppeln/Abladen über die Testfunktionen, Fahrt
+  Hof → Ostseite der Werkstatt → vor den Container per Autopilot im Test (kein Festhängen), Riss mit altem Schlupf samt
+  Ausraster, neu ankoppeln, Rausrutschen bei schiefem Bündel. NICHT getestet: komplette Fahrt in Echtzeit von Hand (130 m
+  Feldweg), wie sich Pendeln/Wegdrehen der Stangen und beide Minispiele bei normaler Bildrate anfühlen, Figuren laufen in die
+  Stangen (keine Kollision Figur/Bündel), andere Wege als die Ostseite (Westseite am Schrottplatz vorbei ist eng),
+  Jonas' echter Laufweg, Zusammenspiel mit Spüldienst-Jonas, Paletten aufnehmen mit Schlupf an der Gabel.
+  Offen: Jonas-Figur ist noch der Platzhalter (Foto kommt vom Betreiber), Augenklappe dann anpassen.
 - Test-Tricks: Waldos/Jonnys Timer stören Tests (`wz.beschaeftigt = true; wz.naechsterBesuch = 1e9`); kleine Teile in der Ferne
   erscheinen erst nach ca. 9 s (`fernUpdate`); `setPointerCapture` unter Pointer-Lock in try/catch; JS-Syntax prüfen mit
   `node --input-type=module --check < datei.js`.
