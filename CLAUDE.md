@@ -88,7 +88,7 @@
 - KI-Stimmklon ist in dieser Umgebung nicht möglich (huggingface.co gesperrt). Stimmproben nie ins Repo (öffentlich).
 
 ## Stand der Pull Requests (9.11.2026)
-- Alles bis #69 gemergt. In Arbeit: E3 Metall-Lieferung (Zweig e3-metall-lieferung, Vorschau, noch kein PR). Neue Zweige immer von `origin/main`.
+- Alles bis #69 gemergt. Offen: #70 E3 Metall-Lieferung (Zweig e3-metall-lieferung). Neue Zweige immer von `origin/main`.
 - Versionsnummer zuletzt `v=20261113-3`. Testmenü bis T110, nächste freie T111.
 - Nächste freie Satz-Nummern (aus stimme/zuordnung.csv): dennis530, jonny58, waldo43, torben32, kumpel8, david19, joel16, jonas11.
 - Projektchat-Session: `session_0136irctrTCA3M7n4aU75GVP` (seit 9.11., Projektchat Nr. 4).
