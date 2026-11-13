@@ -13,6 +13,7 @@ import { DENNIS, JONNY, WALDO, TORBEN, KUMPEL, satzId, DAVID } from './texte.js'
 import { SYMBOL } from './gesicht.js';
 import { baueFahrten } from './fahrten.js';
 import { bauePritsche } from './pritsche.js';
+import { baueGrillen } from './grillen.js';
 
 const zufallAus = (liste) => liste[Math.floor(Math.random() * liste.length)];
 // Text aus einer Liste zufällig wählen (oder den einzelnen Text nehmen): mehr Abwechslung bei Dennis
@@ -3522,6 +3523,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     }
     const id = it.id;
     if (id === 'gurte') return gurteWerfen();
+    // E4: Mettenden auf den Grill werfen (landet auf dem Rost oder daneben, kein Ärger fürs Werfen)
+    if (grillen.istWurst(id)) return grillen.wurf(id, steuerung.blickRichtung());
     if (id === 'kaffee') kaffeeWeg();
     let getroffen = false;
     hand.wirf(steuerung.blickRichtung(), (gid, obj) => {
@@ -3654,6 +3657,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       }
       if (it.id === 'peitsche' && ziel === 'dennis') { dennisJagen(); return true; }
       if (it.id === 'besen' && ziel === 'leiter' && jz.leiter === 'wartet') { await leiterRunterreichen('besen'); return true; }
+      if ((it.id === 'mettenden' || it.id === 'wurst') && ziel === 'feuerschale' && grillen.drauflegen()) return true;
       if ((it.id === 'eier' || it.id === 'mettenden' || it.id === 'kaese' || it.id === 'wurst') && ziel === 'minijeep') {
         const o = hand.item.obj;
         hand.weg();
@@ -3752,6 +3756,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     const A = (text, symbol, tun) => ({ text, symbol, tun });
     if (id === 'torben' && TU.zustand === 'liegt') return ['Torben', 'Liegt am Boden und hält sich den Finger. Erste-Hilfe-Kasten holen (rechte Wand)!', []];
     if (id === 'torben' && TU.zustand === 'sofa') return ['Torben', 'Liegt auf dem Sofa, den Finger hoch. Lass ihn mal.', []];
+    const ausGrill = grillen.menue(id, obj);
+    if (ausGrill) return ausGrill;
     const ausPritsche = pritsche.menue(id, obj);
     if (ausPritsche) return ausPritsche;
     const ausFahrten = fahrten.menue(id, obj);
@@ -4343,12 +4349,38 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   });  // ---------- E2b: Joels Pritsche abschleppen (js/pritsche.js) ----------
   const pritsche = bauePritsche({ welt, scene: dennis.wurzel.parent, fz, fahrten, kumpels, hand, kamera, steuerung, ui, z, sag, dennisSagt, aerger, lob,
     sekunden: sekundenSeitStart, warte, reinkommen, rausgehen, ruhigeLage, handleisteZeigen, klonk, blip, sd });
+  // ---------- E4: Mettenden grillen (js/grillen.js) ----------
+  // Gäste: wer gerade da und frei ist, kommt zum Grill (belegen = für andere Abläufe blockieren)
+  const gaeste = () => {
+    const tb = fahrten.zustand.torben;
+    const g = (id, name, figur, frei, belegen, sagt, texte) => ({ id, name, figur, frei, belegen, sagt, texte,
+      gehZu: (x, zz, t) => figur.gehZu(x, zz, t), zurueck: (p) => figur.gehZu(p.x, p.z, 1.3) });
+    const liste = [
+      { ...g('dennis', 'Dennis', dennis, () => dennis.modus === 'normal' && dennis.wurzel.visible && !z.aufKlo && !z.hula && !z.beschaeftigt && !buehneBelegt()
+        && z.mittag !== 'gerade' && !z.dennisFegt && !z.dennisLoescht && !z.dennisRaeumt && z.feuer !== 'brennt',
+      (an) => { z.beschaeftigt = an; }, (t) => dennisSagt(t, false, { prio: 1 }),
+      { frage: DENNIS.grillen.frage, gut: DENNIS.grillen.bekommtGut, verkohlt: DENNIS.grillen.bekommtVerkohlt, roh: DENNIS.grillen.bekommtRoh, keine: DENNIS.grillen.keine }),
+      zurueck: () => dennis.heim() },
+      g('jonny', 'Jonny', jonny, () => jz.da && !jz.beschaeftigt && jonny.wurzel.visible && !z.jonnyRaucht, (an) => { jz.beschaeftigt = an; }, (t) => ui.jonnySagt(t), JONNY.mettende),
+      g('waldo', 'Waldo', waldo, () => waldoDa() && !wz.beschaeftigt && waldo.wurzel.visible, (an) => { wz.beschaeftigt = an; }, (t) => ui.waldoSagt(t), WALDO.mettende),
+      g('torben', 'Torben', torben, () => tb.da && !tb.unterwegs && torben.wurzel.visible && !fahrten.faehrt && !['laeuft', 'liegt', 'sofa'].includes(TU.zustand),
+        (an) => { if (an) { tb.grillPause = tb.naechsteFahrt; tb.naechsteFahrt = Infinity; } else tb.naechsteFahrt = sekundenSeitStart() + 20; }, (t) => ui.torbenSagt(t), TORBEN.mettende),
+      g('kumpel-david', 'David', kumpels.alle.david, () => davidFrei() && kumpels.alle.david.wurzel.visible, (an) => { dv.beschaeftigt = an; }, (t) => ui.davidSagt(t), DAVID.mettende),
+    ];
+    if (sd.kumpelDa && sd.id !== 'david' && kumpels.alle[sd.id]?.wurzel.visible) {
+      const f = kumpels.alle[sd.id], name = f.wurzel.userData.interaktiv.name;
+      liste.push(g(`kumpel-${sd.id}`, name, f, () => !sd.unterwegs, (an) => { sd.unterwegs = an; }, (t) => ui.hinweis(`${name}: „${t}“`, 3800), KUMPEL.mettende));
+    }
+    return liste;
+  };
+  const grillen = baueGrillen({ welt, scene: dennis.wurzel.parent, fz, fahrten, hand, kamera, steuerung, ui, z, sag, dennisSagt, aerger, lob,
+    sekunden: sekundenSeitStart, warte, handleisteZeigen, klonk, gaeste });
 
 
   return {
     zustand: z,
     klick,
-    test: { pritsche, dv, davidKommt, davidGeht, davidGassi, davidRohrzange, davidLoescher, davidTischgestell, davidRauchtMitJonny, get z() { return z; }, OFEN_SCHRITTE, ofenStand, schutzAn, armAnpassen, setzeWut(w) { z.wut = w; aktualisieren(); }, zeitVor(sek) { z.start -= sek * 1000; }, waescheUebernehmen, kaffeeKochen, hulaHoop, einkaufen, kiwiEssen, TU, torbenUnfall, torbenVerarzten, torbenVerbandAn, spanngurtEreignis, gurteHinwerfen, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
+    test: { pritsche, grillen, gaesteFrei: () => gaeste().map((g) => g.id + ':' + g.frei()), dv, davidKommt, davidGeht, davidGassi, davidRohrzange, davidLoescher, davidTischgestell, davidRauchtMitJonny, get z() { return z; }, OFEN_SCHRITTE, ofenStand, schutzAn, armAnpassen, setzeWut(w) { z.wut = w; aktualisieren(); }, zeitVor(sek) { z.start -= sek * 1000; }, waescheUebernehmen, kaffeeKochen, hulaHoop, einkaufen, kiwiEssen, TU, torbenUnfall, torbenVerarzten, torbenVerbandAn, spanngurtEreignis, gurteHinwerfen, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
     stationWaehlen,
     intro,
     aktualisieren,
@@ -4361,6 +4393,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       if (z.vorbei) return;
       fahrten.update();
       pritsche.update(dt);
+      grillen.update(dt);
       wutUndVorzeichen(dt);
       waescheUpdate(dt);
       jonnyUpdate();

@@ -249,6 +249,13 @@ export function baueTestMenue({ spiel, welt, kamera, steuerung, fahrten, fz }) {
   knopf('T99', 'Gespann kurz vor der Bucht PRITSCHE', () => pr.test.testVorDemCarport());
   knopf('T100', 'Pritsche zurücksetzen (liegt wieder um)', () => { if (ft.aussteigen && fahrten?.faehrt) ft.aussteigen(); pr.test.zuruecksetzen(); });
 
+  ueberschrift('E4 Mettenden grillen');
+  const gr = t.grillen;
+  knopf('T111', '3 Mettenden liegen auf dem Grill (roh)', () => gr.test.testDrauf(3));
+  knopf('T112', 'Minispiel Mettenden grillen (direkt)', mini(() => M.grillSpiel({ anzahl: 3 })), { laeuft: titelEnthaelt('Mettenden grillen') });
+  knopf('T113', 'Fertig gegrillt: alle kommen und fragen', () => gr.test.testFertig(['gut', 'gut', 'gut', 'verkohlt', 'roh']));
+  knopf('T114', 'Grill zurücksetzen (alte Wurst wieder drauf)', () => gr.test.zuruecksetzen());
+
   ueberschrift('Orte (hinspringen)');
   // Paket E2a: direkt hinter die Werkstatt (vor die Hintertür, Blick auf Schrottplatz und Carport)
   const springen = (pos, blick) => () => { if (steuerung) steuerung.setze([pos[0], kamera.position.y, pos[1]], [blick[0], 1.2, blick[1]]); };

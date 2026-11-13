@@ -187,7 +187,8 @@ export function baueHand(scene, kamera) {
       return obj;
     },
     // Werfen: fliegt in Blickrichtung, prallt ab, bleibt auf dem Boden liegen
-    wirf(richtung, beiLanden, beiTreffer) {
+    // fang(p, v): optional, wird jeden Flugschritt gefragt; true = gefangen (z. B. liegt auf dem Grillrost), Flug endet dort
+    wirf(richtung, beiLanden, beiTreffer, fang) {
       if (!item) return;
       const id = item.id;
       const schwer = !!item.cfg.schwer;
@@ -200,7 +201,7 @@ export function baueHand(scene, kamera) {
       obj.position.copy(start);
       const v = richtung.clone().multiplyScalar(schwer ? 4 : 7);
       v.y += 2.4;
-      fliegend.push({ id, obj, v, boden: bodenAbstand(obj), dreh: new THREE.Vector3(Math.random() * 8, Math.random() * 8, 0), getroffen: false, ruhig: 0, beiLanden, beiTreffer });
+      fliegend.push({ id, obj, v, boden: bodenAbstand(obj), dreh: new THREE.Vector3(Math.random() * 8, Math.random() * 8, 0), getroffen: false, ruhig: 0, beiLanden, beiTreffer, fang });
     },
     // Fallen lassen vor die Füße
     fallenLassen(richtung) {
@@ -250,8 +251,12 @@ export function baueHand(scene, kamera) {
         const q = draussen ? AUSSEN : p.x > BAD.xMin && p.x < BAD.xMax && p.z > BAD.zMin ? BAD : RAUM;
         if (p.x < q.xMin + r || p.x > q.xMax - r) { f.v.x *= -0.4; p.x = THREE.MathUtils.clamp(p.x, q.xMin + r, q.xMax - r); }
         if (p.z < q.zMin + r || p.z > q.zMax - r) { f.v.z *= -0.4; p.z = THREE.MathUtils.clamp(p.z, q.zMin + r, q.zMax - r); }
+        // gefangen (z. B. auf dem Grillrost gelandet), bevor der Hindernis-Kasten drumherum abprallen lässt
+        // fang: true = gefangen, 'frei' = hier nicht am Hindernis-Kasten abprallen (z. B. über der offenen Feuerschale)
+        const gefangen = f.fang ? f.fang(p, f.v, f.obj) : false;
+        if (gefangen === true) { fliegend.splice(i, 1); continue; }
         // Möbel (grob als Kästen bis 0.9 m Höhe)
-        if (p.y < 0.95) {
+        if (p.y < 0.95 && gefangen !== 'frei') {
           for (const h of hindernisse) {
             if (p.x > h.xMin && p.x < h.xMax && p.z > h.zMin && p.z < h.zMax) {
               f.v.x *= -0.3;

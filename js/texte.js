@@ -385,6 +385,20 @@ export const DENNIS = {
     sicherheit: ['Spinnst du?! Joel ist runtergefallen! Wenn einer außen mitfährt, fährt man vorsichtig!', 'Hallo?! Sicherheit! Mit Leuten auf dem Tritt fährt man nicht gegen alles, was rumsteht!'],
     alterSchlupf: ['Den alten? Steht doch dran: lebensgefährlich! Für die Pritsche hält der vielleicht noch. Vielleicht.'],
   },
+  // E4: Mettenden grillen (Feuerschale draußen)
+  grillen: {
+    drauf: ['Mettenden auf den Grill? Gute Idee. Aber mach das Ding vorher sauber!'],
+    daneben: ['Daneben! Die liegen jetzt im Dreck.'],
+    fertigGut: ['Riecht gut! Ordentlich gegrillt.'],
+    fertigVerkohlt: ['Das ist Kohle, keine Wurst.'],
+    fertigRoh: ['Die sind ja noch roh! Die müssen länger drauf.'],
+    frage: ['Ist da noch eine für mich?'],
+    bekommtGut: ['Mmmh. Siehste, geht doch.'],
+    bekommtVerkohlt: ['Knusprig. Sehr knusprig. Na danke.'],
+    bekommtRoh: ['Roh?! Willst du mich vergiften?'],
+    keine: ['Alle weg? Und für mich keine? Na super.'],
+    asche: ['Die Wurst liegt in der Asche! Die kannst du wegschmeißen.'],
+  },
 };
 
 // Alle Sätze flach mit ID, z. B. { id: 'fehler.brille.1', text: '...' }
@@ -430,6 +444,8 @@ export const JONNY = {
   raus: ['Ich guck mal kurz nach meinem Camper.', 'Bin mal kurz draußen, telefonieren.', 'Ich hol mir mal Kippen vom Kiosk.'],
   zurueck: ['Bin wieder da. Hab ich was verpasst?', 'So. Wo war ich?', 'Kiosk hatte zu. Egal.'],
   fahren: ['Ich dreh mal ne Runde mit dem Jeep.', 'Kurz Kippen holen. Mit dem Jeep, ist ja nicht weit.', 'Ich fahr mal den Hoflader um, der steht doof.'],
+  // E4: Mettenden vom Grill
+  mettende: { frage: ['Moin! Riecht nach Mettenden. Krieg ich eine?'], gut: ['Boah, lecker. Danke dir!'], verkohlt: ['Schwarz wie meine Seele. Passt.'], roh: ['Die quiekt ja noch. Egal, her damit.'], keine: ['Alle weg? Na dann.'] },
 };
 
 // Waldo (Kumpel, isst eigentlich immer)
@@ -453,6 +469,8 @@ export const WALDO = {
   sofaGeschlichtet: ['Na gut, für dich. Ich geh ja schon.', 'Okay, okay. Schlaf schön, Dennis.'],
   sofaRaus: ['Ist ja gut! Nicht am Bart!', 'Pff. Ich komm nie wieder. Bis morgen.'],
   pumpeZurueck: ['Hier, die Pumpe. Danke fürs Leihen! Ist noch ein bisschen ... naja.', 'Pumpe zurück! Tank ist leer. Die Pumpe ... nicht so ganz.'],
+  // E4: Mettenden vom Grill
+  mettende: { frage: ['Ich hab das gerochen. Ist noch eine über?'], gut: ['Sehr gut. Ich poste das.'], verkohlt: ['Eher was für die Tonne, oder?'], roh: ['Roh? Nee, lass mal.'], keine: ['Typisch. Ich komm immer zu spät.'] },
 };
 
 // Torben (Kumpel, erledigt die schweren Sachen, fährt alles, was Räder hat)
@@ -473,6 +491,8 @@ export const TORBEN = {
   // F1: Choleriker
   wut: ['Wer hat das hier hingestellt?!', 'So eine Scheiße!', 'Ich dreh gleich durch!', 'Immer ich! Immer ich!', 'Verdammte Kacke, das gibt es doch nicht!'],
   essen: ['Mhm. Al dente.', 'Nudeln gehen immer.'],
+  // E4: Mettenden vom Grill
+  mettende: { frage: ['Mettenden! Gib mir zwei!'], gut: ['Läuft! Danke!'], verkohlt: ['Krosser geht nicht, ich nehm sie trotzdem.'], roh: ['Ich ess alles. Auch roh.'], keine: ['Was, schon alle?!'] },
 };
 
 // F3: David (Zimmerer, Hund Coco, dreht seine Zigaretten selbst)
@@ -487,6 +507,8 @@ export const DAVID = {
   tisch: ['Dennis, kann ich mir am Wochenende ein Tischgestell schweißen? Dauert auch nicht lange.', 'Sag mal, ist die Werkstatt am Wochenende frei? Ich bräuchte ein Tischgestell.'],
   rauchen: ['Kurze Pause? Ich dreh mir eine.', 'Jonny, rauchen wir eine?'],
   tschuess: ['So, ich muss weiter. Bis dann!'],
+  // E4: Mettenden vom Grill
+  mettende: { frage: ['Na, grillst du? Haste eine für mich?'], gut: ['Top, danke! Coco kriegt das Ende.'], verkohlt: ['Die kriegt Coco.'], roh: ['Die braucht noch, oder?'], keine: ['Schon weg? Na gut.'] },
 };
 
 // Kumpels mit Spüldienst (Jonas, David, Joel): vorläufige Sätze, bis die Figuren eine eigene Rolle bekommen
@@ -494,6 +516,8 @@ export const KUMPEL = {
   hallo: ['Moin! Ich hol mir nur kurz nen Kaffee.', 'Na? Alles klar hier?'],
   quatschen: ['Läuft bei dir? Sieht gut aus.', 'Ich bin nur kurz hier, Kaffee holen.', 'Dennis guckt schon wieder so. Ich sag nix.'],
   spueldienst: ['Ja, ja, ich mach ja schon. Gib her.', 'Oh Mann. Okay, ich nehm die mit in die Küche.'],
+  // E4: Mettenden vom Grill
+  mettende: { frage: ['Grillst du? Kann ich eine haben?'], gut: ['Danke, ist richtig gut!'], verkohlt: ['Bisschen dunkel, aber geht.'], roh: ['Noch roh. Ich warte lieber.'], keine: ['Alle weg? Schade.'] },
 };
 
 // E2b: Joel (bisher Platzhalter) braucht Hilfe mit seiner umgekippten Pritsche

@@ -398,6 +398,31 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
 - Testmenü: T95 Joel kommt, T96 im Weidemann an der Pritsche (mit Joel und Schlupf), T97 Minispiel direkt, T98 steht, direkt
   abschleppen, T99 Gespann kurz vor der Bucht, T100 zurücksetzen.
 
+## Mettenden grillen (Paket E4)
+- js/grillen.js (`baueGrillen`, aus spiel.js), Minispiel `grillSpiel` in minispiele.js, Sätze DENNIS.grillen und *.mettende
+  (JONNY, WALDO, TORBEN, DAVID, KUMPEL). Feuerschale: draussen.js (alte Wurst jetzt als Gruppe `feuerstelle.userData.alteWurst`).
+- Mettenden (Packung = 3) oder einzelne Wurst aus dem Hofladen auf den Grill werfen (Q): hand.wirf hat einen neuen Rückruf
+  `fang(p, v, obj)`; landet die Wurst auf dem Rost (Radius 0,36, auch knapp drüber, auch wenn sie zwischen zwei Schritten durch
+  die Rost-Ebene fällt), ist sie drauf. Über der Schale kein Abprallen am Hindernis-Kasten ('frei'). Daneben = liegt am Boden
+  (aufheben, nochmal). Werfen von Würsten gibt keinen Wurf-Ärger. Oder mit der Wurst in der Hand die Feuerschale anklicken =
+  drauflegen. Max. 6 auf dem Rost.
+- Feuerschale anklicken = „Grillen“ = Minispiel (deckt den Bildschirm, 3D pausiert): 1) Anzünden: Feuerzeug (Maus) an die
+  3 weißen Anzünder halten (je ca. 1 s); ab 2 brennenden pusten (Leertaste oder Maus halten), bis die Glut im grünen Bereich
+  steht (1,2 s ruhig drin). Zu doll gepustet = Panne „Asche aufgewirbelt“. 2) Säubern: alte schwarze Wurst greifen und mit
+  Schwung vom Rost kicken; sie schubst Mettenden an, die im Weg liegen (fällt eine vom Rost = „Mettende in die Asche“, weg).
+  3) Grillen: Mitte heiß, Rand mild; Klick = wenden, ziehen = verschieben; unten gart schnell, oben kaum. Anzeige zwei
+  Punkte (oben/unten). Zustand: roh (eine Seite unter 0,75), verkohlt (eine Seite über 1,45), sonst gut. Enter oder
+  „Runternehmen“ beendet. Kein Zeitlimit.
+- Danach: alte Wurst weg, Feuerschale glüht ca. 4 Minuten (Flammen, Rauch, Licht), gegrillte Würste liegen gefärbt auf dem Rost.
+  Dennis: nur gut und keine Panne = Lob (Wut -5); mehr verkohlt als gut = Spruch, Wut +2; mehr roh = Spruch; in der Asche = Spruch.
+- Gäste: 2 Minuten lang wird alle 4 s nachgesehen, wer da und frei ist (Dennis, Jonny, Waldo, Torben, David, Spüldienst-Kumpel);
+  jeder kommt einmal schnell (1,7 m/s, gehZu mit Wegfindung) an einen Platz rund um die Schale und fragt. Figur anklicken
+  = „Mettende geben“ (erst die guten, dann verkohlt, dann roh). Dennis: gut = Lob, roh = Wut +4, verkohlt = Wut +1; andere:
+  gut = Wut -1. Wer 40 s nichts bekommt, geht wieder (sagt nur „keine“, wenn der Rost leer ist). Während sie am Grill sind,
+  sind sie für andere Abläufe belegt (z.beschaeftigt, jz/wz/dv.beschaeftigt, Torben fährt nicht, sd.unterwegs).
+- Grill umgefahren (fahrten.js): Würste weg, Feuer aus, Dennis-Spruch.
+- Testmenü: T111 3 rohe Mettenden auf dem Grill, T112 Minispiel direkt, T113 fertig gegrillt (Gäste kommen), T114 zurücksetzen.
+
 ## Carport, Wohnwagen, Benz
 - Dennis' Wohnwagen (js/carport.js, `baueCarport`): links auf der Wiese neben der Betonfläche unter einer Eiche ein großes Carport
   (Holz, Wellplatten-Dach) mit Wohnwagen (Deichsel zur Werkstatt hin), kleiner Holzterrasse OHNE Geländer (kleines altes
@@ -838,6 +863,11 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Nicht getestet: Gespann über Hügel/enge Kurven, Figuren laufen um das fahrende Gespann (Pritsche ist kein bewegtes Hindernis
   in wege.js-Dynamik, nur ihr Hindernis-Kasten), Torben/Jonny/Waldo während des Auftrags. Pritsche bleibt nach dem Abstellen
   dauerhaft im Carport (bis neu laden); E3 kann daran anknüpfen.
+- E4 Mettenden grillen (13.11.): getestet: Wurf auf den Rost (Ziel etwas über dem Rost), Menüs, Minispiel einmal komplett
+  (anzünden, überpustet, kicken, grillen, wenden, verschieben), Gäste Dennis/Jonny/Torben/David kommen und bekommen eine
+  (Laufen im Test abgekürzt). NICHT getestet: Wurf aus größerer Entfernung, echte Laufwege der Gäste in Echtzeit (können
+  sich am Grill gegenseitig im Weg stehen), Waldo und Spüldienst-Kumpel als Gast, Garzeiten bei normaler Bildrate
+  (Mitte gut nach ca. 8 s pro Seite, verkohlt ab ca. 16 s; Rand ca. 20 s pro Seite), Grill umfahren mit Würsten drauf.
 - Test-Tricks: Waldos/Jonnys Timer stören Tests (`wz.beschaeftigt = true; wz.naechsterBesuch = 1e9`); kleine Teile in der Ferne
   erscheinen erst nach ca. 9 s (`fernUpdate`); `setPointerCapture` unter Pointer-Lock in try/catch; JS-Syntax prüfen mit
   `node --input-type=module --check < datei.js`.
