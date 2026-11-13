@@ -19,7 +19,7 @@ import { LADER_HILFE } from './fahrten.js';
 export const LIEFERPLATZ = { x: FELDWEG[FELDWEG.length - 2].x + 3.5, z: FELDWEG[FELDWEG.length - 2].z + 6.7 };
 const LANG = 6.0, HALB = LANG / 2;
 const SCHLINGE = 0.62; // Zinken bis Bündelmitte (m)
-const GABEL_PUNKT = new THREE.Vector3(0, -0.37, 0.55); // im Gabelträger: Mitte der Zinken
+const GABEL_PUNKT = new THREE.Vector3(-0.2, -0.372, 0.6); // im Gabelträger: oben auf der linken Zinke (da hängt der Schlupf drüber)
 const WERKSTATT_NAH = 15; // m um die Werkstatt: hier reißt der alte Schlupf
 
 export function baueMetall(c) {
@@ -72,11 +72,29 @@ export function baueMetall(c) {
   const stangen = BUENDEL.map(([typ, l, o, y, zz]) => { const s = stange(typ, l); s.userData.ruhe = new THREE.Vector3(o * 0.5, y, zz); s.position.copy(s.userData.ruhe); buendel.add(s); return s; });
   // zwei Stahlbänder und der Lieferschein-Anhänger
   const baender = new THREE.Group();
-  for (const x of [-1.9, 1.9]) baender.add(setze(quader(0.035, 0.27, 0.36, 0x2a2c30, { umriss: 0.0015 }), x, 0, 0));
+  {
+    // Stahlband: dünnes, flaches Band eng ums Bündel (abgerundetes Rechteck um den Querschnitt), oben eine Verschlusshülse
+    const Y0 = -0.135, Y1 = 0.145, Z0 = -0.175, Z1 = 0.175, R = 0.03;
+    const ecke = (cy, cz, w0) => Array.from({ length: 5 }, (_, i) => { const w = w0 + (i / 4) * Math.PI / 2; return new THREE.Vector3(0, cy + Math.sin(w) * R, cz + Math.cos(w) * R); });
+    const pfad = [...ecke(Y1 - R, Z1 - R, 0), ...ecke(Y1 - R, Z0 + R, Math.PI / 2), ...ecke(Y0 + R, Z0 + R, Math.PI), ...ecke(Y0 + R, Z1 - R, Math.PI * 1.5)];
+    const kurve = new THREE.CatmullRomCurve3(pfad, true, 'catmullrom', 0.1);
+    const bandMat = toon(0x34373c);
+    for (const x of [-1.9, 1.9]) {
+      const geo = new THREE.TubeGeometry(kurve, 64, 0.004, 4, true);
+      const m = new THREE.Mesh(geo, bandMat); m.scale.set(4.5, 1, 1); m.position.x = x; // flach: 3,5 cm breit, 4 mm dick
+      baender.add(m);
+      baender.add(setze(quader(0.05, 0.012, 0.045, 0x55595e, { umriss: 0.001 }), x, Y1 + 0.004, 0.06)); // Verschlusshülse
+      baender.add(setze(quader(0.004, 0.008, 0.03, 0x22252a, { umriss: false }), x + 0.012, Y1 + 0.01, 0.06)); // Prägung
+    }
+  }
   const anh = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.2), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: leinwandTextur(256, 150, (g, b, h) => {
     g.fillStyle = '#f4f0e0'; g.fillRect(0, 0, b, h); g.strokeStyle = '#1d1d1f'; g.lineWidth = 6; g.strokeRect(4, 4, b - 8, h - 8);
-    g.fillStyle = '#b3241c'; g.font = 'bold 40px Arial'; g.textAlign = 'center'; g.fillText('EISEN MEYER', b / 2, 56);
-    g.fillStyle = '#1d1d1f'; g.font = 'bold 22px Arial'; g.fillText('Lieferung für Dennis', b / 2, 94); g.font = '20px Arial'; g.fillText('8 Stangen à 6 m', b / 2, 126);
+    g.textAlign = 'center';
+    const zeile = (t, y, px, fett, farbe) => { let f = px; do { g.font = `${fett ? 'bold ' : ''}${f}px Arial`; f -= 1; } while (g.measureText(t).width > b - 34 && f > 10); g.fillStyle = farbe; g.fillText(t, b / 2, y); };
+    zeile('EISEN MEYER', 54, 40, true, '#b3241c');
+    zeile('Lieferung für Dennis', 92, 22, true, '#1d1d1f');
+    zeile('8 Stangen à 6 m', 124, 20, false, '#1d1d1f');
+    g.fillStyle = '#8a8f96'; g.beginPath(); g.arc(22, 22, 7, 0, Math.PI * 2); g.fill(); // Loch für den Draht
   }) }));
   anh.position.set(-2.35, 0.02, 0.19); anh.rotation.y = 0; anh.rotation.x = -0.25;
   baender.add(anh);
@@ -91,10 +109,8 @@ export function baueMetall(c) {
   hoelzer.position.set(LIEFERPLATZ.x, gelaendeHoehe(LIEFERPLATZ.x, LIEFERPLATZ.z), LIEFERPLATZ.z);
   hoelzer.visible = false;
   scene.add(hoelzer);
-  // Traverse quer über beide Zinken: daran hängt der Schlupf
-  const traverse = setze(zylinder(0.022, 0.022, 0.6, 0x8c8f94, { umriss: 0.0015 }, 8), GABEL_PUNKT.x, GABEL_PUNKT.y + 0.03, GABEL_PUNKT.z, 0, 0, Math.PI / 2);
-  traverse.visible = false;
-  lader.gabel.add(traverse);
+  // (kein Zusatzteil an der Gabel: der Schlupf hängt einfach über der linken Zinke)
+  const traverse = { visible: false };
   // gelieferte Stangen im Container (erst nach dem Einsortieren sichtbar): vorn auf den Armen des Kragarmregals
   const geliefert = new THREE.Group();
   {
@@ -139,7 +155,7 @@ export function baueMetall(c) {
   // hängt der Schlupf an der Gabel, wird er so lang gezogen, wie Platz bis zum Boden ist
   function schlupfAnGabel(sl) {
     if (hand.item?.obj === sl.obj) { hand.weg(); handleisteZeigen(); }
-    sl.aufFahrzeug(lader.gabel, GABEL_PUNKT.clone(), new THREE.Euler(0, Math.PI / 2, 0), 0.7);
+    sl.aufFahrzeug(lader.gabel, GABEL_PUNKT.clone(), new THREE.Euler(0, 0, 0), 0.7); // Schlaufe quer zur Zinke, oben drüber gelegt
     anGabel = sl;
     traverse.visible = true;
     klonk(0.2);

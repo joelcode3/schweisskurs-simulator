@@ -3259,7 +3259,6 @@ function zeichneLaderVorn(ctx, cx, boden, s, ty) {
   ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(X(-30), Y(140)); ctx.lineTo(X(-12), Y(210)); ctx.stroke();
   ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
   rr(-58, 230, 58, 242, 4, '#2a2c30');
-  ctx.fillStyle = '#f29a1c'; ctx.beginPath(); ctx.roundRect(X(-30), Y(256), 14 * s, 14 * s, 3 * s); ctx.fill(); ctx.stroke();
   // Räder (Stollen von vorn), Vorderwagen, Hubturm
   for (const sx of [-1, 1]) {
     rr(sx * 62 - 16, 0, sx * 62 + 16, 84, 8, '#1b1b1d');
@@ -3273,13 +3272,24 @@ function zeichneLaderVorn(ctx, cx, boden, s, ty) {
   const tY = boden - ty;
   ctx.strokeStyle = '#111'; ctx.lineWidth = 20 * s; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(X(-8), Y(140)); ctx.lineTo(X(-8), tY - 6 * s); ctx.stroke();
   ctx.strokeStyle = '#d0261c'; ctx.lineWidth = 14 * s; ctx.stroke(); ctx.lineCap = 'butt';
-  ctx.strokeStyle = '#111'; ctx.lineWidth = 2.5;
-  ctx.fillStyle = '#6c7075';
-  ctx.fillRect(cx - 44 * s, tY - 62 * s, 88 * s, 8 * s); ctx.strokeRect(cx - 44 * s, tY - 62 * s, 88 * s, 8 * s);
-  ctx.fillRect(cx - 44 * s, tY - 8 * s, 88 * s, 8 * s); ctx.strokeRect(cx - 44 * s, tY - 8 * s, 88 * s, 8 * s);
-  for (const sx of [-1, 1]) { ctx.fillRect(cx + sx * 41 * s - 3 * s, tY - 62 * s, 6 * s, 62 * s); ctx.strokeRect(cx + sx * 41 * s - 3 * s, tY - 62 * s, 6 * s, 62 * s); }
-  ctx.fillStyle = '#45484d';
-  for (const sx of [-1, 1]) { ctx.fillRect(cx + sx * 22 * s - 5 * s, tY - 4 * s, 10 * s, 8 * s); ctx.strokeRect(cx + sx * 22 * s - 5 * s, tY - 4 * s, 10 * s, 8 * s); }
+  // Gabelträger (Rahmen mit Querstreben, Schnellwechsler-Platte in der Mitte) und zwei Zinken: senkrechter Schaft am Träger,
+  // die Zinke selbst zeigt zum Betrachter (man sieht ihre Stirnseite, leicht angeschrägt)
+  ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
+  const R = (x0, y0, w, h, fill) => { ctx.fillStyle = fill; ctx.beginPath(); ctx.roundRect(cx + x0 * s, tY - y0 * s, w * s, h * s, 1.5 * s); ctx.fill(); ctx.stroke(); };
+  R(-45, 64, 90, 7, '#6c7075');                   // oberer Querträger
+  R(-45, 20, 90, 7, '#6c7075');                   // unterer Querträger
+  for (const sx of [-1, 1]) R(sx * 42 - 3.5, 66, 7, 50, '#6c7075'); // Seitenwangen
+  R(-9, 60, 18, 40, '#45484d');                   // Schnellwechsler-Platte
+  ctx.fillStyle = '#8a8d92'; ctx.beginPath(); ctx.arc(cx, tY - 52 * s, 3.2 * s, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  for (const sx of [-1, 1]) {
+    const zx = sx * 22;
+    R(zx - 4, 62, 8, 60, '#5e6267');               // Zinkenschaft
+    // Zinkenspitze von vorn: flaches Rechteck mit Fase, etwas heller
+    ctx.fillStyle = '#7c8086'; ctx.beginPath();
+    ctx.moveTo(cx + (zx - 5) * s, tY - 1 * s); ctx.lineTo(cx + (zx + 5) * s, tY - 1 * s); ctx.lineTo(cx + (zx + 5.5) * s, tY + 4 * s); ctx.lineTo(cx + (zx - 5.5) * s, tY + 4 * s); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = '#9aa0a6'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cx + (zx - 3.5) * s, tY + 0.5 * s); ctx.lineTo(cx + (zx + 3.5) * s, tY + 0.5 * s); ctx.stroke();
+    ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
+  }
 }
 
 // 1) Ankoppeln: Die Stangen liegen quer vor dem Weidemann. Schlupf mittig ansetzen (Schwerpunkt!), anheben. Hängt das Bündel
@@ -3296,7 +3306,7 @@ export function ankoppelSpiel({ alt = false } = {}) {
   ];
   const masse = stangen.reduce((a, q) => a + q.m * q.l, 0);
   const schwer = stangen.reduce((a, q) => a + q.m * q.l * q.o, 0) / masse; // Schwerpunkt (m von der Mitte)
-  const GUT = 0.12, SCHLEIFT = 0.3, SEIL = 0.55, RUHE = 0.26; // m
+  const GUT = 0.12, SCHLEIFT = 0.3, SEIL = 0.8, RUHE = 0.26; // m
   let sx = (zr() < 0.5 ? -1 : 1) * 1.6, ziel = sx; // Schlupf-Position (m von der Mitte)
   let hub = 0, wink = 0, winkV = 0, zeit = 0, versuche = 0, warHoch = false, meldung = '', meldungBis = 0, fertigSeit = 0;
   let maus = null, mausUnten = false;
@@ -3364,10 +3374,12 @@ export function ankoppelSpiel({ alt = false } = {}) {
       const X = (xm) => cx + xm * M;
       const trav = 0.5 + hub * 1.0; // Höhe der Zinken (m)
       // Weidemann hinter dem Bündel, fährt mit dem Schlupf mit
-      zeichneLaderVorn(ctx, X(sx), boden, s, trav * M);
+      zeichneLaderVorn(ctx, X(sx) + 0.22 * M, boden, s, trav * M);
       // Kanthölzer
       ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.fillStyle = '#b08a52';
       for (const kx of [-2.2, 0, 2.2]) { ctx.fillRect(X(kx) - 0.07 * M, boden - 0.12 * M, 0.14 * M, 0.12 * M); ctx.strokeRect(X(kx) - 0.07 * M, boden - 0.12 * M, 0.14 * M, 0.12 * M); }
+      // hinterer Strang des Schlupfs (hinter den Stangen)
+      zeichneSchlupfAnkoppeln(ctx, { X, M, sx, oben: boden - trav * M, by: boden - (RUHE + Math.max(0, trav - SEIL - RUHE)) * M, wink, alt, vorn: false });
       // Bündel: dreht sich um den Schlupf-Punkt
       const e = Math.max(0, trav - SEIL - RUHE);
       const by = boden - (RUHE + e) * M;
@@ -3383,12 +3395,9 @@ export function ankoppelSpiel({ alt = false } = {}) {
       ctx.fillStyle = '#f4f0e0'; ctx.fillRect(X(-2.6), boden - (0.2 + e) * M - 0.16 * M, 0.5 * M, 0.16 * M); ctx.strokeRect(X(-2.6), boden - (0.2 + e) * M - 0.16 * M, 0.5 * M, 0.16 * M);
       ctx.fillStyle = '#1d1d1f'; ctx.font = `bold ${Math.max(8, 0.075 * M)}px system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.fillText('EISEN MEYER', X(-2.35), boden - (0.2 + e) * M - 0.055 * M);
       ctx.restore();
-      // Schlupf: von den Zinken runter, als Schlaufe um das Bündel
-      const farbe = alt ? '#b8742e' : '#f2c21c';
-      ctx.strokeStyle = '#111'; ctx.lineWidth = 0.075 * M; ctx.lineCap = 'round';
-      const oben = boden - trav * M, unten = by + 0.2 * M;
-      const pfad = () => { ctx.beginPath(); ctx.moveTo(X(sx) - 0.2 * M, oben); ctx.lineTo(X(sx) - 0.2 * M, Math.max(oben, by - 0.1 * M)); ctx.quadraticCurveTo(X(sx) - 0.22 * M, unten, X(sx), unten); ctx.quadraticCurveTo(X(sx) + 0.22 * M, unten, X(sx) + 0.2 * M, Math.max(oben, by - 0.1 * M)); ctx.lineTo(X(sx) + 0.2 * M, oben); };
-      pfad(); ctx.stroke(); ctx.strokeStyle = farbe; ctx.lineWidth = 0.05 * M; pfad(); ctx.stroke(); ctx.lineCap = 'butt';
+      // Schlupf: hängt über der linken Zinke, zwei ungleiche Stränge (einer verdreht) laufen vorn und hinten am Bündel runter,
+      // unten liegt der Gurt flach und straff unter dem Bündel (keine Luft)
+      zeichneSchlupfAnkoppeln(ctx, { X, M, sx, oben: boden - trav * M, by, wink, alt, vorn: true });
       // Wasserwaage
       const z = zustand(), grad = Math.round((wink * 180) / Math.PI * 10) / 10;
       const wx = f.x + f.b / 2, wy = f.y + 8;
@@ -3410,6 +3419,74 @@ export function ankoppelSpiel({ alt = false } = {}) {
   return versprechen.then((e) => { delete document.body.dataset.vollbild; return e; });
 }
 const THREE_clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+// Schlupf im Minispiel Ankoppeln (Blick von vorn, Stangen liegen quer): oben über der Zinke, zwei Stränge nach unten.
+// vorn: vorderer Strang über den Stangen bis zur Unterkante, unten flach drunter; sonst der hintere Strang (dunkler, kürzer).
+function zeichneSchlupfAnkoppeln(ctx, { X, M, sx, oben, by, wink, alt, vorn }) {
+  const hell = alt ? '#b8742e' : '#f2c21c', dunkel = alt ? '#7e4f20' : '#c89a10';
+  const OBEN_B = 0.15 * M, UNTEN_B = 0.12 * M; // Bündel: Oberkante über, Unterkante unter dem Drehpunkt
+  const x0 = X(sx);
+  // Punkt am Bündel (gedreht um x0/by)
+  const rot = (dx, dy) => ({ x: x0 + dx * Math.cos(wink) - dy * Math.sin(wink), y: by + dx * Math.sin(wink) + dy * Math.cos(wink) });
+  const band = (pts, breiten, farbe) => {
+    // Gurt als Fläche: Mittellinie pts, Breite je Punkt (Verdrehung = schmal)
+    const l = [], r = [];
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
+      const dx = b.x - a.x, dy = b.y - a.y, n = Math.hypot(dx, dy) || 1, w = breiten[i] / 2;
+      l.push({ x: pts[i].x - (dy / n) * w, y: pts[i].y + (dx / n) * w }); r.push({ x: pts[i].x + (dy / n) * w, y: pts[i].y - (dx / n) * w });
+    }
+    ctx.beginPath(); ctx.moveTo(l[0].x, l[0].y); for (const q of l.slice(1)) ctx.lineTo(q.x, q.y); for (const q of r.reverse()) ctx.lineTo(q.x, q.y); ctx.closePath();
+    ctx.fillStyle = farbe; ctx.fill(); ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.stroke();
+  };
+  const W = 0.09 * M;
+  if (!vorn) {
+    // hinterer Strang: von der Zinke etwas rechts versetzt runter bis hinter die Oberkante
+    const t = rot(0.03 * M, -OBEN_B);
+    band([{ x: x0 + 0.02 * M, y: oben + 0.01 * M }, { x: (x0 + t.x) / 2 + 0.035 * M, y: (oben + t.y) / 2 }, t], [W * 0.9, W * 0.85, W * 0.9], dunkel);
+    // Gurt oben über der Zinke (Bogen)
+    ctx.beginPath(); ctx.ellipse(x0, oben, 0.05 * M, 0.03 * M, 0, Math.PI, 0); ctx.lineWidth = 0.045 * M; ctx.strokeStyle = '#111'; ctx.stroke(); ctx.lineWidth = 0.03 * M; ctx.strokeStyle = dunkel; ctx.stroke();
+    return;
+  }
+  // vorderer Strang: einmal verdreht (schmal), dann flach über die Stangen bis unten, unten flach drunter
+  const t = rot(-0.025 * M, -OBEN_B - 0.01 * M), u = rot(-0.025 * M, UNTEN_B + 0.012 * M);
+  const mitte = { x: (x0 - 0.02 * M + t.x) / 2 - 0.01 * M, y: (oben + t.y) / 2 };
+  band([{ x: x0 - 0.02 * M, y: oben + 0.012 * M }, mitte, t, u], [W, W * 0.6, W, W], hell);
+  // unten: flach unter dem Bündel (nur die Kante sichtbar)
+  const a = rot(-0.07 * M, UNTEN_B + 0.012 * M), b = rot(0.06 * M, UNTEN_B + 0.012 * M);
+  ctx.strokeStyle = '#111'; ctx.lineWidth = 0.03 * M; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  ctx.strokeStyle = hell; ctx.lineWidth = 0.016 * M; ctx.stroke(); ctx.lineCap = 'butt';
+}
+
+// Schlupf im Minispiel Einsortieren: liegt eng um das Profil (Querschnitt), unten ohne Luft, zwei ungleiche Stränge zur Zinke
+const PROFIL_UMRISS = { traeger: [0.5, 0.6], vierkant: [0.42, 0.42], rund: [0.44, 0.44], flach: [0.62, 0.1], winkel: [0.5, 0.5] };
+function zeichneSchlupfEinsortieren(ctx, typ, px, py, gy, g, alt) {
+  const hell = alt ? '#b8742e' : '#f2c21c';
+  const [hw, hh] = PROFIL_UMRISS[typ], d = 0.05; // halbe Gurtstärke: liegt außen am Profil an
+  ctx.beginPath();
+  ctx.moveTo(px - 0.06 * g, gy);
+  if (typ === 'rund') {
+    const r = (hw + d) * g;
+    ctx.lineTo(px - r, py - 0.05 * g);
+    ctx.arc(px, py, r, Math.PI, 0, true);
+  } else {
+    const k = 0.07 * g; // kleine Ecke am Profil
+    ctx.lineTo(px - (hw + d) * g, py - hh * 0.3 * g);
+    ctx.lineTo(px - (hw + d) * g, py + (hh + d) * g - k);
+    ctx.quadraticCurveTo(px - (hw + d) * g, py + (hh + d) * g, px - (hw + d) * g + k, py + (hh + d) * g);
+    ctx.lineTo(px + (hw + d) * g - k, py + (hh + d) * g);
+    ctx.quadraticCurveTo(px + (hw + d) * g, py + (hh + d) * g, px + (hw + d) * g, py + (hh + d) * g - k);
+    ctx.lineTo(px + (hw + d) * g, py - hh * 0.4 * g);
+  }
+  ctx.lineTo(px + 0.2 * g, gy); // zweiter Strang etwas versetzt (nicht symmetrisch)
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  ctx.strokeStyle = '#111'; ctx.lineWidth = g * 0.16; ctx.stroke();
+  ctx.strokeStyle = hell; ctx.lineWidth = g * 0.1; ctx.stroke();
+  // Verdrehung im linken Strang
+  const vy = (gy + py - hh * 0.3 * g) / 2, vx = px - 0.06 * g + ((px - (hw + d) * g) - (px - 0.06 * g)) * ((vy - gy) / (py - hh * 0.3 * g - gy));
+  ctx.fillStyle = '#111'; ctx.beginPath(); ctx.ellipse(vx, vy, g * 0.035, g * 0.07, 0.4, 0, Math.PI * 2); ctx.fill();
+  ctx.lineCap = 'butt';
+}
 
 // 2) Einsortieren: Blick von der Stirnseite in den Container. Jede Stange hängt am Schlupf unter der Gabel und pendelt.
 // Höhe mit der Maus oder W/S einstellen, im richtigen Moment einschieben (Klick oder Leertaste). Unten Träger, Mitte Rohre,
@@ -3504,10 +3581,9 @@ export function einsortierSpiel({ alt = false } = {}) {
         // Weidemann von der Seite (wie im Minispiel Pritsche): Gabelträger kurz vor der Stange, Zinken bis unter den Schlupf
         const ls = f.h / 400, spitze = { x: px + g * 0.55, y: gy - 3 * ls };
         zeichneLader(ctx, f.x + f.b * 0.13 - 312 * ls + (px - ruheX) * 0.75, boden, ls, { x: px - g * 1.5, y: gy - 12 * ls }, spitze, { x: 212, y: 168 });
-        // Schlupf als Schlaufe um die Stange
-        const farbe = alt ? '#b8742e' : '#f2c21c';
-        const pfad = () => { ctx.beginPath(); ctx.moveTo(px - g * 0.12, gy); ctx.lineTo(px - g * 0.62, py - g * 0.1); ctx.quadraticCurveTo(px - g * 0.7, py + g * 0.75, px, py + g * 0.75); ctx.quadraticCurveTo(px + g * 0.7, py + g * 0.75, px + g * 0.62, py - g * 0.1); ctx.lineTo(px + g * 0.12, gy); };
-        ctx.lineCap = 'round'; ctx.strokeStyle = '#111'; ctx.lineWidth = g * 0.16; pfad(); ctx.stroke(); ctx.strokeStyle = farbe; ctx.lineWidth = g * 0.1; pfad(); ctx.stroke(); ctx.lineCap = 'butt';
+        // Schlupf eng um die Stange (unten keine Luft)
+        if (!(schubZiel && zurueck && schubZiel.ebene >= 0)) zeichneSchlupfEinsortieren(ctx, typ, px, py, gy, g, alt);
+        else { ctx.strokeStyle = '#111'; ctx.lineWidth = g * 0.16; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(px - 0.06 * g, gy); ctx.lineTo(px - 0.1 * g, gy + g * 0.9); ctx.lineTo(px + 0.2 * g, gy); ctx.stroke(); ctx.strokeStyle = alt ? '#b8742e' : '#f2c21c'; ctx.lineWidth = g * 0.1; ctx.stroke(); ctx.lineCap = 'butt'; }
         if (!(schubZiel && zurueck && schubZiel.ebene >= 0)) zeichneProfil(ctx, typ, px, py, g, PROFIL_FARBE[typ]);
         // Anzeige: was hängt gerade dran, wie viele noch
         if (nr < liste.length) {
