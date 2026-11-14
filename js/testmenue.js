@@ -262,6 +262,12 @@ export function baueTestMenue({ spiel, welt, kamera, steuerung, fahrten, fz }) {
   knopf('T108', 'Minispiel Stahl einsortieren (direkt)', mini(() => M.einsortierSpiel()), { laeuft: titelEnthaelt('Stahl einsortieren') });
   knopf('T109', 'Auftrag läuft, Jonas in der Werkstatt (zu Fuß)', () => { raus(); me.test.testStart(); });
   knopf('T110', 'Metall-Lieferung zurücksetzen', () => { raus(); me.test.zuruecksetzen(); });
+  ueberschrift('E4 Mettenden grillen');
+  const gr = t.grillen;
+  knopf('T111', '3 Mettenden liegen auf dem Grill (roh)', () => gr.test.testDrauf(3));
+  knopf('T112', 'Minispiel Mettenden grillen (direkt)', mini(() => M.grillSpiel({ anzahl: 3 })), { laeuft: titelEnthaelt('Mettenden grillen') });
+  knopf('T113', 'Fertig gegrillt: alle kommen und fragen', () => gr.test.testFertig(['gut', 'gut', 'gut', 'verkohlt', 'roh']));
+  knopf('T114', 'Grill zurücksetzen (alte Wurst wieder drauf)', () => gr.test.zuruecksetzen());
 
   ueberschrift('Orte (hinspringen)');
   // Paket E2a: direkt hinter die Werkstatt (vor die Hintertür, Blick auf Schrottplatz und Carport)
