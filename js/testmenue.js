@@ -258,7 +258,7 @@ export function baueTestMenue({ spiel, welt, kamera, steuerung, fahrten, fz }) {
   knopf('T104', 'Minispiel Stangen ankoppeln (direkt)', mini(() => M.ankoppelSpiel()), { laeuft: titelEnthaelt('Stangen ankoppeln') });
   knopf('T105', 'Stangen hängen dran, am Hof (neuer Schlupf)', () => me.test.testHaengt(false, 'hof'));
   knopf('T106', 'Stangen hängen dran, kurz vor der Werkstatt (ALTER Schlupf: reißt)', () => me.test.testHaengt(true, 'feldweg'));
-  knopf('T107', 'Stangen hängen dran, vor dem Container', () => me.test.testHaengt(false, 'container'));
+  knopf('T107', 'Stangen hängen dran, vor dem Metallcontainer', () => me.test.testHaengt(false, 'container'));
   knopf('T108', 'Minispiel Stahl einsortieren (direkt)', mini(() => M.einsortierSpiel()), { laeuft: titelEnthaelt('Stahl einsortieren') });
   knopf('T109', 'Auftrag läuft, Jonas in der Werkstatt (zu Fuß)', () => { raus(); me.test.testStart(); });
   knopf('T110', 'Metall-Lieferung zurücksetzen', () => { raus(); me.test.zuruecksetzen(); });

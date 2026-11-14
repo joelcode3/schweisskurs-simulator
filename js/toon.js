@@ -116,3 +116,32 @@ export function rundQuader(b, h, t, farbe, opt, r = 0.05) {
   }
   return teil(geo, farbe, opt);
 }
+
+// Bierflasche (0,33 l, braun): gedrehtes Glasprofil mit Schulter und Hals, Wulst am Mund, Bauch- und Halsetikett,
+// Glanzstreifen; mit Kronkorken (gezackter Rand) oder leer ohne. Ursprung = Mitte des Bauchs (wie die alten Flaschen).
+let bierEtikett = null;
+export function bierflasche({ korken = true, glasMat = null } = {}) {
+  const f = new THREE.Group();
+  const prof = [[0, -0.075], [0.026, -0.075], [0.03, -0.071], [0.03, 0.045], [0.028, 0.062], [0.021, 0.08], [0.014, 0.098],
+    [0.0125, 0.112], [0.0125, 0.148], [0.0142, 0.151], [0.0142, 0.157], [0.0115, 0.158], [0, 0.158]].map(([x, y]) => new THREE.Vector2(x, y));
+  const glas = glasMat || toon(0x5a2e0e, { transparent: true, opacity: 0.93 });
+  f.add(teil(new THREE.LatheGeometry(prof, 18), 0, { material: glas, umriss: 0.002 }));
+  if (!bierEtikett) bierEtikett = leinwandTextur(256, 64, (g, b, h) => {
+    g.fillStyle = '#f2e6c4'; g.fillRect(0, 0, b, h);
+    g.fillStyle = '#c8352a'; g.fillRect(0, 0, b, 10); g.fillRect(0, h - 10, b, 10);
+    g.fillStyle = '#1d1d1f'; g.font = 'bold 22px Georgia'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (const x of [64, 192]) { g.fillText('PILS', x, h / 2 + 1); g.strokeStyle = '#b08a2a'; g.lineWidth = 2; g.beginPath(); g.ellipse(x, h / 2, 40, 17, 0, 0, Math.PI * 2); g.stroke(); }
+  });
+  const etikett = new THREE.Mesh(new THREE.CylinderGeometry(0.0306, 0.0306, 0.058, 18, 1, true), toon(0xffffff, { map: bierEtikett }));
+  etikett.position.y = -0.015; f.add(etikett);
+  const hals = new THREE.Mesh(new THREE.CylinderGeometry(0.0131, 0.0136, 0.026, 14, 1, true), toon(0xc8352a));
+  hals.position.y = 0.128; f.add(hals);
+  f.add(setze(new THREE.Mesh(new THREE.CylinderGeometry(0.0131, 0.0131, 0.004, 14, 1, true), toon(0xd9b44a)), 0, 0.139, 0));
+  const glanz = new THREE.Mesh(new THREE.PlaneGeometry(0.006, 0.1), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35, depthWrite: false }));
+  glanz.position.set(-0.012, 0.0, 0.027); glanz.rotation.y = -0.4; f.add(glanz);
+  if (korken) {
+    f.add(setze(zylinder(0.0148, 0.0148, 0.007, 0xd9b44a, { umriss: 0.001 }, 21), 0, 0.161, 0));
+    for (let k = 0; k < 21; k++) { const w = (k / 21) * Math.PI * 2; f.add(setze(quader(0.003, 0.006, 0.002, 0xb8952f, { umriss: false }), Math.cos(w) * 0.0152, 0.159, Math.sin(w) * 0.0152, 0, -w, 0)); }
+  }
+  return f;
+}

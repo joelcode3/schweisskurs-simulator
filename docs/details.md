@@ -853,6 +853,21 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   T92 | Ereignisse | David geht mit Coco Gassi
   T93 | Ereignisse | David geht wieder
 
+## Paket V2 (Bugs Optik, 14.11.)
+- Bad: der Schachbrett-Boden lag UNTER der Betonfläche von draußen (die reicht bis z 10,5 und unters Bad) – jetzt bei
+  y 0,009 darüber; daher kamen grauer Boden und Zickzack-Risse/Unkraut im Bad. Betonbrocken landen nicht mehr im Bad.
+- WC-Tür: Drücker mit Langschild und Schlüsselloch (beidseitig). Waschmaschine/Trockner: runde Kanten, Scharnier,
+  Trommelrand, Glanz, Schublade, Sockelblende, Füße; Flusensieb-Fach mit grauer Rückwand und hellem Rahmen, das Sieb sitzt
+  davor (Kinder um -0,04 versetzt, Gruppe bleibt bei -0,29 wie in spiel.js). Klo: Fuß, Schraubkappen, Scharniere,
+  Eckventil, Kalkrand. Waschbecken weiß (leicht selbstleuchtend), Kalk/Schlieren/Stoppeln, Seife.
+- Bierflasche als gemeinsames Modell `bierflasche({ korken, glasMat })` in toon.js (Jonny in der Hand, leere Flaschen).
+- Pömpel: gedrehte Gummiglocke mit Lippe, Manschette, Wülste; Stiel mit Kappe und Loch.
+- Sonne: Schattenbereich ±10/±9, Karte 2048, normalBias (vorher heller Keil hinten rechts durchs Dach).
+- Kicker-Spielfeld höher und beidseitig (flackerte grün/braun). Container: Rahmen/Dach/Eckbeschläge gestaffelt (keine
+  deckungsgleichen Außenflächen mehr). Texte „Metallcontainer“. Fallrohr Carport: senkrecht, unten kurzer Auslauf nach außen
+  und unten. Feuerschale: Füße unten nach außen. Wohnwagentür hinter dem Radkasten (lokal z -0,95), Fenster dahinter
+  nach hinten, Stufe vor der Tür. Schotter bis an die Werkstattwand (Umriss x 5,03 / z -4,03), Löwenzahn und Gras an der Wand.
+
 ## Offene Fäden und Ungetestetes (Übergabe 1.11.2026)
 - Ausraster-Videos: #54 (frisches Video-Element, bis zu 6 Versuche, canplay) ist nur eine Absicherung. Die Ursache ist unklar, im Test lief
   alles (WebM statt H.264, Chromium kann hier kein H.264). Der Betreiber prüft im echten Browser (Browser und Anzeige erfragen: schwarz,

@@ -10,9 +10,9 @@ export const HINTERTUER = { x0: -3.45, x1: -2.35, hoehe: 2.15, mitte: -2.9 };
 // Läuft rechts am Haus entlang (dort parkte früher der Hoflader) bis an die Betonplatte vorne, hinterm Haus über
 // Schrottplatz und Carport; links neben dem Carport (Welt -x) kein Schotter.
 export const SCHOTTER_UMRISS = [
-  [5.25, -4.12, true], [5.25, 4.0, true], [7.5, 4.0], [8.8, 2.6], [9.5, 0.2], [9.7, -3.5], [9.9, -8.5], [9.0, -13.0],
+  [5.03, -4.03, true], [5.03, 4.0, true], [7.5, 4.0], [8.8, 2.6], [9.5, 0.2], [9.7, -3.5], [9.9, -8.5], [9.0, -13.0],
   [7.2, -17.0], [5.2, -21.0], [3.0, -23.2], [0.0, -23.5], [-3.5, -23.0], [-6.5, -22.5], [-6.7, -17.5], [-6.6, -12.2],
-  [-8.8, -11.6], [-11.8, -11.4], [-13.0, -8.5], [-12.9, -5.8], [-12.2, -4.3], [-5.2, -4.12, true],
+  [-8.8, -11.6], [-11.8, -11.4], [-13.0, -8.5], [-12.9, -5.8], [-12.2, -4.3], [-5.2, -4.03, true],
 ];
 // Carport: Reihenfolge vom Haus weg Werkstatt, Schrottplatz, Carport (Betreiber 9.11.); längs gestellt, drei Buchten
 // hintereinander (vom Haus weg): Paletten, Pritsche, Weidemann. Offen zur Seite (Welt +x, Schilder dort) und nach hinten
@@ -79,6 +79,36 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     m.position.y = 0.008;
     m.receiveShadow = true;
     gruppe.add(m);
+  }
+  // Schotter reicht bis an die Werkstattwand; dort wachsen ein paar Löwenzahn-Rosetten und Grasbüschel aus der Fuge
+  {
+    const blattMat = toon(0x4f8a34), blattD = toon(0x3f7428), bluete = toon(0xf2c72a), stielMat = toon(0x6a9a40);
+    const rosette = (x, z, mitBluete) => {
+      const g = new THREE.Group();
+      const n = 6 + Math.floor(r() * 3);
+      for (let k = 0; k < n; k++) {
+        const w = (k / n) * Math.PI * 2 + r() * 0.4, l = 0.09 + r() * 0.06;
+        const b = new THREE.Mesh(new THREE.ConeGeometry(0.022, l, 4), k % 2 ? blattMat : blattD);
+        b.scale.set(1, 1, 0.25);
+        b.position.set(Math.cos(w) * l * 0.45, 0.018, Math.sin(w) * l * 0.45);
+        b.rotation.set(0, -w, 0); b.rotateZ(-Math.PI / 2 + 0.25);
+        g.add(b);
+      }
+      if (mitBluete) {
+        const h = 0.1 + r() * 0.08;
+        g.add(setze(new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, h, 4), stielMat), 0.01, h / 2, 0, 0, 0, 0.12));
+        const k = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 5), bluete); k.scale.y = 0.55; k.position.set(0.01 - h * 0.06, h, 0); g.add(k);
+      }
+      g.position.set(x, 0.008, z); g.rotation.y = r() * 6;
+      gruppe.add(g);
+    };
+    for (const z of [-3.6, -2.1, -0.4, 1.3, 2.9]) rosette(5.13 + r() * 0.08, z + (r() - 0.5) * 0.5, r() < 0.6);
+    for (const x of [-4.6, -3.9, 4.8]) rosette(x + (r() - 0.5) * 0.3, -4.13 - r() * 0.08, r() < 0.5);
+    for (const [x, z] of [[5.12, -1.2], [5.12, 2.2], [-4.3, -4.12]]) for (let k = 0; k < 5; k++) {
+      const b = new THREE.Mesh(new THREE.ConeGeometry(0.012, 0.08 + r() * 0.06, 4), blattMat);
+      b.position.set(x + (r() - 0.5) * 0.1, 0.05, z + (r() - 0.5) * 0.1); b.rotation.set((r() - 0.5) * 0.5, 0, (r() - 0.5) * 0.5);
+      gruppe.add(b);
+    }
   }
   // fließender Übergang zum Rasen: lose Schotterflecken nach außen, immer durchsichtiger; Grasbüschel im Schotter
   const fleckMats = [0.7, 0.5, 0.3].map((o) => toon(0xffffff, { map: schotterTex, transparent: true, opacity: o, depthWrite: false }));
@@ -176,8 +206,15 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
   // Regenrinne hinten (am tiefen Rand) mit Fallrohr an der Ecke
   const zHint = -D / 2 - ueber * Math.cos(neigung), yHint = hoeheBeiZ(0) - (D / 2 + ueber) * Math.sin(neigung);
   cp.add(setze(zylinder(0.07, 0.07, L + 0.8, 0x7a7e82, { umriss: 0.002 }, 10), 0, yHint - 0.02, zHint - 0.06, 0, 0, Math.PI / 2));
-  cp.add(setze(zylinder(0.045, 0.045, yHint, 0x7a7e82, { umriss: 0.002 }, 10), L / 2 + 0.25, yHint / 2, zHint - 0.06));
-  cp.add(setze(zylinder(0.045, 0.06, 0.25, 0x7a7e82, { umriss: 0.002 }, 10), L / 2 + 0.35, 0.1, zHint - 0.06, 0, 0, -1.1));
+  // Fallrohr senkrecht bis knapp über den Boden, unten ein kurzer Auslaufbogen, der leicht nach außen UND nach unten zeigt
+  {
+    const fx = L / 2 + 0.25, fz = zHint - 0.06, unten = 0.26;
+    cp.add(setze(zylinder(0.045, 0.045, yHint - unten, 0x7a7e82, { umriss: 0.002 }, 10), fx, (yHint + unten) / 2, fz));
+    cp.add(setze(kugel(0.047, 0x7a7e82, { umriss: 0.002 }, 10), fx, unten, fz)); // Knick
+    const a = new THREE.Vector3(fx, unten, fz), b = new THREE.Vector3(fx + 0.2, 0.12, fz), bogen = zylinder(0.055, 0.045, a.distanceTo(b), 0x7a7e82, { umriss: 0.002 }, 10);
+    bogen.position.copy(a).add(b).multiplyScalar(0.5); bogen.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize());
+    bogen.name = 'fallrohrBogen'; cp.add(bogen);
+  }
   // Kopfbänder (schräge Streben) vorne und hinten
   for (const [z, h] of [[D / 2, hVorne - PF], [-D / 2, hHinten - PF]]) for (const x of pfostenX) for (const s of [-1, 1]) {
     if ((x === pfostenX[0] && s < 0) || (x === pfostenX[3] && s > 0)) continue;
@@ -649,7 +686,7 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
       for (let i = 0; i < 30; i++) { cg.fillStyle = 'rgba(90,70,40,0.35)'; cg.fillRect(r() * b, r() * h, 3 + r() * 10, 2 + r() * 6); }
     });
     const kasten = new THREE.Group();
-    const feld = new THREE.Mesh(new THREE.PlaneGeometry(L - 0.06, Bk - 0.06), toon(0xffffff, { map: feldTex })); feld.rotation.x = -Math.PI / 2; feld.position.y = 0.02; kasten.add(feld);
+    const feld = new THREE.Mesh(new THREE.PlaneGeometry(L - 0.06, Bk - 0.06), toon(0xffffff, { map: feldTex, side: THREE.DoubleSide })); feld.rotation.x = -Math.PI / 2; feld.position.y = 0.028; kasten.add(feld); // klar über dem Boden (sonst flackert grün/braun)
     kasten.add(setze(quader(L, 0.02, Bk, HOLZ, { umriss: 0.002 }), 0, 0.01, 0));
     for (const sz of [-1, 1]) kasten.add(setze(quader(L, K, 0.03, HOLZ, { umriss: 0.003 }), 0, K / 2, sz * Bk / 2));
     for (const sx of [-1, 1]) {
@@ -1415,14 +1452,15 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     const wand = (w, h, x, y, z, ry, rep) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), blech(w, h, rep)); m.position.set(x, y, z); m.rotation.y = ry; m.receiveShadow = true; c.add(m); };
     wand(B - 0.1, H - 0.2, 0, H / 2, T / 2 - 0.03, 0, 10);
     for (const sx of [-1, 1]) wand(T - 0.1, H - 0.2, sx * (B / 2 - 0.03), H / 2, 0, Math.PI / 2, 4);
-    c.add(setze(quader(B, 0.06, T, BLAU_D, { umriss: 0.003 }), 0, H - 0.03, 0)); // Dach
+    c.add(setze(quader(B - 0.044, 0.06, T - 0.044, BLAU_D, { umriss: 0.003 }), 0, H - 0.035, 0)); // Dach
     c.add(setze(quader(B - 0.1, 0.03, T - 0.1, 0x7a5a3a, { umriss: false }), 0, 0.15, 0)); // Holzboden
     // Rahmen: Eckpfosten, Ober- und Untergurt an der offenen Seite und hinten
-    for (const sx of [-1, 1]) for (const sz of [-1, 1]) c.add(setze(quader(0.16, H, 0.16, BLAU_D, { umriss: 0.003 }), sx * (B / 2 - 0.08), H / 2, sz * (T / 2 - 0.08)));
-    for (const sz of [-1, 1]) for (const y of [0.07, H - 0.1]) c.add(setze(quader(B, 0.14, 0.12, BLAU_D, { umriss: 0.003 }), 0, y, sz * (T / 2 - 0.06)));
-    for (const sx of [-1, 1]) for (const y of [0.07, H - 0.1]) c.add(setze(quader(0.12, 0.14, T, BLAU_D, { umriss: 0.003 }), sx * (B / 2 - 0.06), y, 0));
-    // Eckbeschläge (grau)
-    for (const sx of [-1, 1]) for (const sz of [-1, 1]) for (const y of [0.08, H - 0.08]) c.add(setze(quader(0.18, 0.12, 0.18, 0x8c8f94, { umriss: 0.002 }), sx * (B / 2 - 0.09), y, sz * (T / 2 - 0.09)));
+    // (Maße leicht gestaffelt, damit keine Außenflächen genau aufeinanderliegen – sonst flackern die Ecken beim Vorbeigehen)
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) c.add(setze(quader(0.15, H - 0.02, 0.15, BLAU_D, { umriss: 0.003 }), sx * (B / 2 - 0.078), H / 2 - 0.01, sz * (T / 2 - 0.078)));
+    for (const sz of [-1, 1]) for (const y of [0.07, H - 0.1]) c.add(setze(quader(B - 0.3, 0.14, 0.12, BLAU_D, { umriss: 0.003 }), 0, y, sz * (T / 2 - 0.072)));
+    for (const sx of [-1, 1]) for (const y of [0.07, H - 0.1]) c.add(setze(quader(0.12, 0.14, T - 0.3, BLAU_D, { umriss: 0.003 }), sx * (B / 2 - 0.072), y, 0));
+    // Eckbeschläge (grau), stehen ein paar Millimeter über
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) for (const y of [0.08, H - 0.08]) c.add(setze(quader(0.19, 0.13, 0.19, 0x8c8f94, { umriss: 0.002 }), sx * (B / 2 - 0.09), y, sz * (T / 2 - 0.09)));
     // Innen: an der Rückwand drei gelbe Fachbodenregale mit größeren Teilen (Kisten mit Schraubenschlüsseln, Motor,
     // Hinterachse, Kanister); davor ein Kragarmregal mit den Metalllängen (5,85 m: passen gerade so rein)
     const GELB = 0xe8b820, BODEN0 = 0.165;
@@ -1555,7 +1593,7 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     for (let i = 0; i < 6; i++) c.add(setze(zylinder(0.04, 0.04, LANG, STAHL[(i + 2) % 4], { umriss: 0.002 }, 10), (r() - 0.5) * 0.03, auf(armY[1]) + 0.12, KZ - 0.15 - i * 0.09, 0, 0, Math.PI / 2));
     // oben: Flachstahl und Winkel
     for (let i = 0; i < 8; i++) c.add(setze(quader(LANG - r() * 0.6, 0.012, 0.06, STAHL[i % 4], { umriss: 0.001 }), (r() - 0.5) * 0.3, auf(armY[2]) + 0.006 + (i % 3) * 0.012, KZ - 0.12 - i * 0.07, 0, (r() - 0.5) * 0.02, 0));
-    merke(c, 'container', 'Container', null);
+    merke(c, 'container', 'Metallcontainer', null);
     hindernis(K.xMin, K.xMax, K.zMin, K.zMax);
   }
 

@@ -4094,7 +4094,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       case 'gitterbox':
         return ['Gitterbox', 'Randvoll: Kleinteile oder alte Felgen. Sortiert hat das nie jemand.', []];
       case 'container':
-        return ['Container', 'Blauer Container, an der Längsseite aufgeschnitten. Drin liegt Material: Träger, Vierkant, Rohre, Flachstahl, alles 6 Meter. Passt gerade so rein.', []];
+        return ['Metallcontainer', 'Blauer Metallcontainer, an der Längsseite aufgeschnitten. Drin liegt Material: Träger, Vierkant, Rohre, Flachstahl, alles 6 Meter. Passt gerade so rein.', []];
       case 'carportHinten':
         return ['Carport hinterm Haus', 'Drei Plätze: Paletten, Pritsche, Weidemann. Die Pritsche fehlt noch.', []];
       case 'weidemann':

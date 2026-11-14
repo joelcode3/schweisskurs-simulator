@@ -227,6 +227,7 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   for (let i = 0; i < 8; i++) {
     const s = quader(0.08 + r() * 0.12, 0.04 + r() * 0.04, 0.06 + r() * 0.1, 0x8f8d86, { umriss: 0.002 });
     s.position.set(BETON.x0 + 1 + r() * 13, 0.03, 5 + r() * 5);
+    if (s.position.x > 0.5 && s.position.x < 4.1 && s.position.z < 7.0) s.position.z += 2.2; // nicht im Bad (die Fläche reicht unters Bad)
     s.rotation.set(r() * 0.4, r() * 3, r() * 0.4);
     scene.add(s);
   }
@@ -798,7 +799,7 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   feuerstelle.add(setze(teil(new THREE.TorusGeometry(0.44, 0.02, 6, 32), 0x3a2a1e, { umriss: 0.002 }), 0, 0.35, 0, Math.PI / 2, 0, 0));
   // Rost und Rostflecken auf der Schale
   // Fuß
-  for (let i = 0; i < 3; i++) { const w = i / 3 * Math.PI * 2; const fuss = zylinder(0.016, 0.016, 0.2, 0x2a2622, { umriss: 0.002 }, 6); fuss.position.set(Math.cos(w) * 0.2, 0.085, Math.sin(w) * 0.2); fuss.rotation.set(Math.sin(w) * 0.35, 0, -Math.cos(w) * 0.35); feuerstelle.add(fuss); }
+  for (let i = 0; i < 3; i++) { const w = i / 3 * Math.PI * 2; const fuss = zylinder(0.016, 0.016, 0.2, 0x2a2622, { umriss: 0.002 }, 6); fuss.position.set(Math.cos(w) * 0.2, 0.085, Math.sin(w) * 0.2); fuss.rotation.set(-Math.sin(w) * 0.35, 0, Math.cos(w) * 0.35); feuerstelle.add(fuss); } // Füße unten nach außen gespreizt
   // Asche und verkohlte Holzscheite
   // graue Asche mit kleinen Häufchen, verkohlte Holzreste
   const asche = kugel(0.36, 0x77746f, { umriss: false }, 16); asche.scale.set(1, 0.08, 1); asche.position.y = 0.195; feuerstelle.add(asche);
