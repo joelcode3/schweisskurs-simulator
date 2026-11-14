@@ -918,6 +918,19 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   und unten. Feuerschale: Füße unten nach außen. Wohnwagentür hinter dem Radkasten (lokal z -0,95), Fenster dahinter
   nach hinten, Stufe vor der Tür. Schotter bis an die Werkstattwand (Umriss x 5,03 / z -4,03), Löwenzahn und Gras an der Wand.
 
+## Paket N2 (Pritsche und Optik, 14.11.)
+- Umrisse (toon.js umriss): die Hülle wird jetzt entlang gemittelter Normalen (Attribut umrissNormal, je Position aus allen
+  angrenzenden Flächenrichtungen) aufgeblasen statt entlang der harten Flächennormalen. Vorher fielen die Hüllenflächen an
+  jeder Kante (Quader!) auseinander, die Kontur hatte sichtbaren Abstand. platzhinten.js zusammenfassen() nimmt das Attribut
+  mit (gedreht wie die Normalen). Ladezeit im Test etwa +1,5 s.
+- Pritsche: Joel sitzt tiefer (Kopf nicht mehr über dem Dach), Fenster größer und Säulen/Dachrahmen schlanker (FV/FH in
+  baueT5), Dach mit Dicke (Himmel innen, Dachkanten vorn und hinten), runde Nase zwischen Frontplatte und Haube.
+  Liegt die Pritsche auf der Seite, sitzt ihr Hindernis-Kasten seitlich verschoben über dem Dach (Weidemann fährt nicht
+  mehr durch), gleich beim Start gesetzt.
+- David: Kopf höher (halsHoehe 0,875), dickerer Hals, Kragenwulst enger und etwas höher, Halsausschnitt geschlossen.
+- Schraubstock neu (Drehteller, Amboss, Führung, geriffelte Backeneinsätze, Spindel mit Gewinde und Knebel). Milchtüte als
+  echte Giebelpackung (Dachflächen, Siegelnaht, Schraubdeckel, Etikett mit Kuhflecken).
+
 ## Offene Fäden und Ungetestetes (Übergabe 1.11.2026)
 - Ausraster-Videos: #54 (frisches Video-Element, bis zu 6 Versuche, canplay) ist nur eine Absicherung. Die Ursache ist unklar, im Test lief
   alles (WebM statt H.264, Chromium kann hier kein H.264). Der Betreiber prüft im echten Browser (Browser und Anzeige erfragen: schwarz,

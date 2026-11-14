@@ -88,8 +88,8 @@
 - KI-Stimmklon ist in dieser Umgebung nicht möglich (huggingface.co gesperrt). Stimmproben nie ins Repo (öffentlich).
 
 ## Stand der Pull Requests (9.11.2026)
-- Alles bis #73 gemergt. Offen: #74 V3 Kollisionen und Wege (Zweig v3-kollisionen-wege). Neue Zweige immer von `origin/main`.
-- Versionsnummer zuletzt `v=20261114-4` (V3). Testmenü bis T116, nächste freie T117.
+- Alles bis #74 gemergt. In Arbeit: N1 (Zweig n1-metall-grillen), N2 (Zweig n2-pritsche-optik). Neue Zweige immer von `origin/main`.
+- Versionsnummer zuletzt `v=20261114-6` (N2; N1 hat -5). Testmenü bis T116, nächste freie T117.
 - Nächste freie Satz-Nummern (aus stimme/zuordnung.csv): dennis541, jonny63, waldo48, torben37, kumpel13, david24, joel16, jonas11.
 - Projektchat-Session: `session_0136irctrTCA3M7n4aU75GVP` (seit 9.11., Projektchat Nr. 4).
 - Offene Fäden und Ungetestetes: `docs/details.md`, Abschnitt „Offene Fäden und Ungetestetes“ (zuerst lesen, wenn ein neuer Chat startet).

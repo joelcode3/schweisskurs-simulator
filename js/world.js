@@ -668,11 +668,40 @@ export function baueWelt(scene) {
   }
   werkbank.add(setze(quader(2.15, 0.04, 0.7, FARBE.holzDunkel), 0, 0.22, 0));
   // Schraubstock
+  // Schraubstock (Parallelschraubstock, Spannweite längs x): Drehteller mit Klemmhebel auf der Grundplatte, fester Backen mit
+  // Amboss-Fläche, beweglicher Backen auf Führung, aufgeschraubte geriffelte Backeneinsätze, Spindel mit Knebel und Kugeln
   const stock = new THREE.Group();
-  stock.add(setze(quader(0.22, 0.08, 0.16, FARBE.blau), 0, 0.04, 0));
-  stock.add(setze(quader(0.05, 0.12, 0.18, FARBE.blau), -0.07, 0.14, 0));
-  stock.add(setze(quader(0.05, 0.12, 0.18, FARBE.blau), 0.06, 0.14, 0));
-  stock.add(setze(zylinder(0.012, 0.012, 0.3, FARBE.stahlHell, {}, 8), 0.2, 0.12, 0, 0, 0, Math.PI / 2));
+  {
+    const B = FARBE.blau, ST = FARBE.stahlHell, D = 0x2a2c30, U = { umriss: 0.002 };
+    stock.add(setze(rundQuader(0.2, 0.025, 0.15, B, U, 0.01), 0, 0.0125, 0));                        // Grundplatte
+    for (const [x, z] of [[-0.08, -0.055], [0.08, -0.055], [-0.08, 0.055], [0.08, 0.055]]) stock.add(setze(zylinder(0.009, 0.009, 0.006, D, { umriss: false }, 8), x, 0.027, z)); // Schrauben
+    stock.add(setze(zylinder(0.07, 0.072, 0.03, B, U, 22), 0, 0.04, 0));                             // Drehteller
+    stock.add(setze(zylinder(0.073, 0.073, 0.004, 0xd8dce0, { umriss: false }, 22), 0, 0.054, 0));   // Skala-Ring
+    stock.add(setze(zylinder(0.006, 0.006, 0.07, ST, { umriss: 0.001 }, 6), 0.0, 0.04, 0.09, Math.PI / 2, 0, 0)); // Klemmhebel
+    stock.add(setze(kugel(0.011, D, { umriss: 0.001 }, 8), 0, 0.04, 0.125));
+    // Körper mit festem Backen (links) und Amboss dahinter
+    stock.add(setze(rundQuader(0.07, 0.07, 0.11, B, U, 0.012), -0.075, 0.09, 0));
+    stock.add(setze(rundQuader(0.06, 0.03, 0.09, 0x3b4048, U, 0.006), -0.13, 0.11, 0));            // Amboss
+    stock.add(setze(quader(0.05, 0.05, 0.13, B, U), -0.055, 0.145, 0));                               // Backenträger fest
+    // Führung und beweglicher Backen
+    stock.add(setze(quader(0.18, 0.03, 0.05, 0x4a5058, U), 0.06, 0.075, 0));                          // Gleitbahn
+    stock.add(setze(rundQuader(0.05, 0.07, 0.11, B, U, 0.01), 0.075, 0.105, 0));
+    stock.add(setze(quader(0.04, 0.05, 0.13, B, U), 0.06, 0.155, 0));                                 // Backenträger beweglich
+    // Backeneinsätze (Stahl, geriffelt) einander zugewandt, etwas Spalt dazwischen
+    for (const [x, s] of [[-0.027, 1], [0.037, -1]]) {
+      stock.add(setze(quader(0.008, 0.042, 0.125, ST, { umriss: 0.001 }), x, 0.155, 0));
+      for (let k = 0; k < 6; k++) stock.add(setze(quader(0.002, 0.04, 0.003, 0x7a8086, { umriss: false }), x + s * 0.0045, 0.155, -0.05 + k * 0.02));
+      for (const z of [-0.035, 0.035]) stock.add(setze(zylinder(0.004, 0.004, 0.002, D, { umriss: false }, 6), x + s * 0.005, 0.16, z, 0, 0, Math.PI / 2));
+    }
+    // Spindel mit Mutter, Knebel quer durch den Kopf, Kugeln an den Enden
+    stock.add(setze(zylinder(0.011, 0.011, 0.2, ST, { umriss: 0.001 }, 10), 0.19, 0.105, 0, 0, 0, Math.PI / 2));
+    for (let k = 0; k < 8; k++) stock.add(setze(zylinder(0.0125, 0.0125, 0.003, 0x9aa0a6, { umriss: false }, 10), 0.14 + k * 0.012, 0.105, 0, 0, 0, Math.PI / 2)); // Gewinde
+    stock.add(setze(zylinder(0.018, 0.018, 0.03, D, U, 12), 0.29, 0.105, 0, 0, 0, Math.PI / 2));      // Knebelkopf
+    stock.add(setze(zylinder(0.006, 0.006, 0.2, ST, { umriss: 0.001 }, 8), 0.29, 0.105, 0.0, 0.25, 0, 0)); // Knebel
+    for (const s of [-1, 1]) stock.add(setze(kugel(0.012, ST, { umriss: 0.001 }, 10), 0.29, 0.105 + s * 0.099 * Math.cos(0.25), s * 0.099 * Math.sin(0.25)));
+    // Schriftzug-Schild am Körper
+    stock.add(setze(quader(0.002, 0.018, 0.05, 0xd8dce0, { umriss: false }), -0.111, 0.09, 0));
+  }
   setze(stock, -0.9, 0.9, 0.18);
   werkbank.add(stock);
   setze(werkbank, 0, 0, -2.9);
@@ -2707,12 +2736,32 @@ export function baueWelt(scene) {
     g.fillStyle = '#2f5fa8'; g.fillRect(0, 0, b, 34);
     g.fillStyle = '#2f5fa8'; g.font = 'bold 18px Arial'; g.textAlign = 'center'; g.fillText('MILCH', b / 2, 80);
   });
+  // echte Giebelpackung: Quader, oben zwei schräge Dachflächen zu einer flachen Siegelnaht (Finne), vorn Etikett mit Kuh-Flecken
+  // und Schrift, Schraubverschluss auf einer Dachseite, leicht eingedrückte Seite (offen und halb leer)
+  const milchEtikett = leinwandTextur(128, 192, (g, b, h) => {
+    g.fillStyle = '#ffffff'; g.fillRect(0, 0, b, h);
+    g.fillStyle = '#2f5fa8'; g.fillRect(0, 0, b, 38); g.fillRect(0, h - 22, b, 22);
+    g.fillStyle = '#7fbf5a'; g.beginPath(); g.ellipse(b / 2, h - 30, b * 0.7, 22, 0, Math.PI, 0); g.fill(); // grüne Wiese
+    g.fillStyle = '#1d1d1f'; for (const [x, y, rx, ry] of [[28, 70, 14, 9], [92, 96, 11, 8], [50, 128, 9, 6], [100, 60, 7, 5]]) { g.beginPath(); g.ellipse(x, y, rx, ry, 0.4, 0, Math.PI * 2); g.fill(); }
+    g.fillStyle = '#2f5fa8'; g.font = 'bold 24px Arial'; g.textAlign = 'center'; g.fillText('MILCH', b / 2, 108);
+    g.font = 'bold 13px Arial'; g.fillText('frische Vollmilch', b / 2, 128); g.fillStyle = '#c8352a'; g.font = 'bold 16px Arial'; g.fillText('3,5 %', b / 2, 150);
+    g.fillStyle = '#ffffff'; g.font = 'bold 12px Arial'; g.fillText('1 Liter', b / 2, h - 7);
+  });
   const milch = new THREE.Group();
-  milch.add(teil(new THREE.BoxGeometry(0.07, 0.17, 0.07), 0, { material: toon(0xffffff, { map: milchTex }), umriss: 0.003 }));
-  const giebel = teil(new THREE.CylinderGeometry(0.0001, 0.05, 0.05, 4, 1), 0xffffff, { umriss: 0.003 });
-  giebel.rotation.y = Math.PI / 4;
-  giebel.position.y = 0.11;
-  milch.add(giebel);
+  {
+    const W = 0.07, H = 0.165, GH = 0.032;
+    const weiss = toon(0xffffff);
+    const koerper = new THREE.BoxGeometry(W, H, W);
+    const etikett = toon(0xffffff, { map: milchEtikett });
+    milch.add(teil(koerper, 0, { material: [etikett, etikett, weiss, weiss, etikett, etikett], umriss: 0.003 }));
+    // Giebel: Prisma (Dreieck-Querschnitt) über die ganze Tiefe, Spitze zur Finne
+    const giebel = new THREE.Shape(); giebel.moveTo(-W / 2, 0); giebel.lineTo(W / 2, 0); giebel.lineTo(0.004, GH); giebel.lineTo(-0.004, GH); giebel.closePath();
+    const gg = new THREE.ExtrudeGeometry(giebel, { depth: W, bevelEnabled: false }); gg.translate(0, 0, -W / 2);
+    milch.add(setze(teil(gg, 0xf4f6fa, { umriss: 0.003 }), 0, H / 2, 0));
+    milch.add(setze(rundQuader(0.008, 0.02, W + 0.004, 0xffffff, { umriss: 0.002 }, 0.003), 0, H / 2 + GH + 0.006, 0)); // Siegelnaht
+    milch.add(setze(zylinder(0.012, 0.013, 0.012, 0x2f5fa8, { umriss: 0.0015 }, 14), -0.017, H / 2 + 0.019, 0.012, 0, 0, 0.75)); // Deckel
+    for (let k = 0; k < 8; k++) { const w = k / 8 * Math.PI * 2; milch.add(setze(quader(0.002, 0.012, 0.002, 0x24508a, { umriss: false }), -0.017 + Math.cos(w) * 0.0125 * Math.cos(0.75), H / 2 + 0.019 + Math.cos(w) * 0.0125 * Math.sin(0.75), 0.012 + Math.sin(w) * 0.0125, 0, 0, 0.75)); }
+  }
   setze(milch, -4.32, 0.89, 3.8); // vorne rechts auf dem Tisch, nicht hinter der Kaffeemaschine
   milch.scale.setScalar(1.5); // größer, damit man sie auf dem Kaffeetisch sieht (Paket M)
   milch.position.y += 0.17 * 0.25;

@@ -32,6 +32,7 @@ export function bauePritsche(c) {
   const fz2 = fahrten.zustand;
   const pz = { phase: 'aus', naechsterBesuch: 480 + Math.random() * 300, schaeden: [], spurAb: 0, spur: 0 };
   const T5_START = { pos: t5.position.clone(), ry: t5.rotation.y };
+  t5Hindernis(); // gleich passend zur liegenden Pritsche
 
   // ---------- Zwei Schlupfe (Baustein schlupf.js, auch für E3) ----------
   // neu: liegt im Regal (unteres Brett, vorn), alt: hängt an der Wand über den Stahlträgern, daneben ein Warnzettel.
@@ -119,9 +120,12 @@ export function bauePritsche(c) {
   const ladeHaken = () => lader.g.localToWorld(HAKEN_LADER.clone());
   const t5Oese = () => modell.localToWorld(OESE_T5.clone());
   function t5Hindernis() {
-    const psi = t5.rotation.y, hx = 0.98, hz = 2.55;
+    // liegt er auf der Seite (modell um z gedreht), liegt das Dach eine Fahrzeughöhe seitlich neben dem Drehpunkt: Kasten
+    // dorthin verschieben (vorher deckte er nur die Hälfte ab, der Weidemann fuhr durchs Dach)
+    const psi = t5.rotation.y, hx = 0.98, hz = 2.55, k = modell.rotation.z / (Math.PI / 2), off = -0.93 * k;
+    const cx = t5.position.x + Math.cos(psi) * off, cz = t5.position.z - Math.sin(psi) * off;
     const ex = Math.abs(Math.cos(psi)) * hx + Math.abs(Math.sin(psi)) * hz, ez = Math.abs(Math.sin(psi)) * hx + Math.abs(Math.cos(psi)) * hz;
-    Object.assign(t5H, { xMin: t5.position.x - ex, xMax: t5.position.x + ex, zMin: t5.position.z - ez, zMax: t5.position.z + ez, boxen: [{ x: t5.position.x, z: t5.position.z, psi, hx, hz }] });
+    Object.assign(t5H, { xMin: cx - ex, xMax: cx + ex, zMin: cz - ez, zMax: cz + ez, boxen: [{ x: cx, z: cz, psi, hx, hz }] });
   }
   function t5Boden() {
     // auf das Gelände: Höhe und Neigung aus vier Punkten
@@ -194,9 +198,10 @@ export function bauePritsche(c) {
     if (an) {
       joel.halt?.();
       modell.add(joel.wurzel);
-      joel.wurzel.position.set(0.42, 0.8 - 0.5 * 0.9, 1.2);
+      // tiefer im Sitz und etwas kleiner: vorher schaute der Kopf oben aus dem Dach
+      joel.wurzel.position.set(0.42, 0.8 - 0.5 * 0.86 - 0.12, 1.16);
       joel.wurzel.rotation.set(0, 0, 0);
-      joel.wurzel.scale.setScalar(0.9); // sonst stößt er mit dem Kopf ans Dach
+      joel.wurzel.scale.setScalar(0.86);
       joel.sitzen(0.5);
       joel.festhalten?.(true); // Hände nach vorn ans Lenkrad
     } else {
