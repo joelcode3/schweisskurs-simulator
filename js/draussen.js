@@ -2,7 +2,7 @@
 // Wiese mit Bäumen, Horizont, Mülltonnen, roter Weidemann-Hoflader mit Palettengabel, rosa Mini-Jeep, Feuerschale mit
 // Dreibein, Grillrost und alter Bratwurst, Schild „Nicht stören – Schweißkurs!“.
 import * as THREE from 'three';
-import { toon, teil, quader, rundQuader, zylinder, kugel, setze, leinwandTextur, zufall } from './toon.js';
+import { lenkrad, toon, teil, quader, rundQuader, zylinder, kugel, setze, leinwandTextur, zufall } from './toon.js';
 import { FELDWEG, baueLandschaft, imKreis } from './landschaft.js';
 import { bauePlatzHinten, HINTERTUER, BUCHTEN } from './platzhinten.js';
 
@@ -605,8 +605,7 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   kabine.add(setze(quader(0.44, 0.1, 0.44, SCHW, { umriss: 0.002 }), 0, 1.0, -0.6));
   kabine.add(setze(quader(0.3, 0.22, 0.3, GRAU_D, { umriss: 0.002 }), 0, 0.88, -0.6));
   kabine.add(setze(quader(0.44, 0.56, 0.1, SCHW, { umriss: 0.002 }), 0, 1.33, -0.86, -0.12, 0, 0));
-  kabine.add(setze(zylinder(0.03, 0.04, 0.55, GRAU_D, { umriss: false }, 8), 0, 1.08, -0.16, -0.55, 0, 0));
-  kabine.add(setze(teil(new THREE.TorusGeometry(0.15, 0.018, 6, 18), SCHW, { umriss: 0.001 }), 0, 1.36, -0.28, -1.0, 0, 0));
+  kabine.add(lenkrad(new THREE.Vector3(0, 1.36, -0.3), new THREE.Vector3(0, 1.0, -0.06), 0.15, SCHW, 0.018));
   kabine.add(setze(zylinder(0.012, 0.012, 0.18, SCHW, { umriss: false }, 6), -0.28, 1.12, -0.42, 0.25, 0, 0));
   kabine.add(setze(kugel(0.03, SCHW, { umriss: false }, 8), -0.3, 1.21, -0.4));
   kabine.add(setze(quader(0.18, 0.03, 0.22, SCHW, { umriss: 0.002 }), 0.62, 0.52, -0.45));
@@ -732,8 +731,7 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   // Abdeckung zwischen Haube und Scheibe
   jeep.add(setze(rundQuader(JB - 0.02, 0.06, 0.1, ROSA, { umriss: 0.003 }, 0.025), 0, 0.66, 0.33));
   for (const sx of [-0.24, 0.0]) jeep.add(setze(zylinder(0.04, 0.04, 0.01, 0xf4f4ef, { umriss: false }, 12), sx, 0.8, 0.165, Math.PI / 2, 0, 0));
-  jeep.add(setze(zylinder(0.018, 0.018, 0.28, SCHWARZ, { umriss: false }, 8), -0.24, 0.8, 0.1, 1.0, 0, 0));
-  jeep.add(setze(teil(new THREE.TorusGeometry(0.12, 0.016, 6, 16), SCHWARZ, { umriss: 0.001 }), -0.24, 0.87, -0.01, -1.0, 0, 0));
+  jeep.add(lenkrad(new THREE.Vector3(-0.24, 0.89, 0.02), new THREE.Vector3(-0.24, 0.76, 0.22), 0.12, SCHWARZ, 0.016));
   jeep.add(setze(zylinder(0.012, 0.012, 0.2, 0x8a8f96, { umriss: false }, 6), 0.0, 0.52, -0.05, 0.3, 0, 0));
   jeep.add(setze(kugel(0.03, SCHWARZ, { umriss: false }, 8), 0.0, 0.62, -0.08));
   // zwei Schalensitze (Sitzfläche + Lehne)

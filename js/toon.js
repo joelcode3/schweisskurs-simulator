@@ -116,3 +116,23 @@ export function rundQuader(b, h, t, farbe, opt, r = 0.05) {
   }
   return teil(geo, farbe, opt);
 }
+
+// Lenkrad mit Lenksäule: mitte = Mitte des Lenkrads, saeule = Punkt, wo die Säule im Armaturenbrett verschwindet (beide lokal).
+// Das Lenkrad steht senkrecht zur Säule, also zum Fahrer hin geneigt (oben weiter weg, unten näher am Bauch) wie im echten Auto.
+export function lenkrad(mitte, saeule, r = 0.17, farbe = 0x1d1d1f, dicke = 0.02) {
+  const g = new THREE.Group();
+  const achse = mitte.clone().sub(saeule), l = achse.length();
+  const n = achse.clone().normalize();
+  const rad = new THREE.Group();
+  rad.add(teil(new THREE.TorusGeometry(r, dicke, 6, 24), farbe, { umriss: 0.001 }));
+  rad.add(teil(new THREE.CylinderGeometry(r * 0.22, r * 0.22, dicke * 1.6, 12), farbe, { umriss: false }).rotateX(Math.PI / 2));
+  for (const w of [0, Math.PI * 0.85, Math.PI * 1.15]) { const sp = teil(new THREE.BoxGeometry(dicke * 0.9, r, dicke * 0.7), farbe, { umriss: false }); sp.position.set(Math.sin(w) * r / 2, -Math.cos(w) * r / 2, 0); sp.rotation.z = w; rad.add(sp); }
+  rad.position.copy(mitte);
+  rad.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), n.clone().negate());
+  g.add(rad);
+  const s = teil(new THREE.CylinderGeometry(dicke * 1.2, dicke * 1.5, l, 8), farbe, { umriss: false });
+  s.position.copy(saeule).add(mitte).multiplyScalar(0.5);
+  s.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), n);
+  g.add(s);
+  return g;
+}
