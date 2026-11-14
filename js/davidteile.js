@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import { toon, teil, quader, zylinder, kugel, setze, leinwandTextur } from './toon.js';
 import { hosenbein, armTextur, baueHand } from './torbenteile.js';
+import { freierPunkt, bereich } from './wege.js';
 
 const rnd = (() => { let q = 9137; return () => { q = (q * 1664525 + 1013904223) >>> 0; return q / 4294967296; }; })();
 const HOODIE = 0x8d8f94, HOODIE_D = 0x76787d, HOSE = 0x1b1c1f, STIEFEL = 0x151517;
@@ -508,7 +509,8 @@ export function baueCoco(scene) {
   }
   rute.rotation.x = -2.0;
 
-  let ziel = null, zeit = 0, schritt = 0, folgt = null, tempo = 1.3;
+  let ziel = null, zeit = 0, schritt = 0, folgt = null, tempo = 1.3, neben = null;
+  const spur = [];
   const api = {
     wurzel,
     get position() { return wurzel.position; },
@@ -518,14 +520,41 @@ export function baueCoco(scene) {
     update(dt) {
       zeit += dt;
       if (!wurzel.visible) return;
-      // folgt David: hält etwa 0,9 m Abstand seitlich hinter ihm
+      // folgt David auf seiner gelaufenen Spur (Brotkrumen alle 0,2 m), etwa 0,9 m hinter ihm: so geht Coco durch dieselben
+      // Türen und um dieselben Möbel herum. Steht David, setzt sie sich seitlich hinter ihn – aber nur auf einen freien Platz
+      // im selben Bereich, sonst bleibt sie auf der Spur. Das Ziel springt nicht mit jeder Drehung von David mit.
       if (folgt) {
-        const f = folgt.wurzel;
-        const sx = Math.sin(f.rotation.y), sz = Math.cos(f.rotation.y);
-        ziel = new THREE.Vector3(f.position.x - sx * 0.7 + sz * 0.5, 0, f.position.z - sz * 0.7 - sx * 0.5);
+        const f = folgt.wurzel, fp = f.position;
+        const letzte = spur[spur.length - 1];
+        if (!letzte || Math.hypot(fp.x - letzte.x, fp.z - letzte.z) > 0.2) { spur.push({ x: fp.x, z: fp.z }); if (spur.length > 60) spur.shift(); }
+        // zu weit weg (z. B. David wurde versetzt): Coco springt hinterher, Spur neu
+        if (Math.hypot(wurzel.position.x - fp.x, wurzel.position.z - fp.z) > 6) {
+          const q = freierPunkt({ x: fp.x - Math.sin(f.rotation.y) * 0.8, z: fp.z - Math.cos(f.rotation.y) * 0.8 });
+          if (bereich(q.x, q.z) !== bereich(fp.x, fp.z)) { q.x = fp.x; q.z = fp.z; }
+          wurzel.position.set(q.x, 0, q.z); spur.length = 0; spur.push({ x: fp.x, z: fp.z });
+        }
+        let soll = null;
+        if (folgt.geht) {
+          // Punkt auf der Spur ~0,9 m zurück
+          let rest = 0.9;
+          for (let i = spur.length - 1; i > 0; i--) {
+            const a = spur[i], b = spur[i - 1], l = Math.hypot(a.x - b.x, a.z - b.z);
+            if (l >= rest) { soll = { x: a.x + (b.x - a.x) * rest / l, z: a.z + (b.z - a.z) * rest / l }; break; }
+            rest -= l;
+          }
+          if (!soll) soll = spur[0] || { x: fp.x, z: fp.z };
+          neben = null;
+        } else {
+          // steht: Platz seitlich hinter David einmal festlegen (nicht bei jeder Kopfdrehung neu)
+          if (!neben || Math.hypot(neben.fx - fp.x, neben.fz - fp.z) > 0.3) {
+            const sx = Math.sin(f.rotation.y), sz = Math.cos(f.rotation.y);
+            const q = freierPunkt({ x: fp.x - sx * 0.7 + sz * 0.5, z: fp.z - sz * 0.7 - sx * 0.5 });
+            neben = bereich(q.x, q.z) === bereich(fp.x, fp.z) && Math.hypot(q.x - fp.x, q.z - fp.z) < 1.4 ? { x: q.x, z: q.z, fx: fp.x, fz: fp.z } : { x: wurzel.position.x, z: wurzel.position.z, fx: fp.x, fz: fp.z };
+          }
+          soll = neben;
+        }
+        ziel = new THREE.Vector3(soll.x, 0, soll.z);
         tempo = folgt.geht ? 1.6 : 1.2;
-        // zu weit weg (z. B. David wurde versetzt): Coco springt hinterher
-        if (wurzel.position.distanceTo(ziel) > 6) wurzel.position.copy(ziel);
       }
       let geht = false;
       if (ziel) {

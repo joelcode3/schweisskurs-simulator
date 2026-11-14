@@ -189,9 +189,9 @@ export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
   const r = zufall(4242);
   const zuWelt = (gruppe, lx, lz) => new THREE.Vector3(lx, 0, lz).applyMatrix4(gruppe.matrixWorld);
   // gedrehtes Hindernis (Kasten in den lokalen Koordinaten einer Gruppe)
-  function drehHindernis(gruppe, lx, lz, hx, hz) {
+  function drehHindernis(gruppe, lx, lz, hx, hz, psiLokal = 0) {
     gruppe.updateMatrixWorld(true);
-    const c = zuWelt(gruppe, lx, lz), psi = gruppe.rotation.y;
+    const c = zuWelt(gruppe, lx, lz), psi = gruppe.rotation.y + psiLokal;
     const ex = Math.abs(Math.cos(psi)) * hx + Math.abs(Math.sin(psi)) * hz, ez = Math.abs(Math.sin(psi)) * hx + Math.abs(Math.cos(psi)) * hz;
     const h = hindernis(c.x - ex, c.x + ex, c.z - ez, c.z + ez);
     h.boxen = [{ x: c.x, z: c.z, psi, hx, hz }];
@@ -817,7 +817,9 @@ export function baueLandschaft(scene, { merke, hindernis, grasTex }) {
     netz.position.set(HM.x, 0.55, HM.z);
     hof.add(netz);
     for (let k = 0; k < 16; k++) { const w = k / 16 * Math.PI * 2; hof.add(setze(zylinder(0.025, 0.025, 1.2, 0xe8e0c8, { umriss: false }, 6), HM.x + Math.cos(w) * (HM.r + 1), 0.6, HM.z + Math.sin(w) * (HM.r + 1))); }
-    for (let k = 0; k < 48; k++) { const w = k / 48 * Math.PI * 2; drehHindernis(hof, HM.x + Math.cos(w) * (HM.r + 1), HM.z + Math.sin(w) * (HM.r + 1), 0.16, 0.16); }
+    // Netz als durchgehende Wand aus 32 tangentialen Stücken (vorher 48 kleine Pfosten-Kästen mit Lücken: die Ecken vom
+    // Jeep rutschten in die Lücken und er blieb am Zaun hängen)
+    for (let k = 0; k < 32; k++) { const w = (k + 0.5) / 32 * Math.PI * 2; drehHindernis(hof, HM.x + Math.cos(w) * (HM.r + 1), HM.z + Math.sin(w) * (HM.r + 1), Math.PI * (HM.r + 1) / 32 + 0.06, 0.12, Math.atan2(-Math.cos(w), -Math.sin(w))); }
     for (let i = 0; i < 9; i++) {
       const huhn = new THREE.Group();
       const farbe = [0x8a4a1e, 0xf2ece0, 0x6a3a14, 0xc9a46a][i % 4];

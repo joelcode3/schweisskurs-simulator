@@ -145,6 +145,7 @@ export function baueFahrzeuge(scene, welt) {
   // Fahrer-Anker: hier sitzt eine Figur (Wurzel mit Sitzhöhe 0,5)
   for (const f of alle) {
     f.anker = new THREE.Group();
+    f.anker.userData.fahrzeugAnker = true; // wer hier sitzt, läuft nicht los (gehZu wird ignoriert)
     f.anker.position.set(f.sitz.x, f.sitz.y - 0.5, f.sitz.z);
     f.g.add(f.anker);
   }
