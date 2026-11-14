@@ -28,24 +28,53 @@ export function baueGrillen(c) {
   const gz = { phase: 'leer', wuerste: [], glutBis: 0, ergebnis: null, gaesteDa: [], spielt: false };
 
   // ---------- Glut und Flammen in der Feuerschale (nach dem Anzünden ein paar Minuten) ----------
+  // Flammen als weiche, leuchtende Zungen (Sprites mit Verlauf, additiv gemischt), jede flackert und wiegt sich für sich;
+  // darunter Glutbett mit Glutstücken, Funken steigen auf, Rauch als weiche Schwaden
   const feuer = new THREE.Group();
-  const glutMat = toon(0xff7a2a, { emissive: 0xff5a10, transparent: true, opacity: 0.9 });
-  const glutScheibe = new THREE.Mesh(new THREE.CircleGeometry(0.3, 24), glutMat);
+  const leinwand = (b, h, malen) => { const c = document.createElement('canvas'); c.width = b; c.height = h; malen(c.getContext('2d'), b, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; };
+  const glutTex = leinwand(256, 256, (g, b, h) => {
+    const r = (s) => { let x = Math.sin(s) * 10000; return x - Math.floor(x); };
+    const gr = g.createRadialGradient(b / 2, h / 2, 0, b / 2, h / 2, b / 2);
+    gr.addColorStop(0, '#ffb04a'); gr.addColorStop(0.55, '#d8501a'); gr.addColorStop(0.85, '#5a2a18'); gr.addColorStop(1, 'rgba(40,30,25,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, b, h);
+    for (let i = 0; i < 70; i++) { const w = r(i) * 6.28, d = r(i + 50) * b * 0.42; g.fillStyle = i % 3 ? 'rgba(40,20,12,0.55)' : 'rgba(255,220,120,0.8)'; g.beginPath(); g.ellipse(b / 2 + Math.cos(w) * d, h / 2 + Math.sin(w) * d, 4 + r(i + 9) * 10, 3 + r(i + 7) * 7, r(i + 3) * 3, 0, Math.PI * 2); g.fill(); }
+  });
+  const glutMat = new THREE.MeshBasicMaterial({ map: glutTex, transparent: true, opacity: 0.95, depthWrite: false });
+  const glutScheibe = new THREE.Mesh(new THREE.CircleGeometry(0.32, 32), glutMat);
   glutScheibe.rotation.x = -Math.PI / 2; glutScheibe.position.y = 0.215; feuer.add(glutScheibe);
+  // Flammenzunge: unten breit und hell, oben spitz, mit weichem Rand und leichtem Knick
+  const flammTex = (seed) => leinwand(64, 128, (g, b, h) => {
+    const k = Math.sin(seed * 7.1) * 6;
+    const pfad = (s) => { g.beginPath(); g.moveTo(b / 2, h * 0.04); g.bezierCurveTo(b * 0.5 + k, h * 0.32, b * (0.5 + 0.42 * s), h * 0.55, b * (0.5 + 0.34 * s), h * 0.82); g.quadraticCurveTo(b / 2, h * 1.0, b * (0.5 - 0.34 * s), h * 0.82); g.bezierCurveTo(b * (0.5 - 0.42 * s), h * 0.55, b * 0.5 + k * 0.5, h * 0.3, b / 2, h * 0.04); };
+    g.filter = 'blur(3px)';
+    let gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(255,80,20,0)'); gr.addColorStop(0.35, 'rgba(255,90,20,0.75)'); gr.addColorStop(1, 'rgba(255,140,40,0.9)');
+    g.fillStyle = gr; pfad(1); g.fill();
+    gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0.3, 'rgba(255,200,60,0)'); gr.addColorStop(0.7, 'rgba(255,215,90,0.9)'); gr.addColorStop(1, 'rgba(255,250,210,1)');
+    g.fillStyle = gr; pfad(0.55); g.fill();
+  });
+  const flammTexe = [flammTex(1), flammTex(2), flammTex(3)];
   const flammen = [];
-  const flammMat = new THREE.MeshBasicMaterial({ color: 0xffb030, transparent: true, opacity: 0.85 });
-  const flammMat2 = new THREE.MeshBasicMaterial({ color: 0xfff08a, transparent: true, opacity: 0.9 });
-  for (let i = 0; i < 7; i++) {
-    const w = (i / 7) * Math.PI * 2, r = i ? 0.16 : 0;
-    const fl = new THREE.Group();
-    fl.add(new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.22, 7), flammMat));
-    const innen = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.12, 6), flammMat2); innen.position.y = -0.04; fl.add(innen);
-    fl.position.set(Math.cos(w) * r, 0.3, Math.sin(w) * r);
+  for (let i = 0; i < 13; i++) {
+    const w = i * 2.4, r = i < 3 ? 0.03 : 0.07 + (i % 4) * 0.045;
+    const mat = new THREE.SpriteMaterial({ map: flammTexe[i % 3], transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.9 });
+    const fl = new THREE.Sprite(mat);
+    fl.center.set(0.5, 0.02); // wächst vom Boden nach oben
+    fl.userData = { x: Math.cos(w) * r, z: Math.sin(w) * r, h: i < 3 ? 0.42 : 0.24 + (i % 3) * 0.06, b: i < 3 ? 0.2 : 0.13, ph: i * 1.7, f: 6 + (i % 5) * 1.3 };
+    fl.position.set(fl.userData.x, 0.21, fl.userData.z);
     feuer.add(fl); flammen.push(fl);
   }
+  // Funken: kleine helle Punkte, die aufsteigen, seitlich driften und verglühen
+  const FUNKEN = 40, funkPos = new Float32Array(FUNKEN * 3), funkDaten = [];
+  for (let i = 0; i < FUNKEN; i++) funkDaten.push({ t: Math.random(), x: 0, z: 0, vx: 0, vz: 0 });
+  const funkGeo = new THREE.BufferGeometry(); funkGeo.setAttribute('position', new THREE.BufferAttribute(funkPos, 3));
+  const funkTex = leinwand(32, 32, (g, b, h) => { const gr = g.createRadialGradient(b / 2, h / 2, 0, b / 2, h / 2, b / 2); gr.addColorStop(0, 'rgba(255,250,220,1)'); gr.addColorStop(0.4, 'rgba(255,190,80,0.9)'); gr.addColorStop(1, 'rgba(255,120,30,0)'); g.fillStyle = gr; g.fillRect(0, 0, b, h); });
+  const funkMat = new THREE.PointsMaterial({ map: funkTex, color: 0xffffff, size: 0.035, transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending });
+  const funken = new THREE.Points(funkGeo, funkMat); funken.frustumCulled = false; feuer.add(funken);
+  // Rauch: weiche graue Schwaden
+  const rauchTex = leinwand(64, 64, (g, b, h) => { const gr = g.createRadialGradient(b / 2, h / 2, 0, b / 2, h / 2, b / 2); gr.addColorStop(0, 'rgba(200,200,200,0.8)'); gr.addColorStop(1, 'rgba(200,200,200,0)'); g.fillStyle = gr; g.fillRect(0, 0, b, h); });
   const rauch = [];
-  const rauchMat = new THREE.MeshBasicMaterial({ color: 0xc8c8c8, transparent: true, opacity: 0.35, depthWrite: false });
-  for (let i = 0; i < 8; i++) { const k = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), rauchMat); k.userData.t = i / 8; feuer.add(k); rauch.push(k); }
+  for (let i = 0; i < 10; i++) { const k = new THREE.Sprite(new THREE.SpriteMaterial({ map: rauchTex, transparent: true, depthWrite: false, opacity: 0.3 })); k.userData.t = i / 10; feuer.add(k); rauch.push(k); }
+  const rauchMat = rauch[0].material;
   const licht = new THREE.PointLight(0xff8a3a, 0, 4, 1.5); licht.position.y = 0.5; feuer.add(licht);
   feuer.visible = false;
   grill.add(feuer);
@@ -152,13 +181,16 @@ export function baueGrillen(c) {
     gz.ergebnis = e;
     gz.phase = gz.wuerste.length ? 'gegrillt' : 'leer';
     const n = (s) => (e.wuerste || []).filter((w) => w.zustand === s).length;
+    // Reaktion aufs Anzünden mit Bremsenreiniger (Feuerball = Ärger, Stichflamme = Spaß)
+    if (e.anzuenden === 'zuviel') { aerger(3); dennisSagt(sag(DENNIS.grillen.feuerball), true, { prio: 1 }); }
+    else if (e.anzuenden === 'gut' && Math.random() < 0.6) dennisSagt(sag(DENNIS.grillen.wusch), false, { prio: 0 });
     setTimeout(() => {
       if (n('asche')) dennisSagt(sag(DENNIS.grillen.asche), true, { prio: 1 });
       if (n('gut') && !n('verkohlt') && !n('roh') && !(e.fehler || []).length) lob(sag(DENNIS.grillen.fertigGut), 5);
       else if (n('verkohlt') >= n('gut') && n('verkohlt')) { aerger(2); dennisSagt(sag(DENNIS.grillen.fertigVerkohlt), true, { prio: 1 }); }
       else if (n('roh') >= n('gut') && n('roh')) dennisSagt(sag(DENNIS.grillen.fertigRoh), true, { prio: 1 });
       else if (n('gut')) lob(sag(DENNIS.grillen.fertigGut), 2);
-    }, 900);
+    }, e.anzuenden === 'zuviel' || e.anzuenden === 'gut' ? 4500 : 900);
     if (gz.phase === 'gegrillt') { gz.gegrilltSeit = sekunden(); gz.rufenAb = sekunden() + 2.5; gz.bedient = new Set(); }
   }
 
@@ -221,10 +253,27 @@ export function baueGrillen(c) {
     if (feuer.visible) {
       const rest = gz.glutBis - t;
       const stark = Math.max(0, Math.min(1, rest / 120));
-      flammen.forEach((fl, i) => { const s = (0.5 + 0.5 * Math.sin(zeit * (7 + i) + i * 2)) * 0.5 + 0.6; fl.scale.set(stark * 0.9, stark * s, stark * 0.9); fl.visible = stark > 0.05; });
-      glutMat.opacity = 0.5 + 0.4 * Math.max(0, Math.min(1, rest / 240)) + Math.sin(zeit * 3) * 0.05;
+      flammen.forEach((fl) => {
+        const u = fl.userData;
+        // Flackern aus zwei Frequenzen und etwas Zufall, die Zunge wiegt sich seitlich
+        const fla = 0.75 + 0.18 * Math.sin(zeit * u.f + u.ph) + 0.1 * Math.sin(zeit * u.f * 2.3 + u.ph * 3) + (Math.random() - 0.5) * 0.08;
+        fl.scale.set(u.b * stark * (0.9 + 0.1 * Math.sin(zeit * 5 + u.ph)), u.h * stark * fla, 1);
+        fl.position.set(u.x + Math.sin(zeit * 2.1 + u.ph) * 0.015, 0.205, u.z + Math.cos(zeit * 1.7 + u.ph) * 0.015);
+        fl.material.rotation = Math.sin(zeit * 3 + u.ph) * 0.12;
+        fl.material.opacity = 0.65 + 0.3 * fla * stark;
+        fl.visible = stark > 0.05;
+      });
+      funkDaten.forEach((d, i) => {
+        d.t += dt * (0.5 + (i % 5) * 0.12);
+        if (d.t > 1) { d.t = 0; d.x = (Math.random() - 0.5) * 0.3; d.z = (Math.random() - 0.5) * 0.3; d.vx = (Math.random() - 0.5) * 0.25; d.vz = (Math.random() - 0.5) * 0.25; }
+        funkPos[i * 3] = d.x + d.vx * d.t + Math.sin(zeit * 4 + i) * 0.02; funkPos[i * 3 + 1] = 0.25 + d.t * (0.6 + stark * 0.8); funkPos[i * 3 + 2] = d.z + d.vz * d.t;
+      });
+      funkGeo.attributes.position.needsUpdate = true;
+      funkMat.opacity = 0.9 * Math.max(0.2, stark);
+      glutMat.opacity = Math.min(1, 0.55 + 0.4 * Math.max(0, Math.min(1, rest / 240)) + Math.sin(zeit * 3) * 0.05);
+      glutMat.color.setRGB(1, 0.85 + Math.sin(zeit * 2.3) * 0.1, 0.8);
       licht.intensity = (0.6 + Math.sin(zeit * 11) * 0.15) * Math.max(0.15, stark) * 3;
-      rauch.forEach((k) => { k.userData.t = (k.userData.t + dt * 0.25) % 1; const u = k.userData.t; k.position.set(Math.sin(u * 7 + zeit) * 0.1, 0.7 + u * 1.6, Math.cos(u * 5) * 0.1); k.scale.setScalar(0.6 + u * 2.2); k.material.opacity = 0.35 * (1 - u); });
+      rauch.forEach((k, i) => { k.userData.t = (k.userData.t + dt * 0.22) % 1; const u = k.userData.t; k.position.set(Math.sin(u * 5 + i) * 0.15, 0.75 + u * 1.8, Math.cos(u * 4 + i) * 0.15); k.scale.setScalar(0.25 + u * 0.9); k.material.opacity = 0.32 * Math.sin(u * Math.PI); });
       if (rest <= 0) feuer.visible = false;
     }
     // Grill umgefahren: alles in der Asche

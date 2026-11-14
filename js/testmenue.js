@@ -258,7 +258,8 @@ export function baueTestMenue({ spiel, welt, kamera, steuerung, fahrten, fz }) {
   const raus = () => { if (ft.aussteigen && fahrten?.faehrt) ft.aussteigen(); };
   knopf('T102', 'Jonas kommt (Eisen ist da)', () => me.jonasKommt(), { sperre: () => (mphase() !== 'aus' ? 'läuft schon (T110 zurücksetzen)' : null) });
   knopf('T103', 'Weidemann am Stahl, neuer Schlupf an der Gabel', () => me.test.testAmStahl(false));
-  knopf('T104', 'Minispiel Stangen ankoppeln (direkt)', mini(() => M.ankoppelSpiel()), { laeuft: titelEnthaelt('Stangen ankoppeln') });
+  knopf('T104', 'Minispiel Stangen ankoppeln (direkt, neu: Hau-Ruck mit Jonas)', mini(() => M.ankoppelSpiel()), { laeuft: titelEnthaelt('Stangen ankoppeln') });
+  knopf('T117', 'Minispiel Stangen ankoppeln, bisherige Version (zum Vergleich)', mini(() => M.ankoppelSpielKlassisch()), { laeuft: titelEnthaelt('Stangen ankoppeln') });
   knopf('T105', 'Stangen hängen dran, am Hof (neuer Schlupf)', () => me.test.testHaengt(false, 'hof'));
   knopf('T106', 'Stangen hängen dran, kurz vor der Werkstatt (ALTER Schlupf: reißt)', () => me.test.testHaengt(true, 'feldweg'));
   knopf('T107', 'Stangen hängen dran, vor dem Metallcontainer', () => me.test.testHaengt(false, 'container'));

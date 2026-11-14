@@ -3292,9 +3292,265 @@ function zeichneLaderVorn(ctx, cx, boden, s, ty) {
   }
 }
 
+// 1) Ankoppeln „Hau-Ruck mit Jonas“ (Räuberleiter-Prinzip: einer hebt, der andere fädelt). Blick von vorn, die Stangen
+// liegen quer vor dem Weidemann.
+//   a) Anheben: Jonas setzt an einem Ende die Brechstange an. Ein Zeiger pendelt über den Hau-Ruck-Balken; im grünen Feld
+//      klicken (oder Leertaste) = „RUCK!“, das Ende kommt ein Stück hoch. Daneben = Jonas rutscht ab, es sackt wieder.
+//   b) Durchfädeln: Solange Jonas hält (Kraftbalken), den Schlupf mit gedrückter Maus (oder A/D) unter das Bündel schieben.
+//      Unter dem Bündel geht es nur, wo die Lücke groß genug ist: je höher Jonas das Ende hat, desto weiter kommt man. Den
+//      Schwerpunkt verrät nur Jonas („Mehr zu mir!“ / „Zu weit!“). Loslassen = hier ansetzen. Geht Jonas die Kraft aus, sackt
+//      das Ende ab und man fängt mit Hau-Ruck neu an.
+//   c) Einhängen: W oder Maus gedrückt halten = Gabel hoch. Hängt es schief: S = absetzen und neu, Leertaste = so lassen.
+// Ergebnis wie bisher: { versatz (m), schief, versuche }.
+export function ankoppelSpiel({ alt = false } = {}) {
+  let f;
+  const zr = Math.random;
+  const seite = zr() < 0.5 ? -1 : 1;
+  const stangen = [
+    { l: 6.0, o: 0, p: 'traeger', m: 3 }, { l: 6.0, o: 0.05 * seite, p: 'traeger', m: 3 },
+    { l: 5.2, o: (0.35 + zr() * 0.1) * seite, p: 'vierkant', m: 1.6 }, { l: 6.0, o: 0, p: 'vierkant', m: 1.8 }, { l: 4.4, o: (0.75 + zr() * 0.1) * seite, p: 'rund', m: 1.2 },
+    { l: 5.6, o: (0.15 + zr() * 0.1) * seite, p: 'flach', m: 0.8 }, { l: 4.8, o: (0.55 + zr() * 0.1) * seite, p: 'winkel', m: 0.9 }, { l: 6.0, o: 0, p: 'flach', m: 0.9 },
+  ];
+  const masse = stangen.reduce((a, q) => a + q.m * q.l, 0);
+  const schwer = stangen.reduce((a, q) => a + q.m * q.l * q.o, 0) / masse;
+  const GUT = 0.12, SCHLEIFT = 0.3, SEIL = 0.8, RUHE = 0.26, HALB = 3.0;
+  const jSeite = zr() < 0.5 ? -1 : 1;            // an diesem Ende hebt Jonas
+  const HUB_STUFE = 0.13, STUFEN = 3;
+  let phase = 'anheben';                          // anheben | faedeln | einhaengen
+  let anh = 0, anhSoll = 0, stufe = 0;            // Ende bei Jonas angehoben (m)
+  let zeiger = 0, zeigerV = 1.0;                  // Hau-Ruck-Zeiger (-1 … 1)
+  let kraft = 1, sx = jSeite * 2.9, ziel = sx, gesetzt = false;
+  let hub = 0, wink = 0, winkV = 0, zeit = 0, versuche = 0, fertigSeit = 0, wackel = 0;
+  let meldung = '', meldungBis = 0, jonasText = '', jonasBis = 0, jonasRutscht = 0;
+  let maus = null, mausUnten = false;
+  const tasten = new Set();
+  const sagen = (t, sek = 2.4) => { meldung = t; meldungBis = zeit + sek; };
+  const jonas = (t, sek = 1.6) => { jonasText = t; jonasBis = zeit + sek; };
+  // Lücke unter dem Bündel an Stelle x (m): am anderen Ende liegt es auf, bei Jonas ist sie anh hoch
+  const luecke = (x) => Math.max(0, anh * (x * jSeite + HALB) / (2 * HALB));
+  const zustand = () => { const d = Math.abs(schwer - sx); return d < GUT ? 'gut' : d < SCHLEIFT ? 'schief' : 'schleift'; };
+  function ruck() {
+    if (phase !== 'anheben' || api.istFertig) return;
+    const breite = 0.26 - stufe * 0.05;
+    if (Math.abs(zeiger) < breite) {
+      stufe++; anhSoll = stufe * HUB_STUFE; blip(300 + stufe * 120, 0.12); jonas('RUCK!', 1.1);
+      if (stufe >= STUFEN) { phase = 'faedeln'; kraft = 1; sagen('Jonas hält. Schlupf drunter schieben (Maus gedrückt halten oder A/D), loslassen = ansetzen.', 3.5); }
+    } else {
+      blip(150, 0.2, 0.15); jonasRutscht = 0.5; jonas(['Hoppla!', 'Mist, abgerutscht!', 'Nee, zu früh!'][Math.floor(zr() * 3)], 1.4);
+      stufe = Math.max(0, stufe - 1); anhSoll = stufe * HUB_STUFE;
+    }
+    zeigerV = (zeigerV > 0 ? 1 : -1) * (1.0 + stufe * 0.35);
+  }
+  function neuAnsetzen() {
+    phase = 'anheben'; stufe = 0; anhSoll = 0; hub = 0; gesetzt = false; versuche++; fertigSeit = 0;
+    sx = jSeite * 2.9; ziel = sx;
+    sagen('Abgesetzt. Nochmal: Hau-Ruck mit Jonas.', 2.5);
+  }
+  document.body.dataset.vollbild = '1';
+  const { api, versprechen } = spielRahmen('Stangen ankoppeln', 'Zu zweit wie bei der Räuberleiter: Jonas hebelt ein Ende hoch (im grünen Feld klicken oder Leertaste: RUCK!), du fädelst den Schlupf drunter (Maus gedrückt halten oder A/D, loslassen = ansetzen). Den Schwerpunkt spürt nur Jonas. Dann mit W (oder Maus halten) einhängen.', {
+    beiGroesse(m) { f = flaeche(m); },
+    events: {
+      keydown(e) {
+        const k = e.key.toLowerCase();
+        if (['w', 's', 'a', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k)) { tasten.add(k); e.preventDefault(); }
+        if (k === ' ' && !e.repeat) {
+          if (phase === 'anheben') ruck();
+          else if (phase === 'einhaengen' && zustand() === 'schief' && hub > 0.97 && !api.istFertig) abschluss(true);
+        }
+        if ((k === 's' || k === 'arrowdown') && phase === 'einhaengen' && hub < 0.05 && !api.istFertig) neuAnsetzen();
+        if ((k === 'a' || k === 'd' || k === 'arrowleft' || k === 'arrowright') && phase === 'faedeln') gesetzt = false;
+      },
+      keyup(e) {
+        const k = e.key.toLowerCase(); tasten.delete(k);
+        if (phase === 'faedeln' && ['a', 'd', 'arrowleft', 'arrowright'].includes(k) && !['a', 'd', 'arrowleft', 'arrowright'].some((q) => tasten.has(q))) ansetzen();
+      },
+      pointerdown(e) { maus = zeigerPos(api.canvas, e); mausUnten = true; if (phase === 'anheben') ruck(); },
+      pointermove(e) { maus = zeigerPos(api.canvas, e); },
+      pointerup() { mausUnten = false; if (phase === 'faedeln') ansetzen(); },
+    },
+    schritt(dt) {
+      zeit += dt;
+      if (api.istFertig) return;
+      anh += (anhSoll - anh) * Math.min(1, dt * (anhSoll > anh ? 7 : 4));
+      api.canvas.dataset.stand = `${phase}:${stufe}:${zeiger.toFixed(2)}`; // nur für Tests
+      jonasRutscht = Math.max(0, jonasRutscht - dt);
+      const M = f.b * 0.8 / 6.6;
+      if (phase === 'anheben') {
+        zeiger += zeigerV * dt * 1.4;
+        if (zeiger > 1) { zeiger = 1; zeigerV = -Math.abs(zeigerV); } else if (zeiger < -1) { zeiger = -1; zeigerV = Math.abs(zeigerV); }
+        if (Math.abs(zeiger) < 0.35 && zeit > jonasBis) jonas('Hau …', 0.3);
+      } else if (phase === 'faedeln') {
+        // Jonas' Kraft: hält ca. 8 s, je schwerer das Ende (Schwerpunkt auf seiner Seite), desto schneller weg
+        kraft -= dt * (0.11 + Math.max(0, schwer * jSeite) * 0.12);
+        wackel = Math.sin(zeit * 30) * (1 - kraft) * 0.012;
+        const lr = (tasten.has('d') || tasten.has('arrowright') ? 1 : 0) - (tasten.has('a') || tasten.has('arrowleft') ? 1 : 0);
+        if (mausUnten && maus) ziel = THREE_clamp((maus.x - (f.x + f.b / 2)) / M, -2.9, 2.9);
+        if (lr) ziel = THREE_clamp(ziel + lr * 1.3 * dt, -2.9, 2.9);
+        if (mausUnten || lr) {
+          // weiter rein als die Lücke erlaubt geht nicht: der Gurt klemmt
+          let x = sx + (ziel - sx) * Math.min(1, dt * 6);
+          if (luecke(x) < 0.05) { x = sx; if (zeit > meldungBis) sagen('Klemmt! Da ist die Lücke zu klein.', 1.2); }
+          sx = x;
+          if (zeit > jonasBis) {
+            const d = schwer - sx;
+            jonas(Math.abs(d) < GUT ? 'Da! Genau da!' : (d * jSeite > 0 ? 'Mehr zu mir!' : 'Zu weit!'), 0.9);
+          }
+        }
+        if (kraft <= 0) {
+          kraft = 0; anhSoll = 0; stufe = 0; versuche++;
+          sx = jSeite * 2.9; ziel = sx; phase = 'anheben';
+          blip(140, 0.3, 0.2); jonas('Ich kann nicht mehr!', 1.8);
+          sagen('Jonas hat losgelassen. Neu anheben: Hau-Ruck!', 2.6);
+        }
+      } else if (phase === 'einhaengen') {
+        const hoch = tasten.has('w') || tasten.has('arrowup') || mausUnten, runter = tasten.has('s') || tasten.has('arrowdown');
+        const z = zustand();
+        const hubMax = z === 'schleift' ? 0.55 : 1;
+        if (hoch) hub = Math.min(hubMax, hub + dt * 0.42);
+        else if (runter) hub = Math.max(0, hub - dt * 0.6);
+        if (hoch && z === 'schleift' && hub >= hubMax - 0.01 && zeit > meldungBis) { sagen('Ein Ende schleift am Boden. Absetzen (S) und neu ansetzen!'); blip(160, 0.2, 0.15); }
+        if (runter && hub < 0.05 && z !== 'gut' && zeit > meldungBis) sagen('Ganz unten: S nochmal = neu ansetzen.', 1.5);
+        const e = Math.max(0, 0.5 + hub * 1.0 - SEIL - RUHE);
+        const d = schwer - sx;
+        const frei = d * 0.9, grenze = Math.asin(Math.min(1, (e + 0.1) / 3));
+        const soll = e <= 0 ? 0 : Math.sign(frei) * Math.min(Math.abs(frei), grenze);
+        winkV += ((soll - wink) * 30 - winkV * 3.2) * dt;
+        wink += winkV * dt;
+        if (hub >= 0.985 && z !== 'schleift') {
+          fertigSeit += dt;
+          if (z === 'gut' && fertigSeit > 0.9) abschluss(false);
+          else if (z === 'schief' && zeit > meldungBis) sagen('Hängt schief. Runter (S) und neu ansetzen, oder so lassen (Leertaste).', 1.2);
+        } else fertigSeit = 0;
+      }
+    },
+    zeichnen() {
+      const { ctx, m } = api;
+      ctx.fillStyle = '#bcd6e4'; ctx.fillRect(0, 0, m.b, m.h);
+      const boden = f.y + f.h * 0.9;
+      ctx.fillStyle = '#8fb565'; ctx.fillRect(0, boden - f.h * 0.34, m.b, f.h * 0.34);
+      ctx.fillStyle = '#5a5d62'; ctx.fillRect(0, boden - f.h * 0.3, m.b, f.h * 0.06);
+      ctx.strokeStyle = '#e8e8e0'; ctx.lineWidth = 2; ctx.setLineDash([22, 18]); ctx.beginPath(); ctx.moveTo(0, boden - f.h * 0.27); ctx.lineTo(m.b, boden - f.h * 0.27); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = '#7fa04f'; ctx.fillRect(0, boden, m.b, m.h - boden);
+      ctx.fillStyle = '#a89468'; ctx.fillRect(0, boden, m.b, f.h * 0.05);
+      const M = f.b * 0.8 / 6.6, cx = f.x + f.b / 2, s = M / 100;
+      const X = (xm) => cx + xm * M;
+      const trav = 0.5 + hub * 1.0;
+      zeichneLaderVorn(ctx, X(phase === 'einhaengen' ? sx : 0) + 0.22 * M, boden, s, trav * M);
+      ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.fillStyle = '#b08a52';
+      for (const kx of [-2.2, 0, 2.2]) { ctx.fillRect(X(kx) - 0.07 * M, boden - 0.12 * M, 0.14 * M, 0.12 * M); ctx.strokeRect(X(kx) - 0.07 * M, boden - 0.12 * M, 0.14 * M, 0.12 * M); }
+      // Bündel: beim Anheben/Fädeln dreht es um das aufliegende Ende, beim Einhängen um den Schlupf
+      const e = Math.max(0, trav - SEIL - RUHE);
+      const by = boden - (RUHE + e) * M;
+      const kipp = phase === 'einhaengen' ? 0 : -jSeite * Math.atan2(anh, 2 * HALB) + wackel;
+      const drehX = phase === 'einhaengen' ? X(sx) : X(-jSeite * HALB), drehY = phase === 'einhaengen' ? by : boden - 0.12 * M;
+      if (phase === 'einhaengen') zeichneSchlupfAnkoppeln(ctx, { X, M, sx, oben: boden - trav * M, by, wink, alt, vorn: false });
+      ctx.save(); ctx.translate(drehX, drehY); ctx.rotate(phase === 'einhaengen' ? wink : kipp); ctx.translate(-drehX, -drehY);
+      stangen.forEach((q, i) => {
+        const lage = i < 5 ? 0 : 1, k = i < 5 ? i : i - 5;
+        const y = boden - (0.14 + lage * 0.15 + (k % 2) * 0.012) * M - e * M, dicke = (lage ? 0.09 : 0.14) * M;
+        ctx.fillStyle = PROFIL_FARBE[q.p]; ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
+        const yy = y - dicke - (lage ? 0 : k * 0.004 * M) - (i % 3) * 0.03 * M * (lage ? 0 : 1);
+        ctx.fillRect(X(q.o - q.l / 2), yy, q.l * M, dicke); ctx.strokeRect(X(q.o - q.l / 2), yy, q.l * M, dicke);
+      });
+      ctx.fillStyle = '#f4f0e0'; ctx.fillRect(X(-2.6), boden - (0.2 + e) * M - 0.16 * M, 0.5 * M, 0.16 * M); ctx.strokeRect(X(-2.6), boden - (0.2 + e) * M - 0.16 * M, 0.5 * M, 0.16 * M);
+      ctx.fillStyle = '#1d1d1f'; ctx.font = `bold ${Math.max(8, 0.075 * M)}px system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.fillText('EISEN MEYER', X(-2.35), boden - (0.2 + e) * M - 0.055 * M);
+      ctx.restore();
+      if (phase === 'einhaengen') zeichneSchlupfAnkoppeln(ctx, { X, M, sx, oben: boden - trav * M, by, wink, alt, vorn: true });
+      else {
+        // Schlupf-Ende, das man unter das Bündel schiebt: gelber Gurt vom Rand bis sx, flach am Boden unter der Lücke
+        const gx0 = X(jSeite * 3.25), gy = boden - Math.min(0.04, luecke(sx) * 0.5) * M - 0.02 * M;
+        ctx.strokeStyle = '#111'; ctx.lineWidth = 0.075 * M + 3; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(gx0, boden - 0.02 * M); ctx.lineTo(X(sx), gy); ctx.stroke();
+        ctx.strokeStyle = alt ? '#a8962e' : '#f2c21c'; ctx.lineWidth = 0.075 * M; ctx.stroke(); ctx.lineCap = 'butt';
+        ctx.fillStyle = alt ? '#a8962e' : '#f2c21c'; ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.ellipse(X(sx), gy, 0.06 * M, 0.035 * M, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        // Jonas mit Brechstange am angehobenen Ende
+        zeichneJonasHebel(ctx, X(jSeite * (HALB + 0.55)), boden, M, jSeite, anh, jonasRutscht);
+      }
+      // Anzeigen oben
+      const mx = f.x + f.b / 2, oy = f.y + 8;
+      if (phase === 'anheben') {
+        const B = Math.min(360, f.b * 0.5), breite = 0.26 - stufe * 0.05;
+        ctx.fillStyle = '#2a2c30'; ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(mx - B / 2, oy, B, 26, 8); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#4cdc5a'; ctx.fillRect(mx - breite * B / 2, oy + 3, breite * B, 20);
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(mx + zeiger * B / 2, oy - 4); ctx.lineTo(mx + zeiger * B / 2 - 7, oy - 14); ctx.lineTo(mx + zeiger * B / 2 + 7, oy - 14); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillRect(mx + zeiger * B / 2 - 2, oy, 4, 26);
+        textMitte(ctx, `Hau-Ruck ${stufe}/${STUFEN}: im grünen Feld klicken`, mx, oy + 50, 15, '#fff');
+      } else if (phase === 'faedeln') {
+        const B = Math.min(260, f.b * 0.36);
+        ctx.fillStyle = '#2a2c30'; ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(mx - B / 2, oy, B, 20, 6); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = kraft > 0.4 ? '#4cdc5a' : kraft > 0.2 ? '#e8b820' : '#e8452a'; ctx.fillRect(mx - B / 2 + 3, oy + 3, Math.max(0, (B - 6) * kraft), 14);
+        textMitte(ctx, 'Jonas\' Kraft', mx, oy + 44, 15, '#fff');
+      } else {
+        const z = zustand(), grad = Math.round((wink * 180) / Math.PI * 10) / 10;
+        ctx.fillStyle = '#e8b820'; ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(mx - 110, oy, 220, 30, 6); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#d8f0c0'; ctx.beginPath(); ctx.roundRect(mx - 40, oy + 6, 80, 18, 9); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(mx - 9, oy + 6); ctx.lineTo(mx - 9, oy + 24); ctx.moveTo(mx + 9, oy + 6); ctx.lineTo(mx + 9, oy + 24); ctx.stroke();
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(mx + THREE_clamp(-wink * 110, -30, 30), oy + 15, 7, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        textMitte(ctx, hub < 0.3 ? 'W oder Maus halten: einhängen' : `${Math.abs(grad).toFixed(1)}° schief`, mx, oy + 52, 15, hub < 0.3 ? '#fff' : z === 'gut' ? '#b8f0a0' : '#ffb0a0');
+      }
+      if (versuche) textMitte(ctx, `Versuche: ${versuche + 1}`, f.x + f.b - 60, f.y + 20, 14, '#fff');
+      if (zeit < jonasBis && phase !== 'einhaengen') {
+        // Sprechblase von Jonas
+        const jx = X(jSeite * (HALB + 0.55)), jy = boden - 2.05 * M;
+        ctx.font = 'bold 18px "Bangers", system-ui, sans-serif'; const w = ctx.measureText(jonasText).width + 22;
+        ctx.fillStyle = '#fff'; ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(jx - w / 2, jy - 30, w, 30, 10); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#1d1d1f'; ctx.textAlign = 'center'; ctx.fillText(jonasText, jx, jy - 9);
+      }
+      if (zeit < meldungBis) textMitte(ctx, meldung, f.x + f.b / 2, f.y - 6, 20, '#fff');
+    },
+  });
+  function ansetzen() {
+    if (phase !== 'faedeln' || gesetzt) return;
+    if (Math.abs(sx - jSeite * 2.9) < 0.15) return; // noch gar nicht drunter
+    gesetzt = true;
+    phase = 'einhaengen'; hub = 0; anhSoll = 0; stufe = 0; wink = 0; winkV = 0;
+    blip(520, 0.12); jonas('Passt, ich lass los!', 1.4);
+    sagen('Angesetzt. Jetzt W (oder Maus halten): einhängen.', 2.8);
+  }
+  function abschluss(schief) {
+    blip(schief ? 440 : 880, 0.15);
+    sagen(schief ? 'Na gut. Hängt schief, also schön langsam fahren.' : 'Sitzt in der Mitte und hängt gerade.', 4);
+    api.fertig({ versatz: schwer - sx, schief, versuche: versuche + 1 });
+  }
+  return versprechen.then((e) => { delete document.body.dataset.vollbild; return e; });
+}
+// Jonas (Comic, von vorn) mit Brechstange unter dem Bündelende: gebückt, Augenklappe, Arme drücken den Hebel runter
+function zeichneJonasHebel(ctx, x, boden, M, seite, anh, rutscht) {
+  const s = M / 100, Y = (y) => boden - y * s;
+  ctx.save(); ctx.lineJoin = 'round'; ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
+  const beug = 18 + anh / 0.39 * 14 - rutscht * 20;  // je höher, desto tiefer gebückt (drückt den Hebel runter)
+  // Brechstange: Spitze unter dem Bündel (x - seite·0,55 m, Bodenhöhe + Lücke), Griff bei den Händen
+  const sxp = x - seite * 0.58 * M, syp = boden - (0.06 + anh) * s * 100 * 0.6;
+  const gx = x + seite * 0.12 * M, gy = Y(95 - beug);
+  ctx.strokeStyle = '#111'; ctx.lineWidth = 9 * s + 2; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(sxp, syp); ctx.lineTo(gx, gy); ctx.stroke();
+  ctx.strokeStyle = '#c8352a'; ctx.lineWidth = 9 * s; ctx.stroke(); ctx.lineCap = 'butt';
+  // Kantholz als Drehpunkt
+  ctx.fillStyle = '#b08a52'; ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.fillRect(x - seite * 0.38 * M - 6 * s, boden - 12 * s, 12 * s, 12 * s); ctx.strokeRect(x - seite * 0.38 * M - 6 * s, boden - 12 * s, 12 * s, 12 * s);
+  // Beine, Körper, Kopf
+  ctx.lineWidth = 3;
+  ctx.fillStyle = '#2f3a4a';
+  for (const b of [-1, 1]) { ctx.beginPath(); ctx.roundRect(x + b * 9 * s - 6 * s, Y(80), 12 * s, 80 * s, 3 * s); ctx.fill(); ctx.stroke(); }
+  for (const b of [-1, 1]) { ctx.fillStyle = '#1d1d1f'; ctx.beginPath(); ctx.roundRect(x + b * 9 * s - 9 * s, Y(6), 18 * s, 7 * s, 3 * s); ctx.fill(); ctx.stroke(); }
+  ctx.save(); ctx.translate(x, Y(80)); ctx.rotate(seite * beug * 0.012);
+  ctx.fillStyle = '#3c6e9a'; ctx.beginPath(); ctx.roundRect(-20 * s, -70 * s, 40 * s, 72 * s, 10 * s); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#e8b890'; ctx.beginPath(); ctx.arc(0, -86 * s, 16 * s, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#4a3020'; ctx.beginPath(); ctx.arc(0, -92 * s, 16 * s, Math.PI, 0); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#f6f6f2'; ctx.beginPath(); ctx.ellipse(6 * s, -86 * s, 5 * s, 4 * s, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); // Augenklappe
+  ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(-6 * s, -86 * s, 1.8 * s, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-6 * s, -77 * s); ctx.lineTo(4 * s, rutscht > 0 ? -75 * s : -78 * s); ctx.stroke();
+  ctx.restore();
+  // Arme zum Griff
+  ctx.strokeStyle = '#111'; ctx.lineWidth = 8 * s + 2; ctx.lineCap = 'round';
+  for (const b of [-1, 1]) { ctx.beginPath(); ctx.moveTo(x + b * 14 * s, Y(140 - beug * 0.6)); ctx.lineTo(gx + b * 3 * s, gy); ctx.stroke(); }
+  ctx.strokeStyle = '#e8b890'; ctx.lineWidth = 8 * s;
+  for (const b of [-1, 1]) { ctx.beginPath(); ctx.moveTo(x + b * 14 * s, Y(140 - beug * 0.6)); ctx.lineTo(gx + b * 3 * s, gy); ctx.stroke(); }
+  ctx.lineCap = 'butt';
+  ctx.restore();
+}
+
 // 1) Ankoppeln: Die Stangen liegen quer vor dem Weidemann. Schlupf mittig ansetzen (Schwerpunkt!), anheben. Hängt das Bündel
 // schief, absetzen und neu ansetzen. Ergebnis: { versatz (m), schief, versuche }.
-export function ankoppelSpiel({ alt = false } = {}) {
+export function ankoppelSpielKlassisch({ alt = false } = {}) {
   let f;
   // Stangen: Länge, Versatz der Mitte (m), Profil. Der Schwerpunkt liegt nie genau in der Mitte der längsten Stange.
   const zr = Math.random;
@@ -3504,6 +3760,8 @@ export function einsortierSpiel({ alt = false } = {}) {
   document.body.dataset.vollbild = '1';
   // Geometrie in Einheiten der Fläche (0…1 von unten nach oben)
   const ARM = [0.2, 0.47, 0.74], LUFT = 0.2, DICK = 0.03; // Oberkante der Arme, freie Höhe darüber, Armdicke
+  const ALT_BESTAND = [['traeger'], ['vierkant', 'rund'], ['flach', 'winkel']];
+  const BREITE = { traeger: 1.0, vierkant: 0.84, rund: 0.88, flach: 1.24, winkel: 1.0 }, AUF = { traeger: 0.6, vierkant: 0.46, rund: 0.46, flach: 0.1, winkel: 0.5 };
   const pendel = () => Math.sin(zeit * 2.3) * 0.045 + Math.sin(zeit * 3.7 + 1) * 0.012;
   const { api, versprechen } = spielRahmen('Stahl einsortieren', 'Jede Stange ins richtige Fach vom Kragarmregal: unten Träger, Mitte Rohre, oben Flach- und Winkelstahl. Höhe mit der Maus oder W/S, einschieben mit Klick oder Leertaste. Die Stange pendelt: nicht gegen die Arme stoßen.', {
     beiGroesse(m) { f = flaeche(m); },
@@ -3567,14 +3825,16 @@ export function einsortierSpiel({ alt = false } = {}) {
         ctx.fillStyle = '#f4f0e0'; ctx.fillRect(sX + f.b * 0.026, Y(v + 0.14), f.b * 0.098, f.h * 0.11); ctx.strokeRect(sX + f.b * 0.026, Y(v + 0.14), f.b * 0.098, f.h * 0.11);
         SCHILD[i].forEach((t, k) => zeichneProfil(ctx, t, sX + f.b * (0.052 + k * 0.045), Y(v + 0.1), g * 0.36, PROFIL_FARBE[t]));
         ctx.fillStyle = '#1d1d1f'; ctx.font = `bold ${Math.max(9, f.h * 0.026)}px system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.fillText(TEXT[i], sX + f.b * 0.075, Y(v + 0.045));
-        // alter Bestand hinten an der Säule (blasser), davor die neu einsortierten Profile
-        ctx.globalAlpha = 0.55; SCHILD[i].forEach((t, k) => zeichneProfil(ctx, t, sX - f.b * 0.018 - k * g * 0.2, Y(v) - (t === 'flach' ? 0.1 : t === 'traeger' ? 0.6 : 0.46) * g - (k ? g * 0.0 : 0), g, '#4a4640')); ctx.globalAlpha = 1;
-        lager[i].forEach((t, k) => zeichneProfil(ctx, t, sX - f.b * 0.075 - k * g * 1.25, Y(v) - (t === 'flach' ? 0.1 : t === 'traeger' ? 0.6 : 0.46) * g, g, PROFIL_FARBE[t]));
+        // alter Bestand hinten an der Säule (blasser), davor die neu einsortierten Profile: jedes Profil hat seinen eigenen
+        // Platz nebeneinander (vorher lagen der alte Bestand übereinander und die neuen teils darauf)
+        const xs = plaetze(i, sX);
+        ctx.globalAlpha = 0.55; SCHILD[i].forEach((t, k) => zeichneProfil(ctx, t, xs[k], Y(v) - AUF[t] * g, g, '#4a4640')); ctx.globalAlpha = 1;
+        lager[i].forEach((t, k) => zeichneProfil(ctx, t, xs[SCHILD[i].length + k], Y(v) - AUF[t] * g, g, PROFIL_FARBE[t]));
       });
       // Gabel von links (Seitenansicht) mit Schlupf und der Stange im Querschnitt
       if (nr < liste.length || schubZiel) {
         const typ = liste[Math.min(nr, liste.length - 1)];
-        const ruheX = f.x + f.b * 0.27, zielX = schubZiel && schubZiel.ebene >= 0 ? sX - f.b * 0.075 - lager[schubZiel.ebene].length * g * 1.25 : sX - armL - g * 0.75;
+        const ruheX = f.x + f.b * 0.27, zielX = schubZiel && schubZiel.ebene >= 0 ? plaetze(schubZiel.ebene, sX, typ)[ALT_BESTAND[schubZiel.ebene].length + lager[schubZiel.ebene].length] : sX - armL - g * 0.75;
         const px = ruheX + (zielX - ruheX) * schub + (wackel ? Math.sin(zeit * 50) * 4 : 0);
         const hy = schubZiel ? schubZiel.h : hoehe + pendel();
         const py = Y(hy), gy = py - g * 1.9;
@@ -3594,6 +3854,14 @@ export function einsortierSpiel({ alt = false } = {}) {
       if (zeit < meldungBis) textMitte(ctx, meldung, f.x + f.b / 2, f.y - 34, 20, '#fff');
     },
   });
+  // Plätze (x-Mitte) auf einem Arm: von der Säule nach außen, erst der alte Bestand, dann die neuen Profile, jedes mit seiner
+  // Breite und etwas Luft dazwischen. extra = Profil, das gerade eingeschoben wird (bekommt den nächsten Platz).
+  function plaetze(i, sX, extra) {
+    const g = f.h * 0.085, xs = [];
+    let x = sX - f.b * 0.004;
+    for (const t of [...ALT_BESTAND[i], ...lager[i], ...(extra ? [extra] : [])]) { const b = BREITE[t] * g; x -= b / 2; xs.push(x); x -= b / 2 + 0.14 * g; }
+    return xs;
+  }
   // in welchem Fach ist die Stange gerade? (Unterkante über dem Arm, Oberkante unter dem nächsten Arm)
   function schieben() {
     if (api.istFertig || schubZiel !== null || nr >= liste.length) return;
@@ -3619,27 +3887,33 @@ export function grillSpiel({ anzahl = 3 } = {}) {
   const fehlerDazu = (was, t) => { if (!fehler.includes(was)) fehler.push(was); blip(150, 0.2, 0.15); sagen(t, 2.8); };
   // alles in Metern um die Mitte des Rosts (Radius 0,34)
   const ROST = 0.34;
-  const anzuender = [{ x: -0.1, y: 0.06, an: 0 }, { x: 0.09, y: -0.08, an: 0 }, { x: 0.05, y: 0.12, an: 0 }];
+  // Anzünden mit Bremsenreiniger (Comic): Holz einsprühen (Maus halten), dann Feuerzeug (Leertaste oder Knopf) = WUSCH.
+  // menge 0…1: zu wenig = Puff, zu viel = Feuerball (Augenbrauen weg), dazwischen = Stichflamme und gute Glut.
+  let menge = 0, versuchAnz = 0, wusch = 0, wuschStaerke = 0, sprueht = false, anzErgebnis = null;
+  const tropfen = [];
   let glut = 0, gutSeit = 0, ueberpustet = false, flamme = 0;
+  const PAPPE = { x: 0.62, y: 0.12, b: 0.3, h: 0.42 };     // altes Stück Pappe rechts neben der Feuerschale (m)
+  let aufPappe = 0;
   // Mettenden am Rand (beim Werfen hingefallen), die alte Wurst irgendwo in der Mitte
   const wuerste = Array.from({ length: Math.min(6, anzahl) }, (_, i) => {
     // nebeneinander am oberen Rand (Abstand ca. 25 cm, damit sie sich nicht überlappen)
     const w = -Math.PI / 2 + (i - (Math.min(6, anzahl) - 1) / 2) * 0.95;
-    return { x: Math.cos(w) * 0.25, y: Math.sin(w) * 0.25, rot: w + Math.PI / 2, oben: 0, unten: 0, vx: 0, vy: 0, weg: false, dreh: 0 };
+    return { x: Math.cos(w) * 0.25, y: Math.sin(w) * 0.25, rot: w + Math.PI / 2, oben: 0, unten: 0, vx: 0, vy: 0, weg: false, dreh: 0, runter: false };
   });
   const alt = { x: 0.05, y: 0.04, rot: 0.3, vx: 0, vy: 0, weg: false, fallen: 0 };
   document.body.dataset.vollbild = '1';
-  const { api, versprechen } = spielRahmen('Mettenden grillen', 'Erst anzünden: Feuerzeug (Maus) an die weißen Anzünder halten, dann pusten (Leertaste oder Maus halten), bis die Glut im grünen Bereich ist. Dann die alte Wurst mit Schwung vom Rost kicken. Dann grillen: Klick = wenden, ziehen = verschieben. Mitte heiß, Rand mild.', {
+  const { api, versprechen } = spielRahmen('Mettenden grillen', 'Erst anzünden: Holz mit Bremsenreiniger einsprühen (Maus halten), dann Feuerzeug ran (Leertaste) – WUSCH! Zu wenig = Puff, zu viel = Feuerball. Dann die alte Wurst mit Schwung vom Rost kicken. Dann grillen: Klick = wenden, ziehen = verschieben, fertige Würste auf die Pappe neben dem Grill ziehen. Mitte heiß, Rand mild.', {
     beiGroesse(m) { f = flaeche(m); },
     events: {
-      keydown(e) { const k = e.key.toLowerCase(); if ([' ', 'enter'].includes(k)) { tasten.add(k); e.preventDefault(); } if (k === 'enter' && phase === 'grillen') fertig(); },
+      keydown(e) { const k = e.key.toLowerCase(); if (k === ' ') { tasten.add(k); e.preventDefault(); if (!e.repeat && phase === 'anzuenden') zuenden(); } },
       keyup(e) { tasten.delete(e.key.toLowerCase()); },
       pointerdown(e) {
         maus = zeigerPos(api.canvas, e); mausUnten = true;
         const p = welt(maus);
         if (phase === 'saeubern' && !alt.weg && Math.hypot(p.x - alt.x, p.y - alt.y) < 0.09) zieht = { ding: alt, dx: alt.x - p.x, dy: alt.y - p.y, spur: [{ x: p.x, y: p.y, t: zeit }], weit: 0 };
+        if (phase === 'anzuenden') sprueht = true;
         if (phase === 'grillen') {
-          const w = wuerste.filter((q) => !q.weg).map((q) => ({ q, d: Math.hypot(p.x - q.x, p.y - q.y) })).sort((a, b) => a.d - b.d)[0];
+          const w = wuerste.filter((q) => !q.weg && !q.runter).map((q) => ({ q, d: Math.hypot(p.x - q.x, p.y - q.y) })).sort((a, b) => a.d - b.d)[0];
           if (w && w.d < 0.07) zieht = { ding: w.q, dx: w.q.x - p.x, dy: w.q.y - p.y, spur: [{ x: p.x, y: p.y, t: zeit }], weit: 0 };
         }
       },
@@ -3651,11 +3925,15 @@ export function grillSpiel({ anzahl = 3 } = {}) {
         zieht.weit += Math.hypot(nx - d.x, ny - d.y);
         d.x = nx; d.y = ny;
         zieht.spur.push({ x: p.x, y: p.y, t: zeit }); if (zieht.spur.length > 6) zieht.spur.shift();
-        if (phase === 'grillen') { const r = Math.hypot(d.x, d.y); if (r > ROST - 0.05) { d.x *= (ROST - 0.05) / r; d.y *= (ROST - 0.05) / r; } }
+        if (phase === 'grillen') {
+          // über den Rost hinaus nur Richtung Pappe (sonst fällt sie nicht einfach in die Asche: sie bleibt am Rand)
+          const r = Math.hypot(d.x, d.y);
+          if (r > ROST - 0.05 && !ueberPappe(d) && d.x < ROST * 0.6) { d.x *= (ROST - 0.05) / r; d.y *= (ROST - 0.05) / r; }
+        }
         if (phase === 'saeubern') schubsen(d);
       },
       pointerup() {
-        mausUnten = false;
+        mausUnten = false; sprueht = false;
         if (!zieht) return;
         const z = zieht; zieht = null;
         if (phase === 'saeubern') {
@@ -3668,6 +3946,17 @@ export function grillSpiel({ anzahl = 3 } = {}) {
         } else if (phase === 'grillen' && z.weit < 0.02) {
           // Klick ohne Ziehen: wenden
           const q = z.ding; [q.oben, q.unten] = [q.unten, q.oben]; q.dreh = 0.35; klonk(0.08);
+        } else if (phase === 'grillen') {
+          const q = z.ding;
+          if (ueberPappe(q)) {
+            // runter vom Grill: liegt ordentlich auf der Pappe, gart nicht weiter
+            q.runter = true; q.x = PAPPE.x; q.y = PAPPE.y - PAPPE.h / 2 + 0.07 + aufPappe * 0.065; q.rot = 0; aufPappe++;
+            klonk(0.06); blip(620, 0.05);
+            if (wuerste.every((w) => w.weg || w.runter)) setTimeout(fertig, 600);
+          } else {
+            const r = Math.hypot(q.x, q.y);
+            if (r > ROST - 0.05) { q.x *= (ROST - 0.05) / r; q.y *= (ROST - 0.05) / r; if (zeit > meldungBis) sagen('Auf die Pappe rechts neben dem Grill ziehen!', 1.8); }
+          }
         }
       },
     },
@@ -3677,17 +3966,18 @@ export function grillSpiel({ anzahl = 3 } = {}) {
       flamme = Math.max(0, flamme - dt);
       if (phase === 'anzuenden') {
         const p = maus ? welt(maus) : null;
-        for (const a of anzuender) if (a.an < 1 && p && Math.hypot(p.x - a.x, p.y - a.y) < 0.045) { a.an = Math.min(1, a.an + dt / 1.1); if (a.an >= 1) { klonk(0.15); sagen('Brennt!', 1); } }
-        const brennen = anzuender.filter((a) => a.an >= 1).length;
-        if (brennen >= 2) {
-          const pusten = tasten.has(' ') || (mausUnten && brennen === 3);
-          glut += (pusten ? 0.32 : -0.035) * dt * (brennen / 3 + 0.4);
-          if (pusten) flamme = 0.2;
-          if (glut > 1.0 && !ueberpustet) { ueberpustet = true; fehlerDazu('Asche aufgewirbelt', 'Zu doll gepustet! Die Asche fliegt überall hin.'); glut = 0.88; }
-          glut = Math.max(0, Math.min(1.02, glut));
-          const gruen = glut > 0.6 && glut < 0.86;
-          gutSeit = gruen && !pusten ? gutSeit + dt : gruen ? gutSeit : 0;
-          if (gutSeit > 1.2) { phase = 'saeubern'; sagen('Glut passt. Jetzt die alte Wurst runterkicken!', 3); blip(700, 0.08); }
+        wusch = Math.max(0, wusch - dt);
+        if (sprueht && p && !wusch) {
+          // nur was aufs Holz in der Schale geht, zählt
+          const drauf = Math.hypot(p.x, p.y) < 0.3;
+          if (drauf) menge = Math.min(1.3, menge + dt * 0.32);
+          if (Math.random() < dt * 40) tropfen.push({ x: p.x + (Math.random() - 0.5) * 0.08, y: p.y + (Math.random() - 0.5) * 0.08, t: 0 });
+        }
+        for (let i = tropfen.length - 1; i >= 0; i--) { tropfen[i].t += dt; if (tropfen[i].t > 1.6) tropfen.splice(i, 1); }
+        // nach dem WUSCH brennt es runter auf die Glut
+        if (anzErgebnis && !wusch) {
+          if (anzErgebnis === 'puff') { anzErgebnis = null; menge = 0; sagen('Puff. Das war zu wenig. Nochmal einsprühen!', 2.6); }
+          else { phase = 'saeubern'; glut = anzErgebnis === 'zuviel' ? 0.95 : 0.75; sagen('Brennt! Jetzt die alte Wurst runterkicken!', 3); blip(700, 0.08); }
         }
       } else if (phase === 'saeubern') {
         // alte Wurst rutscht mit Schwung weiter (Rost bremst), fällt über den Rand
@@ -3703,11 +3993,11 @@ export function grillSpiel({ anzahl = 3 } = {}) {
           if (Math.hypot(q.vx, q.vy) < 0.01) q.vx = q.vy = 0;
           if (Math.hypot(q.x, q.y) > ROST) { q.weg = true; fehlerDazu('Mettende in die Asche', 'Mist! Eine Mettende ist mit runtergefallen. Die liegt jetzt in der Asche.'); }
         }
-        if (alt.weg && alt.fallen > 1.2) { phase = 'grillen'; sagen('Jetzt grillen. Klick = wenden, ziehen = verschieben.', 3.5); knopfFertig(); }
+        if (alt.weg && alt.fallen > 1.2) { phase = 'grillen'; sagen('Jetzt grillen. Klick = wenden, ziehen = verschieben. Fertige auf die Pappe!', 3.5); }
       } else if (phase === 'grillen') {
         const feuer = 0.6 + Math.min(1, glut) * 0.6;
         for (const q of wuerste) {
-          if (q.weg) continue;
+          if (q.weg || q.runter) continue;
           q.dreh = Math.max(0, q.dreh - dt);
           const r = Math.hypot(q.x, q.y) / ROST;
           const hitze = (1.15 - r * 0.75) * feuer;
@@ -3722,6 +4012,7 @@ export function grillSpiel({ anzahl = 3 } = {}) {
       // Boden (Wiese), Feuerschale von oben, Asche/Glut, Rost
       ctx.fillStyle = '#6f9a48'; ctx.fillRect(0, 0, m.b, m.h);
       const cx = f.x + f.b / 2, cy = f.y + f.h / 2, S = f.h * 0.95 / (0.9); // px pro m
+      api.canvas.dataset.stand = `${phase}:${cx.toFixed(0)}:${cy.toFixed(0)}:${S.toFixed(1)}:${menge.toFixed(2)}`; // nur für Tests
       const P = (x, y) => [cx + x * S, cy + y * S];
       ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
       ctx.fillStyle = '#2a2622'; ctx.beginPath(); ctx.arc(cx, cy, 0.45 * S, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
@@ -3739,15 +4030,14 @@ export function grillSpiel({ anzahl = 3 } = {}) {
         if (g > 0.3) { ctx.strokeStyle = `rgba(255,${120 + 80 * g},40,0.9)`; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-0.1 * S, 0); ctx.lineTo(0.08 * S, 0.01 * S); ctx.stroke(); ctx.strokeStyle = '#111'; ctx.lineWidth = 3; }
         ctx.restore();
       }
-      // Anzünder (weiße Würfel), Flammen; nach dem Anzünden nur noch Glutstücke
+      // nach dem Anzünden nur noch Glutstücke
       if (phase !== 'anzuenden') for (let i = 0; i < 16; i++) { const w = i * 2.39, rr = 0.05 + (i % 6) * 0.045; ctx.fillStyle = i % 3 ? '#ff6a1a' : '#ffb340'; ctx.beginPath(); ctx.arc(...P(Math.cos(w) * rr, Math.sin(w) * rr), (0.012 + (i % 4) * 0.004) * S, 0, Math.PI * 2); ctx.fill(); }
-      if (phase === 'anzuenden') for (const a of anzuender) {
-        const [x, y] = P(a.x, a.y);
-        ctx.fillStyle = '#f4f4ee'; ctx.fillRect(x - 0.025 * S, y - 0.025 * S, 0.05 * S, 0.05 * S); ctx.strokeRect(x - 0.025 * S, y - 0.025 * S, 0.05 * S, 0.05 * S);
-        if (a.an >= 1 || a.an > 0) flammeZeichnen(ctx, x, y, (a.an >= 1 ? 0.06 + g * 0.03 : a.an * 0.04) * S);
+      if (phase === 'anzuenden') {
+        // nasser Glanz auf dem Holz, je mehr Bremsenreiniger desto mehr
+        ctx.fillStyle = `rgba(190,220,255,${Math.min(0.45, menge * 0.4)})`; ctx.beginPath(); ctx.arc(cx, cy, 0.24 * S, 0, Math.PI * 2); ctx.fill();
+        for (const d of tropfen) { ctx.fillStyle = `rgba(220,235,255,${0.7 * (1 - d.t / 1.6)})`; ctx.beginPath(); ctx.arc(...P(d.x, d.y), (0.006 + d.t * 0.01) * S, 0, Math.PI * 2); ctx.fill(); }
+        if (wusch) stichflamme(ctx, cx, cy, S, wusch, wuschStaerke, zeit);
       }
-      if (phase === 'anzuenden' && glut > 0.2) for (let i = 0; i < 6; i++) { const w = i / 6 * Math.PI * 2 + zeit; flammeZeichnen(ctx, ...P(Math.cos(w) * 0.16, Math.sin(w) * 0.16), (0.03 + glut * 0.05 + Math.sin(zeit * 9 + i) * 0.01) * S); }
-      if (ueberpustet && phase === 'anzuenden') { ctx.fillStyle = 'rgba(160,155,150,0.5)'; for (let i = 0; i < 18; i++) { const w = i * 2.4 + zeit; ctx.beginPath(); ctx.arc(...P(Math.cos(w) * 0.3 * ((i % 5) / 5 + 0.3), Math.sin(w * 1.3) * 0.3 * ((i % 4) / 4 + 0.3)), 0.02 * S, 0, Math.PI * 2); ctx.fill(); } }
       // Rost (im Anzünden halb durchsichtig: hängt hoch an der Kette)
       ctx.globalAlpha = phase === 'anzuenden' ? 0.35 : 1;
       ctx.strokeStyle = '#2a2c30'; ctx.lineWidth = 0.012 * S;
@@ -3765,35 +4055,53 @@ export function grillSpiel({ anzahl = 3 } = {}) {
           wurstZeichnen(ctx, ...P(alt.x, alt.y), alt.rot + alt.fallen * 3, S * k, { alt: true });
         }
       }
+      // altes Stück Pappe neben dem Grill (Ablage für die fertigen Würste)
+      {
+        const [px, py] = P(PAPPE.x - PAPPE.b / 2, PAPPE.y - PAPPE.h / 2);
+        ctx.save(); ctx.translate(px + PAPPE.b * S / 2, py + PAPPE.h * S / 2); ctx.rotate(0.06);
+        ctx.fillStyle = '#c9a26a'; ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(-PAPPE.b * S / 2, -PAPPE.h * S / 2); ctx.lineTo(PAPPE.b * S / 2 - 6, -PAPPE.h * S / 2 + 3); ctx.lineTo(PAPPE.b * S / 2, PAPPE.h * S / 2 - 10); ctx.lineTo(PAPPE.b * S / 2 - 14, PAPPE.h * S / 2); ctx.lineTo(-PAPPE.b * S / 2 + 4, PAPPE.h * S / 2 - 2); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.strokeStyle = 'rgba(120,90,50,0.6)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-PAPPE.b * S / 2 + 6, 0); ctx.lineTo(PAPPE.b * S / 2 - 6, 4); ctx.stroke(); // Knick
+        ctx.fillStyle = 'rgba(90,60,30,0.35)'; ctx.beginPath(); ctx.ellipse(-PAPPE.b * S * 0.15, PAPPE.h * S * 0.25, 12, 7, 0.4, 0, Math.PI * 2); ctx.fill(); // Fettfleck
+        if (phase === 'grillen' && !aufPappe) { ctx.fillStyle = '#5a3a1a'; ctx.font = `bold ${Math.max(11, 0.03 * S)}px system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.fillText('fertige', 0, -6); ctx.fillText('hierhin', 0, 12); }
+        ctx.restore();
+      }
       // Mettenden
       // sichtbare Farbe: oben, aber eine stark angebrannte Unterseite sieht man am Rand mit (gemischt)
       for (const q of wuerste) if (!q.weg) wurstZeichnen(ctx, ...P(q.x, q.y), q.rot, S * (1 + q.dreh * 0.4), { gar: q.oben * 0.6 + q.unten * 0.4, unten: q.unten });
       // Garanzeige über jeder Wurst (oben/unten)
-      if (phase === 'grillen') for (const q of wuerste) if (!q.weg) {
+      if (phase === 'grillen') for (const q of wuerste) if (!q.weg && !q.runter) {
         const [x, y] = P(q.x, q.y);
         for (const [i, v] of [[0, q.oben], [1, q.unten]]) { ctx.fillStyle = garFarbe(v); ctx.strokeStyle = '#111'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x - 7 + i * 14, y - 0.075 * S, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
       }
       // Zeiger: Feuerzeug beim Anzünden
-      if (phase === 'anzuenden' && maus) {
-        ctx.fillStyle = '#c8352a'; ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(maus.x + 4, maus.y + 2, 16, 34, 4); ctx.fill(); ctx.stroke();
-        ctx.fillStyle = '#8c8f94'; ctx.fillRect(maus.x + 4, maus.y - 4, 16, 7); ctx.strokeRect(maus.x + 4, maus.y - 4, 16, 7);
-        flammeZeichnen(ctx, maus.x + 8, maus.y - 6, 14);
+      if (phase === 'anzuenden' && maus && !wusch) {
+        // Bremsenreiniger-Dose (blau mit Sprühkopf), sprüht schräg nach unten
+        ctx.save(); ctx.translate(maus.x + 26, maus.y - 30); ctx.rotate(-0.6);
+        ctx.fillStyle = '#2f5fa8'; ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(-11, -8, 22, 56, 5); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#e8e8e0'; ctx.fillRect(-11, 8, 22, 18); ctx.strokeRect(-11, 8, 22, 18);
+        ctx.fillStyle = '#c8352a'; ctx.font = 'bold 8px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('BREMSEN', 0, 16); ctx.fillText('REINIGER', 0, 24);
+        ctx.fillStyle = '#c9cdd2'; ctx.beginPath(); ctx.roundRect(-7, -16, 14, 9, 2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#1d1d1f'; ctx.fillRect(-3, -21, 6, 6);
+        ctx.restore();
+        if (sprueht) { const gr2 = ctx.createRadialGradient(maus.x, maus.y, 2, maus.x, maus.y, 34); gr2.addColorStop(0, 'rgba(230,240,255,0.7)'); gr2.addColorStop(1, 'rgba(230,240,255,0)'); ctx.fillStyle = gr2; ctx.beginPath(); ctx.moveTo(maus.x + 18, maus.y - 44); ctx.lineTo(maus.x - 22, maus.y + 10); ctx.lineTo(maus.x + 14, maus.y + 22); ctx.closePath(); ctx.fill(); }
+        // Feuerzeug liegt am Rand bereit (Leertaste)
       }
       // Anzeigen
       const bx = f.x + f.b + 14 > m.b - 120 ? f.x - 70 : f.x + f.b + 14;
       if (phase === 'anzuenden') {
-        const by = f.y + 10, bh = f.h - 20;
+        // Menge Bremsenreiniger: unten zu wenig (Puff), grün = Stichflamme, oben rot = Feuerball
+        const by = f.y + 10, bh = f.h - 20, M1 = 1.3;
         ctx.fillStyle = '#5b5b5b'; ctx.fillRect(bx, by, 22, bh);
-        ctx.fillStyle = '#4caf50'; ctx.fillRect(bx, by + bh * (1 - 0.86), 22, bh * 0.26);
-        ctx.fillStyle = '#d0453a'; ctx.fillRect(bx, by, 22, bh * 0.08);
-        ctx.fillStyle = '#ffc81e'; ctx.fillRect(bx - 4, by + bh * (1 - Math.min(1, glut)) - 3, 30, 6);
+        ctx.fillStyle = '#4caf50'; ctx.fillRect(bx, by + bh * (1 - 0.85 / M1), 22, bh * 0.4 / M1);
+        ctx.fillStyle = '#d0453a'; ctx.fillRect(bx, by, 22, bh * (1 - 0.85 / M1));
+        ctx.fillStyle = '#9fd0ff'; ctx.fillRect(bx + 4, by + bh * (1 - Math.min(M1, menge) / M1), 14, bh * Math.min(M1, menge) / M1);
         ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.strokeRect(bx, by, 22, bh);
-        textMitte(ctx, 'Glut', bx + 11, by + bh + 22, 15, '#fff');
-        const brennen = anzuender.filter((a) => a.an >= 1).length;
-        textMitte(ctx, brennen < 2 ? `Anzünder: ${brennen} von 3 brennen` : 'Pusten: Leertaste (oder Maus halten)', f.x + f.b / 2, f.y + f.h + 26, 18, '#fff');
+        textMitte(ctx, 'Menge', bx + 11, by + bh + 22, 15, '#fff');
+        textMitte(ctx, menge < 0.05 ? 'Maus halten: Holz einsprühen' : 'Leertaste: Feuerzeug ran!', f.x + f.b / 2, f.y + f.h + 26, 18, '#fff');
       } else if (phase === 'saeubern') textMitte(ctx, 'Alte Wurst greifen und mit Schwung vom Rost kicken', f.x + f.b / 2, f.y + f.h + 26, 18, '#fff');
       else if (phase === 'grillen') {
-        textMitte(ctx, 'Klick = wenden · ziehen = verschieben · Enter = runternehmen', f.x + f.b / 2, f.y + f.h + 26, 18, '#fff');
+        textMitte(ctx, 'Klick = wenden · ziehen = verschieben · fertige Würste auf die Pappe ziehen', f.x + f.b / 2, f.y + f.h + 26, 18, '#fff');
         // Legende
         const lx = f.x + 10, ly = f.y + 14;
         [['roh', 0.2], ['gut', 1.05], ['verkohlt', 1.7]].forEach(([t, v], i) => { ctx.fillStyle = garFarbe(v); ctx.strokeStyle = '#111'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(lx, ly + i * 22, 7, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#fff'; ctx.font = 'bold 14px system-ui, sans-serif'; ctx.textAlign = 'left'; ctx.fillText(t, lx + 14, ly + i * 22 + 5); });
@@ -3802,6 +4110,17 @@ export function grillSpiel({ anzahl = 3 } = {}) {
       if (zeit < meldungBis) textMitte(ctx, meldung, f.x + f.b / 2, f.y - 6, 20, '#fff');
     },
   });
+  function zuenden() {
+    if (phase !== 'anzuenden' || wusch || api.istFertig) return;
+    versuchAnz++;
+    if (menge < 0.05) { sagen('Erst Bremsenreiniger aufs Holz sprühen (Maus halten).', 2); return; }
+    if (menge < 0.45) { anzErgebnis = 'puff'; wusch = 0.7; wuschStaerke = 0.35; blip(220, 0.15, 0.1); }
+    else if (menge <= 0.85) { anzErgebnis = 'gut'; wusch = 1.6; wuschStaerke = 1; blip(90, 0.4, 0.3); }
+    else { anzErgebnis = 'zuviel'; wusch = 2.2; wuschStaerke = 1.7; blip(60, 0.6, 0.4); fehlerDazu('Augenbrauen angesengt', 'WUUUSCH! Viel zu viel! Augenbrauen sind weg.'); }
+    if (anzErgebnis === 'gut') sagen('WUSCH! Stichflamme!', 2);
+    sprueht = false;
+  }
+  function ueberPappe(q) { return Math.abs(q.x - PAPPE.x) < PAPPE.b / 2 + 0.02 && Math.abs(q.y - PAPPE.y) < PAPPE.h / 2 + 0.02; }
   function welt(p) { const S = f.h * 0.95 / 0.9; return { x: (p.x - (f.x + f.b / 2)) / S, y: (p.y - (f.y + f.h / 2)) / S }; }
   // die alte Wurst schubst Mettenden an, die im Weg liegen
   function schubsen(d) {
@@ -3831,9 +4150,25 @@ export function grillSpiel({ anzahl = 3 } = {}) {
     const ergebnis = wuerste.map((q) => ({ zustand: zustandVon(q), oben: q.oben, unten: q.unten }));
     const n = (z) => ergebnis.filter((e) => e.zustand === z).length;
     sagen(`Gut: ${n('gut')} · roh: ${n('roh')} · verkohlt: ${n('verkohlt')}${n('asche') ? ` · in der Asche: ${n('asche')}` : ''}`, 6);
-    api.fertig({ wuerste: ergebnis, fehler: [...fehler], glut });
+    api.fertig({ wuerste: ergebnis, fehler: [...fehler], glut, anzuenden: anzErgebnis || 'gut' });
   }
   return versprechen.then((e) => { delete document.body.dataset.vollbild; return e; });
+}
+// Stichflamme nach dem Bremsenreiniger (Comic): heller Kern, Flammenzungen nach oben-außen, Hitzering; staerke 0,35 Puff,
+// 1 Stichflamme, 1,7 Feuerball
+function stichflamme(ctx, cx, cy, S, rest, staerke, zeit) {
+  const t = 1 - rest / (staerke > 1.5 ? 2.2 : staerke < 0.5 ? 0.7 : 1.6), k = Math.sin(Math.min(1, t * 1.6) * Math.PI) * staerke;
+  if (k <= 0) return;
+  const R = (0.18 + 0.4 * k) * S;
+  const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.25);
+  gr.addColorStop(0, 'rgba(255,255,230,0.95)'); gr.addColorStop(0.35, 'rgba(255,210,80,0.9)'); gr.addColorStop(0.7, 'rgba(255,110,30,0.75)'); gr.addColorStop(1, 'rgba(200,40,10,0)');
+  ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(cx, cy, R * 1.25, 0, Math.PI * 2); ctx.fill();
+  for (let i = 0; i < 14; i++) {
+    const w = i / 14 * Math.PI * 2 + Math.sin(zeit * 6 + i) * 0.2, l = R * (0.9 + 0.5 * Math.sin(zeit * 13 + i * 1.7) ** 2);
+    flammeZeichnen(ctx, cx + Math.cos(w) * l * 0.55, cy + Math.sin(w) * l * 0.55, l * 0.55);
+  }
+  ctx.save(); ctx.strokeStyle = `rgba(255,240,200,${0.6 * (1 - t)})`; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(cx, cy, R * (1.1 + t * 0.8), 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+  if (staerke > 0.5) textMitte(ctx, staerke > 1.5 ? 'WUUUSCH!!' : 'WUSCH!', cx, cy - R * 1.1, 30 + 10 * k, '#fff4c0');
 }
 // Garfarbe: roh rosa, gut braun, verkohlt schwarz
 function garFarbe(v) {
