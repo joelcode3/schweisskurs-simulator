@@ -247,6 +247,7 @@ export function baueTestMenue({ spiel, welt, kamera, steuerung, fahrten, fz }) {
   knopf('T96', 'Im Weidemann an der Pritsche (Joel, Schlupf dabei)', () => pr.test.testAnDiePritsche());
   knopf('T101', 'Joel fällt vom Weidemann (Aufprall)', () => pr.test.joelFaellt());
   knopf('T97', 'Minispiel Pritsche bergen (direkt)', mini(() => M.pritscheSpiel()), { laeuft: titelEnthaelt('Pritsche bergen') });
+  knopf('T115', 'Nach dem Minispiel: Pritsche steht, Weidemann direkt davor', async () => { pr.test.testAnDiePritsche(); await new Promise((r) => setTimeout(r, 800)); if (ft.aussteigen) ft.aussteigen(); pr.test.nachSpiel([]); });
   knopf('T98', 'Pritsche steht, direkt abschleppen', () => pr.test.testAbschleppen());
   knopf('T99', 'Gespann kurz vor der Bucht PRITSCHE', () => pr.test.testVorDemCarport());
   knopf('T100', 'Pritsche zurücksetzen (liegt wieder um)', () => { if (ft.aussteigen && fahrten?.faehrt) ft.aussteigen(); pr.test.zuruecksetzen(); });
@@ -260,7 +261,7 @@ export function baueTestMenue({ spiel, welt, kamera, steuerung, fahrten, fz }) {
   knopf('T104', 'Minispiel Stangen ankoppeln (direkt)', mini(() => M.ankoppelSpiel()), { laeuft: titelEnthaelt('Stangen ankoppeln') });
   knopf('T105', 'Stangen hängen dran, am Hof (neuer Schlupf)', () => me.test.testHaengt(false, 'hof'));
   knopf('T106', 'Stangen hängen dran, kurz vor der Werkstatt (ALTER Schlupf: reißt)', () => me.test.testHaengt(true, 'feldweg'));
-  knopf('T107', 'Stangen hängen dran, vor dem Container', () => me.test.testHaengt(false, 'container'));
+  knopf('T107', 'Stangen hängen dran, vor dem Metallcontainer', () => me.test.testHaengt(false, 'container'));
   knopf('T108', 'Minispiel Stahl einsortieren (direkt)', mini(() => M.einsortierSpiel()), { laeuft: titelEnthaelt('Stahl einsortieren') });
   knopf('T109', 'Auftrag läuft, Jonas in der Werkstatt (zu Fuß)', () => { raus(); me.test.testStart(); });
   knopf('T110', 'Metall-Lieferung zurücksetzen', () => { raus(); me.test.zuruecksetzen(); });

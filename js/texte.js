@@ -391,7 +391,7 @@ export const DENNIS = {
     wo: ['Wo bleibt eigentlich die Metalllieferung?', 'Eisen Meyer wollte doch heute liefern. Wo ist mein Stahl?', 'Hat einer von euch meinen Stahl gesehen?'],
     anstoss: ['Pass auf mit den Stangen! Die sind sechs Meter breit!', 'Klong, klong, klong. Fahr doch nicht überall gegen!'],
     gerissen: ['Der alte Schlupf?! Da hängt ein Zettel dran! Lebensgefährlich steht da! Kannst du nicht lesen?!', 'Sechs Meter Stahl auf meinem Hof verteilt! Mit dem alten Schlupf! Ich dreh durch!'],
-    fertigGut: ['Stahl ist da, sauber einsortiert. So macht man das. Danke dir!', 'Na bitte. Alles im Container, alles am Platz. Top.'],
+    fertigGut: ['Stahl ist da, sauber einsortiert. So macht man das. Danke dir!', 'Na bitte. Alles im Metallcontainer, alles am Platz. Top.'],
     fertigNaja: ['Ist ja jetzt drin. Aber frag nicht, wie.', 'Na endlich. Hätte man auch gleich richtig machen können.'],
     falschSortiert: ['Wer hat denn die Träger zu den Flacheisen gelegt? Das sortier ich nachher selber um.'],
     gerutscht: ['Was scheppert da draußen? Hast du die Stangen verloren?'],

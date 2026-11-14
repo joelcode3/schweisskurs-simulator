@@ -397,6 +397,14 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   T101 Joel fällt vom Weidemann.
 - Testmenü: T95 Joel kommt, T96 im Weidemann an der Pritsche (mit Joel und Schlupf), T97 Minispiel direkt, T98 steht, direkt
   abschleppen, T99 Gespann kurz vor der Bucht, T100 zurücksetzen.
+- Paket V1 (Bugs, 14.11.): T5 neu verkleidet: Innenraum nur Boden + Matte + Block unter dem Armaturenbrett (keine Fläche
+  mehr hinter den Scheiben), Haube EIN Blech entlang des Profils, Dach als feines Netz mit echter eingedrückter Beule
+  (Vertices verschoben, Mulde per Vertex-Farbe dunkler), größere Frontscheibe mit Sprung als Textur (nichts steht über),
+  Radhaus vorn nur als Ringe an den Seiten (keine Walze mehr zwischen den Vorderrädern), Seitenleiste endet vor dem Radlauf,
+  Spiegel mit Fuß auf der Tür und Arm. Lenkräder (Pritsche, Jeep, Weidemann) über `lenkrad(mitte, saeule, …)` in toon.js,
+  zeigen zum Fahrer. Fahrspuren hinter der Werkstatt als weiche Bänder (Catmull-Rom, Alpha-Verlauf). Nach dem Minispiel
+  stellt `weidemannDavor()` den Weidemann gerade vor die Pritsche (die Pritsche dreht beim Aufstellen Richtung Hof), Joel
+  sitzt beim Abschleppen am Steuer (joelInT5). Testmenü T115.
 
 ## Metall-Lieferung (Paket E3)
 - js/metall.js (`baueMetall`, aus spiel.js, nach pritsche.js), Minispiele `ankoppelSpiel` und `einsortierSpiel` in minispiele.js,
@@ -894,6 +902,21 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Der verletzte Torben hat das Werkstatt-Sofa: Waldo setzt sich dann nicht hin bzw. steht auf und geht (Testmenü T116).
 - Abgelegte lange Dinge (Besen, Pömpel, Zange) werden quer gedreht bzw. in den Raum geschoben (hand.js inDenWaendenHalten).
   WC-Tür: Durchgang 0,65 statt 0,55 m.
+
+## Paket V2 (Bugs Optik, 14.11.)
+- Bad: der Schachbrett-Boden lag UNTER der Betonfläche von draußen (die reicht bis z 10,5 und unters Bad) – jetzt bei
+  y 0,009 darüber; daher kamen grauer Boden und Zickzack-Risse/Unkraut im Bad. Betonbrocken landen nicht mehr im Bad.
+- WC-Tür: Drücker mit Langschild und Schlüsselloch (beidseitig). Waschmaschine/Trockner: runde Kanten, Scharnier,
+  Trommelrand, Glanz, Schublade, Sockelblende, Füße; Flusensieb-Fach mit grauer Rückwand und hellem Rahmen, das Sieb sitzt
+  davor (Kinder um -0,04 versetzt, Gruppe bleibt bei -0,29 wie in spiel.js). Klo: Fuß, Schraubkappen, Scharniere,
+  Eckventil, Kalkrand. Waschbecken weiß (leicht selbstleuchtend), Kalk/Schlieren/Stoppeln, Seife.
+- Bierflasche als gemeinsames Modell `bierflasche({ korken, glasMat })` in toon.js (Jonny in der Hand, leere Flaschen).
+- Pömpel: gedrehte Gummiglocke mit Lippe, Manschette, Wülste; Stiel mit Kappe und Loch.
+- Sonne: Schattenbereich ±10/±9, Karte 2048, normalBias (vorher heller Keil hinten rechts durchs Dach).
+- Kicker-Spielfeld höher und beidseitig (flackerte grün/braun). Container: Rahmen/Dach/Eckbeschläge gestaffelt (keine
+  deckungsgleichen Außenflächen mehr). Texte „Metallcontainer“. Fallrohr Carport: senkrecht, unten kurzer Auslauf nach außen
+  und unten. Feuerschale: Füße unten nach außen. Wohnwagentür hinter dem Radkasten (lokal z -0,95), Fenster dahinter
+  nach hinten, Stufe vor der Tür. Schotter bis an die Werkstattwand (Umriss x 5,03 / z -4,03), Löwenzahn und Gras an der Wand.
 
 ## Offene Fäden und Ungetestetes (Übergabe 1.11.2026)
 - Ausraster-Videos: #54 (frisches Video-Element, bis zu 6 Versuche, canplay) ist nur eine Absicherung. Die Ursache ist unklar, im Test lief

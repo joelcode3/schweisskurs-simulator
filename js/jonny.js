@@ -4,7 +4,7 @@
 // und Stift in der Seitentasche, weiße Socken, grüne Sneaker mit drei weißen Streifen, goldener Ring.
 import * as THREE from 'three';
 import { wegNach, ausweichen } from './wege.js';
-import { toon, teil, quader, zylinder, kugel, setze, leinwandTextur } from './toon.js';
+import { toon, teil, quader, zylinder, kugel, setze, leinwandTextur, bierflasche } from './toon.js';
 import { torbenErweitern, torbenShirtTextur, torbenArm } from './torbenteile.js';
 
 const HAUT = 0xeebda0;
@@ -443,13 +443,7 @@ export function baueJonny(scene, opts = {}) {
   // Bierflasche (braun, Etikett, Kronkorken) in der linken Faust: die Finger liegen um den Flaschenbauch
   const bier = new THREE.Group();
   const glas = toon(0x5a2e0e, { transparent: true, opacity: 0.92 });
-  bier.add(teil(new THREE.CylinderGeometry(0.03, 0.03, 0.15, 16), 0, { material: glas, umriss: 0.002 }));
-  bier.add(setze(teil(new THREE.CylinderGeometry(0.012, 0.03, 0.05, 16), 0, { material: glas, umriss: 0.002 }), 0, 0.1, 0));
-  bier.add(setze(teil(new THREE.CylinderGeometry(0.0125, 0.0125, 0.035, 12), 0, { material: glas, umriss: 0.002 }), 0, 0.14, 0));
-  bier.add(setze(zylinder(0.014, 0.014, 0.008, 0xd9b44a, { umriss: 0.001 }, 12), 0, 0.161, 0));
-  bier.add(setze(zylinder(0.0305, 0.0305, 0.06, 0xf2e6c4, { umriss: false }, 16), 0, -0.02, 0));
-  bier.add(setze(zylinder(0.0306, 0.0306, 0.012, 0xc8352a, { umriss: false }, 16), 0, -0.02, 0));
-  bier.add(setze(zylinder(0.0128, 0.0128, 0.012, 0xf2e6c4, { umriss: false }, 12), 0, 0.128, 0));
+  bier.add(bierflasche({ glasMat: glas })); // gemeinsames Modell (toon.js): Glasprofil, Etiketten, Kronkorken
   // Faust: vier gekrümmte Finger vorne um die Flasche, Daumen von der anderen Seite drüber
   const faust = new THREE.Group();
   for (let f = 0; f < 4; f++) {
