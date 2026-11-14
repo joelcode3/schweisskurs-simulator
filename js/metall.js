@@ -236,7 +236,7 @@ export function baueMetall(c) {
     platzMarke.visible = false; abladeMarke.visible = true;
     klonk(0.4);
     haengen(0);
-    hilfe('Vorsichtig zum Container hinter der Werkstatt (grün)');
+    hilfe('Vorsichtig zum Metallcontainer hinter der Werkstatt (grün)');
     ui.hinweis(mz.schief ? 'Hängt schief. Langsam fahren, sonst rutscht das Bündel raus.' : 'Die Stangen hängen quer unter der Gabel: 6 m breit, langsam fahren.', 4200);
   }
 
@@ -347,7 +347,7 @@ export function baueMetall(c) {
       if (neu.has('r') || neu.has('f') || neu.has('b')) { ankoppeln(); return; }
     }
     if (mz.stangen !== 'haengt') return;
-    if (neu.has('b')) { if (imAbladePlatz()) { abladen(); return; } ui.hinweis('Noch nicht vor dem Container (grüne Fläche, Stangen längs zum Container).', 2400); }
+    if (neu.has('b')) { if (imAbladePlatz()) { abladen(); return; } ui.hinweis('Noch nicht vor dem Metallcontainer (grüne Fläche, Stangen längs zum Metallcontainer).', 2400); }
     // pendeln: Beschleunigung in Fahrtrichtung
     if (dt > 0) {
       const a = (f.v - pose.v) / dt;
@@ -394,7 +394,7 @@ export function baueMetall(c) {
       const ruck = Math.abs(pose.v) > 1.2 && Math.abs(pose.v) - Math.abs(lader.v) > Math.max(1.0, 10 * dt);
       if (mz.schnellSeit > 1.6 || ruck) { fallen('rutscht'); return; }
     }
-    if (fz2.aktiv === lader) hilfe(imAbladePlatz() ? 'B: Stahl einsortieren' : `Zum Container hinter der Werkstatt (${Math.round(Math.hypot(buendel.position.x - ABLADE.x, buendel.position.z - ABLADE.z))} m)`);
+    if (fz2.aktiv === lader) hilfe(imAbladePlatz() ? 'B: Stahl einsortieren' : `Zum Metallcontainer hinter der Werkstatt (${Math.round(Math.hypot(buendel.position.x - ABLADE.x, buendel.position.z - ABLADE.z))} m)`);
   };
   // mit dem Schlupf in der Hand einsteigen: bei laufendem Auftrag kommt er vorne an die Gabel
   const vorherEin = fz2.vorEinsteigen;
@@ -439,7 +439,7 @@ export function baueMetall(c) {
       return ['Jonas', 'Weiße Augenklappe.', []];
     }
     if (id === 'metallBuendel') {
-      if (mz.stangen === 'haengt') return ['Stahl von Eisen Meyer', 'Hängt am Schlupf unter der Gabel. Ab zum Container hinter der Werkstatt.', []];
+      if (mz.stangen === 'haengt') return ['Stahl von Eisen Meyer', 'Hängt am Schlupf unter der Gabel. Ab zum Metallcontainer hinter der Werkstatt.', []];
       return ['Stahl von Eisen Meyer', 'Acht Stangen, sechs Meter lang. Viel zu schwer zum Tragen: Weidemann mit Schlupf an der Gabel, quer davor fahren, Gabel bewegen.', []];
     }
     if (id === 'schlupf') {
@@ -456,7 +456,7 @@ export function baueMetall(c) {
       }
       if (anGabel && !hand.item && mz.stangen !== 'haengt' && pritscheFrei()) return null; // normales Menü (einsteigen); Abnehmen über den Schlupf selbst
     }
-    if (id === 'container' && mz.stangen === 'haengt') return ['Container', 'Hier kommt der Stahl rein. Mit dem Weidemann davor (grüne Fläche), dann B.', []];
+    if (id === 'container' && mz.stangen === 'haengt') return ['Metallcontainer', 'Hier kommt der Stahl rein. Mit dem Weidemann davor (grüne Fläche), dann B.', []];
     return null;
   }
 

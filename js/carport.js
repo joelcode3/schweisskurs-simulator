@@ -128,7 +128,7 @@ export function baueCarport(scene, { merke, hindernis }) {
     ww.add(f);
   };
   fenster(WB / 2 + 0.01, 1.3, 1.0, 0.55, WY + 1.25, Math.PI / 2);
-  fenster(WB / 2 + 0.01, -1.4, 0.7, 0.5, WY + 1.25, Math.PI / 2);
+  fenster(WB / 2 + 0.01, -1.78, 0.55, 0.5, WY + 1.25, Math.PI / 2); // hinter der Tür
   fenster(-WB / 2 - 0.01, 0.2, 1.4, 0.55, WY + 1.25, -Math.PI / 2);
   fenster(0, WL / 2 + 0.01, 1.4, 0.6, WY + 1.25, 0);
   fenster(0, -WL / 2 - 0.01, 1.2, 0.45, WY + 1.3, Math.PI);
@@ -136,7 +136,8 @@ export function baueCarport(scene, { merke, hindernis }) {
   tuerW.add(setze(quader(0.62, 1.75, 0.04, 0xece6d8, { umriss: 0.003 }), 0, 0, 0));
   tuerW.add(setze(new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.45, 0.045), fensterMat), 0, 0.45, 0.002));
   tuerW.add(setze(quader(0.04, 0.12, 0.06, 0x8a8f96, { umriss: 0.001 }), -0.24, -0.05, 0.03));
-  tuerW.position.set(WB / 2 + 0.02, WY + 0.95, -0.15); tuerW.rotation.y = Math.PI / 2;
+  // Tür hinter dem Radkasten (Radkasten lokal z -0,5 … 0,3; Heck ist lokal -z, das Ganze wird gespiegelt eingebaut)
+  tuerW.position.set(WB / 2 + 0.02, WY + 0.95, -0.95); tuerW.rotation.y = Math.PI / 2;
   ww.add(tuerW);
   for (let k = 0; k < 4; k++) ww.add(setze(quader(0.01, 0.02, 0.22, 0x8a8f96, { umriss: false }), WB / 2 + 0.02, WY + 0.3 + k * 0.04, -1.9));
   // Rücklichter, Kennzeichenhalter hinten
@@ -227,7 +228,7 @@ export function baueCarport(scene, { merke, hindernis }) {
   // ---------- kleine Holzterrasse vor der Tür mit Stufe, Klappstühlen und Lichterkette ----------
   const terr = new THREE.Group();
   terr.add(setze(teil(new THREE.BoxGeometry(1.8, 0.18, 2.6), 0, { material: holzMat, umriss: 0.004 }), 0, 0.09, 0));
-  terr.add(setze(teil(new THREE.BoxGeometry(0.4, 0.09, 1.0), 0, { material: holzMat, umriss: 0.003 }), 1.1, 0.045, 0));
+  terr.add(setze(teil(new THREE.BoxGeometry(0.4, 0.09, 1.0), 0, { material: holzMat, umriss: 0.003 }), 1.1, 0.045, 0.8)); // Stufe vor der Tür
   // kleines altes Zweisitzer-Sofa am Terrassenende, davor ein Getränkekasten als Tisch
   const sofa = new THREE.Group();
   const SOFA = 0x7a5a3a, SOFA_D = 0x5e4430;
