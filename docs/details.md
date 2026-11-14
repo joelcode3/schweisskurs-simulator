@@ -397,6 +397,14 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   T101 Joel fällt vom Weidemann.
 - Testmenü: T95 Joel kommt, T96 im Weidemann an der Pritsche (mit Joel und Schlupf), T97 Minispiel direkt, T98 steht, direkt
   abschleppen, T99 Gespann kurz vor der Bucht, T100 zurücksetzen.
+- Paket V1 (Bugs, 14.11.): T5 neu verkleidet: Innenraum nur Boden + Matte + Block unter dem Armaturenbrett (keine Fläche
+  mehr hinter den Scheiben), Haube EIN Blech entlang des Profils, Dach als feines Netz mit echter eingedrückter Beule
+  (Vertices verschoben, Mulde per Vertex-Farbe dunkler), größere Frontscheibe mit Sprung als Textur (nichts steht über),
+  Radhaus vorn nur als Ringe an den Seiten (keine Walze mehr zwischen den Vorderrädern), Seitenleiste endet vor dem Radlauf,
+  Spiegel mit Fuß auf der Tür und Arm. Lenkräder (Pritsche, Jeep, Weidemann) über `lenkrad(mitte, saeule, …)` in toon.js,
+  zeigen zum Fahrer. Fahrspuren hinter der Werkstatt als weiche Bänder (Catmull-Rom, Alpha-Verlauf). Nach dem Minispiel
+  stellt `weidemannDavor()` den Weidemann gerade vor die Pritsche (die Pritsche dreht beim Aufstellen Richtung Hof), Joel
+  sitzt beim Abschleppen am Steuer (joelInT5). Testmenü T115.
 
 ## Metall-Lieferung (Paket E3)
 - js/metall.js (`baueMetall`, aus spiel.js, nach pritsche.js), Minispiele `ankoppelSpiel` und `einsortierSpiel` in minispiele.js,

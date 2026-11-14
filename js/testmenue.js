@@ -245,6 +245,7 @@ export function baueTestMenue({ spiel, welt, kamera, steuerung, fahrten, fz }) {
   knopf('T96', 'Im Weidemann an der Pritsche (Joel, Schlupf dabei)', () => pr.test.testAnDiePritsche());
   knopf('T101', 'Joel fällt vom Weidemann (Aufprall)', () => pr.test.joelFaellt());
   knopf('T97', 'Minispiel Pritsche bergen (direkt)', mini(() => M.pritscheSpiel()), { laeuft: titelEnthaelt('Pritsche bergen') });
+  knopf('T115', 'Nach dem Minispiel: Pritsche steht, Weidemann direkt davor', async () => { pr.test.testAnDiePritsche(); await new Promise((r) => setTimeout(r, 800)); if (ft.aussteigen) ft.aussteigen(); pr.test.nachSpiel([]); });
   knopf('T98', 'Pritsche steht, direkt abschleppen', () => pr.test.testAbschleppen());
   knopf('T99', 'Gespann kurz vor der Bucht PRITSCHE', () => pr.test.testVorDemCarport());
   knopf('T100', 'Pritsche zurücksetzen (liegt wieder um)', () => { if (ft.aussteigen && fahrten?.faehrt) ft.aussteigen(); pr.test.zuruecksetzen(); });

@@ -5,7 +5,7 @@
 // Hühnermobil mit Peters Hühnern. Irgendwo innen neben der Straße liegt ein umgekippter VW T5 Doppelkabine mit Pritsche,
 // Reifenspuren führen von der Straße durch die Wiese zu ihm.
 import * as THREE from 'three';
-import { toon, teil, quader, rundQuader, zylinder, kugel, setze, leinwandTextur, zufall } from './toon.js';
+import { toon, teil, quader, rundQuader, zylinder, kugel, setze, leinwandTextur, zufall, lenkrad } from './toon.js';
 
 // ---------- Maße ----------
 // Ringstraße: Mittelpunkt, Radius (Straßenmitte), Breite. Mit dem entdrosselten Jeep gut 2 Minuten für eine Runde.
@@ -1029,27 +1029,77 @@ function baueT5() {
   for (const sx of [-1, 1]) t.add(setze(teil(wandGeo, LACK, { umriss: 0.005 }), sx * (HW - WAND / 2 - KANTE), 0, 0));
   const innenW = W - 2 * (WAND + KANTE) + 0.02; // füllt bündig zwischen den Seitenwänden
   const fuell = (b, h, tt, x, y, z, rx = 0) => t.add(setze(quader(b, h, tt, LACK, { umriss: false }), x, y, z, rx, 0, 0));
-  fuell(innenW, BL - 0.52, 2.22, 0, (0.52 + BL) / 2, KZ0 + 1.13);                    // Innenkörper bis zur Gürtellinie
+  // Innenkörper: unten nur bis zum Wagenboden (0,62), sonst sähe man durch die Scheiben eine Fläche; vorn ein Block unter
+  // Armaturenbrett und Haube
+  fuell(innenW, 0.1, 1.92, 0, 0.57, KZ0 + 0.96);
+  t.add(setze(quader(innenW - 0.02, 0.012, 1.9, 0x34363a, { umriss: false }), 0, 0.626, KZ0 + 0.97)); // Bodenmatte
+  fuell(innenW, 0.6, 0.16, 0, 0.9, 1.98);                                            // unter dem Armaturenbrett (bleibt unter der Haube)
   fuell(innenW, 0.46, 0.4, 0, 0.73, 2.27);                                             // Schnauze bis vorn
-  fuell(innenW, 0.05, 1.55, 0, 1.835, KZ0 + 0.79);                                     // Dach
   // Haube: dünnes Blech entlang der Profiloberkante (zwei Stücke, damit die Wölbung nach vorn mitgeht)
-  fuell(innenW, 0.05, 0.27, 0, 1.255, 2.12, 0.32);
-  fuell(innenW, 0.05, 0.27, 0, 1.13, 2.36, 0.62);
+  {
+    const h = new THREE.Shape();
+    h.moveTo(1.9, 1.33); h.lineTo(1.95, 1.33); h.quadraticCurveTo(1.99, 1.29, 2.05, 1.27);
+    h.quadraticCurveTo(2.3, 1.18, 2.4, 1.1); h.quadraticCurveTo(2.46, 1.05, 2.46, 0.96);
+    h.lineTo(2.4, 0.96); h.quadraticCurveTo(2.4, 1.03, 2.34, 1.07); h.quadraticCurveTo(2.25, 1.13, 2.03, 1.21); h.lineTo(1.9, 1.24); h.closePath();
+    const hg = new THREE.ExtrudeGeometry(h, { depth: innenW, bevelEnabled: false, curveSegments: 16 });
+    hg.translate(0, 0, -innenW / 2); hg.rotateY(-Math.PI / 2);
+    t.add(teil(hg, LACK, { umriss: false }));
+  }
   fuell(innenW, 0.36, 0.05, 0, 1.0, 2.44);                                             // Front unter der Haubenkante
   // Rückwand der Kabine mit Heckscheibe
   fuell(innenW, BL + 0.06 - 0.52, 0.05, 0, (0.52 + BL + 0.06) / 2, KZ0 + 0.025);
   fuell(innenW, 0.11, 0.05, 0, 1.805, KZ0 + 0.025);
   for (const sx of [-1, 1]) fuell(0.18, 0.4, 0.05, sx * (innenW / 2 - 0.09), 1.56, KZ0 + 0.025);
   // dunkles Radhaus vorn (sieht man durch den Radlauf)
-  t.add(setze(teil(new THREE.CylinderGeometry(RADLAUF.r - 0.01, RADLAUF.r - 0.01, innenW + 0.01, 20), 0x18181a, { umriss: false }), 0, RADLAUF.y, RADLAUF.z, 0, 0, Math.PI / 2));
-  // leicht gewölbtes Dach (fließt in die Seitenwände)
-  const wölbung = setze(teil(new THREE.CylinderGeometry(1, 1, 1.5, 24, 1, false, -0.55, 1.1), LACK, { umriss: false }), 0, 0, KZ0 + 0.78, Math.PI / 2, 0, 0);
-  wölbung.scale.set(innenW / 2 / Math.sin(0.55), 1, 0.045); wölbung.position.y = 1.86 - 0.045 * Math.cos(0.55); t.add(wölbung);
+  for (const sx of [-1, 1]) {
+    const band = new THREE.Mesh(new THREE.RingGeometry(0.34, RADLAUF.r + 0.005, 20, 1, 0, Math.PI), toon(0x18181a, { side: THREE.DoubleSide }));
+    band.rotation.y = sx * Math.PI / 2; band.position.set(sx * (innenW / 2 + 0.006), RADLAUF.y, RADLAUF.z);
+    t.add(band);
+  }
+  // Dach: gewölbtes Blech als feines Netz, mit einer deutlichen eingedrückten Beule (vom Umkippen) und einer kleinen
+  {
+    const L = 1.55, geo = new THREE.PlaneGeometry(innenW, L, 28, 30);
+    geo.rotateX(-Math.PI / 2);
+    const pos = geo.attributes.position, hw = innenW / 2, farben = [];
+    const beulen = [[-0.28, 0.25, 0.36, 0.13], [0.32, -0.35, 0.18, 0.05]]; // x, z (lokal), Radius, Tiefe
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i), zz = pos.getZ(i);
+      let y = 0.045 * (1 - (x / hw) ** 2) * Math.min(1, (L / 2 - Math.abs(zz)) / 0.08);
+      for (const [bx, bz, br, bt] of beulen) { const d = Math.hypot(x - bx, (zz - bz) * 0.8) / br; if (d < 1) y -= bt * (1 - d * d) ** 2; }
+      pos.setY(i, y);
+      // Farbe: in der Mulde dunkler (Schatten der Verformung), am Rand eine helle Kante
+      let f = 1;
+      for (const [bx, bz, br, bt] of beulen) {
+        const d = Math.hypot(x - bx, (zz - bz) * 0.8) / br;
+        if (d < 1) f = Math.min(f, 1 - 0.32 * (1 - d * d) * (bt / 0.13)); else if (d < 1.15) f = Math.max(f, 1.08);
+      }
+      farben.push(f, f, f);
+    }
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(farben, 3));
+    geo.computeVertexNormals();
+    const dach = teil(geo, LACK, { umriss: false, mat: { side: THREE.DoubleSide, vertexColors: true } });
+    dach.position.set(0, 1.858, KZ0 + 0.79);
+    t.add(dach);
+  }
   // Scheiben (durchsichtig): Front (schräg zwischen den A-Säulen), Seiten in den Ausschnitten, Heck
-  const front = new THREE.Mesh(new THREE.PlaneGeometry(innenW, 0.62), scheibe);
-  front.position.set(0, 1.57, 1.76); front.rotation.x = -0.69;
+  // Frontscheibe größer, mit Sprung (Spinnennetz als Textur auf der Scheibe, nichts steht über)
+  const sprungTex = leinwandTextur(512, 256, (g, b, h) => {
+    g.fillStyle = 'rgba(184,220,240,0.32)'; g.fillRect(0, 0, b, h);
+    const r = zufall(5), cx = b * 0.72, cy = h * 0.38;
+    g.strokeStyle = 'rgba(255,255,255,0.95)'; g.lineCap = 'round';
+    for (let i = 0; i < 13; i++) {
+      let w = (i / 13) * Math.PI * 2 + r() * 0.3, x = cx, y = cy, l = 40 + r() * 110;
+      g.lineWidth = 2.2; g.beginPath(); g.moveTo(x, y);
+      for (let k = 0; k < 6; k++) { w += (r() - 0.5) * 0.5; x += Math.cos(w) * l / 6; y += Math.sin(w) * l / 6 * 0.9; g.lineTo(x, y); g.lineWidth = Math.max(0.8, 2.2 - k * 0.3); }
+      g.stroke();
+    }
+    for (const rad of [14, 30, 52]) { g.lineWidth = 1.2; g.beginPath(); for (let k = 0; k <= 13; k++) { const w = (k / 13) * Math.PI * 2, rr = rad * (0.8 + r() * 0.4); k ? g.lineTo(cx + Math.cos(w) * rr, cy + Math.sin(w) * rr * 0.9) : g.moveTo(cx + Math.cos(w) * rr, cy + Math.sin(w) * rr * 0.9); } g.stroke(); }
+    g.fillStyle = 'rgba(255,255,255,0.8)'; g.beginPath(); g.arc(cx, cy, 5, 0, Math.PI * 2); g.fill();
+  });
+  const front = new THREE.Mesh(new THREE.PlaneGeometry(innenW, 0.7), new THREE.MeshBasicMaterial({ map: sprungTex, transparent: true, side: THREE.DoubleSide, depthWrite: false }));
+  front.position.set(0, 1.56, 1.77); front.rotation.x = -0.69;
   t.add(front);
-  for (const x of [-0.42, 0.12]) front.add(setze(quader(0.5, 0.018, 0.018, SCHW, { umriss: false }), x + 0.25, -0.27, 0.02, 0, 0, 0.18)); // Wischer
+  for (const x of [-0.42, 0.12]) front.add(setze(quader(0.5, 0.018, 0.018, SCHW, { umriss: false }), x + 0.25, -0.31, 0.02, 0, 0, 0.18)); // Wischer
   for (const sx of [-1, 1]) {
     const vorn = new THREE.Shape(); vorn.moveTo(1.08, 1.36); vorn.lineTo(1.83, 1.36); vorn.lineTo(1.5, 1.75); vorn.lineTo(1.08, 1.75); vorn.closePath();
     const sv = new THREE.Mesh(new THREE.ShapeGeometry(vorn), scheibe); sv.rotation.y = -Math.PI / 2; sv.position.x = sx * (HW - 0.04); t.add(sv);
@@ -1058,21 +1108,25 @@ function baueT5() {
   t.add(setze(new THREE.Mesh(new THREE.PlaneGeometry(innenW - 0.36, 0.4), scheibe), 0, 1.56, KZ0 - 0.005, 0, Math.PI, 0));
   // innen: Armaturenbrett, Lenkrad (Fahrer links = +x), Sitze vorn, Rückbank, Kopfstützen
   t.add(setze(rundQuader(innenW - 0.04, 0.16, 0.42, 0x2f3135, { umriss: 0.002 }, 0.05), 0, BL, 1.74));
-  const lenk = setze(teil(new THREE.TorusGeometry(0.17, 0.022, 6, 20), SCHW, { umriss: false }), 0.42, 1.46, 1.52, -0.45, 0, 0); t.add(lenk);
-  t.add(setze(zylinder(0.025, 0.025, 0.3, SCHW, { umriss: false }, 6), 0.42, 1.39, 1.64, 1.1, 0, 0));
+  t.add(lenkrad(new THREE.Vector3(0.42, 1.36, 1.5), new THREE.Vector3(0.42, 1.2, 1.72), 0.17, SCHW, 0.022));
   for (const [x, b] of [[0.42, 0.5], [-0.38, 0.86]]) {
-    t.add(setze(rundQuader(b, 0.62, 0.13, INNEN, { umriss: 0.002 }, 0.05), x, 1.3, 1.0, -0.12, 0, 0));
-    for (const kx of b > 0.6 ? [-0.2, 0.2] : [0]) t.add(setze(rundQuader(0.24, 0.16, 0.1, INNEN, { umriss: 0.002 }, 0.04), x + kx, 1.7, 0.96));
+    t.add(setze(rundQuader(b, 0.12, 0.44, INNEN, { umriss: 0.002 }, 0.04), x, 0.74, 1.2));          // Sitzfläche
+    t.add(setze(quader(b - 0.1, 0.1, 0.36, 0x26282c, { umriss: false }), x, 0.65, 1.2));            // Sitzkasten
+    t.add(setze(rundQuader(b, 0.62, 0.13, INNEN, { umriss: 0.002 }, 0.05), x, 1.08, 0.97, -0.12, 0, 0)); // Lehne
+    for (const kx of b > 0.6 ? [-0.2, 0.2] : [0]) t.add(setze(rundQuader(0.24, 0.16, 0.1, INNEN, { umriss: 0.002 }, 0.04), x + kx, 1.47, 0.93));
   }
-  t.add(setze(rundQuader(innenW - 0.08, 0.6, 0.13, INNEN, { umriss: 0.002 }, 0.05), 0, 1.3, 0.16, -0.1, 0, 0));
-  for (const kx of [-0.5, 0, 0.5]) t.add(setze(rundQuader(0.24, 0.15, 0.1, INNEN, { umriss: 0.002 }, 0.04), kx, 1.68, 0.13));
+  t.add(setze(rundQuader(innenW - 0.08, 0.12, 0.42, INNEN, { umriss: 0.002 }, 0.04), 0, 0.74, 0.4));     // Rückbank
+  t.add(setze(rundQuader(innenW - 0.08, 0.6, 0.13, INNEN, { umriss: 0.002 }, 0.05), 0, 1.08, 0.14, -0.1, 0, 0));
+  for (const kx of [-0.5, 0, 0.5]) t.add(setze(rundQuader(0.24, 0.15, 0.1, INNEN, { umriss: 0.002 }, 0.04), kx, 1.46, 0.11));
   // Türen: Fugen (aufgemalt), Griffe; Seitenschutzleiste; Spiegel an der A-Säule; Tankdeckel
   for (const sx of [-1, 1]) {
     for (const z of [0.98, 1.97]) t.add(setze(quader(0.006, 1.8 - 0.56, 0.008, 0x8a9096, { umriss: false }), sx * (HW + 0.002), (0.56 + 1.8) / 2, z));
     for (const z of [0.82, 1.78]) t.add(setze(rundQuader(0.03, 0.035, 0.14, SCHW, { umriss: false }, 0.012), sx * (HW + 0.008), BL - 0.12, z));
-    t.add(setze(quader(0.02, 0.08, 1.7, SCHW, { umriss: false }), sx * (HW + 0.005), 0.68, 0.9));
-    t.add(setze(zylinder(0.022, 0.022, 0.1, 0x2a2c30, { umriss: false }, 8), sx * (HW + 0.05), 1.42, 1.9, 0, 0, Math.PI / 2));
-    t.add(setze(rundQuader(0.07, 0.22, 0.13, SCHW, { umriss: 0.002 }, 0.035), sx * (HW + 0.12), 1.45, 1.88));
+    t.add(setze(quader(0.02, 0.08, 1.05, SCHW, { umriss: false }), sx * (HW + 0.005), 0.68, 0.58)); // endet vor dem Radlauf
+    // Spiegel: Fuß sitzt auf der Tür (vorn oben, unter der Scheibe), Arm schräg nach außen, Spiegelgehäuse daran
+    t.add(setze(rundQuader(0.03, 0.08, 0.12, SCHW, { umriss: 0.001 }, 0.012), sx * (HW + 0.005), 1.29, 1.8));
+    t.add(setze(zylinder(0.016, 0.016, 0.14, 0x2a2c30, { umriss: false }, 8), sx * (HW + 0.06), 1.33, 1.8, 0, 0, sx * -1.15));
+    t.add(setze(rundQuader(0.06, 0.2, 0.13, SCHW, { umriss: 0.002 }, 0.03), sx * (HW + 0.13), 1.4, 1.79));
   }
   t.add(setze(zylinder(0.06, 0.06, 0.01, 0xb8bcc0, { umriss: false }, 14), HW + 0.004, 0.95, 0.4, 0, 0, Math.PI / 2)); // Tankdeckel
   // Front: Grill mit Chromleisten und VW-Logo, Scheinwerfer gerade und VOR dem Blech, Blinker, Stoßstange, Kennzeichen
@@ -1169,16 +1223,7 @@ function baueT5() {
     if (z > 0) t.add(setze(teil(new THREE.TorusGeometry(0.44, 0.03, 5, 22, Math.PI), SCHW, { umriss: 0.002 }), sx * (HW + 0.005), 0.33, z, 0, sx * Math.PI / 2, 0));
     else t.add(setze(teil(new THREE.TorusGeometry(0.41, 0.04, 5, 20, Math.PI), SCHW, { umriss: 0.002 }), sx * (HW + 0.02), 0.36, z, 0, sx * Math.PI / 2, 0));
   }
-  // Schäden vom Umkippen: Beulen (dunklere Flecken mit Lichtkante) auf der linken Seite und am Dach, Kratzer, Risse in der Front
-  const beule = (x, y, z, ry, b, h) => {
-    const m = new THREE.Mesh(new THREE.CircleGeometry(1, 16), toon(LACK_D)); m.scale.set(b, h, 1); m.position.set(x, y, z); m.rotation.y = ry; t.add(m);
-    const kante = new THREE.Mesh(new THREE.RingGeometry(0.85, 1, 16, 1, 0.3, 2.2), toon(0xe4e7ea)); kante.scale.set(b, h, 1); kante.position.set(x, y, z); kante.rotation.y = ry; kante.position.x += Math.sign(x) * 0.002; t.add(kante);
-  };
-  beule(-(HW + 0.006), 0.85, 0.45, -Math.PI / 2, 0.22, 0.12);
-  beule(-(HW + 0.006), 0.72, 1.55, -Math.PI / 2, 0.16, 0.1);
-  beule(HW + 0.006, 0.9, 1.4, Math.PI / 2, 0.12, 0.08);
-  for (let k = 0; k < 6; k++) t.add(setze(quader(0.004, 0.004, 0.4 + (k % 3) * 0.2, 0xe8eaec, { umriss: false }), -(HW + 0.01), 0.7 + k * 0.05, 0.6 + (k % 2) * 0.5, 0.15 * (k % 3 - 1), 0, 0));
-  for (let k = 0; k < 4; k++) { const b = kugel(0.16 + k * 0.03, LACK_D, { umriss: false }, 8); b.scale.y = 0.18; b.position.set(-0.5 + k * 0.22, 1.9, 0.3 + (k % 2) * 0.55); t.add(b); }
-  for (let k = 0; k < 9; k++) { const w = k / 9 * Math.PI * 2; const riss = quader(0.22 + (k % 3) * 0.08, 0.006, 0.006, 0xffffff, { umriss: false }); riss.position.set(0.45 + Math.cos(w) * 0.1, 0.2 + Math.sin(w) * 0.08, 0.004); riss.rotation.z = w; front.add(riss); }
+  // Schäden vom Umkippen: Kratzer auf der linken Seite (Beule im Dach ist echt verformt, Sprung in der Scheibe ist Textur)
+  for (let k = 0; k < 6; k++) t.add(setze(quader(0.004, 0.004, 0.4 + (k % 3) * 0.2, 0xe8eaec, { umriss: false }), -(HW + 0.01), 0.75 + k * 0.05, 0.6 + (k % 2) * 0.5, 0.15 * (k % 3 - 1), 0, 0));
   return t;
 }

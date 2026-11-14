@@ -194,12 +194,16 @@ export function bauePritsche(c) {
     if (an) {
       joel.halt?.();
       modell.add(joel.wurzel);
-      joel.wurzel.position.set(0.42, 0.18, 1.15);
+      joel.wurzel.position.set(0.42, 0.8 - 0.5 * 0.9, 1.2);
       joel.wurzel.rotation.set(0, 0, 0);
+      joel.wurzel.scale.setScalar(0.9); // sonst stößt er mit dem Kopf ans Dach
       joel.sitzen(0.5);
+      joel.festhalten?.(true); // Hände nach vorn ans Lenkrad
     } else {
+      joel.festhalten?.(false);
       joel.sitzen(null);
       scene.attach(joel.wurzel);
+      joel.wurzel.scale.setScalar(1);
       joel.wurzel.rotation.set(0, joel.wurzel.rotation.y, 0);
       joel.wurzel.position.y = 0;
     }
@@ -255,6 +259,7 @@ export function bauePritsche(c) {
     if (e.abgebrochen) { pz.phase = 'amT5'; hilfe('B: Pritsche bergen'); return; }
     pz.schaeden = e.schaeden || [];
     await aufstellen();
+    weidemannDavor();
     if (pz.schaeden.length) {
       aerger(3 * pz.schaeden.length);
       ui.joelSagt(sag(JOEL.schaden), 3800);
@@ -270,14 +275,26 @@ export function bauePritsche(c) {
     pz.phase = 'bereit';
     hilfe('B: Abschleppen');
   }
+  // Weidemann gerade vor die Pritsche stellen (Blick weg von ihr), Seil passt ohne Rangieren
+  function weidemannDavor() {
+    const d = dir(t5.rotation.y), ab = T5_VORN + SEIL + 1.5;
+    const p = new THREE.Vector3(t5.position.x + d.x * ab, 0, t5.position.z + d.z * ab);
+    if (!welt.draussen.fahrbar(p.x, p.z) || !welt.draussen.fahrbar(p.x + d.x * 2, p.z + d.z * 2)) return false;
+    Object.assign(lader, { x: p.x, z: p.z, psi: t5.rotation.y, knick: 0, v: 0 });
+    fz.anwenden(lader, 0);
+    return true;
+  }
   function aufstellen() {
-    // weich auf die Räder rollen
+    // weich auf die Räder rollen und dabei mit der Schnauze Richtung Hof drehen (so geht es ohne Wenden nach Hause)
     return new Promise((res) => {
       const r0 = modell.rotation.z, y0 = modell.position.y, t0 = performance.now();
+      const ry0 = t5.rotation.y, ry1 = Math.atan2(-t5.position.x, -t5.position.z);
+      const dry = Math.atan2(Math.sin(ry1 - ry0), Math.cos(ry1 - ry0));
       const schritt = (jetzt) => {
         const k = Math.min(1, (jetzt - t0) / 1100), e = k < 0.8 ? (k / 0.8) ** 2 : 1 - Math.sin(((k - 0.8) / 0.2) * Math.PI) * 0.03;
         modell.rotation.z = r0 * (1 - Math.min(1, e));
         modell.position.y = y0 * (1 - Math.min(1, e));
+        t5.rotation.y = ry0 + dry * Math.min(1, k);
         if (k < 1) requestAnimationFrame(schritt);
         else { modell.rotation.z = 0; modell.position.y = 0; klonk(0.8); t5Hindernis(); res(); }
       };

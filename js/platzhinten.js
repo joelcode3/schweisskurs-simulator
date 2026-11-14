@@ -108,21 +108,36 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
       }
     }
   });
-  // Fahrspuren im Schotter (dunkler, festgefahren): den Weg runter und zum Carport
-  const spur = (x0, z0, x1, z1) => {
-    const l = Math.hypot(x1 - x0, z1 - z0);
-    for (const s of [-0.55, 0.55]) {
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(0.34, l), toon(0x7d776b, { transparent: true, opacity: 0.5, depthWrite: false }));
-      m.rotation.set(-Math.PI / 2, 0, Math.atan2(x1 - x0, z1 - z0));
-      const nx = (z1 - z0) / l, nz = -(x1 - x0) / l;
-      m.position.set((x0 + x1) / 2 + nx * s, 0.011, (z0 + z1) / 2 + nz * s);
+  // Fahrspuren im Schotter (dunkler, festgefahren): den Weg runter und zum Carport. Weich gerundet: zwei Bänder entlang einer
+  // glatten Kurve, Ränder laufen über die Textur weich aus (keine Ecken an den Knicken)
+  {
+    const kurve = new THREE.CatmullRomCurve3([[7.6, 3.6], [8.6, -2.5], [8.4, -8.5], [6.4, -14.5], [3.5, -18.6], [0.6, BUCHTEN.weidemann.z + 0.3], [-1.2, BUCHTEN.weidemann.z]]
+      .map(([x, z]) => new THREE.Vector3(x, 0, z)), false, 'centripetal');
+    const N = 160, pkt = kurve.getSpacedPoints(N);
+    const spurTex = leinwandTextur(64, 64, (g, b, h) => {
+      const gr = g.createLinearGradient(0, 0, b, 0);
+      gr.addColorStop(0, 'rgba(125,119,107,0)'); gr.addColorStop(0.3, 'rgba(118,112,100,0.55)'); gr.addColorStop(0.7, 'rgba(118,112,100,0.55)'); gr.addColorStop(1, 'rgba(125,119,107,0)');
+      g.fillStyle = gr; g.fillRect(0, 0, b, h);
+      const rr = zufall(9); for (let i = 0; i < 40; i++) { g.fillStyle = `rgba(80,74,64,${rr() * 0.25})`; g.fillRect(b * 0.25 + rr() * b * 0.5, rr() * h, 2, 2 + rr() * 4); }
+    }, [1, 1]);
+    spurTex.wrapT = THREE.RepeatWrapping;
+    const spurMat = new THREE.MeshBasicMaterial({ map: spurTex, transparent: true, depthWrite: false, color: 0xffffff, side: THREE.DoubleSide });
+    for (const s0 of [-0.55, 0.55]) {
+      const pos = [], uv = [], idx = [];
+      let laenge = 0;
+      for (let i = 0; i <= N; i++) {
+        const a = pkt[Math.max(0, i - 1)], b = pkt[Math.min(N, i + 1)];
+        const dx = b.x - a.x, dz = b.z - a.z, l = Math.hypot(dx, dz) || 1, nx = dz / l, nz = -dx / l;
+        if (i) laenge += pkt[i].distanceTo(pkt[i - 1]);
+        for (const [k, w] of [[0, -0.21], [1, 0.21]]) { pos.push(pkt[i].x + nx * (s0 + w), 0.011, pkt[i].z + nz * (s0 + w)); uv.push(k, laenge / 1.5); }
+        if (i) { const q = i * 2; idx.push(q - 2, q - 1, q, q - 1, q + 1, q); }
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); geo.setIndex(idx);
+      const m = new THREE.Mesh(geo, spurMat); m.renderOrder = 1;
       gruppe.add(m);
     }
-  };
-  spur(7.6, 3.6, 8.8, -7.5);
-  spur(8.8, -7.5, 6.4, -14.5);
-  spur(6.4, -14.5, 3.5, -18.6);
-  spur(3.5, -18.6, -1.2, BUCHTEN.weidemann.z);
+  }
 
   // ---------- Carport: Holzpfosten mit Stahlfüßen, Pfetten, Sparren, Wellplatten-Dach (vorne hoch, hinten tief),
   // Stirnbrett, Regenrinne mit Fallrohr, Kopfbänder, Lampe, Radstopper, Schilder unter der Pfette; Schotterboden ----------
