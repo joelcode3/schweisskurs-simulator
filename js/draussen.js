@@ -645,7 +645,6 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   for (const sx of [-0.2, 0.2]) {
     gabel.add(setze(quader(0.08, 0.6, 0.05, GRAU, { umriss: 0.003 }), sx, -0.12, 0.13));
     gabel.add(setze(quader(0.08, 0.05, 0.8, GRAU, { umriss: 0.003 }), sx, -0.4, 0.53));
-    gabel.add(setze(quader(0.08, 0.02, 0.1, GRAU, { umriss: false }), sx, -0.39, 0.96, 0.18, 0, 0));
   }
   // Hub- und Kippzylinder (grau, mit blanker Kolbenstange): werden bei jeder Armbewegung neu ausgerichtet
   const hubZyl = zylinder(0.055, 0.055, 1, GRAU, { umriss: 0.003 }, 10);

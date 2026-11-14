@@ -249,6 +249,19 @@ export function baueTestMenue({ spiel, welt, kamera, steuerung, fahrten, fz }) {
   knopf('T99', 'Gespann kurz vor der Bucht PRITSCHE', () => pr.test.testVorDemCarport());
   knopf('T100', 'Pritsche zurücksetzen (liegt wieder um)', () => { if (ft.aussteigen && fahrten?.faehrt) ft.aussteigen(); pr.test.zuruecksetzen(); });
 
+  ueberschrift('E3 Metall-Lieferung (Jonas)');
+  const me = t.metall;
+  const mphase = () => me?.mz.phase;
+  const raus = () => { if (ft.aussteigen && fahrten?.faehrt) ft.aussteigen(); };
+  knopf('T102', 'Jonas kommt (Eisen ist da)', () => me.jonasKommt(), { sperre: () => (mphase() !== 'aus' ? 'läuft schon (T110 zurücksetzen)' : null) });
+  knopf('T103', 'Weidemann am Stahl, neuer Schlupf an der Gabel', () => me.test.testAmStahl(false));
+  knopf('T104', 'Minispiel Stangen ankoppeln (direkt)', mini(() => M.ankoppelSpiel()), { laeuft: titelEnthaelt('Stangen ankoppeln') });
+  knopf('T105', 'Stangen hängen dran, am Hof (neuer Schlupf)', () => me.test.testHaengt(false, 'hof'));
+  knopf('T106', 'Stangen hängen dran, kurz vor der Werkstatt (ALTER Schlupf: reißt)', () => me.test.testHaengt(true, 'feldweg'));
+  knopf('T107', 'Stangen hängen dran, vor dem Container', () => me.test.testHaengt(false, 'container'));
+  knopf('T108', 'Minispiel Stahl einsortieren (direkt)', mini(() => M.einsortierSpiel()), { laeuft: titelEnthaelt('Stahl einsortieren') });
+  knopf('T109', 'Auftrag läuft, Jonas in der Werkstatt (zu Fuß)', () => { raus(); me.test.testStart(); });
+  knopf('T110', 'Metall-Lieferung zurücksetzen', () => { raus(); me.test.zuruecksetzen(); });
   ueberschrift('E4 Mettenden grillen');
   const gr = t.grillen;
   knopf('T111', '3 Mettenden liegen auf dem Grill (roh)', () => gr.test.testDrauf(3));

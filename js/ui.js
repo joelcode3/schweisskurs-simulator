@@ -227,6 +227,13 @@ export function joelSagt(text, ms = 4500) {
   $('lobblase').querySelector('b').textContent = 'JOEL';
   $('lob-gesicht').innerHTML = JOEL_MINI;
 }
+// Jonas (E3): lange dunkle Haare, Stoppeln, weiße Augenklappe
+const JONAS_MINI = '<path d="M5 30 Q2 8 20 6 Q38 8 35 30 L31 30 L31 18 L9 18 L9 30z" fill="#2a1c12" stroke="#111" stroke-width="1.5"/><circle cx="20" cy="22" r="12" fill="#eebda0" stroke="#111" stroke-width="2"/><path d="M9 26 Q20 38 31 26 Q29 34 20 35 Q11 34 9 26z" fill="#3a2a1c" opacity="0.55"/><path d="M7 14 L33 20" stroke="#f4f4f0" stroke-width="2"/><ellipse cx="25" cy="21" rx="5" ry="4" fill="#f8f8f4" stroke="#111" stroke-width="1.5"/><circle cx="15" cy="21" r="1.8" fill="#111"/><path d="M15 29 Q20 31 25 29" stroke="#111" stroke-width="1.5" fill="none"/>';
+export function jonasSagt(text, ms = 4500) {
+  blaseRechts(text, ms, 'normal');
+  $('lobblase').querySelector('b').textContent = 'JONAS';
+  $('lob-gesicht').innerHTML = JONAS_MINI;
+}
 // Fahrhilfe unten: Tasten beim Fahren
 export function fahrHilfe(text) {
   const el = $('fahrhilfe');
