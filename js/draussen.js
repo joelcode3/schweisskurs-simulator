@@ -833,11 +833,16 @@ export function baueDraussen(scene, { merke, hindernis, RAUM }) {
   for (let i = -5; i <= 5; i++) { const x = i * 0.06; const l = 2 * Math.sqrt(Math.max(0, 0.34 ** 2 - x * x)); feuerstelle.add(setze(zylinder(0.006, 0.006, l, 0x3a3c40, { umriss: false }, 5), x, ROST_Y, 0, Math.PI / 2, 0, 0)); }
   // alte, schwarz verkohlte Bratwurst mit Rissen
   const wurstKurve = new THREE.CatmullRomCurve3([new THREE.Vector3(-0.1, 0, -0.02), new THREE.Vector3(-0.03, 0, 0.02), new THREE.Vector3(0.05, 0, 0.01), new THREE.Vector3(0.11, 0, -0.03)]);
+  // (als eigene Gruppe: beim Grillen, Paket E4, wird sie vom Rost gekickt)
+  const alteWurst = new THREE.Group();
   const wurst = teil(new THREE.TubeGeometry(wurstKurve, 16, 0.028, 10, false), 0x1f1611, { umriss: 0.002 });
   wurst.position.set(0.05, ROST_Y + 0.025, 0.08);
-  feuerstelle.add(wurst);
-  for (const sx of [-1, 1]) feuerstelle.add(setze(kugel(0.028, 0x1f1611, { umriss: 0.002 }, 8), 0.05 + sx * 0.105 + (sx > 0 ? 0.005 : 0), ROST_Y + 0.025, 0.08 + (sx > 0 ? -0.03 : -0.02)));
-  for (let i = 0; i < 4; i++) feuerstelle.add(setze(quader(0.012, 0.004, 0.02, 0x7a4a2a, { umriss: false }), 0.0 + i * 0.035, ROST_Y + 0.047, 0.09 - (i % 2) * 0.01, 0, 0.4, 0));
+  alteWurst.add(wurst);
+  for (const sx of [-1, 1]) alteWurst.add(setze(kugel(0.028, 0x1f1611, { umriss: 0.002 }, 8), 0.05 + sx * 0.105 + (sx > 0 ? 0.005 : 0), ROST_Y + 0.025, 0.08 + (sx > 0 ? -0.03 : -0.02)));
+  for (let i = 0; i < 4; i++) alteWurst.add(setze(quader(0.012, 0.004, 0.02, 0x7a4a2a, { umriss: false }), 0.0 + i * 0.035, ROST_Y + 0.047, 0.09 - (i % 2) * 0.01, 0, 0.4, 0));
+  feuerstelle.add(alteWurst);
+  feuerstelle.userData.alteWurst = alteWurst;
+  feuerstelle.userData.ROST_Y = ROST_Y;
   setze(feuerstelle, -4.3, 0, 8.0, 0, 0, 0);
   scene.add(feuerstelle);
   merke(feuerstelle, 'feuerschale', 'Feuerschale', null);
