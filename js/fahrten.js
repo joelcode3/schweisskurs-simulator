@@ -648,6 +648,7 @@ export function baueFahrten(c) {
     einsteigenInDerNaehe,
     get faehrt() { return !!fz2.aktiv; },
     zustand: fz2,
+    grill, // Feuerschale (E4 grillen.js)
     // nur für Tests
     aufLadeflaeche,
     test: { torbenIstAm: (w) => (w === 'wirft' ? torben.wirft : torben.isst), torbenWuetet, torbenHerholen, torbenWurfZiel: wurfZiel, ladungFaellt, einsteigen, aussteigen, figurFaehrt, torbenKommt, torbenGeht, grillUm, grillAuf, dennisStelltGrillAuf, tonnenUm, tonnenAuf },
