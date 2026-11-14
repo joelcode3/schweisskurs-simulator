@@ -169,6 +169,8 @@ export function baueTestMenue({ spiel, welt, kamera, steuerung, fahrten, fz }) {
   });
 
   ueberschrift('Ereignisse');
+  // V3: Waldo sitzt auf dem Werkstatt-Sofa (dann T39: der verletzte Torben hat Vorrang, Waldo steht auf und geht)
+  knopf('T116', 'Waldo sitzt auf dem Werkstatt-Sofa (mit T39: Torben hat Vorrang)', () => { const w = t.waldoFigur, wz = t.wz; w.halt(); w.sichtbar(true); w.wurzel.position.set(-3.58, 0, 3.42); w.wurzel.rotation.y = Math.PI; w.haltung('sitzen', 0.52); wz.ort = 'sofa'; wz.draussenOrt = null; wz.segway = false; wz.beschaeftigt = false; wz.bleibtBis = Infinity; });
   knopf('T40', 'Dennis telefoniert', () => { frei(); return t.dennisTelefoniert(); }, { laeuft: () => !!z.telefon });
   knopf('T41', 'Dennis Klo-Pause', () => { frei(); return t.kloPause(); }, { laeuft: () => !!z.aufKlo });
   knopf('T42', 'Mittagspause', () => { frei(); return t.mittagspause(); }, {

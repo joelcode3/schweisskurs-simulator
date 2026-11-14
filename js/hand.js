@@ -119,6 +119,33 @@ export function baueHand(scene, kamera) {
   function flachLegen(obj, drehungY) {
     obj.rotation.set(Math.PI / 2, drehungY, 0, 'YXZ');
   }
+  // Lange Dinge (Besen, Pömpel, Rohrzange), die man an einer Wand ablegt, ragten durch die Wand: erst quer zur Blickrichtung
+  // drehen, ragt es dann immer noch hinaus, so weit nach innen schieben, bis es ganz im Raum (Werkstatt oder Bad) liegt
+  function inDenWaendenHalten(obj) {
+    const p = obj.position;
+    const raum = p.x > RAUM.xMin && p.x < RAUM.xMax && p.z > RAUM.zMin && p.z < RAUM.zMax ? RAUM
+      : p.x > BAD.xMin && p.x < BAD.xMax && p.z > BAD.zMin && p.z < BAD.zMax ? BAD : null;
+    if (!raum) return;
+    const R = 0.03;
+    const raus = () => {
+      obj.updateMatrixWorld(true);
+      const b = new THREE.Box3().setFromObject(obj, true);
+      return { b, n: Math.max(0, raum.xMin + R - b.min.x) + Math.max(0, b.max.x - raum.xMax + R) + Math.max(0, raum.zMin + R - b.min.z) + Math.max(0, b.max.z - raum.zMax + R) };
+    };
+    let r = raus();
+    if (r.n > 0) {
+      const alt = obj.rotation.clone();
+      obj.rotation.y += Math.PI / 2;
+      const r2 = raus();
+      if (r2.n < r.n) r = r2; else { obj.rotation.copy(alt); r = raus(); }
+    }
+    if (r.n > 0) {
+      const { b } = r;
+      if (b.min.x < raum.xMin + R) p.x += raum.xMin + R - b.min.x; else if (b.max.x > raum.xMax - R) p.x -= b.max.x - (raum.xMax - R);
+      if (b.min.z < raum.zMin + R) p.z += raum.zMin + R - b.min.z; else if (b.max.z > raum.zMax - R) p.z -= b.max.z - (raum.zMax - R);
+      obj.updateMatrixWorld(true);
+    }
+  }
   function bodenAbstand(obj) {
     const alt = obj.position.clone();
     obj.position.set(0, 0, 0);
@@ -184,6 +211,7 @@ export function baueHand(scene, kamera) {
       obj.scale.copy(obj.userData.ruhe.skala);
       scene.add(obj);
       obj.position.set(punkt.x, punkt.y + bodenAbstand(obj) + 0.002, punkt.z);
+      if (obj.userData.liegend) inDenWaendenHalten(obj);
       return obj;
     },
     // Werfen: fliegt in Blickrichtung, prallt ab, bleibt auf dem Boden liegen

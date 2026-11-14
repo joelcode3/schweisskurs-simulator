@@ -318,6 +318,7 @@ export function baueFahrten(c) {
   async function figurFaehrt(wer, f, { weg = false, drinnen = true } = {}) {
     const figur = figurVon[wer];
     const stil = STIL[wer][f.art];
+    if (figur.wurzel.parent?.userData.fahrzeugAnker || f.fahrer) return false; // sitzt schon in einem Fahrzeug / ist besetzt
     fz2.npc = true;
     const ein = einstiegPunkt(f);
     if (wer === 'waldo') waldo.haltung('stehen');

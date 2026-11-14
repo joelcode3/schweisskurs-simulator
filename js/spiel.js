@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { STATIONEN, AUGENHOEHE } from './world.js';
 import { FELDWEG, inHindernis } from './draussen.js';
-import { bereich } from './wege.js';
+import { bereich, freierPunkt } from './wege.js';
 import { eierKartonModell, mettendenModell, kaeseModell } from './landschaft.js';
 import { setze } from './toon.js';
 import { auftritt, hatClip, buehneBelegt } from './clips.js';
@@ -1076,6 +1076,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     hand.add(torbenVerband);
   }
   const TU_SZENE = () => dennis.wurzel.parent;
+  const RAUM_X0 = -5, RAUM_X1 = 5; // Innenwände der Werkstatt (world.js RAUM)
   // Arm so stellen, dass die Hand möglichst genau an ziel (Welt) liegt: grobe Suche, dann fein (Schulter x/z, Ellbogen x)
   function armAnpassen(arm, ziel) {
     const v = new THREE.Vector3();
@@ -1116,8 +1117,13 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     await Promise.all([Promise.race([dennis.gehZu(2.45, 2.72, 1.3), warte(9000)]), Promise.race([torben.gehZu(4.45, 2.72, 1.3), warte(9000)])]);
     const beam = welt.objekte.traegerOben;
     TU_SZENE().attach(beam);
-    // beide drehen sich Richtung Tor (−x) und nehmen den Träger auf die rechte Schulter
-    dennis.platziere(dennis.position.x, 0, dennis.position.z, -Math.PI / 2);
+    // Tassen, die auf dem oberen Träger standen, rutschen auf die unteren (schweben sonst in der Luft)
+    { const lift = beam.position.y; beam.position.y += 3; beam.updateMatrixWorld(true); welt.tassenNachrutschen(2.1, 5.0, 2.9, 4.1); beam.position.y = lift; }
+    // beide drehen sich Richtung Tor (−x) und nehmen den Träger auf die rechte Schulter; wer nicht ganz hingekommen ist
+    // (umgelaufen, Zeit um), steht jetzt genau an seinem Platz – sonst hängt der Träger schief durch die Wand
+    dennis.halt?.(); torben.halt();
+    dennis.platziere(2.45, 0, 2.72, -Math.PI / 2);
+    torben.wurzel.position.set(4.45, 0, 2.72);
     torben.wurzel.rotation.y = -Math.PI / 2;
     await warte(300);
     const traegerY = 1.44, seitlich = 0.2; // rechts = +z, wenn man nach −x schaut
@@ -1144,7 +1150,9 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     const folgen = async () => {
       while (tragen) {
         const a = dennis.position, b = torben.position;
-        beam.position.set((a.x + b.x) / 2, traegerY + Math.sin(performance.now() / 160) * 0.015, z0 + seitlich);
+        // Träger (2,4 m) bleibt ganz im Raum, auch wenn einer der beiden hängen bleibt
+        const mx = Math.max(RAUM_X0 + 1.3, Math.min(RAUM_X1 - 1.3, (a.x + b.x) / 2));
+        beam.position.set(mx, traegerY + Math.sin(performance.now() / 160) * 0.015, z0 + seitlich);
         beam.rotation.set(0, 0, 0);
         dennis.wurzel.rotation.z = -0.07; torben.wurzel.rotation.z = -0.07;
         torbenHalten();
@@ -1225,6 +1233,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       dennisSagt(sag(DENNIS.traegerUnfall.erleichtert), false, { prio: 2 });
     }
     ui.torbenSagt(sag(TORBEN.danke), 3500);
+    // der verletzte Torben hat Vorrang: sitzt Waldo auf dem Sofa, steht er auf und geht
+    waldoMachtSofaFrei();
     // Träger liegt jetzt halt da, wo er hingefallen ist; Torben steht auf und legt sich aufs Sofa
     const p = torben.position.clone();
     torbenLiegt(false, p.x, p.z, -Math.PI / 2);
@@ -1241,6 +1251,12 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     torben.posenSperre(false); // Spaghetti wieder in der Hand
     const tb = fahrten.zustand.torben;
     tb.da = true; tb.unterwegs = false; tb.bisWeg = sekundenSeitStart() + 30;
+  }
+  // Sofa in der Werkstatt: gehört dem verletzten Torben, solange er verarztet wird und dort liegt
+  const torbenBrauchtSofa = () => TU.zustand === 'verarztet' || TU.zustand === 'sofa';
+  async function waldoMachtSofaFrei() {
+    for (let i = 0; i < 20 && wz.beschaeftigt; i++) await warte(500);
+    if (wz.ort === 'sofa' && waldoDa()) await waldoGeht();
   }
   function torbenUnfallUpdate() {
     const t = sekundenSeitStart();
@@ -1369,7 +1385,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   // hinlaufen; kommt er (langsames Gerät, verlaufen) nicht an, steht er danach direkt dort
   async function davidHin(x, zz, tempo = 1.1) {
     await Promise.race([david.gehZu(x, zz, tempo), warte(12000)]);
-    if (Math.hypot(david.wurzel.position.x - x, david.wurzel.position.z - zz) > 0.4) { david.halt?.(); david.wurzel.position.set(x, 0, zz); }
+    if (Math.hypot(david.wurzel.position.x - x, david.wurzel.position.z - zz) > 0.4) { david.halt?.(); const q = freierPunkt({ x, z: zz }); david.wurzel.position.set(q.x, 0, q.z); } // nie in ein Möbel/die Tonne setzen
   }
   const davidFrei = () => dv.da && !dv.beschaeftigt && !(sd.id === 'david' && (sd.kumpelDa || sd.unterwegs));
   async function davidKommt(mitCoco = Math.random() < 0.5) {
@@ -1785,7 +1801,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   async function waldoBesuch() {
     if (waldoDa() || wz.beschaeftigt) return;
     wz.beschaeftigt = true;
-    const moeglich = WALDO_ORTE.filter((o) => o.ort !== 'sofa' || (z.mittag !== 'gerade' && dennis.modus !== 'sitzen' && dennis.modus !== 'schlafen'));
+    const moeglich = WALDO_ORTE.filter((o) => o.ort !== 'sofa' || (z.mittag !== 'gerade' && dennis.modus !== 'sitzen' && dennis.modus !== 'schlafen' && !torbenBrauchtSofa()));
     const o = moeglich[Math.floor(Math.random() * moeglich.length)];
     waldo.haltung('handy');
     await waldoKommt();
@@ -1928,7 +1944,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     await warte(1800);
     if (dennisSiehts() && !z.vorbei) { aerger(3); dennisSagt(sag(DENNIS.pumpeIstDa), true, { prio: 1 }); }
     // setzt sich danach aufs Sofa (wie bei einem normalen Besuch), statt gleich wieder hinter die Werkstatt zu rennen
-    const sofaFrei = z.mittag !== 'gerade' && dennis.modus !== 'sitzen' && dennis.modus !== 'schlafen';
+    const sofaFrei = z.mittag !== 'gerade' && dennis.modus !== 'sitzen' && dennis.modus !== 'schlafen' && !torbenBrauchtSofa();
     if (sofaFrei && !z.vorbei) {
       const sofa = WALDO_ORTE.find((x) => x.ort === 'sofa');
       await waldoPlatzNehmen(sofa);
@@ -4358,7 +4374,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   return {
     zustand: z,
     klick,
-    test: { pritsche, metall, dv, davidKommt, davidGeht, davidGassi, davidRohrzange, davidLoescher, davidTischgestell, davidRauchtMitJonny, get z() { return z; }, OFEN_SCHRITTE, ofenStand, schutzAn, armAnpassen, setzeWut(w) { z.wut = w; aktualisieren(); }, zeitVor(sek) { z.start -= sek * 1000; }, waescheUebernehmen, kaffeeKochen, hulaHoop, einkaufen, kiwiEssen, TU, torbenUnfall, torbenVerarzten, torbenVerbandAn, spanngurtEreignis, gurteHinwerfen, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
+    test: { waldoFigur: waldo, pritsche, metall, dv, davidKommt, davidGeht, davidGassi, davidRohrzange, davidLoescher, davidTischgestell, davidRauchtMitJonny, get z() { return z; }, OFEN_SCHRITTE, ofenStand, schutzAn, armAnpassen, setzeWut(w) { z.wut = w; aktualisieren(); }, zeitVor(sek) { z.start -= sek * 1000; }, waescheUebernehmen, kaffeeKochen, hulaHoop, einkaufen, kiwiEssen, TU, torbenUnfall, torbenVerarzten, torbenVerbandAn, spanngurtEreignis, gurteHinwerfen, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
     stationWaehlen,
     intro,
     aktualisieren,

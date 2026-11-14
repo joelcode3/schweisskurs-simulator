@@ -501,6 +501,8 @@ export function baueWaldo(scene) {
     schauZu(punkt) { blickZiel = punkt; },
     sichtbar(an) { wurzel.visible = an; },
     gehZu(x, z, t = 1.1) {
+      // sitzt im Fahrzeug (Anker): nicht in Fahrzeug-Koordinaten loslaufen (sonst sitzt man meterweit daneben in der Luft)
+      if (wurzel.parent?.userData.fahrzeugAnker) return Promise.resolve(false);
       if (zielFertig) zielFertig(false);
       weg = wegNach(wurzel.position, { x, z });
       const p = weg.shift();

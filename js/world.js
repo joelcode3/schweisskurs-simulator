@@ -978,6 +978,8 @@ export function baueWelt(scene) {
   kreideSchild.position.set(0.3, 0.4, 0.1 - 0.12 - 0.009);
   kreideSchild.rotation.y = Math.PI;
   traeger.add(kreideSchild);
+  traeger.updateMatrixWorld(true);
+  oben.attach(kreideSchild); // Kreide-Schild steht auf dem oberen Träger: geht mit, wenn Torben und Dennis ihn wegtragen
   setze(traeger, 3.55, 0, RAUM.zMax - 0.5, 0, 0, 0);
   scene.add(traeger);
   merke(traeger, 'traeger', 'Stahlträger', null);
@@ -3240,6 +3242,18 @@ export function baueWelt(scene) {
     akkuAufWerkbank() { scene.add(akku); akku.position.set(1.08, 0.905, -2.72); akku.rotation.set(0, -0.6, 0); akku.scale.setScalar(1); akku.visible = true; },
     akkuRepariert() { akkuDreck.visible = false; },
     tassen,
+    // Tassen in einem Bereich fallen auf die nächste Fläche darunter (z. B. wenn der obere Stahlträger weggetragen wird)
+    tassenNachrutschen(xMin, xMax, zMin, zMax) {
+      for (const t of tassen) {
+        if (t.parent !== scene || !t.visible || t.userData.aufgeraeumt) continue;
+        const p = t.position;
+        if (p.x < xMin || p.x > xMax || p.z < zMin || p.z > zMax) continue;
+        // höchste Fläche knapp um die Tasse (sie steht nicht auf einem Punkt, sondern auf ihrem Boden)
+        let y = 0;
+        for (const [dx, dz] of [[0, 0], [0.035, 0], [-0.035, 0], [0, 0.035], [0, -0.035]]) y = Math.max(y, oberflaecheBei(p.x + dx, p.z + dz, p.y - 0.01));
+        if (y < p.y - 0.01) p.y = y;
+      }
+    },
     tassenVerteilen,
     tasseAufKuehlschrank,
     tassenAbholen,
@@ -3302,7 +3316,8 @@ export function baueWelt(scene) {
       const drin = (q, rr) => x > q.xMin + rr && x < q.xMax - rr && z > q.zMin + rr && z < q.zMax - rr;
       if (drin(RAUM, r) || drin(BAD, r)) return true;
       if (draussen.begehbar(x, z, r)) return true;
-      return kloOffen && x > KLO_TUER.xMin + 0.15 && x < KLO_TUER.xMax - 0.15 && z > RAUM.zMax - 0.7 && z < BAD.zMin + 0.7;
+      // Durchgang etwas breiter (0,65 m statt 0,55 m), man blieb sonst leicht an der Türkante hängen
+      return kloOffen && x > KLO_TUER.xMin + 0.1 && x < KLO_TUER.xMax - 0.1 && z > RAUM.zMax - 0.7 && z < BAD.zMin + 0.7;
     },
     istDraussen: (x, z) => draussen.istDraussen(x, z),
     draussen,

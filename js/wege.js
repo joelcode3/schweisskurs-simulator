@@ -9,8 +9,9 @@ const HT_INNEN = { x: HINTERTUER.mitte, z: RAUM.zMin + 0.75 }, HT_AUSSEN = { x: 
 const WC_WERKSTATT = { x: 1.4, z: 3.4 }, WC_BAD = { x: 1.4, z: 4.6 };
 // Hindernisse draußen (Mauern mit etwas Abstand) und Eckpunkte drumherum
 const KAESTEN = [
-  { xMin: RAUM.xMin - 0.45, xMax: RAUM.xMax + 0.45, zMin: RAUM.zMin - 0.45, zMax: RAUM.zMax + 0.4 },
-  { xMin: BAD.xMin - 0.45, xMax: BAD.xMax + 0.45, zMin: RAUM.zMax, zMax: BAD.zMax + 0.45 },
+  // (Abstand 0,65 ab Innenkante: die Außenwand ist gut 10 cm dick, so bleibt gut ein halber Meter bis zur Wand)
+  { xMin: RAUM.xMin - 0.65, xMax: RAUM.xMax + 0.65, zMin: RAUM.zMin - 0.65, zMax: RAUM.zMax + 0.6 },
+  { xMin: BAD.xMin - 0.65, xMax: BAD.xMax + 0.65, zMin: RAUM.zMax, zMax: BAD.zMax + 0.65 },
   // Schrottplatz hinterm Haus (der Gang von der Hintertür bleibt frei) und die Pfosten vom Carport
   ...SCHROTT_KAESTEN.map((k) => ({ xMin: k.xMin - 0.3, xMax: k.xMax + 0.3, zMin: k.zMin - 0.3, zMax: k.zMax + 0.3 })),
   { xMin: CONTAINER.xMin - 0.3, xMax: CONTAINER.xMax + 0.3, zMin: CONTAINER.zMin - 0.3, zMax: RAUM.zMin }, // Container an der Rückwand
@@ -42,17 +43,42 @@ export function setzeDynamisch(f) { dynamisch = f; }
 const abst = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 const drin = (p, k) => p.x > k.xMin && p.x < k.xMax && p.z > k.zMin && p.z < k.zMax;
 
-// Draußen von a nach b: kürzester Weg über die Ecken um Häuser und Fahrzeuge (Dijkstra, wenige Knoten).
-// Ein Fahrzeug, in dem Start oder Ziel liegt (z. B. Einsteigen), zählt nicht.
-function aussenWeg(a, b) {
+// Punkt, der in einem der Kästen liegt, zum nächsten freien Rand schieben (mehrere Runden, falls Kästen aneinander liegen)
+function rausSchieben(p, kaesten) {
+  const q = { x: p.x, z: p.z };
+  for (let runde = 0; runde < 4; runde++) {
+    const k = kaesten.find((c) => drin(q, c));
+    if (!k) break;
+    const opt = [{ x: k.xMin - 0.06, z: q.z }, { x: k.xMax + 0.06, z: q.z }, { x: q.x, z: k.zMin - 0.06 }, { x: q.x, z: k.zMax + 0.06 }]
+      .sort((m, n) => abst(m, q) - abst(n, q));
+    q.x = opt[0].x; q.z = opt[0].z;
+  }
+  return q;
+}
+// Feste Hindernisse draußen (Wohnwagen, Terrasse, Sofa, Mülltonnen, Bäume …) aus welt.hindernisse; nur die in der Nähe
+// der Strecke a-b (sonst wird der Graph zu groß). Mit Abstand, damit niemand an Kanten entlangschrammt.
+const AUSSEN_R = 0.3;
+function aussenHindernisseNahe(a, b, rand = 4) {
+  const x0 = Math.min(a.x, b.x) - rand, x1 = Math.max(a.x, b.x) + rand, z0 = Math.min(a.z, b.z) - rand, z1 = Math.max(a.z, b.z) + rand;
+  return innenHindernisse().filter((h) => !h.niedrig && !h.keinWeg && bereich((h.xMin + h.xMax) / 2, (h.zMin + h.zMax) / 2) === 'draussen'
+    && h.xMax > x0 && h.xMin < x1 && h.zMax > z0 && h.zMin < z1 && (h.xMax - h.xMin) < 12 && (h.zMax - h.zMin) < 12)
+    .map((h) => ({ xMin: h.xMin - AUSSEN_R, xMax: h.xMax + AUSSEN_R, zMin: h.zMin - AUSSEN_R, zMax: h.zMax + AUSSEN_R }));
+}
+// Draußen von a nach b: kürzester Weg über die Ecken um Häuser, Fahrzeuge und feste Hindernisse (Dijkstra).
+// Ein Fahrzeug oder Hindernis, in dem Start oder Ziel liegt (z. B. Einsteigen, Sofa), zählt nicht. Liegen Start oder Ziel
+// im Abstandsstreifen an der Hauswand, wird erst aus dem Streifen herausgegangen (früher ging es dann quer durch die Wand).
+function aussenWeg(a0, b0) {
+  const a = rausSchieben(a0, KAESTEN), b = rausSchieben(b0, KAESTEN);
+  const vorn = abst(a, a0) > 0.01 ? [a] : [], hinten = abst(b, b0) > 0.01 ? [b0] : [];
   const dyn = dynamisch().map((h) => ({ xMin: h.xMin - 0.35, xMax: h.xMax + 0.35, zMin: h.zMin - 0.35, zMax: h.zMax + 0.35 }))
     .filter((k) => !drin(a, k) && !drin(b, k));
-  const kaesten = [...KAESTEN, ...dyn];
+  const fest = aussenHindernisseNahe(a, b).filter((k) => !drin(a, k) && !drin(b, k));
+  const kaesten = [...KAESTEN, ...dyn, ...fest];
   const frei = (p, q) => !kaesten.some((k) => schneidet(p, q, k));
   const imKasten = (p) => kaesten.some((k) => drin(p, k));
-  if (frei(a, b) || KAESTEN.some((k) => drin(a, k) || drin(b, k))) return [b];
+  if (frei(a, b)) return [...vorn, b, ...hinten];
   const ecken = [...ECKEN];
-  for (const k of dyn) for (const x of [k.xMin - 0.3, k.xMax + 0.3]) for (const z of [k.zMin - 0.3, k.zMax + 0.3]) ecken.push({ x, z });
+  for (const k of [...dyn, ...fest]) for (const x of [k.xMin - 0.3, k.xMax + 0.3]) for (const z of [k.zMin - 0.3, k.zMax + 0.3]) ecken.push({ x, z });
   const knoten = [a, ...ecken.filter((e) => !imKasten(e)), b];
   const n = knoten.length, dist = new Array(n).fill(Infinity), vor = new Array(n).fill(-1), fertig = new Array(n).fill(false);
   dist[0] = 0;
@@ -67,10 +93,10 @@ function aussenWeg(a, b) {
       if (d < dist[k]) { dist[k] = d; vor[k] = i; }
     }
   }
-  if (vor[n - 1] < 0) return [b];
+  if (vor[n - 1] < 0) return [...vorn, b, ...hinten];
   const weg = [];
   for (let k = n - 1; k > 0; k = vor[k]) weg.unshift(knoten[k]);
-  return weg;
+  return [...vorn, ...weg, ...hinten];
 }
 
 // Andere Figuren (und der Spieler): wer läuft, weicht aus, statt durchzugehen. main.js meldet die Positionen an.
@@ -109,6 +135,11 @@ const inWerkstatt = (p) => p.x > RAUM.xMin + 0.3 && p.x < RAUM.xMax - 0.3 && p.z
 // Steht der Punkt in einem Möbel, wird er zum nächsten freien Rand geschoben
 export function freierPunkt(p) {
   const q = { x: p.x, z: p.z };
+  if (bereich(q.x, q.z) === 'draussen') {
+    const nah = innenHindernisse().filter((h) => !h.niedrig && !h.keinWeg && bereich((h.xMin + h.xMax) / 2, (h.zMin + h.zMax) / 2) === 'draussen')
+      .map((h) => ({ xMin: h.xMin - 0.2, xMax: h.xMax + 0.2, zMin: h.zMin - 0.2, zMax: h.zMax + 0.2 }));
+    return rausSchieben(q, nah);
+  }
   if (bereich(q.x, q.z) !== 'werkstatt') return q;
   for (let runde = 0; runde < 3; runde++) {
     const k = innenKaesten().find((c) => q.x > c.xMin + 0.05 && q.x < c.xMax - 0.05 && q.z > c.zMin + 0.05 && q.z < c.zMax - 0.05);

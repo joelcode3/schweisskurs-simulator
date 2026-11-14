@@ -853,6 +853,24 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   T92 | Ereignisse | David geht mit Coco Gassi
   T93 | Ereignisse | David geht wieder
 
+## Paket V3 (Bugs Kollisionen, Wege, Sitzen, 14.11.)
+- wege.js: draußen zählen jetzt auch die festen Hindernisse aus welt.hindernisse (Wohnwagen, Sofa, Bierkasten, Tonnen,
+  Bäume …, nur die nahe an der Strecke, ohne niedrige und `keinWeg`); Start/Ziel im Abstandsstreifen an Werkstatt/Bad werden
+  erst herausgeschoben (vorher ging es dann quer durch die Wand). Abstand zu Werkstatt- und Badwand 0,65 statt 0,45.
+  `freierPunkt` schiebt auch draußen aus Hindernissen (David wird bei Zeitüberschreitung nie mehr in die Tonne gesetzt).
+- Coco folgt Davids gelaufener Spur (Brotkrumen), steht sie, wird der Platz neben David einmal festgelegt (freier Punkt im
+  selben Bereich): kein Zappeln, nicht mehr in der Werkbank.
+- Figuren im Fahrzeug (Anker `userData.fahrzeugAnker`) ignorieren gehZu (jonny.js-Gerüst und waldo.js); figurFaehrt startet
+  nicht, wenn die Figur schon in einem Fahrzeug sitzt. Ursache für „Torben sitzt 3–5 m neben dem Fahrzeug in der Luft“ und
+  „Weidemann fährt ohne Fahrer“: ein Lauf-Befehl während der Fahrt lief in Fahrzeug-Koordinaten.
+- Hühnernetz: 32 tangentiale Wandstücke statt 48 Pfosten-Kästchen (Jeep-Ecken rutschten in die Lücken). drehHindernis hat
+  dafür einen optionalen Winkel.
+- Torben-Unfall: beide stehen beim Aufnehmen genau an ihrem Platz, Träger bleibt beim Tragen im Raum; Tassen auf dem oberen
+  Träger rutschen auf die unteren (welt.tassenNachrutschen); Kreide-Schild „HEB 200“ hängt am oberen Träger (geht mit).
+  Der verletzte Torben hat das Werkstatt-Sofa: Waldo setzt sich dann nicht hin bzw. steht auf und geht (Testmenü T116).
+- Abgelegte lange Dinge (Besen, Pömpel, Zange) werden quer gedreht bzw. in den Raum geschoben (hand.js inDenWaendenHalten).
+  WC-Tür: Durchgang 0,65 statt 0,55 m.
+
 ## Offene Fäden und Ungetestetes (Übergabe 1.11.2026)
 - Ausraster-Videos: #54 (frisches Video-Element, bis zu 6 Versuche, canplay) ist nur eine Absicherung. Die Ursache ist unklar, im Test lief
   alles (WebM statt H.264, Chromium kann hier kein H.264). Der Betreiber prüft im echten Browser (Browser und Anzeige erfragen: schwarz,
