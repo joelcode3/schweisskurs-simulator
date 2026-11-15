@@ -78,7 +78,7 @@
 - Alle Dennis-Sätze stehen in `js/texte.js` (IDs = Dateinamen der Aufnahmen), `spiel.js` nutzt nur diese.
 - `stimme/stimme.json` + `stimme/<id>.mp3`: Aufnahmen pro Satz, Mund bewegt sich nach Lautstärke.
   Pflege mit `node tools/stimme.mjs liste|eintragen`, siehe `stimme/LIESMICH.md`.
-- Die Jungs sprechen ALLE Sätze ein. Dateinamen kurz: dennis1 … dennis540 (530–540 Mettenden grillen, 516–529 Metall-Lieferung, 505–515 Pritsche, 502–504 David, 498–501 Torben wirft, 491–497 Torben-Unfall, 489–490 Pömpel gespritzt, 487–488 Gurte geworfen, 485–486 Flaschen räumen, 483–484 Bierflasche werfen, 469–475 Spanngurt, 476–478 Paletten, 479–482 Hofladen), jonny1 … jonny62 (58–62 Mettende), waldo1 … waldo47 (43–47 Mettende), torben1 … torben36 (25–31 wütet/isst, 32–36 Mettende), kumpel1 … kumpel12 (KUMPEL, 8–12 Mettende), david1 … david23 (DAVID, 19–23 Mettende), joel1 … joel15 (JOEL), jonas1 … jonas10 (JONAS) (Endung
+- Die Jungs sprechen ALLE Sätze ein. Dateinamen kurz: dennis1 … dennis542 (541–542 Bremsenreiniger, 530–540 Mettenden grillen, 516–529 Metall-Lieferung, 505–515 Pritsche, 502–504 David, 498–501 Torben wirft, 491–497 Torben-Unfall, 489–490 Pömpel gespritzt, 487–488 Gurte geworfen, 485–486 Flaschen räumen, 483–484 Bierflasche werfen, 469–475 Spanngurt, 476–478 Paletten, 479–482 Hofladen), jonny1 … jonny62 (58–62 Mettende), waldo1 … waldo47 (43–47 Mettende), torben1 … torben36 (25–31 wütet/isst, 32–36 Mettende), kumpel1 … kumpel12 (KUMPEL, 8–12 Mettende), david1 … david23 (DAVID, 19–23 Mettende), joel1 … joel15 (JOEL), jonas1 … jonas10 (JONAS) (Endung
   .mp3/.m4a/.wav, Groß-/Kleinschreibung egal). Zuordnung Kurzname -> Satz-ID steht in stimme/zuordnung.csv (vom Projektchat).
   Nummern sind fest und verschieben sich NIE; neue Sätze bekommen die nächste freie Nummer (dennis367 …) und eine neue Zeile.
   Schlüssel in texte.js NIE umbenennen, neue Sätze nur ergänzen. IDs: Dennis wie alleSaetze(), telefon.G.Z = Gespräch G,
@@ -88,8 +88,8 @@
 - KI-Stimmklon ist in dieser Umgebung nicht möglich (huggingface.co gesperrt). Stimmproben nie ins Repo (öffentlich).
 
 ## Stand der Pull Requests (9.11.2026)
-- Alles bis #74 gemergt. In Arbeit: N1 (Zweig n1-metall-grillen), N2 (Zweig n2-pritsche-optik). Neue Zweige immer von `origin/main`.
-- Versionsnummer zuletzt `v=20261114-6` (N2; N1 hat -5). Testmenü bis T116, nächste freie T117.
-- Nächste freie Satz-Nummern (aus stimme/zuordnung.csv): dennis541, jonny63, waldo48, torben37, kumpel13, david24, joel16, jonas11.
+- Alles bis #75 gemergt. Offen: #76 N2 (Zweig n2-pritsche-optik); N3 im Zweig n3-kollisionen-wege. Neue Zweige immer von `origin/main`.
+- Versionsnummer zuletzt `v=20261114-6` (N2). Testmenü bis T117, nächste freie T118 (N3 hat T118–T119).
+- Nächste freie Satz-Nummern (aus stimme/zuordnung.csv): dennis543, jonny63, waldo48, torben37, kumpel13, david24, joel16, jonas11.
 - Projektchat-Session: `session_0136irctrTCA3M7n4aU75GVP` (seit 9.11., Projektchat Nr. 4).
 - Offene Fäden und Ungetestetes: `docs/details.md`, Abschnitt „Offene Fäden und Ungetestetes“ (zuerst lesen, wenn ein neuer Chat startet).

@@ -409,6 +409,8 @@ export const DENNIS = {
     bekommtRoh: ['Roh?! Willst du mich vergiften?'],
     keine: ['Alle weg? Und für mich keine? Na super.'],
     asche: ['Die Wurst liegt in der Asche! Die kannst du wegschmeißen.'],
+    wusch: ['WUSCH! Hahaha! So macht man ein Feuer an!'],
+    feuerball: ['Bist du bescheuert?! Meine Augenbrauen! Das halbe Dorf hat das gesehen!'],
   },
 };
 
