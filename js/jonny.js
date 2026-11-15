@@ -479,7 +479,7 @@ export function baueJonny(scene, opts = {}) {
 
   // ---------- Kopf: breites Gesicht, Vollbart, runde Brille, lange Haare, grüne Cap mit Schirm ----------
   const kopf = new THREE.Group();
-  kopf.position.y = (A.halsKurz ? 0.84 : 0.9) * KY;
+  kopf.position.y = (A.halsHoehe ?? (A.halsKurz ? 0.84 : 0.9)) * KY;
   rumpf.add(kopf);
   const schaedel = teil(new THREE.SphereGeometry(0.165, 22, 18), F.HAUT);
   schaedel.scale.set(0.98, 1.12, 0.98);

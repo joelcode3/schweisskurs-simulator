@@ -467,7 +467,7 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
   };
   // Leistung: alle Teile eines Gegenstands (Haufen, Gitterbox, Mofa …) mit gleichem Aussehen zu einem Mesh
   // zusammenfassen (sieht gleich aus, aber viel weniger Zeichenaufrufe). Anklickbar bleibt der Gegenstand als Ganzes.
-  const _inv = new THREE.Matrix4(), _rel = new THREE.Matrix4();
+  const _inv = new THREE.Matrix4(), _rel = new THREE.Matrix4(), _nm = new THREE.Matrix3();
   function schluessel(m) {
     if (m.isShaderMaterial) return 'u|' + m.uuid;
     return [m.type, m.color?.getHex(), m.map?.uuid || '', m.side, m.transparent, m.opacity, m.alphaTest, m.depthWrite].join('|');
@@ -476,11 +476,13 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     let n = 0, ni = 0;
     for (const g of geos) { n += g.attributes.position.count; ni += g.index ? g.index.count : g.attributes.position.count; }
     const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), uv = new Float32Array(n * 2), idx = new Uint32Array(ni);
+    const mitUmriss = geos.some((g) => g.attributes.umrissNormal), un = mitUmriss ? new Float32Array(n * 3) : null;
     let o = 0, oi = 0;
     for (const g of geos) {
       const c = g.attributes.position.count;
       pos.set(g.attributes.position.array, o * 3);
       if (g.attributes.normal) nor.set(g.attributes.normal.array, o * 3);
+      if (un) un.set((g.attributes.umrissNormal || g.attributes.normal).array, o * 3);
       if (g.attributes.uv) uv.set(g.attributes.uv.array.subarray(0, c * 2), o * 2);
       if (g.index) { const a = g.index.array; for (let k = 0; k < a.length; k++) idx[oi + k] = a[k] + o; oi += a.length; }
       else { for (let k = 0; k < c; k++) idx[oi + k] = k + o; oi += c; }
@@ -490,6 +492,7 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     m.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     m.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
     m.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    if (un) m.setAttribute('umrissNormal', new THREE.BufferAttribute(un, 3));
     m.setIndex(new THREE.BufferAttribute(idx, 1));
     m.computeBoundingSphere();
     return m;
@@ -505,6 +508,8 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
       const geo = o.geometry.index ? o.geometry.clone() : o.geometry.clone();
       _rel.multiplyMatrices(_inv, o.matrixWorld);
       geo.applyMatrix4(_rel);
+      // Umriss-Normalen (toon.js) wie die Normalen mitdrehen
+      if (geo.attributes.umrissNormal) { geo.attributes.umrissNormal.applyNormalMatrix(_nm.getNormalMatrix(_rel)); geo.attributes.umrissNormal.normalize?.(); }
       gruppen.get(k).geos.push(geo);
       weg.push(o);
     });

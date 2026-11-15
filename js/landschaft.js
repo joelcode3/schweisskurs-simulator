@@ -1023,8 +1023,10 @@ function baueT5() {
   profil.absarc(RADLAUF.z, RADLAUF.y, RADLAUF.r, wA, Math.PI - wA, false);
   profil.lineTo(KZ0 + 0.1, 0.5); profil.quadraticCurveTo(KZ0, 0.5, KZ0, 0.52);
   const loch = (pts) => { const h = new THREE.Path(); h.moveTo(...pts[0]); for (const q of pts.slice(1)) h.lineTo(...q); h.closePath(); return h; };
-  profil.holes.push(loch([[1.08, 1.36], [1.83, 1.36], [1.5, 1.75], [1.08, 1.75]]));
-  profil.holes.push(loch([[0.18, 1.36], [0.92, 1.36], [0.92, 1.75], [0.18, 1.75]]));
+  // Fenster groß, Säulen schlank (A-Säule ca. 7 cm, B-Säule 8 cm, C-Säule 10 cm, Rahmen oben 6 cm)
+  const FV = [[1.03, 1.33], [1.885, 1.33], [1.54, 1.795], [1.03, 1.795]], FH = [[0.05, 1.33], [0.95, 1.33], [0.95, 1.795], [0.05, 1.795]];
+  profil.holes.push(loch(FV));
+  profil.holes.push(loch(FH));
   const WAND = 0.04, KANTE = 0.03;
   const wandGeo = new THREE.ExtrudeGeometry(profil, { depth: WAND, bevelEnabled: true, bevelThickness: KANTE, bevelSize: KANTE, bevelSegments: 4, curveSegments: 14 });
   wandGeo.translate(0, 0, -WAND / 2); wandGeo.rotateY(-Math.PI / 2);
@@ -1048,9 +1050,11 @@ function baueT5() {
     t.add(teil(hg, LACK, { umriss: false }));
   }
   fuell(innenW, 0.36, 0.05, 0, 1.0, 2.44);                                             // Front unter der Haubenkante
+  // runde Nase zwischen Frontplatte (mit den Scheinwerfern) und Haube: kein harter Knick mehr
+  t.add(setze(teil(new THREE.CylinderGeometry(0.07, 0.07, innenW + 0.03, 20, 1, false), LACK, { umriss: 0.003 }), 0, 1.02, 2.395, 0, 0, Math.PI / 2));
   // Rückwand der Kabine mit Heckscheibe
   fuell(innenW, BL + 0.06 - 0.52, 0.05, 0, (0.52 + BL + 0.06) / 2, KZ0 + 0.025);
-  fuell(innenW, 0.11, 0.05, 0, 1.805, KZ0 + 0.025);
+  fuell(innenW, 0.08, 0.05, 0, 1.82, KZ0 + 0.025);
   for (const sx of [-1, 1]) fuell(0.18, 0.4, 0.05, sx * (innenW / 2 - 0.09), 1.56, KZ0 + 0.025);
   // dunkles Radhaus vorn (sieht man durch den Radlauf)
   for (const sx of [-1, 1]) {
@@ -1082,6 +1086,14 @@ function baueT5() {
     const dach = teil(geo, LACK, { umriss: false, mat: { side: THREE.DoubleSide, vertexColors: true } });
     dach.position.set(0, 1.858, KZ0 + 0.79);
     t.add(dach);
+    // Dach hat Dicke: innen der Himmel (hellgrau, 5 cm tiefer, folgt der Beule), vorn eine runde Dachkante über der Scheibe,
+    // hinten eine Abschlusskante (vorher war es nur eine dünne Fläche)
+    const himmelGeo = geo.clone();
+    const himmel = new THREE.Mesh(himmelGeo, toon(0xb8bab6, { side: THREE.DoubleSide }));
+    himmel.position.set(0, 1.858 - 0.05, KZ0 + 0.79); himmel.scale.set(0.98, 1, 0.97);
+    t.add(himmel);
+    t.add(setze(teil(new THREE.CylinderGeometry(0.03, 0.03, innenW, 12), LACK, { umriss: false }), 0, 1.83, KZ0 + 0.79 + L / 2 - 0.02, 0, 0, Math.PI / 2));
+    t.add(setze(quader(innenW, 0.055, 0.04, LACK, { umriss: false }), 0, 1.835, KZ0 + 0.79 - L / 2 + 0.02));
   }
   // Scheiben (durchsichtig): Front (schräg zwischen den A-Säulen), Seiten in den Ausschnitten, Heck
   // Frontscheibe größer, mit Sprung (Spinnennetz als Textur auf der Scheibe, nichts steht über)
@@ -1103,9 +1115,9 @@ function baueT5() {
   t.add(front);
   for (const x of [-0.42, 0.12]) front.add(setze(quader(0.5, 0.018, 0.018, SCHW, { umriss: false }), x + 0.25, -0.31, 0.02, 0, 0, 0.18)); // Wischer
   for (const sx of [-1, 1]) {
-    const vorn = new THREE.Shape(); vorn.moveTo(1.08, 1.36); vorn.lineTo(1.83, 1.36); vorn.lineTo(1.5, 1.75); vorn.lineTo(1.08, 1.75); vorn.closePath();
+    const vorn = new THREE.Shape(); vorn.moveTo(...FV[0]); for (const q of FV.slice(1)) vorn.lineTo(...q); vorn.closePath();
     const sv = new THREE.Mesh(new THREE.ShapeGeometry(vorn), scheibe); sv.rotation.y = -Math.PI / 2; sv.position.x = sx * (HW - 0.04); t.add(sv);
-    const hinten = new THREE.Mesh(new THREE.PlaneGeometry(0.74, 0.39), scheibe); hinten.position.set(sx * (HW - 0.04), 1.555, 0.55); hinten.rotation.y = Math.PI / 2; t.add(hinten);
+    const hinten = new THREE.Mesh(new THREE.PlaneGeometry(FH[1][0] - FH[0][0], FH[2][1] - FH[0][1]), scheibe); hinten.position.set(sx * (HW - 0.04), (FH[0][1] + FH[2][1]) / 2, (FH[0][0] + FH[1][0]) / 2); hinten.rotation.y = Math.PI / 2; t.add(hinten);
   }
   t.add(setze(new THREE.Mesh(new THREE.PlaneGeometry(innenW - 0.36, 0.4), scheibe), 0, 1.56, KZ0 - 0.005, 0, Math.PI, 0));
   // innen: Armaturenbrett, Lenkrad (Fahrer links = +x), Sitze vorn, Rückbank, Kopfstützen

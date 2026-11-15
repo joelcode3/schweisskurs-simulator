@@ -918,6 +918,35 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   und unten. Feuerschale: Füße unten nach außen. Wohnwagentür hinter dem Radkasten (lokal z -0,95), Fenster dahinter
   nach hinten, Stufe vor der Tür. Schotter bis an die Werkstattwand (Umriss x 5,03 / z -4,03), Löwenzahn und Gras an der Wand.
 
+## Paket N1 (Nacharbeit Metall-Lieferung und Grillen, 14.11.)
+- Stahl am Weidemann pendelt (metall.js pendelSchritt): vor/zurück beim Anfahren und Bremsen, seitlich in Kurven, leichtes
+  Drehen beim Lenken; Pendel ca. 1 m, gedämpft, in Teilschritten gerechnet (stabil bei ruckeligen Bildern), Ausschlag
+  gedrosselt (×0,35 bzw. ×0,5). Gegen Ruckeln beim Anstoßen: erst 0,9 s nach dem letzten Kontakt zurückdrehen, Klonk und
+  Ärger frühestens alle 0,6 s.
+- Minispiel Ankoppeln neu „Hau-Ruck mit Jonas“ (Räuberleiter-Prinzip, ankoppelSpiel): Jonas hebelt ein Ende mit der
+  Brechstange hoch (Zeiger im grünen Feld = RUCK, 3 Stufen), dann Schlupf mit gedrückter Maus unter die Lücke schieben
+  (nur so weit, wie die Lücke reicht), Jonas sagt „Mehr zu mir!/Zu weit!/Da!“, Kraftbalken; dann einhängen wie bisher.
+  Ergebnis unverändert { versatz, schief, versuche }. Alte Version als ankoppelSpielKlassisch (Testmenü T117).
+- Einsortieren: Profile liegen nebeneinander auf den Armen (plaetze(): alter Bestand zuerst, je nach Breite), nichts
+  überlappt mehr.
+- Grillen: Anzünden mit Bremsenreiniger (Maus halten = sprühen, Leertaste = Feuerzeug, Stichflamme; zu wenig = Puff,
+  zu viel = Feuerball, Panne „Augenbrauen angesengt“), Ergebnis e.anzuenden. Würste per Maus vom Rost auf ein altes
+  Stück Pappe rechts neben dem Grill ziehen (kein Enter, kein Knopf mehr); alle runter = fertig. Dennis: grillen.wusch
+  (dennis541), grillen.feuerball (dennis542, +3 Wut).
+- Feuer in der Feuerschale: weiche Flammenzungen (Sprites mit Verlauf, additiv, flackern), Glutbett-Textur, runde Funken,
+  weiche Rauchschwaden.
+## Paket N2 (Pritsche und Optik, 14.11.)
+- Umrisse (toon.js umriss): die Hülle wird jetzt entlang gemittelter Normalen (Attribut umrissNormal, je Position aus allen
+  angrenzenden Flächenrichtungen) aufgeblasen statt entlang der harten Flächennormalen. Vorher fielen die Hüllenflächen an
+  jeder Kante (Quader!) auseinander, die Kontur hatte sichtbaren Abstand. platzhinten.js zusammenfassen() nimmt das Attribut
+  mit (gedreht wie die Normalen). Ladezeit im Test etwa +1,5 s.
+- Pritsche: Joel sitzt tiefer (Kopf nicht mehr über dem Dach), Fenster größer und Säulen/Dachrahmen schlanker (FV/FH in
+  baueT5), Dach mit Dicke (Himmel innen, Dachkanten vorn und hinten), runde Nase zwischen Frontplatte und Haube.
+  Liegt die Pritsche auf der Seite, sitzt ihr Hindernis-Kasten seitlich verschoben über dem Dach (Weidemann fährt nicht
+  mehr durch), gleich beim Start gesetzt.
+- David: Kopf höher (halsHoehe 0,875), dickerer Hals, Kragenwulst enger und etwas höher, Halsausschnitt geschlossen.
+- Schraubstock neu (Drehteller, Amboss, Führung, geriffelte Backeneinsätze, Spindel mit Gewinde und Knebel). Milchtüte als
+  echte Giebelpackung (Dachflächen, Siegelnaht, Schraubdeckel, Etikett mit Kuhflecken).
 ## Paket N3 (Kollisionen und Wege, 15.11.)
 - wege.js: Steht Start oder Ziel im Abstandsstreifen eines Möbels/Hindernisses, zählt es mit kleinem Rand (0,06 m) statt
   gar nicht (drinnen und draußen). Vorher liefen Figuren, die dicht an etwas standen (z. B. David an der Rohrzange neben

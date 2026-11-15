@@ -19,8 +19,9 @@ function umrissMaterial(dicke) {
       uniforms: { dicke: { value: dicke } },
       vertexShader: `
         uniform float dicke;
+        attribute vec3 umrissNormal;
         void main() {
-          vec3 p = position + normal * dicke;
+          vec3 p = position + umrissNormal * dicke;
           #ifdef USE_INSTANCING
             p = (instanceMatrix * vec4(p, 1.0)).xyz;
           #endif
@@ -33,7 +34,38 @@ function umrissMaterial(dicke) {
   return umrissCache.get(dicke);
 }
 
+// Für den Umriss gemittelte Normalen pro Eckpunkt (alle Flächen, die sich an einer Position treffen): so bleibt die
+// aufgeblasene Hülle an Kanten geschlossen und liegt eng am Teil. Mit den harten Flächennormalen (Quader!) fielen die
+// Hüllen-Flächen an jeder Kante auseinander, der schwarze Rand sah aus, als hätte er Abstand zum Teil.
+function umrissNormalen(geo) {
+  if (geo.attributes.umrissNormal) return;
+  const pos = geo.attributes.position, n = pos.count, idx = geo.index;
+  const schl = new Array(n), summe = new Map();
+  for (let i = 0; i < n; i++) schl[i] = `${Math.round(pos.getX(i) * 1e4)},${Math.round(pos.getY(i) * 1e4)},${Math.round(pos.getZ(i) * 1e4)}`;
+  const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3(), ab = new THREE.Vector3(), ac = new THREE.Vector3();
+  const dreiecke = idx ? idx.count / 3 : n / 3;
+  for (let t = 0; t < dreiecke; t++) {
+    const i0 = idx ? idx.getX(t * 3) : t * 3, i1 = idx ? idx.getX(t * 3 + 1) : t * 3 + 1, i2 = idx ? idx.getX(t * 3 + 2) : t * 3 + 2;
+    a.fromBufferAttribute(pos, i0); b.fromBufferAttribute(pos, i1); c.fromBufferAttribute(pos, i2);
+    ab.subVectors(b, a); ac.subVectors(c, a); ab.cross(ac); // Länge = doppelte Fläche (große Flächen zählen mehr)
+    if (ab.lengthSq() < 1e-14) continue;
+    ab.normalize(); // jede angrenzende Fläche gleich stark, sonst kippt die Hülle an kleinen Fasen weg
+    for (const i of [i0, i1, i2]) { const k = schl[i]; const v = summe.get(k); if (v) { if (!v.some((w) => w.dot(ab) > 0.999)) v.push(ab.clone()); } else summe.set(k, [ab.clone()]); }
+  }
+  const nor = geo.attributes.normal, arr = new Float32Array(n * 3), m = new THREE.Vector3();
+  for (let i = 0; i < n; i++) {
+    const liste = summe.get(schl[i]);
+    m.set(0, 0, 0);
+    if (liste) for (const w of liste) m.add(w);
+    if (m.lengthSq() < 1e-8) { if (nor) m.fromBufferAttribute(nor, i); else m.set(0, 1, 0); }
+    m.normalize();
+    arr[i * 3] = m.x; arr[i * 3 + 1] = m.y; arr[i * 3 + 2] = m.z;
+  }
+  geo.setAttribute('umrissNormal', new THREE.BufferAttribute(arr, 3));
+}
+
 export function umriss(mesh, dicke = 0.012) {
+  umrissNormalen(mesh.geometry);
   const u = new THREE.Mesh(mesh.geometry, umrissMaterial(dicke));
   u.raycast = () => {};
   u.userData.umriss = true;
