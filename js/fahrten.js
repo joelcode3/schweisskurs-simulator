@@ -9,6 +9,7 @@ import * as ui from './ui.js';
 import { TORBEN_PLATZ } from './torben.js';
 import { FELDWEG, inHindernis, muellTeil, MUELL_NAMEN, MUELL_ARTEN } from './draussen.js';
 import { gelaendeHoehe, eierKaputtModell, wurstModell } from './landschaft.js';
+import { wegNach } from './wege.js';
 
 // Vorerst steckt der Schlüssel im Hoflader (Betreiber: später gibt Dennis ihn raus, wenn man etwas damit erledigen muss)
 export const LADER_SCHLUESSEL_STECKT = true;
@@ -311,8 +312,16 @@ export function baueFahrten(c) {
   // ---------- Figuren fahren ----------
   function parkt(f) { return !f.fahrer && !f.gesperrt && Math.hypot(f.x - f.park.x, f.z - f.park.z) < 1.0 && f.g.visible; }
   function einstiegPunkt(f) { return f.g.localToWorld(new THREE.Vector3(f.art === 'lader' ? 1.0 : 1.05, 0, f.sitz.z)); }
+  // Frist je Punkt nach der echten Weglänge (vorher fest 12 s, zu kurz für den Weg zum Carport); hängt die Figur trotzdem
+  // fest, springt sie zum Punkt
   async function geheWeg(figur, punkte, tempo = 1.3) {
-    for (const p of punkte) if (!(await Promise.race([figur.gehZu(p.x, p.z, tempo), warte(12000).then(() => false)]))) return false;
+    for (const p of punkte) {
+      let l = 0, q = figur.wurzel.position;
+      for (const w of wegNach(q, p)) { l += Math.hypot(w.x - q.x, w.z - q.z); q = w; }
+      const ok = await Promise.race([figur.gehZu(p.x, p.z, tempo), warte(6000 + (l / Math.max(0.3, tempo)) * 2000).then(() => 'zeit')]);
+      if (ok === 'zeit') { figur.halt?.(); if (figur.wurzel.parent?.userData?.fahrzeugAnker) return false; figur.wurzel.position.set(p.x, figur.wurzel.position.y, p.z); continue; }
+      if (!ok) return false;
+    }
     return true;
   }
   async function figurFaehrt(wer, f, { weg = false, drinnen = true } = {}) {

@@ -58,11 +58,11 @@ function rausSchieben(p, kaesten) {
 // Feste Hindernisse draußen (Wohnwagen, Terrasse, Sofa, Mülltonnen, Bäume …) aus welt.hindernisse; nur die in der Nähe
 // der Strecke a-b (sonst wird der Graph zu groß). Mit Abstand, damit niemand an Kanten entlangschrammt.
 const AUSSEN_R = 0.3;
-function aussenHindernisseNahe(a, b, rand = 4) {
+function aussenHindernisseNahe(a, b, rand = 4, roh = false) {
   const x0 = Math.min(a.x, b.x) - rand, x1 = Math.max(a.x, b.x) + rand, z0 = Math.min(a.z, b.z) - rand, z1 = Math.max(a.z, b.z) + rand;
   return innenHindernisse().filter((h) => !h.niedrig && !h.keinWeg && bereich((h.xMin + h.xMax) / 2, (h.zMin + h.zMax) / 2) === 'draussen'
     && h.xMax > x0 && h.xMin < x1 && h.zMax > z0 && h.zMin < z1 && (h.xMax - h.xMin) < 12 && (h.zMax - h.zMin) < 12)
-    .map((h) => ({ xMin: h.xMin - AUSSEN_R, xMax: h.xMax + AUSSEN_R, zMin: h.zMin - AUSSEN_R, zMax: h.zMax + AUSSEN_R }));
+    .map((h) => (roh ? h : { xMin: h.xMin - AUSSEN_R, xMax: h.xMax + AUSSEN_R, zMin: h.zMin - AUSSEN_R, zMax: h.zMax + AUSSEN_R }));
 }
 // Draußen von a nach b: kürzester Weg über die Ecken um Häuser, Fahrzeuge und feste Hindernisse (Dijkstra).
 // Ein Fahrzeug oder Hindernis, in dem Start oder Ziel liegt (z. B. Einsteigen, Sofa), zählt nicht. Liegen Start oder Ziel
@@ -70,9 +70,12 @@ function aussenHindernisseNahe(a, b, rand = 4) {
 function aussenWeg(a0, b0) {
   const a = rausSchieben(a0, KAESTEN), b = rausSchieben(b0, KAESTEN);
   const vorn = abst(a, a0) > 0.01 ? [a] : [], hinten = abst(b, b0) > 0.01 ? [b0] : [];
-  const dyn = dynamisch().map((h) => ({ xMin: h.xMin - 0.35, xMax: h.xMax + 0.35, zMin: h.zMin - 0.35, zMax: h.zMax + 0.35 }))
-    .filter((k) => !drin(a, k) && !drin(b, k));
-  const fest = aussenHindernisseNahe(a, b).filter((k) => !drin(a, k) && !drin(b, k));
+  // wie drinnen: liegt Start oder Ziel im Abstandsstreifen, zählt das Hindernis mit kleinem Rand (nur im Hindernis selbst
+  // fällt es weg)
+  const rand = (h, r) => ({ xMin: h.xMin - r, xMax: h.xMax + r, zMin: h.zMin - r, zMax: h.zMax + r });
+  const nimm = (liste, r) => liste.map((h) => { let k = rand(h, r); if (drin(a, k) || drin(b, k)) { k = rand(h, 0.06); if (drin(a, k) || drin(b, k)) return null; } return k; }).filter(Boolean);
+  const dyn = nimm(dynamisch(), 0.35);
+  const fest = nimm(aussenHindernisseNahe(a, b, 4, true), AUSSEN_R);
   const kaesten = [...KAESTEN, ...dyn, ...fest];
   const frei = (p, q) => !kaesten.some((k) => schneidet(p, q, k));
   const imKasten = (p) => kaesten.some((k) => drin(p, k));
@@ -105,6 +108,13 @@ export function setzeFiguren(f) { andere = f; }
 // d = normierte Laufrichtung (wird angepasst): steht jemand bis 0,9 m voraus und seitlich näher als 0,5 m,
 // lenkt man seitlich weg (zur Seite, auf der mehr Platz ist)
 // rest = Abstand bis zum Ziel: wer hinter dem Ziel steht (oder genau dort), stört nicht
+// Ein Ausweich-Schritt darf nicht in ein Möbel oder durch eine Wand führen
+function ausweichFrei(pos, dx, dz) {
+  const x = pos.x + dx * 0.45, z = pos.z + dz * 0.45;
+  if (bereich(x, z) !== bereich(pos.x, pos.z)) return false;
+  return !innenHindernisse().some((h) => !h.niedrig && !h.keinWeg && x > h.xMin - 0.12 && x < h.xMax + 0.12 && z > h.zMin - 0.12 && z < h.zMax + 0.12
+    && !(pos.x > h.xMin - 0.12 && pos.x < h.xMax + 0.12 && pos.z > h.zMin - 0.12 && pos.z < h.zMax + 0.12));
+}
 export function ausweichen(pos, d, rest = Infinity) {
   for (const o of andere()) {
     if (o === pos) continue;
@@ -113,10 +123,12 @@ export function ausweichen(pos, d, rest = Infinity) {
     if (vor <= 0.05 || vor > 0.9 || vor > rest + 0.2) continue;
     const seit = ox * -d.z + oz * d.x; // >0: steht auf der Seite (-d.z, d.x)
     if (Math.abs(seit) > 0.5) continue;
-    const w = (seit > 0 ? -1 : 1) * 0.9; // weg von ihr drehen (+w dreht zur Seite (-d.z, d.x) hin)
-    const c = Math.cos(w), sn = Math.sin(w);
-    const nx = d.x * c - d.z * sn, nz = d.x * sn + d.z * c;
-    d.x = nx; d.z = nz;
+    // weg von ihr drehen (+w dreht zur Seite (-d.z, d.x) hin); geht das nicht (Möbel, Wand), andere Seite, sonst geradeaus
+    for (const w of [(seit > 0 ? -1 : 1) * 0.9, (seit > 0 ? 1 : -1) * 0.9]) {
+      const c = Math.cos(w), sn = Math.sin(w);
+      const nx = d.x * c - d.z * sn, nz = d.x * sn + d.z * c;
+      if (ausweichFrei(pos, nx, nz)) { d.x = nx; d.z = nz; return d; }
+    }
     return d;
   }
   return d;
@@ -153,9 +165,20 @@ export function freierPunkt(p) {
 }
 // In der Werkstatt von a nach b um Möbel herum (Ecken-Dijkstra wie draußen); Start/Ziel in einem Möbel: dieses zählt nicht
 function innenWeg(a, b) {
-  const alle = innenKaesten().filter((k) => !drin(a, k) && !drin(b, k));
+  // Steht Start oder Ziel dicht an einem Möbel (im Abstandsstreifen), zählt dieses Möbel nur mit kleinem Rand statt gar
+  // nicht (vorher liefen Figuren, die dicht an der Werkbank standen, quer durch sie hindurch). Nur wenn der Punkt im Möbel
+  // selbst liegt, fällt es weg.
+  const mitRand = (h, r) => ({ xMin: h.xMin - r, xMax: h.xMax + r, zMin: h.zMin - r, zMax: h.zMax + r });
+  const alle = [];
+  for (const h of innenHindernisse()) {
+    if (h.niedrig) continue;
+    let k = mitRand(h, INNEN_R);
+    if (drin(a, k) || drin(b, k)) { k = mitRand(h, 0.06); if (drin(a, k) || drin(b, k)) continue; }
+    alle.push(k);
+  }
+  const mitVorn = (w) => w;
   const frei = (p, q) => !alle.some((k) => schneidet(p, q, k));
-  if (frei(a, b)) return [b];
+  if (frei(a, b)) return mitVorn([b]);
   const ecken = [];
   for (const k of alle) for (const x of [k.xMin - 0.05, k.xMax + 0.05]) for (const z of [k.zMin - 0.05, k.zMax + 0.05]) {
     const e = { x, z };
@@ -175,10 +198,10 @@ function innenWeg(a, b) {
       if (d < dist[k]) { dist[k] = d; vor[k] = i; }
     }
   }
-  if (vor[n - 1] < 0) return [b];
+  if (vor[n - 1] < 0) return mitVorn([b]);
   const weg = [];
   for (let k = n - 1; k > 0; k = vor[k]) weg.unshift(knoten[k]);
-  return weg;
+  return mitVorn(weg);
 }
 
 // Wegpunkte von (von) nach (nach), ohne den Startpunkt

@@ -918,6 +918,23 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   und unten. Feuerschale: Füße unten nach außen. Wohnwagentür hinter dem Radkasten (lokal z -0,95), Fenster dahinter
   nach hinten, Stufe vor der Tür. Schotter bis an die Werkstattwand (Umriss x 5,03 / z -4,03), Löwenzahn und Gras an der Wand.
 
+## Paket N3 (Kollisionen und Wege, 15.11.)
+- wege.js: Steht Start oder Ziel im Abstandsstreifen eines Möbels/Hindernisses, zählt es mit kleinem Rand (0,06 m) statt
+  gar nicht (drinnen und draußen). Vorher liefen Figuren, die dicht an etwas standen (z. B. David an der Rohrzange neben
+  der Werkbank), quer hindurch. Ausweichen vor anderen Figuren lenkt nie in Möbel oder durch Wände.
+- Prüfskript (Playwright, nicht im Repo): 30 Standardziele (Werkstatt, Bad, Tür, Hof, Terrasse, Carport, Container …),
+  alle 870 Wege gegen welt.hindernisse und Wände (nur durch Türen). Vorher 30 Wege mit Problem (20× durch die Werkbank
+  von der Zange aus, 10× durch den geparkten Jeep vom Hof aus), nachher 0.
+- lauf() (spiel.js) und geheWeg() (fahrten.js): Frist je Punkt nach der echten Weglänge (6 s + 2 s je m/Tempo) statt fest
+  15/12 s; läuft sie ab, springt die Figur zum Punkt weiter. rausgehen() blendet nie mehr drinnen aus (bei Unterbrechung erst
+  ganz raus).
+- Torben-Unfall: z.spielerFrei – solange Dennis und Torben den Träger holen (und Dennis selbst verarztet), kann der
+  Spieler weiter klicken und arbeiten (nur Dennis/Torben anklicken = Hinweis). Verarzten nur, wenn Torben wirklich in der
+  Werkstatt am Boden liegt (torbenLiegtDa); wird er im Zustand „liegt“ bewegt, wird er an seinen Platz zurückgelegt; während
+  des ganzen Unfalls gilt tb.unterwegs (kein Wegfahren/Weggehen über fahrten.js). Keine Mittagspause während des Unfalls;
+  schläft oder sitzt Dennis, wenn die Frist abläuft, steht er erst auf (Mittagspause ist dann vorbei), auf dem Klo wartet er.
+- Testmenü: T118 Torben liegt sofort verletzt, T119 Frist vorbei (Dennis hilft selbst).
+
 ## Offene Fäden und Ungetestetes (Übergabe 1.11.2026)
 - Ausraster-Videos: #54 (frisches Video-Element, bis zu 6 Versuche, canplay) ist nur eine Absicherung. Die Ursache ist unklar, im Test lief
   alles (WebM statt H.264, Chromium kann hier kein H.264). Der Betreiber prüft im echten Browser (Browser und Anzeige erfragen: schwarz,
