@@ -180,6 +180,7 @@ export const DENNIS = {
       'Das ist das Wetter. Immer hinten links. Hilf mir mal!',
     ],
     danke: ['Danke dir! Ohne dich läg ich da noch. Und erzähl das keinem.', 'Puh, danke. Das bleibt unter uns, klar?', 'Danke! Du hast was gut bei mir. Ein bisschen.'],
+    selbst: ['Na toll. Dann steh ich halt alleine auf. Hinten links! Danke für nix.'],
   },
   fegen: ['Na guck. Ordnung ist das halbe Schweißen.', 'Sauber! So sieht eine Werkstatt aus.', 'Geht doch. Besen ist dein Freund.'],
 
@@ -228,6 +229,7 @@ export const DENNIS = {
     selbstHolen: ['Finger weg, die hol ich selber runter! Frag mich einfach.'],
     sieb: ['Halt! Erst das Flusensieb sauber machen! Sonst fängt der Trockner Feuer!', 'Flusensieb! Raus damit und ausblasen, sonst brennt die Bude!'],
     danke: ['Ah, frische Wäsche! Riecht ja wie neu. Danke dir, echt.', 'Trocken und warm! Du bist ein Schatz. Das vergess ich dir nicht.'],
+    muffig: ['Die Wäsche liegt hier rum und wird muffig! Dann mach ich das eben selber.'],
     dankeHalb: ['Danke. Auch wenn mein Hoodie jetzt kneift.'],
   },
   stromwuerfel: ['Aua! Man, wer hängt die Scheißdinger immer so tief?!', 'AU! Schon wieder dieser Würfel! Wer hat den so tief gehängt?!', 'Mein Kopf! Irgendwann reiß ich die Dinger ab!', 'Wer hängt denn Steckdosen auf Kopfhöhe?! Ehrlich!'],

@@ -248,6 +248,7 @@ export function baueFahrten(c) {
   }
   async function dennisStelltGrillAuf() {
     z.dennisRaeumt = true;
+    (z.zuSpaet ||= []).push({ text: 'Zu spät: Dennis stellt den Grill selbst auf', seit: sekunden() });
     dennis.stimmung('sauer');
     dennisSagt(sag(DENNIS.grillSelbst), true, { prio: 1 });
     for (const p of [TUER_INNEN, TUER_AUSSEN, { x: -4.3, z: 6.6 }]) await Promise.race([dennis.gehZu(p.x, p.z, 1.6), warte(9000)]);
@@ -288,6 +289,7 @@ export function baueFahrten(c) {
   }
   async function dennisStelltTonnenAuf() {
     z.dennisRaeumt = true;
+    (z.zuSpaet ||= []).push({ text: 'Zu spät: Dennis stellt die Mülltonnen selbst auf', seit: sekunden() });
     dennis.stimmung('sauer');
     dennisSagt(sag(DENNIS.tonnenSelbst), true, { prio: 1 });
     for (const p of [TUER_INNEN, TUER_AUSSEN, { x: -3.6, z: 6.4 }]) await Promise.race([dennis.gehZu(p.x, p.z, 1.6), warte(9000)]);
@@ -655,6 +657,8 @@ export function baueFahrten(c) {
     menue,
     palettenGezaehlt, // auch für Tests
     update,
+    // Müllteile, die um die Tonnen herum liegen (für die Aufgabenliste)
+    muellRest: () => T.tonnen.children.filter((c) => c.userData.liegeMuell && c.visible).length,
     einsteigenInDerNaehe,
     get faehrt() { return !!fz2.aktiv; },
     zustand: fz2,
