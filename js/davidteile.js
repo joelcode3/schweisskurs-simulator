@@ -171,14 +171,18 @@ export function davidErweitern(c) {
     const hals = [];
     for (let i = 0; i <= 24; i++) {
       const w = -Math.PI * 0.82 + (i / 24) * Math.PI * 1.64; // 0 = hinten
-      const r = 0.098 + 0.006 * Math.cos(w);
-      hals.push(new THREE.Vector3(Math.sin(w) * r, 0.735 * KY + 0.02 * Math.cos(w) * 0.5 + 0.012, -Math.cos(w) * r * 0.95));
+      const r = 0.089 + 0.005 * Math.cos(w); // enger am Hals (vorher klaffte eine Lücke zwischen Kragen und Hals)
+      hals.push(new THREE.Vector3(Math.sin(w) * r, 0.745 * KY + 0.02 * Math.cos(w) * 0.5 + 0.012, -Math.cos(w) * r * 0.95));
     }
     // vorne die beiden Enden zur Brustmitte runterziehen (V)
     const vL = [new THREE.Vector3(-0.05, 0.69 * KY, 0.11), new THREE.Vector3(-0.012, 0.645 * KY, 0.125)];
     const vR = [new THREE.Vector3(0.05, 0.69 * KY, 0.11), new THREE.Vector3(0.012, 0.645 * KY, 0.125)];
     const pfad = [...vL.slice().reverse(), ...hals, ...vR];
-    rumpf.add(teil(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pfad), 90, 0.022, 10, false), 0, { material: hoodMat, umriss: 0.0022 }));
+    rumpf.add(teil(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pfad), 90, 0.027, 12, false), 0, { material: hoodMat, umriss: 0.0022 }));
+    // Stoff zwischen Kragenwulst und Hals (Halsausschnitt innen): schließt die Lücke, leicht dunkler
+    const ausschnitt = new THREE.Mesh(new THREE.CylinderGeometry(0.071, 0.092, 0.05, 20, 1, true), toon(HOODIE_D, { side: THREE.DoubleSide }));
+    ausschnitt.position.set(0, 0.735 * KY + 0.005, -0.004); ausschnitt.scale.set(1, 1, 0.96);
+    rumpf.add(ausschnitt);
     // Innenseite der Kapuzenöffnung (etwas dunkler) sichtbar am V
     const innen = teil(new THREE.CircleGeometry(0.03, 3), HOODIE_D, noUmr);
     innen.position.set(0, 0.675 * KY, 0.118); innen.rotation.x = -0.35; innen.scale.set(1, 1.3, 1);
