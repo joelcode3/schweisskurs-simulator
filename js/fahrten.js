@@ -655,6 +655,8 @@ export function baueFahrten(c) {
     menue,
     palettenGezaehlt, // auch für Tests
     update,
+    // Müllteile, die um die Tonnen herum liegen (für die Aufgabenliste)
+    muellRest: () => T.tonnen.children.filter((c) => c.userData.liegeMuell && c.visible).length,
     einsteigenInDerNaehe,
     get faehrt() { return !!fz2.aktiv; },
     zustand: fz2,

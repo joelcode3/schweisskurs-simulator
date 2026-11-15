@@ -964,6 +964,20 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   schläft oder sitzt Dennis, wenn die Frist abläuft, steht er erst auf (Mittagspause ist dann vorbei), auf dem Klo wartet er.
 - Testmenü: T118 Torben liegt sofort verletzt, T119 Frist vorbei (Dennis hilft selbst).
 
+## Paket A1 (Icons und Aufgabenliste, 15.11.)
+- Ring-Icons unten rechts (aufgabenUpdate) neu: Mülltonnen (75 s, Dennis stellt selbst auf), Grill (75 s), Dennis
+  aufhelfen (Hüfte, HUEFTE_FRIST 90 s: danach steht er allein auf, +6 Wut, dennis543 huefte.selbst), Wäsche (fertig in
+  Maschine oder Trockner, WAESCHE_FRIST 90 s: Dennis holt sie selbst, +5 Wut, dennis544 waesche.muffig, Zustand
+  z.waesche = 'dennis'), Leiter für Jonny (45 s, danach gibt Jonny auf). Tassen nicht mehr als Ring (nur Liste).
+- Kackepumpe: Ring und Meckern nur solange sie dreckig ist (imWeg); abgewaschen = nichts stinkt mehr, Zurückstellen
+  steht nur noch in der Liste.
+- Auftragszettel links: vom Ofen „N Schritte erledigt“ (zusammengefasst), der letzte erledigte, der aktuelle und der
+  nächste Schritt, dann „noch N weitere Schritte“. Darunter alle offenen Nebenaufgaben (jede aktiv): Torben verarzten,
+  Dennis aufhelfen, Kackepumpe abwaschen/zurückstellen, Leiter, Wäsche (aktueller Schritt), Akkuschrauber, Mülltonnen,
+  Grill, Tassen, Flaschen, Spanngurte, Pritsche (Joel), Stahl (Jonas), Mettenden. Erledigte Einmal-Aufgaben stehen 15 s
+  mit Haken da, abgelaufene verschwinden sofort. Liste wird bei jeder Änderung neu gezeichnet (aufgabenListeAuffrischen).
+- Testmenü: T120 Wäsche fertig und wartet, T121 Wartefristen vorbei (Hüfte, Wäsche).
+
 ## Offene Fäden und Ungetestetes (Übergabe 1.11.2026)
 - Ausraster-Videos: #54 (frisches Video-Element, bis zu 6 Versuche, canplay) ist nur eine Absicherung. Die Ursache ist unklar, im Test lief
   alles (WebM statt H.264, Chromium kann hier kein H.264). Der Betreiber prüft im echten Browser (Browser und Anzeige erfragen: schwarz,
