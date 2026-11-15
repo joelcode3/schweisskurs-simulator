@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { STATIONEN, AUGENHOEHE } from './world.js';
 import { FELDWEG, inHindernis } from './draussen.js';
-import { bereich, freierPunkt } from './wege.js';
+import { bereich, freierPunkt, wegNach } from './wege.js';
 import { eierKartonModell, mettendenModell, kaeseModell } from './landschaft.js';
 import { setze } from './toon.js';
 import { auftritt, hatClip, buehneBelegt } from './clips.js';
@@ -1105,7 +1105,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     TU.zustand = 'laeuft';
     tb.unterwegs = true;
     torben.posenSperre(true); // Spaghetti weg, Arme gehören jetzt dem Unfall (Tragen, Liegen)
-    z.beschaeftigt = true;
+    z.beschaeftigt = true; z.spielerFrei = true; // Dennis und Torben sind beschäftigt, der Spieler darf weiter arbeiten
     torben.sitzen(null);
     if (!torben.wurzel.visible) { torben.wurzel.position.set(-0.35, 0, 5.8); torben.sichtbar(true); }
     await Promise.race([torben.gehZu(dennis.position.x + 0.8, dennis.position.z + 0.5, 1.4), warte(15000)]);
@@ -1192,7 +1192,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     torbenLiegt(true, b.x + 0.05, b.z - 0.1, 0);
     TU.zustand = 'liegt';
     TU.seit = sekundenSeitStart();
-    z.beschaeftigt = false;
+    TU.liegt = { x: torben.wurzel.position.x, y: torben.wurzel.position.y, z: torben.wurzel.position.z };
+    z.beschaeftigt = false; z.spielerFrei = false;
     z.dennisRaeumt = true; // Dennis ist mit Panik beschäftigt: keine Tassen, Flaschen, Gurte nebenbei
     ui.hinweis('Torben liegt am Boden! Schnell den Erste-Hilfe-Kasten holen (rechte Wand) und Torben verarzten.', 6000);
     dennisPanik();
@@ -1207,12 +1208,28 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       await Promise.race([dennis.gehZu(x, zz, 3.4), warte(3500)]);
     }
   }
+  // liegt Torben wirklich verletzt am Boden (in der Werkstatt, auf dem Rücken)?
+  const torbenLiegtDa = () => TU.zustand === 'liegt' && torben.wurzel.visible && torben.wurzel.parent === TU_SZENE()
+    && torben.wurzel.rotation.x < -1.2 && bereich(torben.position.x, torben.position.z) === 'werkstatt';
   async function torbenVerarzten(durchDennis = false) {
     if (TU.zustand !== 'liegt') return;
+    if (!torbenLiegtDa()) {
+      // sollte nicht vorkommen: Torben ist woanders (z. B. von einer anderen Aktion bewegt). Zurück an seinen Platz legen.
+      if (TU.liegt) { torben.halt?.(); if (torben.wurzel.parent !== TU_SZENE()) TU_SZENE().attach(torben.wurzel); torben.sichtbar(true); torbenLiegt(true, TU.liegt.x, TU.liegt.z, 0, TU.liegt.y); }
+      if (!torbenLiegtDa()) return;
+    }
     TU.zustand = 'verarztet';
     z.beschaeftigt = true;
     z.dennisRaeumt = false;
     if (durchDennis) {
+      // schläft oder sitzt Dennis (Mittagspause), wacht er erst auf; auf dem Klo: warten, bis er raus ist
+      z.spielerFrei = true;
+      if (dennis.modus === 'schlafen' || dennis.modus === 'sitzen') {
+        mittagGeweckt = true; z.mittag = 'erledigt'; welt.objekte.brotdose.visible = true;
+        dennis.aufstehen(welt.SOFA.x, welt.SOFA.vorneZ);
+        await warte(800);
+      }
+      for (let i = 0; i < 120 && (z.aufKlo || !dennis.wurzel.visible); i++) await warte(500);
       await Promise.race([dennis.gehZu(torben.position.x - 0.6, torben.position.z, 1.6), warte(8000)]);
       await warte(3500);
       torbenVerbandAn();
@@ -1222,7 +1239,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       steuerung.sperre(true);
       const e = await fingerSpiel();
       steuerung.sperre(false);
-      if (!e || e.abgebrochen) { TU.zustand = 'liegt'; z.beschaeftigt = false; z.dennisRaeumt = true; dennisPanik(); return; }
+      if (!e || e.abgebrochen) { TU.zustand = 'liegt'; z.beschaeftigt = false; z.spielerFrei = false; z.dennisRaeumt = true; dennisPanik(); return; }
       const box = hand.weg();
       if (box) welt.zurueckAnDieWand(box);
       handleisteZeigen();
@@ -1239,7 +1256,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     // Träger liegt jetzt halt da, wo er hingefallen ist; Torben steht auf und legt sich aufs Sofa
     const p = torben.position.clone();
     torbenLiegt(false, p.x, p.z, -Math.PI / 2);
-    z.beschaeftigt = false;
+    z.beschaeftigt = false; z.spielerFrei = false;
     dennis.heim();
     await Promise.race([torben.gehZu(-3.2, 2.6, 0.8), warte(15000)]);
     // Kopf auf dem Polster an der linken Lehne, Füße hängen über die rechte Armlehne (Torben ist länger als die Sitzfläche)
@@ -1259,8 +1276,26 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     for (let i = 0; i < 20 && wz.beschaeftigt; i++) await warte(500);
     if (wz.ort === 'sofa' && waldoDa()) await waldoGeht();
   }
+  // nur Testmenü: Torben liegt sofort verletzt am Boden (ohne Tragen); Frist sofort vorbei (Dennis hilft selbst)
+  function torbenLiegtTest() {
+    if (TU.zustand && TU.zustand !== 'fertig') return;
+    const tb = fahrten.zustand.torben;
+    if (torben.wurzel.parent !== TU_SZENE()) TU_SZENE().attach(torben.wurzel);
+    torben.sichtbar(true); torben.posenSperre(true); torben.sitzen(null);
+    tb.da = true; tb.unterwegs = true;
+    torbenLiegt(true, 2.6, 2.6, 0);
+    TU.zustand = 'liegt'; TU.seit = sekundenSeitStart();
+    TU.liegt = { x: torben.wurzel.position.x, y: torben.wurzel.position.y, z: torben.wurzel.position.z };
+    z.dennisRaeumt = true;
+    dennisPanik();
+  }
+  function torbenFristVorbei() { if (TU.zustand === 'liegt') TU.seit = sekundenSeitStart() - TORBEN_FRIST - 1; }
+  const tuAktiv = () => ['laeuft', 'liegt', 'verarztet', 'sofa'].includes(TU.zustand);
   function torbenUnfallUpdate() {
     const t = sekundenSeitStart();
+    // solange der Unfall läuft, gehört Torben dem Unfall (kein Wegfahren, Werfen, Weggehen über fahrten.js)
+    if (tuAktiv()) fahrten.zustand.torben.unterwegs = true;
+    if (TU.zustand === 'liegt' && TU.liegt && !torbenLiegtDa() && !z.vorbei) { torben.halt?.(); if (torben.wurzel.parent !== TU_SZENE()) TU_SZENE().attach(torben.wurzel); torben.sichtbar(true); torbenLiegt(true, TU.liegt.x, TU.liegt.z, 0, TU.liegt.y); }
     if (TU.zustand === 'liegt' && t - TU.seit > TORBEN_FRIST) { torbenVerarzten(true); return; }
     if (TU.zustand || t < TU.ab || z.vorbei) return;
     const tb = fahrten.zustand.torben, p = kamera.position;
@@ -1344,8 +1379,19 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     // Dennis' Sofa auf der Wohnwagen-Terrasse (Blick nach +z)
     sofa: { x: -14.42, z: 8.95, hoehe: 0.63, boden: 0.18 }, // boden = Holzterrasse
   };
+  // Läuft die Wegpunkte ab. Frist je Punkt nach der echten Weglänge (vorher fest 15 s: bei langen Wegen brach es ab und die
+  // Figur verschwand danach mitten in der Werkstatt). Hängt sie trotzdem fest, springt sie zum Punkt und läuft weiter.
+  // false nur, wenn ein anderer Befehl das Laufen abgebrochen hat.
   async function lauf(figur, punkte, tempo = 1.1) {
-    for (const p of punkte) if (!(await Promise.race([figur.gehZu(p.x, p.z, tempo), warte(15000).then(() => false)]))) return false;
+    for (const p of punkte) {
+      const pos = figur.wurzel.position;
+      let l = 0, q = pos;
+      for (const w of wegNach(pos, p)) { l += Math.hypot(w.x - q.x, w.z - q.z); q = w; }
+      const frist = 6000 + (l / Math.max(0.3, tempo)) * 2000;
+      const ok = await Promise.race([figur.gehZu(p.x, p.z, tempo), warte(frist).then(() => 'zeit')]);
+      if (ok === 'zeit') { figur.halt?.(); figur.wurzel.position.set(p.x, figur.wurzel.position.y, p.z); continue; }
+      if (!ok) return false;
+    }
     return true;
   }
   function sitzt(figur, an) {
@@ -1367,7 +1413,12 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   }
   // raus und irgendwohin; auf der Terrasse setzt man sich und chillt, sonst ist man irgendwann weg
   async function rausgehen(figur, wohin, tempo = 1.1) {
-    await lauf(figur, [DRAUSSEN.tuerInnen, DRAUSSEN.tuerAussen, ...DRAUSSEN.wege[wohin]], tempo);
+    const ziele = [DRAUSSEN.tuerInnen, DRAUSSEN.tuerAussen, ...DRAUSSEN.wege[wohin]];
+    if (!(await lauf(figur, ziele, tempo))) {
+      // unterbrochen: nie drinnen verschwinden, erst ganz raus
+      const p = figur.wurzel.position;
+      if (bereich(p.x, p.z) !== 'draussen') await lauf(figur, ziele, tempo);
+    }
     if (wohin === 'terrasse') {
       const S = DRAUSSEN.sofa;
       await Promise.race([figur.gehZu(S.x, S.z, 0.8), warte(5000)]);
@@ -3703,7 +3754,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
         await cremeGeben();
         return true;
       }
-      if (it.id === 'verbandskasten' && ziel === 'torben' && TU.zustand === 'liegt') { await hinZu(info, treffer.obj); await torbenVerarzten(); return true; }
+      if (it.id === 'verbandskasten' && ziel === 'torben' && TU.zustand === 'liegt') { if (!torbenLiegtDa()) { ui.hinweis('Torben ist gerade nicht da.', 2200); return true; } await hinZu(info, treffer.obj); await torbenVerarzten(); return true; }
       if (it.id === 'bierflasche' && ziel === 'bierkasten') { await hinZu(info, treffer.obj); flascheInKasten(); return true; }
       if (it.id === 'tasse' && ziel === 'kuehlschrank') { await hinZu(info, treffer.obj); tasseWegraeumen(); return true; }
       if (it.id === 'kackpumpe' && (ziel === 'dusche' || ziel === 'waschbecken' || ziel === 'spuele')) { await hinZu(info, treffer.obj); await pumpeWaschen(); return true; }
@@ -4139,10 +4190,11 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       if (treffer.info.id === 'box') musikUmschalten(); else lichtUmschalten();
       return;
     }
-    if (z.beschaeftigt) return;
+    if (z.beschaeftigt && !z.spielerFrei) return;
     if (ui.menueOffen()) { ui.schliesseMenue(); return; }
     if (!treffer) return;
     const { info, obj } = treffer;
+    if (z.beschaeftigt && (info?.id === 'dennis' || info?.id === 'torben')) { ui.hinweis(TU.zustand === 'laeuft' ? 'Dennis und Torben schleppen gerade den Träger.' : 'Gerade nicht.', 2200); return; }
     if (obj && !obj.visible) {
       if (info.id === 'dennis') ui.hinweis('Dennis ist gerade auf dem Klo.');
       return;
@@ -4162,7 +4214,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   }
 
   async function stationWaehlen(id) {
-    if (z.vorbei || z.beschaeftigt) return;
+    if (z.vorbei || (z.beschaeftigt && !z.spielerFrei)) return;
     ui.schliesseMenue();
     steuerung.sperre(true);
     if (id === 'dennis') {
@@ -4406,7 +4458,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   return {
     zustand: z,
     klick,
-    test: { waldoFigur: waldo, pritsche, metall, grillen, gaesteFrei: () => gaeste().map((g) => g.id + ':' + g.frei()), dv, davidKommt, davidGeht, davidGassi, davidRohrzange, davidLoescher, davidTischgestell, davidRauchtMitJonny, get z() { return z; }, OFEN_SCHRITTE, ofenStand, schutzAn, armAnpassen, setzeWut(w) { z.wut = w; aktualisieren(); }, zeitVor(sek) { z.start -= sek * 1000; }, waescheUebernehmen, kaffeeKochen, hulaHoop, einkaufen, kiwiEssen, TU, torbenUnfall, torbenVerarzten, torbenVerbandAn, spanngurtEreignis, gurteHinwerfen, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
+    test: { torbenLiegtTest, torbenFristVorbei, lauf, rausgehen, waldoFigur: waldo, pritsche, metall, grillen, gaesteFrei: () => gaeste().map((g) => g.id + ':' + g.frei()), dv, davidKommt, davidGeht, davidGassi, davidRohrzange, davidLoescher, davidTischgestell, davidRauchtMitJonny, get z() { return z; }, OFEN_SCHRITTE, ofenStand, schutzAn, armAnpassen, setzeWut(w) { z.wut = w; aktualisieren(); }, zeitVor(sek) { z.start -= sek * 1000; }, waescheUebernehmen, kaffeeKochen, hulaHoop, einkaufen, kiwiEssen, TU, torbenUnfall, torbenVerarzten, torbenVerbandAn, spanngurtEreignis, gurteHinwerfen, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
     stationWaehlen,
     intro,
     aktualisieren,
@@ -4566,14 +4618,14 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
         kloPause();
       }
       // Mittagspause: Dennis kommt mit Brotdose rüber und isst eine Tomate (einmal pro Spiel)
-      if (z.mittag === 'nie' && sekundenSeitStart() > 140 && (ruhigeLage() || z.ueberlappOk) && !z.beschaeftigt && !z.dennisFegt && !z.dennisLoescht && !z.aufKlo && dennis.modus === 'normal' && dennis.istDaheim() && !buehneBelegt() && Math.random() < dt * 0.03) {
+      if (z.mittag === 'nie' && !tuAktiv() && sekundenSeitStart() > 140 && (ruhigeLage() || z.ueberlappOk) && !z.beschaeftigt && !z.dennisFegt && !z.dennisLoescht && !z.aufKlo && dennis.modus === 'normal' && dennis.istDaheim() && !buehneBelegt() && Math.random() < dt * 0.03) {
         // erst ein paar Mal auf die Uhr schauen, dann Mittagspause
         z.mittag = 'vorzeichen';
         z.vorzeichenBis = sekundenSeitStart() + 20;
         z.naechsteGeste = 0;
         if (ruhig()) dennisSagt(sag(DENNIS.mittagBald), false, { prio: 0 });
       }
-      if (z.mittag === 'vorzeichen' && sekundenSeitStart() > z.vorzeichenBis && !z.beschaeftigt && !z.dennisFegt && !z.dennisLoescht && !z.aufKlo && dennis.modus === 'normal' && !buehneBelegt()) {
+      if (z.mittag === 'vorzeichen' && !tuAktiv() && sekundenSeitStart() > z.vorzeichenBis && !z.beschaeftigt && !z.dennisFegt && !z.dennisLoescht && !z.aufKlo && dennis.modus === 'normal' && !buehneBelegt()) {
         z.mittag = 'nie';
         mittagspause();
       }

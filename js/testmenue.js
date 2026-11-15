@@ -169,6 +169,9 @@ export function baueTestMenue({ spiel, welt, kamera, steuerung, fahrten, fz }) {
   });
 
   ueberschrift('Ereignisse');
+  // N3: Torben liegt sofort (zum Testen von Verarzten); Frist vorbei = Dennis hilft selbst, auch aus dem Mittagsschlaf (T42)
+  knopf('T118', 'Torben liegt verletzt am Boden (sofort, ohne Tragen)', () => { frei(); t.torbenLiegtTest(); }, { sperre: () => (t.TU.zustand && t.TU.zustand !== 'fertig' ? 'Unfall läuft schon' : null) });
+  knopf('T119', 'Frist vorbei: Dennis verarztet Torben selbst (auch wenn er schläft)', () => t.torbenFristVorbei(), { sperre: () => (t.TU.zustand !== 'liegt' ? 'Torben liegt gerade nicht (T118 oder T39)' : null) });
   // V3: Waldo sitzt auf dem Werkstatt-Sofa (dann T39: der verletzte Torben hat Vorrang, Waldo steht auf und geht)
   knopf('T116', 'Waldo sitzt auf dem Werkstatt-Sofa (mit T39: Torben hat Vorrang)', () => { const w = t.waldoFigur, wz = t.wz; w.halt(); w.sichtbar(true); w.wurzel.position.set(-3.58, 0, 3.42); w.wurzel.rotation.y = Math.PI; w.haltung('sitzen', 0.52); wz.ort = 'sofa'; wz.draussenOrt = null; wz.segway = false; wz.beschaeftigt = false; wz.bleibtBis = Infinity; });
   knopf('T40', 'Dennis telefoniert', () => { frei(); return t.dennisTelefoniert(); }, { laeuft: () => !!z.telefon });
