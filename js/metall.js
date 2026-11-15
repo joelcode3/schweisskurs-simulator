@@ -32,7 +32,7 @@ export function baueMetall(c) {
   // phase: aus → jonasKommt → wartet (Jonas hat Bescheid gesagt) → offen (Auftrag angenommen) → fertig
   // stangen: liegt (am Boden: Lieferplatz oder wo sie runtergefallen sind) | haengt (am Schlupf unter der Gabel) | drin (Container)
   const mz = { phase: 'aus', stangen: 'weg', naechsterBesuch: 300 + Math.random() * 240, pannen: 0, anstoesse: 0, gier: 0, schief: false, versatz: 0,
-    pendel: 0, pendelV: 0, schnellSeit: 0, gerissen: false, jonasDa: false, nachfrageAb: 0, dennisAb: 0, lauf: 0, schleifHinweis: 0, festHinweis: 0, kontakt: false };
+    pendel: 0, pendelV: 0, sl: 0, slV: 0, sq: 0, sqV: 0, gw: 0, gwV: 0, yawAlt: 0, zurueckAb: 0, kontaktSeit: 0, schnellSeit: 0, gerissen: false, jonasDa: false, nachfrageAb: 0, dennisAb: 0, lauf: 0, schleifHinweis: 0, festHinweis: 0, kontakt: false };
   let anGabel = null; // der Schlupf, der gerade vorne an der Gabel hängt
 
   // ---------- Jonas: weiße Augenklappe (einfach, später austauschbar: jonas.augenklappe) ----------
@@ -258,11 +258,14 @@ export function baueMetall(c) {
   function haengen(dt) {
     const g = gabelPunkt(), boden = gelaendeHoehe(g.x, g.z);
     const y = Math.max(boden + 0.2, g.y - SCHLINGE);
-    buendel.position.set(g.x, y, g.z);
-    // schief angekoppelt: hängt dauerhaft etwas schräg; dazu pendelt es beim Anfahren und Bremsen
-    const neigung = THREE.MathUtils.clamp(mz.versatz * 0.9, -0.3, 0.3) + mz.pendel;
+    // pendelt am Schlupf: vor/zurück (sl, in Fahrtrichtung), seitlich entlang der Stangen (sq), dazu ein leichtes Drehen (gw)
+    const h = heading(), ry = h + mz.gier + mz.gw;
+    const fx = Math.sin(h), fzz = Math.cos(h), ax = Math.cos(ry), az = -Math.sin(ry);
+    buendel.position.set(g.x + fx * mz.sl + ax * mz.sq, y + (mz.sl * mz.sl + mz.sq * mz.sq) * 0.35, g.z + fzz * mz.sl + az * mz.sq);
+    // schief angekoppelt: hängt dauerhaft etwas schräg; seitliches Pendeln kippt die Enden etwas mit
+    const neigung = THREE.MathUtils.clamp(mz.versatz * 0.9, -0.3, 0.3) + mz.pendel + mz.sq * 0.25;
     const frei = Math.asin(Math.min(1, Math.max(0, (y - boden - 0.08)) / HALB));
-    buendel.rotation.set(0, heading() + mz.gier, THREE.MathUtils.clamp(neigung, -frei, frei), 'YXZ');
+    buendel.rotation.set(-mz.sl * 0.5, ry, THREE.MathUtils.clamp(neigung, -frei, frei), 'YXZ');
     if (anGabel) anGabel.obj.scale.y = THREE.MathUtils.clamp((g.y - y + 0.2) / 0.8, 0.12, 1.1);
     return { g, y, boden, schleift: g.y - SCHLINGE < boden + 0.2 };
   }
@@ -338,6 +341,22 @@ export function baueMetall(c) {
     }, 6500);
   }
 
+  function pendelSchritt(dt, v, vAlt, yaw) {
+    const W2 = 9.81 / 1.0, D = 1.1;
+    // schweres Bündel, Gurt reibt: nur ein Teil der Beschleunigung kommt als Ausschlag an (ein wenig Schwingen, nicht wild)
+    const a = THREE.MathUtils.clamp((v - vAlt) / dt, -5, 5) * 0.35;
+    const quer = THREE.MathUtils.clamp(v * yaw, -4, 4) * 0.5;
+    const yawAcc = THREE.MathUtils.clamp((yaw - mz.yawAlt) / dt, -8, 8); mz.yawAlt = yaw;
+    // in kleinen Teilschritten rechnen (bei ruckeligen Bildern bleibt es stabil)
+    const n = Math.max(1, Math.ceil(dt / 0.012)), h = dt / n;
+    for (let i = 0; i < n; i++) {
+      mz.slV += (-a - W2 * mz.sl - D * mz.slV) * h; mz.sl = THREE.MathUtils.clamp(mz.sl + mz.slV * h, -0.32, 0.32);
+      // Querbeschleunigung zeigt zur Kurvenmitte; die Last schwingt nach außen. Die Stangen liegen quer, ihre Achse zeigt
+      // (für gier = 0) zur Fahrzeug-Seite
+      mz.sqV += (quer * Math.cos(mz.gier) - W2 * mz.sq - D * mz.sqV) * h; mz.sq = THREE.MathUtils.clamp(mz.sq + mz.sqV * h, -0.3, 0.3);
+      mz.gwV += (-yawAcc * 0.35 - 7 * mz.gw - 1.4 * mz.gwV) * h; mz.gw = THREE.MathUtils.clamp(mz.gw + mz.gwV * h, -0.2, 0.2);
+    }
+  }
   // ---------- nach jedem Fahrschritt (fahrten.js) ----------
   const vorherNach = fz2.nachSchritt;
   fz2.nachSchritt = (f, neu, pose, dt) => {
@@ -348,12 +367,9 @@ export function baueMetall(c) {
     }
     if (mz.stangen !== 'haengt') return;
     if (neu.has('b')) { if (imAbladePlatz()) { abladen(); return; } ui.hinweis('Noch nicht vor dem Metallcontainer (grüne Fläche, Stangen längs zum Metallcontainer).', 2400); }
-    // pendeln: Beschleunigung in Fahrtrichtung
-    if (dt > 0) {
-      const a = (f.v - pose.v) / dt;
-      mz.pendelV += (-a * 0.012 - mz.pendel * 14 - mz.pendelV * 1.6) * dt;
-      mz.pendel = THREE.MathUtils.clamp(mz.pendel + mz.pendelV * dt, -0.12, 0.12);
-    }
+    // pendeln: das Bündel hängt wie ein Pendel (ca. 1 m) am Schlupf. Anfahren/Bremsen = vor/zurück, Kurven = nach außen,
+    // Lenkruck = leichtes Drehen; gedämpft, so dass es ein paar Mal nachschwingt
+    if (dt > 0) pendelSchritt(dt, f.v, pose.v, norm((f.psi + (f.knick || 0)) - (pose.psi + (pose.knick || 0))) / dt);
     let h = haengen(dt);
     // Stangen stoßen irgendwo an: sie drehen sich weg (bis ca. 70°), sonst steht der Weidemann
     if (stoesst(h.g.x, h.g.z, heading() + mz.gier)) {
@@ -362,11 +378,14 @@ export function baueMetall(c) {
         const w = mz.gier + r * k * 0.035;
         if (Math.abs(w) < 1.25 && !stoesst(h.g.x, h.g.z, heading() + w)) { frei = w; break; }
       }
-      if (!mz.kontakt) {
+      mz.zurueckAb = sekunden() + 0.9; // erst nach einer Weile ohne Kontakt wieder zurückdrehen (sonst stottert es)
+      mz.slV *= 0.4; mz.sqV *= 0.4;
+      if (!mz.kontakt && sekunden() - mz.kontaktSeit > 0.6) {
         mz.kontakt = true; mz.anstoesse++;
         klonk(Math.min(0.9, 0.3 + Math.abs(pose.v) * 0.25));
         if (Math.abs(pose.v) > 1.1 && sekunden() > (mz.anstossAb || 0)) { mz.anstossAb = sekunden() + 30; aerger(1); setTimeout(() => dennisSagt(sag(DENNIS.metall.anstoss), true, { prio: 1 }), 500); }
       }
+      mz.kontakt = true; mz.kontaktSeit = sekunden();
       if (frei !== null) mz.gier = frei;
       else {
         Object.assign(lader, { x: pose.x, z: pose.z, psi: pose.psi, knick: pose.knick, v: 0 }); fz.anwenden(lader, 0);
@@ -374,9 +393,9 @@ export function baueMetall(c) {
       }
       h = haengen(0);
     } else {
-      mz.kontakt = false;
-      // frei: dreht langsam wieder quer zur Fahrtrichtung
-      if (Math.abs(mz.gier) > 0.002) {
+      if (sekunden() - mz.kontaktSeit > 0.6) mz.kontakt = false;
+      // frei: dreht langsam wieder quer zur Fahrtrichtung (nicht sofort nach einem Anstoß)
+      if (Math.abs(mz.gier) > 0.002 && sekunden() > mz.zurueckAb) {
         const w = mz.gier - Math.sign(mz.gier) * Math.min(Math.abs(mz.gier), 0.35 * dt);
         if (!stoesst(h.g.x, h.g.z, heading() + w)) { mz.gier = w; h = haengen(0); }
       }
@@ -409,7 +428,9 @@ export function baueMetall(c) {
   function update(dt) {
     zeit += dt;
     markMat.opacity = 0.25 + Math.sin(zeit * 3) * 0.12;
-    if (mz.stangen === 'haengt' && fz2.aktiv !== lader) haengen(0); else schlupfFrei();
+    if (mz.stangen === 'haengt' && fz2.aktiv !== lader) { if (dt > 0) pendelSchritt(Math.min(dt, 0.05), 0, 0, 0); haengen(0); }
+    else if (mz.stangen === 'haengt' && fz2.pause) haengen(0);
+    else schlupfFrei();
     if (z.vorbei) return;
     const t = sekunden();
     if (mz.phase === 'aus' && t > mz.naechsterBesuch && ruhigeLage() && !fz2.aktiv && pritscheFrei()) { mz.naechsterBesuch = Infinity; jonasKommt(); }

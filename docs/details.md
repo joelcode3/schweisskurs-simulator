@@ -918,6 +918,24 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   und unten. Feuerschale: Füße unten nach außen. Wohnwagentür hinter dem Radkasten (lokal z -0,95), Fenster dahinter
   nach hinten, Stufe vor der Tür. Schotter bis an die Werkstattwand (Umriss x 5,03 / z -4,03), Löwenzahn und Gras an der Wand.
 
+## Paket N1 (Nacharbeit Metall-Lieferung und Grillen, 14.11.)
+- Stahl am Weidemann pendelt (metall.js pendelSchritt): vor/zurück beim Anfahren und Bremsen, seitlich in Kurven, leichtes
+  Drehen beim Lenken; Pendel ca. 1 m, gedämpft, in Teilschritten gerechnet (stabil bei ruckeligen Bildern), Ausschlag
+  gedrosselt (×0,35 bzw. ×0,5). Gegen Ruckeln beim Anstoßen: erst 0,9 s nach dem letzten Kontakt zurückdrehen, Klonk und
+  Ärger frühestens alle 0,6 s.
+- Minispiel Ankoppeln neu „Hau-Ruck mit Jonas“ (Räuberleiter-Prinzip, ankoppelSpiel): Jonas hebelt ein Ende mit der
+  Brechstange hoch (Zeiger im grünen Feld = RUCK, 3 Stufen), dann Schlupf mit gedrückter Maus unter die Lücke schieben
+  (nur so weit, wie die Lücke reicht), Jonas sagt „Mehr zu mir!/Zu weit!/Da!“, Kraftbalken; dann einhängen wie bisher.
+  Ergebnis unverändert { versatz, schief, versuche }. Alte Version als ankoppelSpielKlassisch (Testmenü T117).
+- Einsortieren: Profile liegen nebeneinander auf den Armen (plaetze(): alter Bestand zuerst, je nach Breite), nichts
+  überlappt mehr.
+- Grillen: Anzünden mit Bremsenreiniger (Maus halten = sprühen, Leertaste = Feuerzeug, Stichflamme; zu wenig = Puff,
+  zu viel = Feuerball, Panne „Augenbrauen angesengt“), Ergebnis e.anzuenden. Würste per Maus vom Rost auf ein altes
+  Stück Pappe rechts neben dem Grill ziehen (kein Enter, kein Knopf mehr); alle runter = fertig. Dennis: grillen.wusch
+  (dennis541), grillen.feuerball (dennis542, +3 Wut).
+- Feuer in der Feuerschale: weiche Flammenzungen (Sprites mit Verlauf, additiv, flackern), Glutbett-Textur, runde Funken,
+  weiche Rauchschwaden.
+
 ## Offene Fäden und Ungetestetes (Übergabe 1.11.2026)
 - Ausraster-Videos: #54 (frisches Video-Element, bis zu 6 Versuche, canplay) ist nur eine Absicherung. Die Ursache ist unklar, im Test lief
   alles (WebM statt H.264, Chromium kann hier kein H.264). Der Betreiber prüft im echten Browser (Browser und Anzeige erfragen: schwarz,
