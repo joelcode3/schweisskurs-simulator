@@ -977,6 +977,10 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   Grill, Tassen, Flaschen, Spanngurte, Pritsche (Joel), Stahl (Jonas), Mettenden. Erledigte Einmal-Aufgaben stehen 15 s
   mit Haken da, abgelaufene verschwinden sofort. Liste wird bei jeder Änderung neu gezeichnet (aufgabenListeAuffrischen).
 - Testmenü: T120 Wäsche fertig und wartet, T121 Wartefristen vorbei (Hüfte, Wäsche).
+- Nachtrag (Betreiber: Vorschläge ok, ohne Ton): Ring erst gelb, ab 75 % rot, letzte 10 s blinkt das Icon (Klasse blinkt,
+  kein Ton). Icons anklickbar: Hinweis, wo die Sache ist (AUFGABE_WO in spiel.js, ui.beiAufgabeKlick). Nebenaufgaben links
+  mit Symbol, Aufgaben mit Ring zuerst; Tassen, Flaschen, Spanngurte in einer Zeile „Aufräumen: …“. Macht Dennis (oder
+  Jonny) etwas selbst, steht 10 s eine rote Zeile „Zu spät: …“ (zuSpaet(), z.zuSpaet; auch aus fahrten.js für Grill/Tonnen).
 
 ## Offene Fäden und Ungetestetes (Übergabe 1.11.2026)
 - Ausraster-Videos: #54 (frisches Video-Element, bis zu 6 Versuche, canplay) ist nur eine Absicherung. Die Ursache ist unklar, im Test lief

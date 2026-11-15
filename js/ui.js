@@ -22,6 +22,8 @@ export function aufgabenZeigen(liste) {
     // Nebenaufgaben (z. B. Dennis' Wäsche) blau und mit Trennlinie
     if (a.neben) { klasse += ' neben'; if (nebenErster) { klasse += ' neben-start'; nebenErster = false; } }
     if (a.sammel) klasse += ' sammel';
+    if (a.spaet) klasse = 'neben spaet';
+    if (a.neben && a.id && AUFGABE_SYMBOL[a.id]) return `<li class="${klasse}"><span class="box">${a.fertig ? SYMBOL.haken : ''}</span><span class="li-symbol">${AUFGABE_SYMBOL[a.id]}</span><span>${a.text}</span></li>`;
     if (a.mehr) klasse = 'mehr';
     return `<li class="${klasse}"><span class="box">${a.fertig ? SYMBOL.haken : ''}</span><span>${a.text}</span></li>`;
   }).join('');
@@ -304,8 +306,15 @@ const AUFGABE_SYMBOL = {
   huefte: '<svg viewBox="0 0 24 24" class="ico"><circle cx="9" cy="5" r="2"/><path d="M9 7v6l-3 7M9 13l4 2 1 5"/><path d="M9 9l-3 3"/><path d="M15 10l3-1M15 13h4M15 16l3 1"/></svg>',
   waesche: '<svg viewBox="0 0 24 24" class="ico"><rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="12" cy="13" r="4.5"/><path d="M9.5 13.5c1 1 2 1 3 0s2-1 2.5 0"/><path d="M7 6h3M16 6h1"/></svg>',
   leiter: '<svg viewBox="0 0 24 24" class="ico"><path d="M8 3L5 21M16 3l3 18"/><path d="M7.5 7h9M7 11h10M6.3 15h11.4M5.6 19h12.8"/></svg>',
+  akku: '<svg viewBox="0 0 24 24" class="ico"><path d="M4 8h10v6H4z"/><path d="M14 10h5M14 12h5"/><path d="M7 14l-1 6h4l1-6"/></svg>',
+  pritsche: '<svg viewBox="0 0 24 24" class="ico"><path d="M2 15V9h7l2 3h11v3z"/><circle cx="6" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>',
+  metall: '<svg viewBox="0 0 24 24" class="ico"><path d="M3 7h18M3 12h18M3 17h18"/><path d="M5 5v4M19 15v4"/></svg>',
+  mettende: '<svg viewBox="0 0 24 24" class="ico"><path d="M5 15c3-6 11-6 14 0"/><path d="M4 18h16"/><path d="M8 21l1-3M16 21l-1-3"/></svg>',
   tassen: '<svg viewBox="0 0 24 24" class="ico"><path d="M4 9h11v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M15 11h2a2 2 0 0 1 0 4h-2"/><path d="M8 3v3M11 3v3"/></svg>',
 };
+// Klick auf ein Aufgaben-Icon: spiel.js zeigt, wo die Sache ist
+let aufgabeKlick = null;
+export function beiAufgabeKlick(f) { aufgabeKlick = f; }
 export function aufgabenIcons(liste) {
   const el = $('warnungen');
   if (!el) return;
@@ -318,11 +327,16 @@ export function aufgabenIcons(liste) {
       k = document.createElement('div');
       k.className = `aufgabe ${a.id}`;
       k.dataset.id = a.id;
+      k.title = 'Klick: wo ist das?';
+      k.addEventListener('click', () => { if (aufgabeKlick) aufgabeKlick(a.id); });
       k.innerHTML = `<svg viewBox="0 0 56 56" class="ring"><circle cx="28" cy="28" r="25" class="ring-hg"/><circle cx="28" cy="28" r="25" class="ring-voll" stroke-dasharray="${U}" stroke-dashoffset="${U}"/></svg>${AUFGABE_SYMBOL[a.id] || ''}<span class="aufgabe-text">${a.titel}</span>`;
       el.appendChild(k);
     }
     const anteil = Math.max(0, Math.min(1, a.anteil));
     k.querySelector('.ring-voll').setAttribute('stroke-dashoffset', String(U * (1 - anteil)));
+    // erst gelb, ab drei Vierteln rot, in den letzten 10 s blinkt das Icon (ohne Ton)
+    k.classList.toggle('gelb', anteil < 0.75);
+    k.classList.toggle('blinkt', a.rest != null && a.rest <= 10 && anteil < 1);
     k.classList.toggle('dringend', !!a.dringend);
     k.classList.toggle('voll', anteil >= 1);
   }

@@ -1050,6 +1050,15 @@ button { font: inherit; color: inherit; }
 .aufgabe.wasser { background: #23609e; }
 .aufgabe.dringend { animation: warnBlinken 0.8s infinite alternate; }
 .aufgabe.voll .ring-voll { stroke: #ff5a40; }
+/* A1: Ring gelb bis drei Viertel, dann rot; letzte 10 s blinkt das Icon; Icons sind anklickbar */
+.aufgabe { cursor: pointer; pointer-events: auto; }
+.aufgabe.gelb .ring-voll { stroke: #f2c21c; }
+.aufgabe.blinkt { animation: aufgabeBlinken 0.45s infinite alternate; }
+@keyframes aufgabeBlinken { from { box-shadow: 0 0 0 0 rgba(224, 57, 43, 0); } to { box-shadow: 0 0 0 6px rgba(224, 57, 43, 0.75); filter: brightness(1.35); } }
+#aufgaben li .li-symbol { display: inline-flex; width: 15px; height: 15px; margin-right: 5px; flex: none; }
+#aufgaben li .li-symbol svg { width: 15px; height: 15px; stroke: currentColor; stroke-width: 2.2; fill: none; }
+#aufgaben li.spaet { color: #c8352a; font-weight: 700; }
+#aufgaben li.spaet .box { border-color: #c8352a; }
 @keyframes warnBlinken { from { transform: scale(1); } to { transform: scale(1.12); filter: brightness(1.25); } }
 
 /* Testmenü (nur mit ?test in der Adresse) */
