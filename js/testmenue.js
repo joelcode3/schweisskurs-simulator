@@ -184,6 +184,8 @@ export function baueTestMenue({ spiel, welt, kamera, steuerung, fahrten, fz }) {
   // A1: Wäsche wartet fertig in der Maschine (Ring läuft); Wartefristen vorbei = Dennis macht es selbst (Hüfte, Wäsche)
   knopf('T120', 'Wäsche fertig gewaschen, wartet in der Maschine', () => t.waescheFertigTest(), { sperre: () => (['laeuft', 'trocknet', 'nass', 'zuDennis'].includes(z.waesche) ? 'Wäsche ist gerade unterwegs' : null) });
   knopf('T121', 'Wartefristen vorbei (Hüfte, Wäsche): Dennis macht es selbst', () => t.fristenVorbei());
+  // N4: Tanzpause (Box an, Dennis tanzt; T127 = er hört nach ein paar Sekunden selbst auf, Box ist dann gesperrt)
+  knopf('T127', 'Box an, Dennis tanzt kurz und macht dann Pause („Nee du, ich brauch mal ne Pause.“)', () => { frei(); z.keinTanzBis = 0; z.boxGesperrtBis = 0; if (!z.musik) t.musikUmschalten(); z.tanzZeit = 0; z.tanzEnde = 6; }, { laeuft: () => !!z.tanzPauseLaeuft });
   knopf('T43', 'Hüfte (Dennis liegt)', () => { frei(); return t.hueftePlatt(); }, {
     laeuft: () => z.huefte === 'geht' || z.huefte === 'liegt',
     sperre: () => (z.huefte === 'erledigt' ? 'Hüfte war schon' : null),
