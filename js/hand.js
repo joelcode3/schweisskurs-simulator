@@ -29,7 +29,7 @@ const HALTUNG = {
   hulahup: { pos: [0.3, -0.5, -1.05], rot: [0.35, 1.1, 0], skala: 0.85, name: 'Hula-Hoop-Reifen', benutzen: 'Dennis bringen' },
   creme: { pos: [0.18, -0.16, -0.42], rot: [0.2, 0.4, 0], skala: 1.5, name: 'Lockencreme', benutzen: 'Dennis geben (auf Dennis klicken)' },
   bierflasche: { pos: [0.2, -0.22, -0.5], rot: [0.3, 0, 0], skala: 1.6, name: 'Leere Bierflasche', benutzen: null },
-  verbandskasten: { pos: [0.22, -0.3, -0.55], rot: [0.1, -1.2, 0], skala: 1.0, name: 'Erste-Hilfe-Kasten', nichtWerfen: true, benutzen: 'Torben verarzten (auf Torben klicken)' },
+  verbandskasten: { pos: [0.22, -0.3, -0.55], rot: [0.1, -1.2, 0], skala: 1.0, name: 'Erste-Hilfe-Kasten', benutzen: 'Torben verarzten (auf Torben klicken)' },
   poempel: { pos: [0.22, -0.45, -0.62], rot: [0.35, 0, -0.25], name: 'Pömpel', benutzen: 'Pömpeln' },
   tasse: { pos: [0.2, -0.2, -0.45], rot: [0.1, 2.0, 0], skala: 1.3, name: 'Benutzte Kaffeetasse', benutzen: 'Auf den Kühlschrank stellen' },
   kackpumpe: { pos: [0.3, -0.5, -0.85], rot: [0.15, 0.6, 0], skala: 0.85, name: 'Kackepumpe', benutzen: 'Abwaschen (Bad oder Spüle) / zurückstellen (Kompressor)' },
@@ -86,6 +86,7 @@ export function baueHand(scene, kamera) {
 
   let item = null;
   let wackel = 0;
+  let schwung = null; // Gerten-Schlag (schwing)
   const fliegend = [];
 
   // Spritzpistole vom Gartenschlauch (nur in der Hand; der Schlauch selbst bleibt an der Wand)
@@ -165,6 +166,8 @@ export function baueHand(scene, kamera) {
     handschuhe(an) {
       for (const h of [rechts, links]) for (const m of h.userData.haut) m.material = an ? handschuhMat : hautMat;
     },
+    // N5: Schlag mit der Gerte (oder anderem): kurz ausholen, nach vorn-unten schnalzen, zurück
+    schwing(dauer = 0.45) { if (item) schwung = { t: 0, d: dauer }; },
     // Fegebewegung: Besen schwingt hin und her (0 = Ruhe)
     fegeSchwung(w) { if (item && item.id === 'besen') { item.obj.rotation.z = item.cfg.rot[2] + Math.sin(w) * 0.35; item.obj.position.x = item.cfg.pos[0] + Math.sin(w) * 0.06; } },
     // Ding aus der Werkstatt in die Hand nehmen
@@ -186,6 +189,7 @@ export function baueHand(scene, kamera) {
     // Ding ist weg (angezogen, abgegeben): nicht mehr in der Hand, nicht in der Werkstatt
     weg() {
       if (!item) return null;
+      if (schwung) { schwung = null; item.obj.rotation.set(...item.cfg.rot, 'XYZ'); }
       const obj = item.obj;
       obj.removeFromParent();
       item = null;
@@ -255,6 +259,16 @@ export function baueHand(scene, kamera) {
         rechts.rotation.set(0.2, -0.2, 0.3);
         links.position.set(-0.22, cfg.pos[1] - 0.04 + b - wackel * 0.3, cfg.pos[2] + 0.08);
         links.rotation.set(0.2, 0.2, -0.3);
+        if (schwung) {
+          schwung.t += dt;
+          const k = Math.min(1, schwung.t / schwung.d);
+          // erst ausholen (nach hinten-oben), dann schnell nach vorn-unten, dann zurückfedern
+          const w = k < 0.3 ? -(k / 0.3) * 0.7 : k < 0.55 ? -0.7 + ((k - 0.3) / 0.25) * 2.1 : 1.4 * (1 - (k - 0.55) / 0.45);
+          item.obj.rotation.set(cfg.rot[0] - w, cfg.rot[1], cfg.rot[2] + w * 0.35, 'XYZ');
+          item.obj.position.z += -Math.max(0, w) * 0.06;
+          rechts.rotation.x = 0.2 - w * 0.5;
+          if (k >= 1) { schwung = null; item.obj.rotation.set(...cfg.rot, 'XYZ'); }
+        }
         if (item.id === 'kaffee') for (const d of becher.children) if (d.userData.dampf !== undefined) d.position.y = 0.08 + ((t * 0.08 + d.userData.dampf * 0.03) % 0.09);
       }
       // Flugbahnen

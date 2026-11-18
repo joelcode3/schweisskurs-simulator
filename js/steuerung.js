@@ -104,7 +104,7 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
   const tipp = document.createElement('div');
   tipp.id = 'maus-tipp';
   tipp.className = 'versteckt';
-  tipp.textContent = 'Ins Bild klicken: Umschauen mit der Maus. Rechtsklick: zwischen Umschauen und Cursor wechseln.';
+  tipp.textContent = 'Ins Bild klicken: Umschauen mit der Maus. Rechtsklick (oder Esc): Maus frei als Cursor. Nochmal Rechtsklick: wieder umschauen.';
   document.body.appendChild(tipp);
   function fensterOffen() {
     for (const id of ['aktionen', 'dialog', 'minispiel', 'start-einfach', 'start']) {
@@ -128,6 +128,9 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
     if (gefangen && !jetzt) {
       // losgelassen: wegen eines Fensters (dann gleich wieder fangen) oder per Esc (dann erst beim nächsten Klick ins Bild)
       wiederFangen = fensterOffen() && !cursorModus;
+      // N5: Esc (der Browser schreibt oben „Esc drücken, um den Mauszeiger anzuzeigen“) wirkt jetzt wie Rechtsklick:
+      // Maus bleibt frei (Cursor), Klicks benutzen Dinge. Zurück zum Umschauen: Rechtsklick.
+      if (!wiederFangen) cursorModus = true;
       beiHover(null, 0, 0);
     }
     gefangen = jetzt;
