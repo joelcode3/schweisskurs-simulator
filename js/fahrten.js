@@ -108,7 +108,7 @@ export function baueFahrten(c) {
     }
     ui.hinweis('Hier kommst du nicht raus. Fahr ein Stück weiter.');
   }
-  // ---------- Ladefläche des Jeeps: Eier und Mettenden hinten drauf; scharf lenken, hart bremsen oder Rums = fällt runter ----------
+  // ---------- Ladefläche des Jeeps: Eier und Mettenden hinten drauf; nur ein Aufprall (Rums) = fällt runter (N7) ----------
   const LADE = [[-0.22, -0.7], [0.22, -0.7], [-0.22, -0.82], [0.22, -0.82]];
   function ladung() { return fz.jeep.g.children.filter((o) => o.userData.ladung); }
   function aufLadeflaeche(obj) {
@@ -122,7 +122,7 @@ export function baueFahrten(c) {
     obj.rotation.y = Math.random() * 0.6 - 0.3;
     obj.userData.ladung = true;
     klonk(0.15);
-    ui.hinweis('Liegt auf der Ladefläche. Vorsichtig fahren!', 2600);
+    ui.hinweis('Liegt auf der Ladefläche. Nirgends gegenfahren!', 2600);
     return true;
   }
   function ladungFaellt(f, warum) {
@@ -157,9 +157,8 @@ export function baueFahrten(c) {
       }
     }
     klonk(0.4); blip(300, 0.1, 0.06);
-    ui.hinweis(warum === 'kurve' ? 'Zu scharf in die Kurve: die Ladung ist runtergefallen!' : 'Zu hart gebremst: die Ladung ist runtergefallen!', 3200);
+    ui.hinweis(warum === 'kurve' ? 'Zu scharf in die Kurve: die Ladung ist runtergefallen!' : warum === 'aufprall' ? 'Rums! Beim Aufprall ist die Ladung runtergefallen!' : 'Zu hart gebremst: die Ladung ist runtergefallen!', 3200);
   }
-  let vAlt = 0;
   function steuern(f, tasten, dt, neu) {
     // E2b: während eines Minispiels steht das Fahrzeug
     if (fz2.pause) { f.v = 0; return { dpsi: 0, auge: f.g.localToWorld(f.auge.clone()) }; }
@@ -198,14 +197,9 @@ export function baueFahrten(c) {
       if (sekunden() > fz2.rumsAb) { fz2.rumsAb = sekunden() + 20; aerger(1); setTimeout(() => dennisSagt(sag(DENNIS.anstoss), true, { prio: 1 }), 600); }
     }
     fz2.vorher = f.v;
-    // Ladung: Querbeschleunigung (v² · tan(lenk) / Radstand) oder Bremsen über ca. 8 m/s²
-    if (f.art === 'jeep' && dt > 0) {
-      const quer = Math.abs(f.v * f.v * Math.tan(f.lenk) / f.radstand);
-      const brems = (Math.abs(vAlt) - Math.abs(f.v)) / dt;
-      if (quer > 8) ladungFaellt(f, 'kurve');
-      else if (brems > 8 || rums) ladungFaellt(f, 'bremsen');
-    }
-    vAlt = f.v;
+    // Ladung (N7): fällt nur noch bei einem Aufprall runter (gegen Wand, Zaun, Grill, Tonnen ...), nicht mehr beim
+    // Gasgeben, in Kurven oder beim Bremsen
+    if (f.art === 'jeep' && dt > 0 && (rums || (treffer && schnell))) ladungFaellt(f, 'aufprall');
     // beim Fahren meckert Dennis ab und zu
     if (Math.abs(f.v) > 0.4 && sekunden() > fz2.meckerAb && !(f.art === 'jeep' && f.gedrosselt)) { fz2.meckerAb = sekunden() + 35 + Math.random() * 15; dennisSagt(sag(DENNIS.fahrenSpieler), true, { prio: 0 }); }
     // E2b (pritsche.js): Anhänger nachziehen, Tasten für Bergen/Abschleppen/Abstellen
@@ -665,6 +659,6 @@ export function baueFahrten(c) {
     grill, // Feuerschale (E4 grillen.js)
     // nur für Tests
     aufLadeflaeche,
-    test: { torbenIstAm: (w) => (w === 'wirft' ? torben.wirft : torben.isst), torbenWuetet, torbenHerholen, torbenWurfZiel: wurfZiel, ladungFaellt, einsteigen, aussteigen, figurFaehrt, torbenKommt, torbenGeht, grillUm, grillAuf, dennisStelltGrillAuf, tonnenUm, tonnenAuf },
+    test: { aufLadeflaeche, ladung, torbenIstAm: (w) => (w === 'wirft' ? torben.wirft : torben.isst), torbenWuetet, torbenHerholen, torbenWurfZiel: wurfZiel, ladungFaellt, einsteigen, aussteigen, figurFaehrt, torbenKommt, torbenGeht, grillUm, grillAuf, dennisStelltGrillAuf, tonnenUm, tonnenAuf },
   };
 }
