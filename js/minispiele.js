@@ -1,5 +1,16 @@
 // Minispiele als 2D-Ansicht: Schneiden mit der Flex, Schweißen, Schlacke abklopfen.
-import { dauer, klonk, blip, husten } from './audio.js';
+import { dauer as dauerRoh, klonk, blip, husten } from './audio.js';
+
+// N4: Dauertöne der Minispiele (Gas, Wasser, Druckluft ...) merken; beim Schließen (auch Abbrechen) laufen sie nicht weiter
+const offeneToene = new Set();
+function dauer(art, lautst) {
+  const d = dauerRoh(art, lautst);
+  const stopp = d.stopp.bind(d);
+  d.stopp = (...a) => { offeneToene.delete(d); return stopp(...a); };
+  offeneToene.add(d);
+  return d;
+}
+function alleToeneAus() { for (const d of [...offeneToene]) { try { d.stopp(); } catch { /* schon aus */ } } offeneToene.clear(); }
 
 export const STROM_OK = [70, 100];
 
@@ -1030,6 +1041,7 @@ function spielRahmen(titel, text, { beiGroesse, schritt, zeichnen, events }) {
       window.removeEventListener('resize', neuGroesse);
       for (const [n, f] of Object.entries(events)) (n === 'keydown' || n === 'keyup' ? window : canvas).removeEventListener(n, f);
       el.classList.add('versteckt');
+      alleToeneAus();
       aufloesen({ abgebrochen, ...daten, ...(ergebnis || {}) });
     },
     fertig(daten) {
@@ -2047,9 +2059,14 @@ export function spanngurtSpiel({ verknotet = false } = {}) {
         const radS = tempo / 4 * 3.9;
         ctx.fillStyle = '#26282c'; ctx.fillRect(bx, by, bb, 12);
         ctx.fillStyle = 'rgba(80,190,90,0.7)'; ctx.fillRect(bx + bb * GRUEN[0] / MAXV, by, bb * (GRUEN[1] - GRUEN[0]) / MAXV, 12);
-        ctx.fillStyle = '#ffe9a8'; ctx.fillRect(bx + Math.min(bb, bb * radS / MAXV) - 2, by - 4, 4, 20);
         ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.strokeRect(bx, by, bb, 12);
-        textMitte(ctx, 'Tempo', mx, by + 30, 13, '#ffe9a8');
+        // N4: Zeiger deutlicher (Dreieck + Strich), mit Klartext darunter
+        const zx = bx + Math.max(0, Math.min(bb, bb * radS / MAXV));
+        ctx.fillStyle = '#ffe9a8'; ctx.strokeStyle = '#111'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(zx, by - 2); ctx.lineTo(zx - 7, by - 12); ctx.lineTo(zx + 7, by - 12); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillRect(zx - 2, by - 2, 4, 16);
+        const wort = radS < GRUEN[0] ? (radS < 0.3 ? 'Tempo' : 'Tempo: schneller') : radS > GRUEN[1] ? 'Tempo: zu schnell!' : 'Tempo: gut';
+        textMitte(ctx, wort, mx, by + 30, 13, radS > GRUEN[1] ? '#ffb0a0' : '#ffe9a8');
       }
       balken(ctx, f.x, f.y + f.h + 26, f.b, 12, (gurt + (api.istFertig ? 1 : w)) / 2, '#ffc81e');
       const offenN = knoten.filter((k) => !k.offen).length;
