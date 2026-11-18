@@ -184,6 +184,9 @@ export function baueTestMenue({ spiel, welt, kamera, steuerung, fahrten, fz }) {
   // A1: Wäsche wartet fertig in der Maschine (Ring läuft); Wartefristen vorbei = Dennis macht es selbst (Hüfte, Wäsche)
   knopf('T120', 'Wäsche fertig gewaschen, wartet in der Maschine', () => t.waescheFertigTest(), { sperre: () => (['laeuft', 'trocknet', 'nass', 'zuDennis'].includes(z.waesche) ? 'Wäsche ist gerade unterwegs' : null) });
   knopf('T121', 'Wartefristen vorbei (Hüfte, Wäsche): Dennis macht es selbst', () => t.fristenVorbei());
+  // N6: Flusensieb in die Hand (zum Werfen und wieder Aufheben), Klo verstopft und gleich pömpeln (mit Spülen am Spülkasten)
+  knopf('T122', 'Flusensieb in die Hand (werfen mit Q, dann wieder aufheben)', () => { if (z.sieb !== 'drin') { z.sieb = 'drin'; } t.siebRaus(); }, { sperre: () => (t.handVoll() ? 'Erst die Hand frei machen' : null) });
+  knopf('T123', 'Klo verstopft und gleich pömpeln (mit Spülen)', async () => { frei(); if (z.verstopft !== 'ja') { z.verstopft = null; await t.kloVerstopft(); } return t.poempeln(); }, { laeuft: titelEnthaelt('Klo pömpeln') });
   knopf('T43', 'Hüfte (Dennis liegt)', () => { frei(); return t.hueftePlatt(); }, {
     laeuft: () => z.huefte === 'geht' || z.huefte === 'liegt',
     sperre: () => (z.huefte === 'erledigt' ? 'Hüfte war schon' : null),

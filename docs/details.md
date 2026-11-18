@@ -982,6 +982,30 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   mit Symbol, Aufgaben mit Ring zuerst; Tassen, Flaschen, Spanngurte in einer Zeile „Aufräumen: …“. Macht Dennis (oder
   Jonny) etwas selbst, steht 10 s eine rote Zeile „Zu spät: …“ (zuSpaet(), z.zuSpaet; auch aus fahrten.js für Grill/Tonnen).
 
+## Paket N6 (Klo, Pumpe, Bad, 18.11.)
+- B31 Freeze nach dem Klo-Minispiel: Ursache war, dass das Pömpel-Spiel (wie die meisten älteren Minispiele) die 3D-Welt
+  dahinter weiterzeichnete (nur die neuen Spiele ab Pritsche setzten data-vollbild). Im Test lief das Klo-Spiel dadurch mit
+  1,3 statt 60 Bildern pro Sekunde; die Pump-Erkennung (Mausbewegung) und das „Es gurgelt“ (Zeitschritt pro Bild begrenzt)
+  zogen sich ewig, das wirkt wie eingefroren. Jetzt setzt spielRahmen selbst data-vollbild (alle Minispiele) und nimmt es
+  beim Schließen wieder weg. Einen echten Hänger (Sperre bleibt, Spiel reagiert nicht mehr) konnte ich nicht nachstellen:
+  nach Weiter waren Steuerung frei, z.beschaeftigt aus, Klo erledigt.
+- Klospülung überall die Aufnahme vom Betreiber (assets/klospuelung.mp3, 7,5 s mit Ausblenden) über spuelTon() in audio.js;
+  die live erzeugte Spülung (klospuelung) kommt nur noch, wenn die Datei nicht lädt. Vorher spülte Dennis nach seinem eigenen
+  Pömpeln (dennisPoempelt) mit dem erzeugten Rauschen.
+- Pömpel-Spiel: nach dem Durchbruch muss man spülen. Abbrechen verschwindet, Pömpel wird weggestellt, der Spülkasten oben
+  links blinkt gelb mit „SPÜLEN“ (Drücker vorne am Kasten). Klick = Klonk + Aufnahme, Kasten läuft leer und wieder voll,
+  Wasser in der Schüssel wird von braun zu hellblau, dann Weiter. poempeln() spielt die Spülung nicht mehr selbst.
+- Kackepumpe abwaschen leichter: 18 statt 26 Kleckse, Krusten 0,6 s statt 1,6 s, frische 0,25 s statt 0,5 s, Strahl 56 statt
+  38 px, Luft reicht 9 statt 6 s; die letzten 3 Kleckse leuchten gelb gestrichelt.
+- Waldo sucht die Kackepumpe (kackePumpe): Spieler bleibt frei (z.spielerFrei), Waldo und Dennis lösen es selbst. Klickt man
+  während der Suche auf die Pumpe hinterm Kompressor: „Waldo zeigen“ (wz.suchtPumpe, pumpeZeigen), die Suche bricht ab,
+  Waldo holt sie gleich, Wut -3.
+- Flusensieb werfbar (Q): z.sieb = 'boden', z.siebWarSauber merkt den Zustand; gelandet bekommt es eine eigene
+  Klick-Info (id sieb), Klick = wieder in die Hand (siebAufheben). Beim Einsetzen in den Trockner und beim Ausbauen wird die
+  Klick-Info wieder entfernt (sonst würde sie den Trockner-Klick abfangen).
+- Flusensieb ausblasen: die letzten zwei Fusseln fliegen am Ende mit weg, das Sieb ist danach ganz sauber.
+- Testmenü: T122 Flusensieb in die Hand, T123 Klo verstopft und gleich pömpeln (mit Spülen).
+
 ## Offene Fäden und Ungetestetes (Übergabe 1.11.2026)
 - Ausraster-Videos: #54 (frisches Video-Element, bis zu 6 Versuche, canplay) ist nur eine Absicherung. Die Ursache ist unklar, im Test lief
   alles (WebM statt H.264, Chromium kann hier kein H.264). Der Betreiber prüft im echten Browser (Browser und Anzeige erfragen: schwarz,

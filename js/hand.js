@@ -25,7 +25,7 @@ const HALTUNG = {
   ofen: { pos: [0.4, -0.8, -1.2], rot: [-0.2, Math.PI / 2, 0], name: 'Fertiger Ofen', beidhaendig: true, schwer: true, nichtWerfen: true, benutzen: 'Zu Dennis bringen (auf Dennis klicken)' },
   klemmbrett: { pos: [-0.03, 0.0, -0.4], rot: [Math.PI / 2 - 0.08, 0, 0], griff: [0.15, -0.17, 0.02], name: 'Dennis’ Klemmbrett' },
   waeschetasche: { pos: [0.42, -0.78, -0.95], rot: [0.1, 0.5, 0], griff: [-0.02, 0.58, -0.08], name: 'Dennis’ Wäschetasche', nichtWerfen: true, nichtAblegen: true, ablegenHinweis: 'Die Wäsche kommt in die Maschine (oder zu Dennis).' },
-  sieb: { pos: [0.16, -0.18, -0.48], rot: [0.2, 1.3, 0.2], skala: 1.3, name: 'Flusensieb', nichtWerfen: true, nichtAblegen: true, ablegenHinweis: 'Das Sieb gehört in den Trockner. Dreckig erst am Kompressor ausblasen.' },
+  sieb: { pos: [0.16, -0.18, -0.48], rot: [0.2, 1.3, 0.2], skala: 1.3, name: 'Flusensieb', nichtAblegen: true, ablegenHinweis: 'Das Sieb gehört in den Trockner. Dreckig erst am Kompressor ausblasen.' },
   hulahup: { pos: [0.3, -0.5, -1.05], rot: [0.35, 1.1, 0], skala: 0.85, name: 'Hula-Hoop-Reifen', benutzen: 'Dennis bringen' },
   creme: { pos: [0.18, -0.16, -0.42], rot: [0.2, 0.4, 0], skala: 1.5, name: 'Lockencreme', benutzen: 'Dennis geben (auf Dennis klicken)' },
   bierflasche: { pos: [0.2, -0.22, -0.5], rot: [0.3, 0, 0], skala: 1.6, name: 'Leere Bierflasche', benutzen: null },
