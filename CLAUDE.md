@@ -87,9 +87,9 @@
   nur DENNIS und löst verschachtelte Listen wie telefon nicht auf).
 - KI-Stimmklon ist in dieser Umgebung nicht möglich (huggingface.co gesperrt). Stimmproben nie ins Repo (öffentlich).
 
-## Stand der Pull Requests (9.11.2026)
-- Alles bis #77 gemergt. Offen: #78 A1 Icons und Aufgabenliste (Zweig a1-icons-aufgaben).
-- Versionsnummer zuletzt `v=20261114-16` (N7 nach Merge von N6, N5, N4). Testmenü bis T127, nächste freie T128.
+## Stand der Pull Requests (25.11.2026)
+- Alles bis #82 gemergt (N6 #79, N5 #80, N4 #81, N7 #82). Offen nur #83 (dieser Stand-Eintrag).
+- Versionsnummer zuletzt `v=20261114-17`. Testmenü bis T127, nächste freie T128.
 - Nächste freie Satz-Nummern (aus stimme/zuordnung.csv): dennis548, jonny63, waldo48, torben37, kumpel13, david24, joel16, jonas11.
 - Projektchat-Session: `session_0136irctrTCA3M7n4aU75GVP` (seit 9.11., Projektchat Nr. 4).
 - Offene Fäden und Ungetestetes: `docs/details.md`, Abschnitt „Offene Fäden und Ungetestetes“ (zuerst lesen, wenn ein neuer Chat startet).
