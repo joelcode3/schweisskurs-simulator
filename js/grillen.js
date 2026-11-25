@@ -122,7 +122,7 @@ export function baueGrillen(c) {
     }
     return d < 1.0 ? 'frei' : false; // über der Schale nicht am Hindernis-Kasten abprallen
   }
-  function wurf(id, richtung) {
+  function wurf(id, richtung, kraft) {
     let vor = null;
     hand.wirf(richtung, (gid, obj) => {
       klonk(0.25);
@@ -137,7 +137,7 @@ export function baueGrillen(c) {
       obj.removeFromParent();
       drauf(id);
       return true;
-    });
+    }, kraft);
     handleisteZeigen();
   }
   function drauf(id) {

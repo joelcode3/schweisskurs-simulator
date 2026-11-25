@@ -1,4 +1,4 @@
-// Bedienoberfläche: Auftragszettel, Wutanzeige, Ausrüstung, Aktionsmenü, Dialoge.
+// Bedienoberfläche: Auftragszettel, Puls-Anzeige (Dennis' Wut), Ausrüstung, Aktionsmenü, Dialoge.
 import { SYMBOL, dennisMini } from './gesicht.js';
 import { STATIONEN } from './world.js';
 import { dauer, blip } from './audio.js';
@@ -32,15 +32,109 @@ export function aufgabenZeigen(liste) {
 $('zettel-kopf').addEventListener('click', () => $('zettel').classList.toggle('zu'));
 if (window.innerHeight < 500 || window.innerWidth < 600) $('zettel').classList.add('zu');
 
+// Dennis-Puls: die Wut (0-100) wird als Herzfrequenz angezeigt, 60 = tiefenentspannt, 180 = Ausraster.
+// Intern bleibt alles Wut; nur die Anzeige rechnet um.
+export const pulsAusWut = (wut) => Math.round(60 + Math.max(0, Math.min(100, wut)) * 1.2);
+const PULS = { ziel: 78, wert: 78, wut: 15, t: 0, schlagStart: 0, x: 0, spalten: null, letzte: 0, zitter: 0, naechsterZitter: 0, extra: 1 };
+function pulsFarbe(p) { return p < 95 ? '#5cff6a' : p < 130 ? '#ffd23a' : p < 160 ? '#ff8a2a' : '#ff3b2e'; }
 export function wutZeigen(wert, stimmung) {
-  // Verlauf immer über die ganze Balkenbreite: grün links, rot rechts
-  const w = Math.max(1, Math.min(100, wert));
-  $('wut-fuellung').style.width = `${Math.min(100, wert)}%`;
-  $('wut-fuellung').style.backgroundSize = `${10000 / w}% 100%`;
+  PULS.wut = Math.max(0, Math.min(100, wert));
+  PULS.ziel = pulsAusWut(wert);
   $('wut-gesicht').innerHTML = dennisMini(stimmung);
-  const stufe = wert >= 85 ? 'kurz vorm Platzen' : wert >= 60 ? 'stinksauer' : wert >= 35 ? 'genervt' : wert >= 12 ? 'skeptisch' : 'entspannt';
+  const stufe = wert >= 92 ? 'fliegst gleich raus!' : wert >= 85 ? 'kurz vorm Platzen' : wert >= 60 ? 'stinksauer' : wert >= 35 ? 'genervt' : wert >= 12 ? 'skeptisch' : 'tiefenentspannt';
   $('wut-stufe').textContent = stufe;
+  // Skala: Marke von 60 (links) bis 180 (rechts); ab 150 Gefahr, ab 165 kritisch (bei 180 fliegt man raus)
+  $('puls-marke').style.left = `${PULS.wut}%`;
+  const p = PULS.ziel;
+  $('wut').classList.toggle('gefahr', p >= 150 && p < 165);
+  $('wut').classList.toggle('kritisch', p >= 165);
 }
+// EKG-Kurve: eine Spalte pro Pixel, ein Schreibstrahl läuft von links nach rechts und überschreibt die alte Kurve
+// (mit kleiner Lücke davor) wie am Monitor im Krankenhaus. Je höher der Puls, desto schneller, höher und unruhiger.
+function ekgHoehe(s, dauer, wut) {
+  // s = Sekunden seit Schlagbeginn; bei schnellem Puls wird der Schlag zeitlich gestaucht
+  const k = Math.min(1, dauer / 0.75);
+  const g = (m, b, a) => a * Math.exp(-(((s - m * k) / (b * k)) ** 2));
+  const hoch = 0.62 + wut / 100 * 0.38;
+  return g(0.09, 0.025, 0.12) + g(0.165, 0.008, -0.12) + g(0.19, 0.011, hoch) + g(0.215, 0.01, -0.28 * hoch) + g(0.38, 0.045, 0.2 + wut / 100 * 0.12);
+}
+function pulsMalen(jetzt) {
+  requestAnimationFrame(pulsMalen);
+  const c = $('puls-kurve');
+  if (!c || !c.offsetParent) { PULS.letzte = jetzt; return; }
+  const dt = Math.min(0.1, (jetzt - (PULS.letzte || jetzt)) / 1000);
+  PULS.letzte = jetzt;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const B = Math.round(c.clientWidth * dpr), H = Math.round(c.clientHeight * dpr);
+  if (c.width !== B || c.height !== H) { c.width = B; c.height = H; PULS.spalten = new Float32Array(B).fill(NaN); PULS.x = 0; }
+  // angezeigter Wert läuft dem Ziel nach und zittert ein bisschen wie ein echter Monitor
+  PULS.wert += (PULS.ziel - PULS.wert) * Math.min(1, dt * 1.5);
+  PULS.naechsterZitter -= dt;
+  if (PULS.naechsterZitter <= 0) { PULS.naechsterZitter = 0.9 + Math.random() * 0.6; PULS.zitter = Math.round((Math.random() - 0.5) * (2 + PULS.wut / 25)); }
+  const anzeige = Math.max(55, Math.round(PULS.wert + PULS.zitter));
+  const farbe = pulsFarbe(PULS.wert);
+  const dauer = 60 / Math.max(50, PULS.wert);
+  const w = $('puls-wert');
+  if (w.dataset.p !== String(anzeige)) { w.dataset.p = anzeige; $('puls-zahl').textContent = anzeige; }
+  if (w.dataset.f !== farbe) { w.dataset.f = farbe; w.style.setProperty('--puls-farbe', farbe); }
+  const dauerTxt = dauer.toFixed(2) + 's';
+  if (w.dataset.d !== dauerTxt) { w.dataset.d = dauerTxt; w.style.setProperty('--puls-dauer', dauerTxt); }
+  // Schreibstrahl weiterschieben und neue Spalten berechnen (Geschwindigkeit steigt etwas mit dem Puls)
+  const tempo = (55 + PULS.wut * 0.35) * dpr;
+  const neu = tempo * dt;
+  const sp = PULS.spalten;
+  for (let i = 0; i < Math.max(1, Math.round(neu)); i++) {
+    PULS.t += dt / Math.max(1, Math.round(neu));
+    let s = PULS.t - PULS.schlagStart;
+    if (s >= dauer * PULS.extra) {
+      // wütend: ab und zu ein Extraschlag (früher dran), damit es unruhig aussieht
+      PULS.schlagStart = PULS.t;
+      PULS.extra = PULS.wut > 55 && Math.random() < (PULS.wut - 55) / 120 ? 0.6 + Math.random() * 0.2 : 1;
+      s = 0;
+    }
+    const unruhe = (Math.random() - 0.5) * 0.04 * (1 + PULS.wut / 40);
+    sp[Math.floor(PULS.x) % B] = ekgHoehe(s, dauer, PULS.wut) + unruhe;
+    PULS.x = (PULS.x + 1) % B;
+  }
+  const g = c.getContext('2d');
+  g.clearRect(0, 0, B, H);
+  // Raster
+  g.strokeStyle = 'rgba(70, 160, 100, 0.16)';
+  g.lineWidth = 1;
+  g.beginPath();
+  const raster = 8 * dpr;
+  for (let x = 0; x < B; x += raster) { g.moveTo(x + 0.5, 0); g.lineTo(x + 0.5, H); }
+  for (let y = H / 2 % raster; y < H; y += raster) { g.moveTo(0, y + 0.5); g.lineTo(B, y + 0.5); }
+  g.stroke();
+  // Kurve (Lücke direkt vor dem Schreibstrahl)
+  const mitte = H * 0.64, hub = H * 0.56;
+  const kopf = Math.floor(PULS.x);
+  const luecke = 10 * dpr;
+  g.strokeStyle = farbe;
+  g.lineWidth = 1.8 * dpr;
+  g.lineJoin = 'round';
+  g.shadowColor = farbe;
+  g.shadowBlur = 4 * dpr;
+  g.beginPath();
+  let an = false;
+  for (let x = 0; x < B; x++) {
+    const abst = (x - kopf + B) % B;
+    if (abst < luecke || Number.isNaN(sp[x])) { an = false; continue; }
+    const y = mitte - sp[x] * hub;
+    if (an) g.lineTo(x, y); else { g.moveTo(x, y); an = true; }
+  }
+  g.stroke();
+  // heller Punkt am Schreibstrahl
+  const letzte = sp[(kopf - 1 + B) % B];
+  if (!Number.isNaN(letzte)) {
+    g.fillStyle = '#ffffff';
+    g.beginPath();
+    g.arc(kopf - 1, mitte - letzte * hub, 1.8 * dpr, 0, Math.PI * 2);
+    g.fill();
+  }
+  g.shadowBlur = 0;
+}
+requestAnimationFrame(pulsMalen);
 export function wutWackeln() {
   const w = $('wut');
   w.classList.remove('wackelt');
@@ -276,6 +370,32 @@ export function lautstaerkeLeiste(beiAenderung) {
   zeigen();
 }
 
+// Paket 6: Vollbild an/aus (Knopf unten links, Taste F) und Neustart mit Sicherheitsabfrage
+export function vollbildUmschalten() {
+  try {
+    if (document.fullscreenElement) document.exitFullscreen?.();
+    else document.documentElement.requestFullscreen?.({ navigationUI: 'hide' })?.catch?.(() => {});
+  } catch { /* Browser kann kein Vollbild */ }
+}
+export function bedienKnoepfe() {
+  const vb = $('vollbild-knopf'), ns = $('neustart-knopf');
+  const zeigen = () => {
+    const an = !!document.fullscreenElement;
+    vb.innerHTML = an ? SYMBOL.vollbildAus : SYMBOL.vollbild;
+    vb.title = an ? 'Vollbild aus (F)' : 'Vollbild an (F)';
+  };
+  if (!document.documentElement.requestFullscreen) vb.style.display = 'none';
+  vb.addEventListener('click', vollbildUmschalten);
+  document.addEventListener('fullscreenchange', zeigen);
+  zeigen();
+  ns.innerHTML = SYMBOL.neustart;
+  ns.addEventListener('click', async () => {
+    document.exitPointerLock?.();
+    const i = await infoDialog('Neustart?', '<p>Das Spiel fängt von vorn an. Der jetzige Stand geht verloren.</p>', [{ text: 'Ja, neu starten', klasse: 'rot' }, { text: 'Nein, weiterspielen' }]);
+    if (i === 0) location.reload();
+  });
+}
+
 // Band oben: Arbeitspause, solange Dennis auf dem Klo ist
 export function pauseZeigen(an, text = '') {
   const el = $('pause');
@@ -296,6 +416,7 @@ const AUFGABE_SYMBOL = {
   ...WARN_SYMBOL,
   dreck: '<svg viewBox="0 0 24 24" class="ico"><path d="M15 3l-4 9"/><path d="M7 12h8l2 9H5z"/><path d="M8 16v4M11 16v4M14 16v4"/></svg>',
   pumpe: '<svg viewBox="0 0 24 24" class="ico"><rect x="6" y="7" width="8" height="13" rx="2"/><path d="M7 7a3 3 0 0 1 6 0"/><path d="M14 16c3 0 5 1 5 3s-2 2-4 2"/></svg>',
+  kuehlschrank: '<svg viewBox="0 0 24 24" class="ico"><rect x="6" y="3" width="10" height="18" rx="1.5"/><path d="M6 10h10M9 6v2M9 13v3"/><path d="M16 4l4 2v14l-4 1"/></svg>',
   gurte: '<svg viewBox="0 0 24 24" class="ico"><circle cx="8" cy="12" r="5"/><circle cx="8" cy="12" r="2"/><path d="M13 12c3 0 3 4 6 4h2"/><rect x="17" y="14" width="5" height="4" rx="1"/></svg>',
   flaschen: '<svg viewBox="0 0 24 24" class="ico"><path d="M10 3h4v4l2 3v10a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V10l2-3z"/><path d="M8 13h8"/></svg>',
   erstehilfe: '<svg viewBox="0 0 24 24" class="ico"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M9 6V4h6v2"/><path d="M12 10v6M9 13h6"/></svg>',

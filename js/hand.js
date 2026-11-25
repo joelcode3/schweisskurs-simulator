@@ -182,6 +182,7 @@ export function baueHand(scene, kamera) {
       obj.scale.copy(obj.userData.ruhe.skala).multiplyScalar(cfg.skala || 1);
       obj.visible = true;
       item = { id, obj, cfg };
+      api.beimNehmen?.(id, obj);
       rechts.visible = true;
       links.visible = !!cfg.beidhaendig;
       wackel = 0.25;
@@ -218,9 +219,10 @@ export function baueHand(scene, kamera) {
       if (obj.userData.liegend) inDenWaendenHalten(obj);
       return obj;
     },
-    // Werfen: fliegt in Blickrichtung, prallt ab, bleibt auf dem Boden liegen
+    // Werfen: fliegt in Blickrichtung, prallt ab, bleibt auf dem Boden liegen (Weite nach kraft)
     // fang(p, v): optional, wird jeden Flugschritt gefragt; true = gefangen (z. B. liegt auf dem Grillrost), Flug endet dort
-    wirf(richtung, beiLanden, beiTreffer, fang) {
+    // kraft 0..1 (Q gedrückt halten, nach 3 s voll): 0 = kurzer Schubs, 0.5 = wie früher, 1 = richtig weit
+    wirf(richtung, beiLanden, beiTreffer, fang, kraft = 0.5) {
       if (!item) return;
       const id = item.id;
       const schwer = !!item.cfg.schwer;
@@ -231,9 +233,19 @@ export function baueHand(scene, kamera) {
       const start = kamera.position.clone().addScaledVector(richtung, 0.45);
       start.y -= 0.25;
       obj.position.copy(start);
-      const v = richtung.clone().multiplyScalar(schwer ? 4 : 7);
-      v.y += 2.4;
+      const k = Math.max(0, Math.min(1, kraft));
+      const v = richtung.clone().multiplyScalar((schwer ? 4 : 7) * (0.3 + 1.4 * k));
+      v.y += 1.2 + 2.4 * k;
       fliegend.push({ id, obj, v, boden: bodenAbstand(obj), dreh: new THREE.Vector3(Math.random() * 8, Math.random() * 8, 0), getroffen: false, ruhig: 0, beiLanden, beiTreffer, fang });
+    },
+    // Ding, das in der Werkstatt liegt, verliert seine Unterlage (z. B. Tasse auf dem Erste-Hilfe-Kasten, wenn man den
+    // Kasten von der Wand nimmt): fällt mit Physik nach unten und bleibt auf der Fläche bei Höhe zielY liegen (Boden = 0)
+    // boden: Abstand Ursprung bis Unterkante, falls bekannt (Tasse: 0; ihre unsichtbare Klickkugel ragt sonst nach unten)
+    fallen(obj, zielY = 0, beiLanden, boden) {
+      if (!obj.userData.ruhe) obj.userData.ruhe = { rot: obj.rotation.clone(), skala: obj.scale.clone() };
+      if (fliegend.some((f) => f.obj === obj)) return;
+      const v = new THREE.Vector3((Math.random() - 0.5) * 0.5, 0, (Math.random() - 0.5) * 0.5);
+      fliegend.push({ id: obj.userData.interaktiv?.id, obj, v, boden: boden ?? bodenAbstand(obj), festBoden: boden, zielY, dreh: new THREE.Vector3(2 + Math.random() * 3, 2 + Math.random() * 3, 0), getroffen: true, ruhig: 0, beiLanden });
     },
     // Fallen lassen vor die Füße
     fallenLassen(richtung) {
@@ -315,7 +327,7 @@ export function baueHand(scene, kamera) {
           if (f.beiTreffer) f.beiTreffer(f.id);
         }
         // Boden
-        const grund = f.boden + (f.draussen ? gelaendeHoehe(p.x, p.z) : 0);
+        const grund = f.boden + (f.zielY ?? (f.draussen ? gelaendeHoehe(p.x, p.z) : 0));
         if (p.y <= grund) {
           p.y = grund;
           if (Math.abs(f.v.y) > 1.2) {
@@ -333,7 +345,7 @@ export function baueHand(scene, kamera) {
           f.obj.rotation.copy(f.obj.userData.ruhe.rot);
           f.obj.rotation.y += Math.random() * Math.PI;
           if (f.obj.userData.liegend) flachLegen(f.obj, Math.random() * Math.PI * 2);
-          f.obj.position.y = bodenAbstand(f.obj);
+          f.obj.position.y = (f.festBoden ?? bodenAbstand(f.obj)) + (f.zielY ?? 0);
           fliegend.splice(i, 1);
           if (f.beiLanden) f.beiLanden(f.id, f.obj);
         }

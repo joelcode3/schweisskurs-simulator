@@ -451,6 +451,33 @@ export function baueWelt(scene) {
   const rauchSchild = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.525), new THREE.MeshBasicMaterial({ map: verbotTex }));
   rauchSchild.position.set(0, 2.12, 0.1205);
   fluegelRechts.add(rauchSchild);
+  // Paket 8.3: Zettel von Torben innen am Tor, mit Klebeband, Handschrift
+  {
+    const zettelTex = leinwandTextur(320, 240, (g, b, h) => {
+      g.fillStyle = '#fbf8ee'; g.fillRect(0, 0, b, h);
+      g.strokeStyle = 'rgba(90,130,190,0.35)'; g.lineWidth = 1;
+      for (let y = 30; y < h; y += 22) { g.beginPath(); g.moveTo(0, y); g.lineTo(b, y); g.stroke(); }
+      g.strokeStyle = 'rgba(200,80,80,0.4)'; g.beginPath(); g.moveTo(26, 0); g.lineTo(26, h); g.stroke();
+      g.fillStyle = '#1d2a6a'; g.textAlign = 'left';
+      const hand = (t, x, y, px, rot = 0) => { g.save(); g.translate(x, y); g.rotate(rot); g.font = `bold ${px}px "Comic Sans MS", "Segoe Print", "Bradley Hand", cursive`; g.fillText(t, 0, 0); g.restore(); };
+      hand('Rosa Jeep ab jetzt', 36, 46, 25, -0.02);
+      hand('nur noch 4 km/h!', 36, 78, 27, -0.015);
+      g.fillStyle = '#b3170d';
+      hand('Entdrosselung macht', 36, 122, 23, -0.01);
+      hand('nur Torben!', 36, 152, 25, -0.01);
+      g.strokeStyle = '#b3170d'; g.lineWidth = 3; g.beginPath(); g.moveTo(36, 160); g.lineTo(170, 157); g.stroke();
+      g.fillStyle = '#1d2a6a';
+      hand('LG Torben', 170, 206, 24, -0.04);
+    });
+    const zettel = new THREE.Group();
+    zettel.add(new THREE.Mesh(new THREE.PlaneGeometry(0.36, 0.27), toon(0xffffff, { map: zettelTex })));
+    for (const [x, y, r] of [[-0.15, 0.125, 0.5], [0.15, 0.125, -0.5], [0, -0.13, 0.05]]) {
+      const band = new THREE.Mesh(new THREE.PlaneGeometry(0.08, 0.025), new THREE.MeshBasicMaterial({ color: 0xe8dcb0, transparent: true, opacity: 0.85 }));
+      band.position.set(x, y, 0.001); band.rotation.z = r; zettel.add(band);
+    }
+    zettel.position.set(0.3, 1.25, 0.125); zettel.rotation.z = -0.04;
+    fluegelRechts.add(zettel);
+  }
   setze(tuer, -0.85, 0, RAUM.zMax - 0.05, 0, Math.PI, 0);
   scene.add(tuer);
 
@@ -497,6 +524,25 @@ export function baueWelt(scene) {
   merke(loescher, 'feuerloescher', 'Feuerlöscher', null);
   objekte.feuerloescher = loescher;
   loescher.userData.wand = { pos: loescher.position.clone(), rot: loescher.rotation.clone() };
+  // Feuerlöscher-Schild darüber an der Wand (Betreiber 25.11., statt Ablage-Markierung): rotes Quadrat, weißer Löscher und Flamme
+  {
+    const schildTex = leinwandTextur(128, 128, (g, b, h) => {
+      g.fillStyle = '#c8231a'; g.fillRect(0, 0, b, h);
+      g.strokeStyle = '#ffffff'; g.lineWidth = 5; g.strokeRect(6, 6, b - 12, h - 12);
+      g.fillStyle = '#ffffff';
+      // Löscher: Körper, Kopf, Griff, Schlauch
+      g.beginPath(); g.roundRect(30, 46, 30, 62, 10); g.fill();
+      g.fillRect(38, 34, 14, 14);
+      g.fillRect(30, 28, 30, 7);
+      g.lineWidth = 5; g.strokeStyle = '#ffffff'; g.beginPath(); g.moveTo(54, 36); g.quadraticCurveTo(76, 34, 72, 60); g.stroke();
+      // Flamme rechts
+      g.beginPath(); g.moveTo(96, 108); g.quadraticCurveTo(76, 100, 84, 78); g.quadraticCurveTo(88, 90, 92, 88); g.quadraticCurveTo(86, 70, 100, 56);
+      g.quadraticCurveTo(100, 74, 108, 80); g.quadraticCurveTo(116, 100, 96, 108); g.fill();
+    });
+    const schild = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.24), toon(0xffffff, { map: schildTex }));
+    schild.position.set(RAUM.xMax - 0.012, 1.82, -1.0); schild.rotation.y = -Math.PI / 2;
+    scene.add(schild);
+  }
 
   // Erste-Hilfe-Kasten neben dem Feuerlöscher
   const ersteHilfe = new THREE.Group();
@@ -1369,39 +1415,112 @@ export function baueWelt(scene) {
   for (let k = -1; k <= 1; k++) becken.add(setze(quader(0.07, 0.004, 0.008, 0x8a8f95, { umriss: false }), 0, OBEN - TIEF - 0.033, k * 0.02));
   // Überlauf: Schlitz oben an der Rückwand der Wanne
   becken.add(setze(quader(0.1, 0.012, 0.006, 0x1d1d1f, { umriss: false }), 0, OBEN - 0.075, -wZ / 2 + 0.004));
-  // Armatur: Säule hinten (an der Wand), Auslauf im Bogen über die Wannenmitte, Hebel
-  becken.add(setze(zylinder(0.022, 0.026, 0.34, 0xc9cdd2, { umriss: 0.003 }, 12), 0.225, OBEN + 0.15, 0));
-  becken.add(setze(zylinder(0.016, 0.016, 0.25, 0xc9cdd2, { umriss: 0.003 }, 10), 0.1, OBEN + 0.32, 0, 0, 0, Math.PI / 2));
-  becken.add(setze(zylinder(0.016, 0.014, 0.08, 0xc9cdd2, { umriss: 0.003 }, 10), -0.025, OBEN + 0.285, 0));
-  becken.add(setze(zylinder(0.011, 0.011, 0.14, 0x2f5fa8, { umriss: 0.002 }, 8), 0.225, OBEN + 0.2, 0.09, Math.PI / 2, 0, 0)); // kalt
-  becken.add(setze(zylinder(0.011, 0.011, 0.14, FARBE.rot, { umriss: 0.002 }, 8), 0.225, OBEN + 0.2, -0.09, Math.PI / 2, 0, 0)); // warm
-  becken.add(setze(zylinder(0.03, 0.03, 0.03, 0x3a3d42, { umriss: 0.002 }, 10), 0.225, OBEN + 0.32, 0));
+  // Armatur (Bug 2): verchromte Einhebel-Mischbatterie mit hohem Schwenkauslauf (Bogen über die Wannenmitte), Rosette,
+  // Hebel nach vorn, Strahlregler vorn am Auslauf, ein Tropfen hängt dran. Die rot-blauen Stäbe sind weg.
+  {
+    const chrom = toon(0xdfe4e9), chromD = toon(0x9aa3ab);
+    const arm = new THREE.Group();
+    // Rosette und Fuß
+    arm.add(setze(teil(new THREE.CylinderGeometry(0.042, 0.046, 0.012, 20), 0, { material: chrom, umriss: 0.002 }), 0, 0.006, 0));
+    arm.add(setze(teil(new THREE.CylinderGeometry(0.03, 0.034, 0.03, 18), 0, { material: chromD, umriss: false }), 0, 0.027, 0));
+    // Körper (leicht konisch) mit Zierring
+    arm.add(setze(teil(new THREE.CylinderGeometry(0.027, 0.031, 0.15, 18), 0, { material: chrom, umriss: 0.003 }), 0, 0.117, 0));
+    arm.add(setze(teil(new THREE.TorusGeometry(0.028, 0.004, 6, 20), 0, { material: chromD, umriss: false }), 0, 0.19, 0, Math.PI / 2, 0, 0));
+    // Kartuschenkopf oben, Hebel nach vorn (zum Spieler, -x), leicht angehoben, Griffende abgerundet
+    arm.add(setze(teil(new THREE.SphereGeometry(0.03, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), 0, { material: chrom, umriss: 0.003 }), 0, 0.195, 0));
+    const hebel = new THREE.Group();
+    hebel.add(setze(teil(new THREE.BoxGeometry(0.11, 0.014, 0.024), 0, { material: chrom, umriss: 0.002 }), -0.055, 0, 0));
+    hebel.add(setze(teil(new THREE.CylinderGeometry(0.012, 0.012, 0.024, 12), 0, { material: chrom, umriss: 0.002 }), -0.11, 0, 0, Math.PI / 2, 0, 0));
+    hebel.position.set(0, 0.222, 0); hebel.rotation.z = -0.22;
+    arm.add(hebel);
+    // Schwenkauslauf: Rohr in einem hohen Bogen nach vorn über die Wanne, am Ende senkrecht nach unten
+    const bogen = new THREE.CatmullRomCurve3([[0, 0.17, 0], [0, 0.26, 0], [-0.02, 0.33, 0], [-0.09, 0.37, 0], [-0.17, 0.35, 0], [-0.215, 0.3, 0], [-0.225, 0.25, 0]].map((q) => new THREE.Vector3(...q)));
+    arm.add(teil(new THREE.TubeGeometry(bogen, 40, 0.014, 12, false), 0, { material: chrom, umriss: 0.003 }));
+    // Strahlregler (Perlator) und Tropfen
+    arm.add(setze(teil(new THREE.CylinderGeometry(0.017, 0.017, 0.022, 14), 0, { material: chromD, umriss: 0.002 }), -0.225, 0.24, 0));
+    arm.add(setze(zylinder(0.012, 0.012, 0.003, 0x3a3d42, { umriss: false }, 12), -0.225, 0.228, 0));
+    const tropfen = kugel(0.006, 0x8fc8ee, { umriss: false, mat: { transparent: true, opacity: 0.85 } }, 8);
+    tropfen.scale.y = 1.4; tropfen.position.set(-0.225, 0.219, 0);
+    arm.add(tropfen);
+    arm.position.set(0.225, OBEN, 0);
+    becken.add(arm);
+  }
   setze(becken, 4.67, 0, 1.6);
   scene.add(becken);
   merke(becken, 'spuele', 'Spüle (Waschplatz)', null);
   objekte.spuele = becken;
-  // Rohr unter dem Hahn (hier platzt es bei Frost)
+  // Wasserleitung an der Wand (Betreiber-Wunsch 25.11.): kommt seitlich hinter der Spüle hervor (Anschluss unter der
+  // Arbeitsplatte), läuft an der Wand entlang zur linken Seite der Spüle und von dort senkrecht bis unter die Decke.
+  // Das Rohr hinter dem Hahn ist weg; der Rohrbruch passiert an der Messing-Verschraubung dieser Wandleitung.
+  const ROHR_X = RAUM.xMax - 0.04, ROHR_Z = 1.02, ROHR_Y0 = 0.6, BRUCH_Y = 1.25;
+  {
+    const rohrMat = toon(FARBE.stahlHell);
+    const leitung = new THREE.Group();
+    // waagerecht hinter der Spüle (vom Anschluss unter der Platte zur Seite)
+    leitung.add(setze(teil(new THREE.CylinderGeometry(0.018, 0.018, 1.6 - ROHR_Z - 0.06, 10), 0, { material: rohrMat, umriss: 0.002 }), ROHR_X, ROHR_Y0, (1.6 + ROHR_Z + 0.06) / 2, Math.PI / 2, 0, 0));
+    // 90-Grad-Bogen nach oben: schließt genau an das waagerechte (Ende bei z + 0,06) und das senkrechte Rohr (Start bei y + 0,06) an
+    const bogenGeo = new THREE.TorusGeometry(0.06, 0.018, 8, 12, Math.PI / 2);
+    bogenGeo.rotateZ(Math.PI);
+    const bogen = teil(bogenGeo, 0, { material: rohrMat, umriss: 0.002 });
+    bogen.position.set(ROHR_X, ROHR_Y0 + 0.06, ROHR_Z + 0.06); bogen.rotation.set(0, -Math.PI / 2, 0);
+    leitung.add(bogen);
+    // senkrecht bis zur Decke (ein Stück unterhalb und oberhalb der Verschraubung)
+    const senk = (y0, y1) => leitung.add(setze(teil(new THREE.CylinderGeometry(0.018, 0.018, y1 - y0, 10), 0, { material: rohrMat, umriss: 0.002 }), ROHR_X, (y0 + y1) / 2, ROHR_Z));
+    senk(ROHR_Y0 + 0.06, BRUCH_Y - 0.05);
+    senk(BRUCH_Y + 0.05, RAUM.hoehe);
+    // Rohrschellen mit Schrauben an der Wand, Deckenrosette oben
+    for (const y of [0.95, 1.8, 2.6, 3.4]) {
+      leitung.add(setze(quader(0.03, 0.035, 0.05, 0x8a8f95, { umriss: 0.001 }), ROHR_X, y, ROHR_Z));
+      leitung.add(setze(zylinder(0.006, 0.006, 0.02, 0x5a5d62, { umriss: false }, 6), ROHR_X + 0.01, y, ROHR_Z + 0.032, 0, 0, Math.PI / 2));
+    }
+    leitung.add(setze(quader(0.03, 0.035, 0.05, 0x8a8f95, { umriss: 0.001 }), ROHR_X, ROHR_Y0, 1.3));
+    leitung.add(setze(zylinder(0.035, 0.035, 0.01, 0xd8d2c4, { umriss: 0.001 }, 14), ROHR_X, RAUM.hoehe - 0.005, ROHR_Z));
+    // Absperrventil (blaues Griffrad) knapp über dem Bogen
+    leitung.add(setze(quader(0.04, 0.06, 0.04, FARBE.messing, { umriss: 0.002 }), ROHR_X, 0.82, ROHR_Z));
+    leitung.add(setze(teil(new THREE.TorusGeometry(0.03, 0.007, 6, 14), 0x2f5fa8, { umriss: 0.001 }), ROHR_X - 0.045, 0.82, ROHR_Z, 0, Math.PI / 2, 0));
+    leitung.add(setze(zylinder(0.006, 0.006, 0.045, FARBE.messing, { umriss: false }, 6), ROHR_X - 0.025, 0.82, ROHR_Z, 0, 0, Math.PI / 2));
+    scene.add(leitung);
+  }
+  // Bruchstelle: dicke Messing-Verschraubung an der Wandleitung (hier platzt es bei Frost und hier wird repariert)
   const hahnRohr = new THREE.Group();
-  hahnRohr.add(zylinder(0.025, 0.025, 0.5, FARBE.stahlHell, {}, 10));
-  // dicke Messing-Verschraubung: hier platzt es und hier wird repariert
-  hahnRohr.add(setze(zylinder(0.055, 0.055, 0.1, FARBE.messing, {}, 6), 0, -0.05, 0));
-  hahnRohr.add(setze(zylinder(0.045, 0.045, 0.03, 0x8a6a22, {}, 6), 0, 0.02, 0));
+  hahnRohr.add(setze(zylinder(0.032, 0.032, 0.1, FARBE.messing, {}, 6), 0, 0, 0));
+  hahnRohr.add(setze(zylinder(0.026, 0.026, 0.13, 0x8a6a22, {}, 6), 0, 0, 0));
   const leckRing = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.015, 8, 32), new THREE.MeshBasicMaterial({ color: 0xffc81e }));
   leckRing.rotation.y = Math.PI / 2;
-  leckRing.position.set(-0.04, -0.05, 0);
+  leckRing.position.set(-0.04, 0, 0);
   leckRing.visible = false;
   hahnRohr.add(leckRing);
-  const rohrKlick = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.6, 0.45), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
-  rohrKlick.position.set(-0.1, -0.02, 0);
+  const rohrKlick = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.5, 0.3), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
+  rohrKlick.position.set(-0.1, 0, 0);
   hahnRohr.add(rohrKlick);
-  hahnRohr.position.set(4.93, 0.95, 1.6);
+  hahnRohr.position.set(ROHR_X, BRUCH_Y, ROHR_Z);
   scene.add(hahnRohr);
-  merke(hahnRohr, 'wasserhahn', 'Wasserrohr am Hahn', null);
+  merke(hahnRohr, 'wasserhahn', 'Wasserrohr an der Wand', null);
   objekte.wasserhahn = hahnRohr;
   // Pfütze (wächst, solange es spritzt)
-  const pfuetze = new THREE.Mesh(new THREE.CircleGeometry(1, 32), new THREE.MeshBasicMaterial({ color: 0x5aa6e6, transparent: true, opacity: 0.55, depthWrite: false }));
+  // Paket 8.1: nicht rund, sondern fleckig mit Ausbuchtungen, dazu ein paar kleine Spritzer-Lachen drumherum
+  const pfuetze = new THREE.Group();
+  {
+    const pfMat = new THREE.MeshBasicMaterial({ color: 0x5aa6e6, transparent: true, opacity: 0.55, depthWrite: false });
+    const glanzMat = new THREE.MeshBasicMaterial({ color: 0xcfe8fa, transparent: true, opacity: 0.35, depthWrite: false });
+    const klecks = (r0, saat, n = 48) => {
+      const f = new THREE.Shape();
+      for (let i = 0; i <= n; i++) {
+        const w = (i / n) * Math.PI * 2;
+        const r = r0 * (1 + 0.22 * Math.sin(3 * w + saat) + 0.14 * Math.sin(5 * w + saat * 2.1) + 0.08 * Math.sin(9 * w + saat * 0.7));
+        const x = Math.cos(w) * r * 1.25, y = Math.sin(w) * r * 0.85; // etwas länglich (läuft von der Wand weg)
+        if (i === 0) f.moveTo(x, y); else f.lineTo(x, y);
+      }
+      return new THREE.ShapeGeometry(f);
+    };
+    pfuetze.add(new THREE.Mesh(klecks(0.9, 1.3), pfMat));
+    for (const [x, y, r, saat] of [[1.15, 0.35, 0.22, 2], [-0.95, -0.55, 0.18, 4], [0.5, -0.85, 0.14, 5], [-0.3, 0.9, 0.12, 6], [1.45, -0.3, 0.09, 7]]) {
+      const m = new THREE.Mesh(klecks(r, saat, 24), pfMat); m.position.set(x, y, 0); pfuetze.add(m);
+    }
+    const glanz = new THREE.Mesh(klecks(0.28, 3, 24), glanzMat); glanz.position.set(-0.25, 0.2, 0.001); pfuetze.add(glanz);
+  }
   pfuetze.rotation.x = -Math.PI / 2;
-  pfuetze.position.set(4.3, 0.006, 1.6);
+  pfuetze.position.set(4.3, 0.006, ROHR_Z);
   pfuetze.scale.setScalar(0.01);
   pfuetze.visible = false;
   scene.add(pfuetze);
@@ -2727,6 +2846,7 @@ export function baueWelt(scene) {
   sofa.rotation.y = Math.PI;
   scene.add(sofa);
   hindernis(-4.05, -2.35, 3.15, 4.0);
+  merke(sofa, 'sofa', 'Sofa', null); // Paket 6: Hinsetzen
 
   // Bierkasten für Jonnys leere Flaschen: links neben dem Sofa, grüner Kunststoff mit 4 x 5 Fächern. Leere Flaschen kommen aufrecht hinein.
   const bierKastenWelt = { x: -1.95, z: 3.62 };
@@ -2817,7 +2937,58 @@ export function baueWelt(scene) {
   eimerM.children[0].position.y = 0.25;
   eimerM.add(setze(zylinder(0.17, 0.17, 0.01, 0x2a2a2a, { umriss: false }, 18), 0, 0.01, 0));
   eimerM.add(setze(zylinder(0.18, 0.18, 0.02, 0x3a2e22, { umriss: false }, 18), 0, 0.42, 0));
-  for (let i = 0; i < 4; i++) eimerM.add(setze(quader(0.08, 0.06, 0.05, 0xc9b48a, { umriss: 0.002 }), Math.sin(i * 1.7) * 0.08, 0.45, Math.cos(i * 1.7) * 0.08, i, i * 0.7, 0.3));
+  // Bug 7: richtiger Werkstattmüll statt Pappklötzchen, quillt etwas über den Rand
+  {
+    const knuell = (r, farbe, x, y, z, d = 0) => eimerM.add(setze(teil(new THREE.IcosahedronGeometry(r, 0), farbe, { umriss: 0.0015 }), x, y, z, d, d * 1.3, d * 0.7));
+    // zerknülltes Papier und Zeitungsseiten
+    knuell(0.05, 0xf2efe6, -0.07, 0.45, 0.06, 0.4);
+    knuell(0.042, 0xe8e2d0, 0.09, 0.44, -0.03, 1.1);
+    knuell(0.038, 0xd9d4c4, 0.02, 0.5, -0.1, 2.0);
+    knuell(0.034, 0xf2efe6, -0.11, 0.43, -0.08, 2.7);
+    // Energy-Drink-Dose, zerdrückt und schräg
+    const dose = new THREE.Group();
+    dose.add(zylinder(0.033, 0.033, 0.1, 0x1d3f8a, { umriss: 0.002 }, 12));
+    dose.add(setze(zylinder(0.0335, 0.0335, 0.035, 0xc8d4e0, { umriss: false }, 12), 0, 0.01, 0));
+    dose.add(setze(zylinder(0.03, 0.033, 0.008, 0xb8bcc2, { umriss: false }, 12), 0, 0.054, 0));
+    dose.scale.set(1, 0.85, 0.72);
+    eimerM.add(setze(dose, 0.06, 0.48, 0.07, 1.2, 0.4, 0.3));
+    // Bierflasche, Hals schaut raus
+    const fl = new THREE.Group();
+    fl.add(zylinder(0.03, 0.03, 0.14, 0x5a3612, { umriss: 0.002 }, 10));
+    fl.add(setze(zylinder(0.012, 0.028, 0.06, 0x5a3612, { umriss: 0.002 }, 10), 0, 0.1, 0));
+    fl.add(setze(zylinder(0.0305, 0.0305, 0.05, 0xe8d9a8, { umriss: false }, 10), 0, -0.01, 0));
+    eimerM.add(setze(fl, -0.09, 0.47, -0.02, 0.15, 0, 0.75));
+    // Pizzakarton-Ecke, gefaltet
+    const karton = new THREE.Group();
+    karton.add(quader(0.2, 0.012, 0.14, 0xc49a63, { umriss: 0.002 }));
+    karton.add(setze(quader(0.07, 0.013, 0.05, 0xa03b22, { umriss: false }), 0.03, 0.001, 0.02));
+    eimerM.add(setze(karton, 0.0, 0.5, -0.02, -0.5, 0.6, 0.35));
+    // Chipstüte (zerknittert, rot mit gelbem Streifen)
+    const tuete = new THREE.Group();
+    tuete.add(quader(0.09, 0.12, 0.025, 0xd2281e, { umriss: 0.002 }));
+    tuete.add(setze(quader(0.092, 0.025, 0.026, 0xf2c21c, { umriss: false }), 0, 0.02, 0));
+    eimerM.add(setze(tuete, 0.1, 0.5, 0.0, 0.3, -0.8, -0.6));
+    // Bananenschale
+    const banane = new THREE.Group();
+    for (let i = 0; i < 3; i++) banane.add(setze(teil(new THREE.TorusGeometry(0.05, 0.011, 5, 8, Math.PI * 0.55), 0xe8c534, { umriss: 0.0015 }), 0, 0, 0, 0.3 * i, i * 1.9, 0));
+    banane.add(setze(zylinder(0.006, 0.008, 0.02, 0x4a3a1c, { umriss: false }, 6), 0.05, 0.0, 0));
+    eimerM.add(setze(banane, -0.03, 0.52, 0.09, 0.4, 0.8, 0));
+    // blaue Plastiktüte, zusammengeknüllt, hängt über den Rand
+    const tuete2 = teil(new THREE.IcosahedronGeometry(0.06, 1), 0x2f6fc2, { umriss: 0.002 });
+    tuete2.scale.set(1.3, 0.7, 1);
+    eimerM.add(setze(tuete2, 0.13, 0.48, 0.1, 0.3, 0.5, 0));
+    eimerM.add(setze(quader(0.04, 0.12, 0.01, 0x2f6fc2, { umriss: 0.0015 }), 0.19, 0.44, 0.12, 0, 0.7, 0.15));
+    // Kaffeebecher to go und abgebrannte Elektrodenreste
+    const becherMuell = new THREE.Group();
+    becherMuell.add(zylinder(0.035, 0.026, 0.09, 0xf4f0e6, { umriss: 0.002 }, 12));
+    becherMuell.add(setze(zylinder(0.037, 0.037, 0.012, 0x1d1d1f, { umriss: false }, 12), 0, 0.048, 0));
+    eimerM.add(setze(becherMuell, -0.12, 0.47, 0.08, 1.4, 0.2, 0.2));
+    for (let i = 0; i < 3; i++) eimerM.add(setze(zylinder(0.003, 0.003, 0.07, 0x6a6e74, { umriss: false }, 5), -0.02 + i * 0.03, 0.5, -0.06 + i * 0.01, 1.2 + i * 0.3, i, 0.4));
+    // Lappen mit Öl
+    const lappen = teil(new THREE.IcosahedronGeometry(0.045, 0), 0x7a6a4a, { umriss: 0.0015 });
+    lappen.scale.set(1.4, 0.5, 1.1);
+    eimerM.add(setze(lappen, 0.04, 0.46, 0.12, 0.2, 0.9, 0));
+  }
   setze(eimerM, 1.55, 0, -3.3);
   scene.add(eimerM);
   merke(eimerM, 'muelleimer', 'Mülleimer', null);
@@ -3069,7 +3240,7 @@ export function baueWelt(scene) {
       leckTakt += dt;
       while (leckTakt > 0.03) {
         leckTakt -= 0.03;
-        wasser(new THREE.Vector3(4.9, 0.9, 1.6), new THREE.Vector3(4.2 + (Math.random() - 0.5) * 0.4, 1.0, 1.6 + (Math.random() - 0.5) * 0.9), 2, 0.6);
+        wasser(new THREE.Vector3(4.92, 1.25, 1.02), new THREE.Vector3(4.2 + (Math.random() - 0.5) * 0.4, 1.1, 1.02 + (Math.random() - 0.5) * 0.9), 2, 0.6);
       }
       pfuetze.visible = true;
       pfuetze.scale.setScalar(Math.min(1.5, pfuetze.scale.x + dt * 0.05));
@@ -3373,8 +3544,9 @@ export function baueWelt(scene) {
     akkuAufWerkbank() { scene.add(akku); akku.position.set(1.08, 0.905, -2.72); akku.rotation.set(0, -0.6, 0); akku.scale.setScalar(1); akku.visible = true; },
     akkuRepariert() { akkuDreck.visible = false; },
     tassen,
-    // Tassen in einem Bereich fallen auf die nächste Fläche darunter (z. B. wenn der obere Stahlträger weggetragen wird)
-    tassenNachrutschen(xMin, xMax, zMin, zMax) {
+    // Tassen in einem Bereich fallen auf die nächste Fläche darunter (z. B. wenn der obere Stahlträger weggetragen wird).
+    // fallen(t, y): optional, dann fällt die Tasse mit Physik (hand.fallen), wenn es tiefer als 5 cm runtergeht
+    tassenNachrutschen(xMin, xMax, zMin, zMax, fallen) {
       for (const t of tassen) {
         if (t.parent !== scene || !t.visible || t.userData.aufgeraeumt) continue;
         const p = t.position;
@@ -3382,10 +3554,12 @@ export function baueWelt(scene) {
         // höchste Fläche knapp um die Tasse (sie steht nicht auf einem Punkt, sondern auf ihrem Boden)
         let y = 0;
         for (const [dx, dz] of [[0, 0], [0.035, 0], [-0.035, 0], [0, 0.035], [0, -0.035]]) y = Math.max(y, oberflaecheBei(p.x + dx, p.z + dz, p.y - 0.01));
-        if (y < p.y - 0.01) p.y = y;
+        if (fallen && y < p.y - 0.05) fallen(t, y);
+        else if (y < p.y - 0.01) p.y = y;
       }
     },
     tassenVerteilen,
+    tasseHinstellen,
     tasseAufKuehlschrank,
     tassenAbholen,
     kuehlschrankVoll: () => tassenOben().length >= KUEHL_PLAETZE,
@@ -3524,7 +3698,7 @@ export function baueWelt(scene) {
     wasser,
     leck(an) { leckAn = an; },
     get leckt() { return leckAn; },
-    LECK: { x: 4.93, z: 1.6, vorX: 4.05, vorZ: 1.6 },
+    LECK: { x: 4.93, z: 1.02, vorX: 4.05, vorZ: 1.02 },
     ROHRZANGE: { x: 1.32, z: -3.3 },
     loescherSichtbar(an) { loescher.visible = an; },
     pumpeDreckig(an) { pumpeDreck.visible = an; },

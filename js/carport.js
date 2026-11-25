@@ -26,12 +26,33 @@ export function baueCarport(scene, { merke, hindernis }) {
   }
   for (const x of [-GX, GX]) platz.add(setze(quader(0.14, 0.2, GZ1 - GZ0 + 0.4, HOLZ_D, { umriss: 0.004 }), x, GH - 0.1, 0));
   for (let k = 0; k <= 6; k++) platz.add(setze(quader(2 * GX + 0.4, 0.12, 0.08, HOLZ, { umriss: 0.003 }), 0, GH + 0.04, GZ0 - 0.1 + k * (GZ1 - GZ0 + 0.2) / 6));
-  // Kopfbänder (schräge Streben)
-  for (const x of [-GX, GX]) for (const z of [GZ0, GZ1]) {
-    const s = quader(0.08, 0.6, 0.08, HOLZ, { umriss: 0.002 });
-    s.position.set(x, GH - 0.3, z + (z < 0 ? 0.2 : -0.2));
-    s.rotation.x = z < 0 ? -0.75 : 0.75;
-    platz.add(s);
+  // Kopfbänder (Bug 11): echte 45°-Streben zwischen Pfosten und Pfette, an jedem Pfosten zu beiden Seiten (an den Eckpfosten
+  // nur nach innen), Enden senkrecht bzw. waagerecht abgeschnitten (liegen satt an Pfosten und Pfette an), je Ende eine
+  // Schraube mit Unterlegscheibe
+  {
+    const KB = 0.6, KD = 0.08, KT = KD * Math.SQRT2; // Abstand vom Pfosten, Holzstärke, Schnittlänge am Ende
+    const PF = 0.06; // halbe Pfostenstärke
+    const yU = GH - 0.2; // Unterkante Pfette
+    const form = new THREE.Shape();
+    form.moveTo(0, -KB - KT); form.lineTo(0, -KB); form.lineTo(KB, 0); form.lineTo(KB + KT, 0); form.lineTo(0, -KB - KT);
+    const kbGeo = new THREE.ExtrudeGeometry(form, { depth: KD, bevelEnabled: false });
+    kbGeo.translate(0, 0, -KD / 2);
+    kbGeo.rotateY(-Math.PI / 2); // Form-x zeigt jetzt längs der Pfette (z)
+    const schraube = (x, y, z) => {
+      for (const sx of [-1, 1]) {
+        platz.add(setze(zylinder(0.022, 0.022, 0.006, 0x8a8f96, { umriss: false }, 10), x + sx * (KD / 2 + 0.003), y, z, 0, 0, Math.PI / 2));
+        platz.add(setze(zylinder(0.012, 0.012, 0.012, 0x5a5d62, { umriss: false }, 6), x + sx * (KD / 2 + 0.008), y, z, 0, 0, Math.PI / 2));
+      }
+    };
+    for (const x of [-GX, GX]) for (const z of [GZ0, 0, GZ1]) for (const seite of [-1, 1]) {
+      if ((z === GZ0 && seite < 0) || (z === GZ1 && seite > 0)) continue;
+      const k = teil(kbGeo, HOLZ, { umriss: 0.002 });
+      k.position.set(x, yU, z + seite * PF);
+      k.scale.z = seite;
+      platz.add(k);
+      schraube(x, yU - KB - KT * 0.35, z + seite * (PF + KT * 0.35));
+      schraube(x, yU - KT * 0.35, z + seite * (PF + KB + KT * 0.35));
+    }
   }
   const wellTex = leinwandTextur(64, 16, (g, b, h) => {
     const v = g.createLinearGradient(0, 0, b, 0);
@@ -146,9 +167,18 @@ export function baueCarport(scene, { merke, hindernis }) {
   // Fahrgestell: Achse mit Rädern und Radkasten, Deichsel mit Gaskasten, Stützrad, Kurbelstützen
   ww.add(setze(quader(1.8, 0.12, WL - 0.2, 0x2a2c30, { umriss: 0.003 }), 0, WY - 0.06, 0));
   for (const sx of [-1, 1]) {
-    ww.add(setze(zylinder(0.3, 0.3, 0.18, 0x1d1d1f, { umriss: 0.003 }, 18), sx * (WB / 2 - 0.05), 0.3, -0.1, 0, 0, Math.PI / 2));
-    ww.add(setze(zylinder(0.15, 0.15, 0.19, 0xc9cdd2, { umriss: false }, 12), sx * (WB / 2 - 0.05), 0.3, -0.1, 0, 0, Math.PI / 2));
-    ww.add(setze(quader(0.04, 0.12, 0.8, 0xe4dfd2, { umriss: 0.002 }), sx * (WB / 2 + 0.02), WY + 0.08, -0.1));
+    // Rad etwas weiter innen, Felge steht nicht mehr bündig mit dem Radkasten (Bug 10: das flackerte)
+    ww.add(setze(zylinder(0.3, 0.3, 0.18, 0x1d1d1f, { umriss: 0.003 }, 18), sx * (WB / 2 - 0.08), 0.3, -0.1, 0, 0, Math.PI / 2));
+    ww.add(setze(zylinder(0.15, 0.15, 0.19, 0xc9cdd2, { umriss: false }, 12), sx * (WB / 2 - 0.08), 0.3, -0.1, 0, 0, Math.PI / 2));
+    // Radlauf als runder Kotflügel-Bogen über dem Rad, steht etwas aus der Wand
+    {
+      const bogen = new THREE.Shape();
+      bogen.absarc(0, 0, 0.4, 0.12, Math.PI - 0.12, false);
+      bogen.absarc(0, 0, 0.345, Math.PI - 0.12, 0.12, true);
+      const bgGeo = new THREE.ExtrudeGeometry(bogen, { depth: 0.09, bevelEnabled: true, bevelThickness: 0.01, bevelSize: 0.01, bevelSegments: 2, curveSegments: 20 });
+      bgGeo.rotateY(sx * Math.PI / 2); // Bogen steht längs (z), Tiefe zeigt nach außen
+      ww.add(setze(teil(bgGeo, 0xe4dfd2, { umriss: 0.002 }), sx * (WB / 2 - 0.02), 0.3, -0.1));
+    }
     for (const z of [-WL / 2 + 0.3, WL / 2 - 0.3]) ww.add(setze(zylinder(0.03, 0.04, WY, 0x5a5d62, { umriss: 0.002 }, 8), sx * 0.75, WY / 2, z));
   }
   // Deichsel: V-Rahmen aus verzinktem Profil, Deichselhaube, Auflaufbremse mit Faltenbalg, Kugelkopfkupplung mit Griff,
@@ -227,8 +257,9 @@ export function baueCarport(scene, { merke, hindernis }) {
 
   // ---------- kleine Holzterrasse vor der Tür mit Stufe, Klappstühlen und Lichterkette ----------
   const terr = new THREE.Group();
-  terr.add(setze(teil(new THREE.BoxGeometry(1.8, 0.18, 2.6), 0, { material: holzMat, umriss: 0.004 }), 0, 0.09, 0));
-  terr.add(setze(teil(new THREE.BoxGeometry(0.4, 0.09, 1.0), 0, { material: holzMat, umriss: 0.003 }), 1.1, 0.045, 0.8)); // Stufe vor der Tür
+  // Bug 9: breiter (2,4 x 4,4 m statt 1,8 x 2,6 m), läuft fast die ganze Wohnwagenseite entlang; Sofa und Kasten bleiben stehen
+  terr.add(setze(teil(new THREE.BoxGeometry(2.4, 0.18, 4.4), 0, { material: holzMat, umriss: 0.004 }), 0.3, 0.09, 0));
+  terr.add(setze(teil(new THREE.BoxGeometry(0.4, 0.09, 1.0), 0, { material: holzMat, umriss: 0.003 }), 1.7, 0.045, 0.8)); // Stufe vor der Tür
   // kleines altes Zweisitzer-Sofa am Terrassenende, davor ein Getränkekasten als Tisch
   const sofa = new THREE.Group();
   const SOFA = 0x7a5a3a, SOFA_D = 0x5e4430;
@@ -325,6 +356,47 @@ export function baueCarport(scene, { merke, hindernis }) {
     b.scale.set(1, 1.3, 1);
     b.position.copy(kabelPunkte[k]); b.position.y -= 0.05;
     platz.add(b);
+  }
+
+  // ---------- Paket 8.2: vollgekotzte Fußmatte auf einer Wäscheleine zwischen Carport-Pfosten und Wohnwagen ----------
+  {
+    const A = new THREE.Vector3(GX - 0.06, 1.95, GZ0), B = new THREE.Vector3(WB / 2 + 0.02, 1.75, -1.55);
+    const mitteL = A.clone().lerp(B, 0.5); mitteL.y -= 0.12;
+    const leine = new THREE.QuadraticBezierCurve3(A, mitteL, B);
+    platz.add(teil(new THREE.TubeGeometry(leine, 24, 0.005, 4, false), 0xe8e4d8, { umriss: false }));
+    // Haken am Pfosten und Öse am Wohnwagen
+    platz.add(setze(zylinder(0.01, 0.01, 0.06, 0x8a8f96, { umriss: 0.001 }, 6), A.x - 0.02, A.y, A.z, 0, 0, Math.PI / 2));
+    platz.add(setze(teil(new THREE.TorusGeometry(0.018, 0.005, 6, 10), 0x8a8f96, { umriss: false }), B.x, B.y, B.z, 0, Math.PI / 2, 0));
+    const matteTex = leinwandTextur(256, 192, (g, b, h) => {
+      // Kokosmatte: braun, Faserstruktur, Rand, „WELCOME“
+      g.fillStyle = '#9a6a35'; g.fillRect(0, 0, b, h);
+      for (let i = 0; i < 900; i++) { g.fillStyle = `rgba(${60 + r() * 60},${35 + r() * 30},10,${0.25 + r() * 0.3})`; g.fillRect(r() * b, r() * h, 1 + r() * 2, 3 + r() * 5); }
+      g.strokeStyle = '#5a3a18'; g.lineWidth = 10; g.strokeRect(5, 5, b - 10, h - 10);
+      g.fillStyle = '#4a2e12'; g.font = 'bold 34px Impact, sans-serif'; g.textAlign = 'center'; g.fillText('WELCOME', b / 2, 104);
+      // Kotze: gelbgrüne Lache mit Brocken, Spritzer, ein dunkler Rand
+      const lache = (x, y, rx, ry, w) => { g.beginPath(); for (let i = 0; i <= 20; i++) { const a = (i / 20) * Math.PI * 2; const q = 1 + 0.25 * Math.sin(a * 3 + w) + 0.15 * Math.sin(a * 5 + w * 2); const px = x + Math.cos(a) * rx * q, py = y + Math.sin(a) * ry * q; if (i) g.lineTo(px, py); else g.moveTo(px, py); } g.closePath(); g.fill(); };
+      g.fillStyle = 'rgba(110,120,30,0.55)'; lache(120, 120, 70, 42, 1); lache(196, 60, 26, 18, 2);
+      g.fillStyle = '#c8c24a'; lache(118, 116, 60, 34, 1.4); lache(194, 58, 20, 13, 2.3); lache(50, 150, 14, 9, 3);
+      g.fillStyle = '#e0d870'; lache(108, 108, 28, 14, 2);
+      for (let i = 0; i < 18; i++) { g.fillStyle = ['#d98a3a', '#e8e0b0', '#8aa43a', '#f2d890'][i % 4]; const x = 80 + r() * 90, y = 96 + r() * 44; g.beginPath(); g.ellipse(x, y, 2 + r() * 4, 2 + r() * 3, r() * 3, 0, Math.PI * 2); g.fill(); }
+      g.fillStyle = 'rgba(200,194,74,0.8)'; for (let i = 0; i < 10; i++) { g.beginPath(); g.arc(30 + r() * 200, 30 + r() * 140, 2 + r() * 3, 0, Math.PI * 2); g.fill(); }
+    });
+    const matteMat2 = toon(0xffffff, { map: matteTex, side: THREE.DoubleSide });
+    const m2 = new THREE.Group();
+    // über die Leine gehängt: vorne länger, hinten kürzer, leicht schräg
+    const vorn = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.4, 0.015), matteMat2); vorn.position.set(0, -0.2, 0.012); vorn.rotation.x = 0.06; m2.add(vorn);
+    const hinten = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.22, 0.015), toon(0x7a5228)); hinten.position.set(0, -0.11, -0.012); hinten.rotation.x = -0.08; m2.add(hinten);
+    m2.add(setze(quader(0.62, 0.02, 0.03, 0x7a5228, { umriss: 0.001 }), 0, 0, 0));
+    for (const sx of [-0.22, 0.22]) m2.add(setze(quader(0.018, 0.06, 0.03, sx < 0 ? 0xc8352a : 0x2f6fc2, { umriss: 0.001 }), sx, 0.005, 0));
+    // Tropfen unten dran
+    for (const [x, l] of [[-0.05, 0.05], [0.08, 0.035]]) m2.add(setze(zylinder(0.006, 0.01, l, 0xc8c24a, { umriss: false }, 6), x, -0.4 - l / 2, 0.02));
+    m2.traverse((o) => { if (o.isMesh) { o.castShadow = true; } });
+    const p = leine.getPoint(0.5);
+    m2.position.set(p.x, p.y, p.z);
+    const d = B.clone().sub(A); m2.rotation.y = Math.atan2(d.x, d.z) + Math.PI / 2; // bekleckerte Seite zur Wiese
+    platz.add(m2);
+    // Fliegen um die Matte
+    for (let i = 0; i < 3; i++) platz.add(setze(kugel(0.008, 0x1d1d1f, { umriss: false }, 5), p.x + (r() - 0.5) * 0.4, p.y - 0.1 + r() * 0.25, p.z + (r() - 0.5) * 0.4));
   }
 
   // ---------- Dennis' wackliges Anbau-Carport seitlich am großen (gegenüber der Terrasse): Latten, schiefe Pfosten, blaue Plane ----------
@@ -792,6 +864,7 @@ export function baueCarport(scene, { merke, hindernis }) {
   platz.rotation.y = -Math.PI / 2;
   scene.add(platz);
   // Klickbare Teile
+  merke(sofa, 'terrassensofa', 'Sofa auf der Terrasse', null); // Paket 6: Hinsetzen
   merke(benz, 'benz', 'Mercedes 123', null);
   merke(kofferDeckel, 'kofferraum', 'Kofferraum', null);
   merke(kettenhemd, 'kettenhemd', 'Kettenhemd', null);
