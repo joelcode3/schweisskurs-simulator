@@ -2817,7 +2817,58 @@ export function baueWelt(scene) {
   eimerM.children[0].position.y = 0.25;
   eimerM.add(setze(zylinder(0.17, 0.17, 0.01, 0x2a2a2a, { umriss: false }, 18), 0, 0.01, 0));
   eimerM.add(setze(zylinder(0.18, 0.18, 0.02, 0x3a2e22, { umriss: false }, 18), 0, 0.42, 0));
-  for (let i = 0; i < 4; i++) eimerM.add(setze(quader(0.08, 0.06, 0.05, 0xc9b48a, { umriss: 0.002 }), Math.sin(i * 1.7) * 0.08, 0.45, Math.cos(i * 1.7) * 0.08, i, i * 0.7, 0.3));
+  // Bug 7: richtiger Werkstattmüll statt Pappklötzchen, quillt etwas über den Rand
+  {
+    const knuell = (r, farbe, x, y, z, d = 0) => eimerM.add(setze(teil(new THREE.IcosahedronGeometry(r, 0), farbe, { umriss: 0.0015 }), x, y, z, d, d * 1.3, d * 0.7));
+    // zerknülltes Papier und Zeitungsseiten
+    knuell(0.05, 0xf2efe6, -0.07, 0.45, 0.06, 0.4);
+    knuell(0.042, 0xe8e2d0, 0.09, 0.44, -0.03, 1.1);
+    knuell(0.038, 0xd9d4c4, 0.02, 0.5, -0.1, 2.0);
+    knuell(0.034, 0xf2efe6, -0.11, 0.43, -0.08, 2.7);
+    // Energy-Drink-Dose, zerdrückt und schräg
+    const dose = new THREE.Group();
+    dose.add(zylinder(0.033, 0.033, 0.1, 0x1d3f8a, { umriss: 0.002 }, 12));
+    dose.add(setze(zylinder(0.0335, 0.0335, 0.035, 0xc8d4e0, { umriss: false }, 12), 0, 0.01, 0));
+    dose.add(setze(zylinder(0.03, 0.033, 0.008, 0xb8bcc2, { umriss: false }, 12), 0, 0.054, 0));
+    dose.scale.set(1, 0.85, 0.72);
+    eimerM.add(setze(dose, 0.06, 0.48, 0.07, 1.2, 0.4, 0.3));
+    // Bierflasche, Hals schaut raus
+    const fl = new THREE.Group();
+    fl.add(zylinder(0.03, 0.03, 0.14, 0x5a3612, { umriss: 0.002 }, 10));
+    fl.add(setze(zylinder(0.012, 0.028, 0.06, 0x5a3612, { umriss: 0.002 }, 10), 0, 0.1, 0));
+    fl.add(setze(zylinder(0.0305, 0.0305, 0.05, 0xe8d9a8, { umriss: false }, 10), 0, -0.01, 0));
+    eimerM.add(setze(fl, -0.09, 0.47, -0.02, 0.15, 0, 0.75));
+    // Pizzakarton-Ecke, gefaltet
+    const karton = new THREE.Group();
+    karton.add(quader(0.2, 0.012, 0.14, 0xc49a63, { umriss: 0.002 }));
+    karton.add(setze(quader(0.07, 0.013, 0.05, 0xa03b22, { umriss: false }), 0.03, 0.001, 0.02));
+    eimerM.add(setze(karton, 0.0, 0.5, -0.02, -0.5, 0.6, 0.35));
+    // Chipstüte (zerknittert, rot mit gelbem Streifen)
+    const tuete = new THREE.Group();
+    tuete.add(quader(0.09, 0.12, 0.025, 0xd2281e, { umriss: 0.002 }));
+    tuete.add(setze(quader(0.092, 0.025, 0.026, 0xf2c21c, { umriss: false }), 0, 0.02, 0));
+    eimerM.add(setze(tuete, 0.1, 0.5, 0.0, 0.3, -0.8, -0.6));
+    // Bananenschale
+    const banane = new THREE.Group();
+    for (let i = 0; i < 3; i++) banane.add(setze(teil(new THREE.TorusGeometry(0.05, 0.011, 5, 8, Math.PI * 0.55), 0xe8c534, { umriss: 0.0015 }), 0, 0, 0, 0.3 * i, i * 1.9, 0));
+    banane.add(setze(zylinder(0.006, 0.008, 0.02, 0x4a3a1c, { umriss: false }, 6), 0.05, 0.0, 0));
+    eimerM.add(setze(banane, -0.03, 0.52, 0.09, 0.4, 0.8, 0));
+    // blaue Plastiktüte, zusammengeknüllt, hängt über den Rand
+    const tuete2 = teil(new THREE.IcosahedronGeometry(0.06, 1), 0x2f6fc2, { umriss: 0.002 });
+    tuete2.scale.set(1.3, 0.7, 1);
+    eimerM.add(setze(tuete2, 0.13, 0.48, 0.1, 0.3, 0.5, 0));
+    eimerM.add(setze(quader(0.04, 0.12, 0.01, 0x2f6fc2, { umriss: 0.0015 }), 0.19, 0.44, 0.12, 0, 0.7, 0.15));
+    // Kaffeebecher to go und abgebrannte Elektrodenreste
+    const becherMuell = new THREE.Group();
+    becherMuell.add(zylinder(0.035, 0.026, 0.09, 0xf4f0e6, { umriss: 0.002 }, 12));
+    becherMuell.add(setze(zylinder(0.037, 0.037, 0.012, 0x1d1d1f, { umriss: false }, 12), 0, 0.048, 0));
+    eimerM.add(setze(becherMuell, -0.12, 0.47, 0.08, 1.4, 0.2, 0.2));
+    for (let i = 0; i < 3; i++) eimerM.add(setze(zylinder(0.003, 0.003, 0.07, 0x6a6e74, { umriss: false }, 5), -0.02 + i * 0.03, 0.5, -0.06 + i * 0.01, 1.2 + i * 0.3, i, 0.4));
+    // Lappen mit Öl
+    const lappen = teil(new THREE.IcosahedronGeometry(0.045, 0), 0x7a6a4a, { umriss: 0.0015 });
+    lappen.scale.set(1.4, 0.5, 1.1);
+    eimerM.add(setze(lappen, 0.04, 0.46, 0.12, 0.2, 0.9, 0));
+  }
   setze(eimerM, 1.55, 0, -3.3);
   scene.add(eimerM);
   merke(eimerM, 'muelleimer', 'Mülleimer', null);

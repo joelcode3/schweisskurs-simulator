@@ -214,6 +214,25 @@ button { font: inherit; color: inherit; }
   pointer-events: none !important;
 }
 
+/* Wurfkraft: Q gedrückt halten, der Ring um den Zielpunkt füllt sich (nach 3 s voll) */
+#wurfring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 64px;
+  height: 64px;
+  margin: -32px 0 0 -32px;
+  transform: rotate(-90deg);
+  pointer-events: none !important;
+  overflow: visible;
+}
+#wurfring.versteckt { display: none; }
+#wurfring circle { fill: none; stroke-width: 6; }
+#wurfring .wr-grund { stroke: rgba(0, 0, 0, 0.45); stroke-width: 9; }
+#wurfring .wr-fuell { stroke-linecap: round; stroke-dasharray: 163.4; }
+#wurfring.voll .wr-fuell { animation: wurf-voll 0.35s infinite alternate; }
+@keyframes wurf-voll { to { stroke: #ffffff; } }
+
 #hover-name {
   position: absolute;
   left: 0;
