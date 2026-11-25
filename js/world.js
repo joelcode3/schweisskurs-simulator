@@ -451,6 +451,33 @@ export function baueWelt(scene) {
   const rauchSchild = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.525), new THREE.MeshBasicMaterial({ map: verbotTex }));
   rauchSchild.position.set(0, 2.12, 0.1205);
   fluegelRechts.add(rauchSchild);
+  // Paket 8.3: Zettel von Torben innen am Tor, mit Klebeband, Handschrift
+  {
+    const zettelTex = leinwandTextur(320, 240, (g, b, h) => {
+      g.fillStyle = '#fbf8ee'; g.fillRect(0, 0, b, h);
+      g.strokeStyle = 'rgba(90,130,190,0.35)'; g.lineWidth = 1;
+      for (let y = 30; y < h; y += 22) { g.beginPath(); g.moveTo(0, y); g.lineTo(b, y); g.stroke(); }
+      g.strokeStyle = 'rgba(200,80,80,0.4)'; g.beginPath(); g.moveTo(26, 0); g.lineTo(26, h); g.stroke();
+      g.fillStyle = '#1d2a6a'; g.textAlign = 'left';
+      const hand = (t, x, y, px, rot = 0) => { g.save(); g.translate(x, y); g.rotate(rot); g.font = `bold ${px}px "Comic Sans MS", "Segoe Print", "Bradley Hand", cursive`; g.fillText(t, 0, 0); g.restore(); };
+      hand('Rosa Jeep ab jetzt', 36, 46, 25, -0.02);
+      hand('nur noch 4 km/h!', 36, 78, 27, -0.015);
+      g.fillStyle = '#b3170d';
+      hand('Entdrosselung macht', 36, 122, 23, -0.01);
+      hand('nur Torben!', 36, 152, 25, -0.01);
+      g.strokeStyle = '#b3170d'; g.lineWidth = 3; g.beginPath(); g.moveTo(36, 160); g.lineTo(170, 157); g.stroke();
+      g.fillStyle = '#1d2a6a';
+      hand('LG Torben', 170, 206, 24, -0.04);
+    });
+    const zettel = new THREE.Group();
+    zettel.add(new THREE.Mesh(new THREE.PlaneGeometry(0.36, 0.27), toon(0xffffff, { map: zettelTex })));
+    for (const [x, y, r] of [[-0.15, 0.125, 0.5], [0.15, 0.125, -0.5], [0, -0.13, 0.05]]) {
+      const band = new THREE.Mesh(new THREE.PlaneGeometry(0.08, 0.025), new THREE.MeshBasicMaterial({ color: 0xe8dcb0, transparent: true, opacity: 0.85 }));
+      band.position.set(x, y, 0.001); band.rotation.z = r; zettel.add(band);
+    }
+    zettel.position.set(0.3, 1.25, 0.125); zettel.rotation.z = -0.04;
+    fluegelRechts.add(zettel);
+  }
   setze(tuer, -0.85, 0, RAUM.zMax - 0.05, 0, Math.PI, 0);
   scene.add(tuer);
 
@@ -1471,7 +1498,27 @@ export function baueWelt(scene) {
   merke(hahnRohr, 'wasserhahn', 'Wasserrohr an der Wand', null);
   objekte.wasserhahn = hahnRohr;
   // Pfütze (wächst, solange es spritzt)
-  const pfuetze = new THREE.Mesh(new THREE.CircleGeometry(1, 32), new THREE.MeshBasicMaterial({ color: 0x5aa6e6, transparent: true, opacity: 0.55, depthWrite: false }));
+  // Paket 8.1: nicht rund, sondern fleckig mit Ausbuchtungen, dazu ein paar kleine Spritzer-Lachen drumherum
+  const pfuetze = new THREE.Group();
+  {
+    const pfMat = new THREE.MeshBasicMaterial({ color: 0x5aa6e6, transparent: true, opacity: 0.55, depthWrite: false });
+    const glanzMat = new THREE.MeshBasicMaterial({ color: 0xcfe8fa, transparent: true, opacity: 0.35, depthWrite: false });
+    const klecks = (r0, saat, n = 48) => {
+      const f = new THREE.Shape();
+      for (let i = 0; i <= n; i++) {
+        const w = (i / n) * Math.PI * 2;
+        const r = r0 * (1 + 0.22 * Math.sin(3 * w + saat) + 0.14 * Math.sin(5 * w + saat * 2.1) + 0.08 * Math.sin(9 * w + saat * 0.7));
+        const x = Math.cos(w) * r * 1.25, y = Math.sin(w) * r * 0.85; // etwas länglich (läuft von der Wand weg)
+        if (i === 0) f.moveTo(x, y); else f.lineTo(x, y);
+      }
+      return new THREE.ShapeGeometry(f);
+    };
+    pfuetze.add(new THREE.Mesh(klecks(0.9, 1.3), pfMat));
+    for (const [x, y, r, saat] of [[1.15, 0.35, 0.22, 2], [-0.95, -0.55, 0.18, 4], [0.5, -0.85, 0.14, 5], [-0.3, 0.9, 0.12, 6], [1.45, -0.3, 0.09, 7]]) {
+      const m = new THREE.Mesh(klecks(r, saat, 24), pfMat); m.position.set(x, y, 0); pfuetze.add(m);
+    }
+    const glanz = new THREE.Mesh(klecks(0.28, 3, 24), glanzMat); glanz.position.set(-0.25, 0.2, 0.001); pfuetze.add(glanz);
+  }
   pfuetze.rotation.x = -Math.PI / 2;
   pfuetze.position.set(4.3, 0.006, ROHR_Z);
   pfuetze.scale.setScalar(0.01);
