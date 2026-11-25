@@ -15,6 +15,7 @@ import { baueFahrten } from './fahrten.js';
 import { bauePritsche } from './pritsche.js';
 import { baueMetall } from './metall.js';
 import { baueGrillen } from './grillen.js';
+import { baueZielMarken } from './zielmarke.js';
 
 const zufallAus = (liste) => liste[Math.floor(Math.random() * liste.length)];
 // Text aus einer Liste zufällig wählen (oder den einzelnen Text nehmen): mehr Abwechslung bei Dennis
@@ -276,7 +277,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   const nebenErledigt = new Map(); // text -> Zeitpunkt erledigt
   // Aufgabe abgelaufen, Dennis (oder jemand) hat es selbst gemacht: 10 s als rote Zeile in der Liste
   function zuSpaet(was, wut) {
-    (z.zuSpaet ||= []).push({ text: `Zu spät: ${was}${wut ? ` (+${wut} Wut)` : ''}`, seit: sekundenSeitStart() });
+    (z.zuSpaet ||= []).push({ text: `Zu spät: ${was}${wut ? ` (Puls +${Math.round(wut * 1.2)})` : ''}`, seit: sekundenSeitStart() });
     aufgabenListeAuffrischen?.();
   }
   function aufgaben() {
@@ -2249,6 +2250,11 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     dennis.heim();
   }
   // ---------- Kaffeetassen: stehen überall rum, gehören auf den Kühlschrank ----------
+  // Bug 12: steht eine Tasse auf dem Erste-Hilfe-Kasten (rechte Wand) und man nimmt den Kasten, fällt sie runter
+  hand.beimNehmen = (id) => {
+    if (id !== 'verbandskasten') return;
+    welt.tassenNachrutschen(4.6, 5.2, -1.85, -1.25, (t, y) => hand.fallen(t, y, () => klonk(0.2), 0));
+  };
   function offeneTassen() { return welt.tassen.filter((t) => !t.userData.aufgeraeumt && t.parent && t.visible && hand.item?.obj !== t); }
   function tasseWegraeumen() {
     if (hand.item?.id !== 'tasse') return;
@@ -3471,7 +3477,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     else if (it.id === 'ofen') knoepfe.push(['', z.lackiert ? 'Klick auf Dennis = abgeben, Klick auf den Boden = abstellen' : 'Klick auf Dennis = abgeben, Klick auf Schweißplatz = abstellen', '']);
     else if (it.id === 'waeschetasche') knoepfe.push(['', z.waesche === 'tasche' ? 'Klick auf Waschmaschine' : z.waesche === 'nass' ? 'Klick auf Trockner' : 'Klick auf Dennis = abgeben', '']);
     else if (!cfg.nichtAblegen) knoepfe.push(['', it.obj?.userData.wand ? 'Klick auf Fläche = ablegen, auf seinen Platz = zurückhängen' : 'Klick auf Fläche = ablegen', '']);
-    if (!cfg.nichtWerfen) knoepfe.push(['werfen', 'Werfen', 'Q']);
+    if (!cfg.nichtWerfen) knoepfe.push(['werfen', 'Werfen (halten = weiter, antippen = fallen lassen)', 'Q']);
     if (!cfg.nichtAblegen && it.id !== 'flasche' && it.id !== 'ofen') knoepfe.push(['fallen', 'Fallen lassen', 'G']);
     if (it.id === 'schlauch') knoepfe.push(['fallen', 'Zurückhängen', 'G']);
     if (it.id === 'kaffee') knoepfe.push(['fallen', 'Fallen lassen', 'G']);
@@ -3487,12 +3493,12 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     el.classList.remove('versteckt');
   }
 
-  function handAktion(k) {
+  function handAktion(k, kraft) {
     // N5: läuft ein Ereignis, bei dem der Spieler frei ist (z.spielerFrei), gehen Hand-Tasten trotzdem (Helm aufsetzen usw.)
     if (z.vorbei || (z.beschaeftigt && !z.spielerFrei) || !hand.item) return;
     if (k === 'anziehen') anziehen();
     else if (k === 'benutzen') benutzen();
-    else if (k === 'werfen') werfen();
+    else if (k === 'werfen') werfen(kraft);
     else if (k === 'fallen') fallenLassen();
   }
   function aufnehmen(id, obj) {
@@ -3809,7 +3815,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     if (dennisSiehts()) await fehler('loescherSpielen');
   }
 
-  function werfen() {
+  function werfen(kraft = 0.5) {
     const it = hand.item;
     if (it.cfg.nichtWerfen) {
       if (it.id === 'flasche' || it.id === 'ofen') dennisSagt(sag(DENNIS.hand.flascheWerfen), true);
@@ -3817,9 +3823,9 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       return;
     }
     const id = it.id;
-    if (id === 'gurte') return gurteWerfen();
+    if (id === 'gurte') return gurteWerfen(kraft);
     // E4: Mettenden auf den Grill werfen (landet auf dem Rost oder daneben, kein Ärger fürs Werfen)
-    if (grillen.istWurst(id)) return grillen.wurf(id, steuerung.blickRichtung());
+    if (grillen.istWurst(id)) return grillen.wurf(id, steuerung.blickRichtung(), kraft);
     if (id === 'kaffee') kaffeeWeg();
     // N6: Flusensieb darf fliegen; es liegt danach auf dem Boden und kann wieder aufgehoben werden
     if (id === 'sieb') { z.siebWarSauber = z.sieb === 'sauber'; z.sieb = 'boden'; }
@@ -3830,7 +3836,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     }, () => {
       getroffen = true;
       fehler('getroffen');
-    });
+    }, null, kraft);
     handleisteZeigen();
     setTimeout(() => {
       if (getroffen || !dennisSiehts() || z.vorbei) return;
@@ -3843,7 +3849,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   }
 
   // aufgerollte Spanngurte werfen: fliegen weg und liegen danach wieder (verknotet) auf dem Boden
-  function gurteWerfen() {
+  function gurteWerfen(kraft) {
     hand.wirf(steuerung.blickRichtung(), (gid, obj) => {
       obj.removeFromParent();
       klonkRoh(0.35 * werkstattLaut());
@@ -3855,7 +3861,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       z.gurteSeit = sekundenSeitStart();
       ui.hinweis('Jetzt liegen sie da. Verknotet. Glückwunsch.', 2800);
       if (dennisSiehts() && !z.vorbei) { aerger(4); dennisSagt(sag(DENNIS.spanngurt.geworfen), true, { prio: 2 }); }
-    });
+    }, null, null, kraft);
     handleisteZeigen();
   }
 
@@ -4050,11 +4056,57 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     const k = e.key.toLowerCase();
     if (k === 'e' && !hand.item && !z.vorbei && !z.beschaeftigt && fahrten.einsteigenInDerNaehe()) return;
     if (k === 'e') handAktion(hand.item && ANZIEHBAR.includes(hand.item.id) ? 'anziehen' : 'benutzen');
-    else if (k === 'q') handAktion('werfen');
+    else if (k === 'q') wurfLaden();
     else if (k === 'g') handAktion('fallen');
   });
-  window.addEventListener('keyup', (e) => { if (e.key.toLowerCase() === 'e') { spritzStopp(); loeschStopp(); fegeStopp(); } });
-  window.addEventListener('blur', () => { spritzStopp(); loeschStopp(); });
+  window.addEventListener('keyup', (e) => {
+    const k = e.key.toLowerCase();
+    if (k === 'e') { spritzStopp(); loeschStopp(); fegeStopp(); }
+    if (k === 'q') wurfLoslassen();
+  });
+  window.addEventListener('blur', () => { spritzStopp(); loeschStopp(); wurfAbbrechen(); });
+
+  // Bug 8: Wurfkraft. Q gedrückt halten = Kraft lädt (nach 3 s voll), Ring um den Zielpunkt zeigt sie. Loslassen = werfen,
+  // kurz antippen (unter 0,2 s) = fallen lassen. Gilt für alles, was man werfen kann.
+  const WURF_VOLL = 3, WURF_TIPP = 0.2;
+  let wurf = null;
+  const wurfRing = document.getElementById('wurfring');
+  const wurfFuell = document.getElementById('wurfring-fuell');
+  function wurfKraft() { return wurf ? Math.min(1, (performance.now() - wurf.start) / 1000 / WURF_VOLL) : 0; }
+  function wurfRingMalen() {
+    if (!wurf) return;
+    if (!hand.item || hand.item !== wurf.item || z.vorbei) { wurfAbbrechen(); return; }
+    const sek = (performance.now() - wurf.start) / 1000;
+    const k = wurfKraft();
+    // erst nach dem Antipp-Fenster zeigen, sonst blitzt der Ring beim Fallenlassen kurz auf
+    wurfRing.classList.toggle('versteckt', sek < WURF_TIPP);
+    wurfFuell.setAttribute('stroke-dashoffset', (163.4 * (1 - k)).toFixed(1));
+    wurfFuell.setAttribute('stroke', k < 0.5 ? '#ffd23a' : k < 0.9 ? '#ff9a2a' : '#ff4a2e');
+    wurfRing.classList.toggle('voll', k >= 1);
+    requestAnimationFrame(wurfRingMalen);
+  }
+  function wurfLaden() {
+    if (wurf || !hand.item || z.vorbei || (z.beschaeftigt && !z.spielerFrei)) return;
+    // was man nicht werfen soll, meldet sich sofort (wie bisher)
+    if (hand.item.cfg.nichtWerfen) { handAktion('werfen'); return; }
+    wurf = { start: performance.now(), item: hand.item };
+    requestAnimationFrame(wurfRingMalen);
+  }
+  function wurfAbbrechen() {
+    wurf = null;
+    wurfRing.classList.add('versteckt');
+    wurfRing.classList.remove('voll');
+  }
+  function wurfLoslassen() {
+    if (!wurf) return;
+    const sek = (performance.now() - wurf.start) / 1000;
+    const kraft = wurfKraft();
+    const item = wurf.item;
+    wurfAbbrechen();
+    if (hand.item !== item) return;
+    if (sek < WURF_TIPP) handAktion('fallen');
+    else handAktion('werfen', kraft);
+  }
 
   function menueFuer(id, obj = null) {
     const A = (text, symbol, tun) => ({ text, symbol, tun });
@@ -4528,15 +4580,15 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
         <li><span>Schnitt</span><b>${z.schnittQ} %</b></li>${naehte}
         <li><span>Lack</span><b>${z.lackQ ?? 0} %</b></li>
         <li><span>Verarbeitung gesamt</span><b>${qualitaet} %</b></li>
-        <li><span>Dennis-Wut am Ende</span><b>${Math.round(z.wut)} %</b></li>
-        <li><span>Höchste Dennis-Wut</span><b>${Math.round(z.wutMax)} %</b></li>
+        <li><span>Dennis-Puls am Ende</span><b>${ui.pulsAusWut(z.wut)}</b></li>
+        <li><span>Höchster Dennis-Puls</span><b>${ui.pulsAusWut(z.wutMax)}</b></li>
         <li><span>Werkstatt</span><b>${welt.dreck ? 'dreckig' : z.dennisHatGefegt ? 'Dennis musste fegen' : 'gefegt'}</b></li>
         <li><span>Zeit</span><b>${minuten} Min.</b></li>
       </ul>
       <p><b>So kommt die Note zustande (${punkte} von 100 Punkten):</b></p>
       <ul class="wertung-liste">
         <li><span>Arbeit (${qualitaet} % Verarbeitung, max. 75)</span><b>${pkt(teile.arbeit)}</b></li>
-        <li><span>Dennis’ Laune (Wut im Schnitt ${wut} %, max. 25)</span><b>${pkt(teile.laune)}</b></li>
+        <li><span>Dennis’ Laune (Puls im Schnitt ${ui.pulsAusWut(wut)}, max. 25)</span><b>${pkt(teile.laune)}</b></li>
         <li><span>Fehler (je 1,5, höchstens 15)</span><b>${pkt(teile.fehler)}</b></li>
         <li><span>Werkstatt</span><b>${pkt(teile.werkstatt)}</b></li>
         <li><span>Paletten hinterm Haus (je 1, höchstens 6)</span><b>${pkt(teile.paletten)}</b></li>
@@ -4665,6 +4717,18 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     dennisFrei: () => dennis.modus === 'normal' && dennis.wurzel.visible && !z.aufKlo && !z.hula && !z.beschaeftigt && !buehneBelegt()
       && z.mittag !== 'gerade' && !z.dennisFegt && !z.dennisLoescht && !z.dennisRaeumt,
   });  // ---------- E2b: Joels Pritsche abschleppen (js/pritsche.js) ----------
+  // Paket 4, Bug 4: grüne Ablage-Markierung, nur solange das passende Ding in der Hand ist
+  const zielMarken = baueZielMarken(dennis.wurzel.parent);
+  const _zm = new THREE.Vector3();
+  // Kackepumpe (sauber) -> ihr Platz am Kompressor
+  zielMarken.regel('pumpeKompressor', () => (hand.item?.id === 'kackpumpe' && !welt.pumpeIstDreckig
+    ? _zm.set(welt.objekte.kackPumpe.userData.wand.pos.x + 0.1, 0, welt.objekte.kackPumpe.userData.wand.pos.z) : null), 1.6);
+  // Spanngurte (aufgerollt) -> unten ins Regal links (Markierung am Boden vor dem Regal)
+  zielMarken.regel('gurteRegal', () => (hand.item?.id === 'gurte' ? _zm.set(REGAL.x + 0.35, 0, REGAL.z) : null), 1.6);
+  // Kackepumpe (dreckig) -> Spüle am Waschplatz zum Abwaschen (geht auch im Bad, markiert ist der nächste Platz)
+  zielMarken.regel('pumpeSpuele', () => (hand.item?.id === 'kackpumpe' && welt.pumpeIstDreckig
+    ? _zm.set(welt.objekte.spuele.position.x - 0.55, 0, welt.objekte.spuele.position.z) : null), 1.4);
+  // Pritsche (Carport-Bucht) und Metall (vor dem Container) haben schon ihre eigene grüne Fläche (pritsche.js, metall.js)
   const pritsche = bauePritsche({ welt, scene: dennis.wurzel.parent, fz, fahrten, kumpels, hand, kamera, steuerung, ui, z, sag, dennisSagt, aerger, lob,
     sekunden: sekundenSeitStart, warte, reinkommen, rausgehen, ruhigeLage, handleisteZeigen, klonk, blip, sd, andererAuftrag: () => metall.aktiv });
   // ---------- E3: Metall-Lieferung (js/metall.js) ----------
@@ -4701,7 +4765,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   return {
     zustand: z,
     klick,
-    test: { sek: () => sekundenSeitStart(), waescheFertigTest, fristenVorbei, torbenLiegtTest, torbenFristVorbei, lauf, rausgehen, waldoFigur: waldo, pritsche, metall, grillen, gaesteFrei: () => gaeste().map((g) => g.id + ':' + g.frei()), dv, davidKommt, davidGeht, davidGassi, davidRohrzange, davidLoescher, davidTischgestell, davidRauchtMitJonny, get z() { return z; }, OFEN_SCHRITTE, ofenStand, schutzAn, armAnpassen, setzeWut(w) { z.wut = w; aktualisieren(); }, zeitVor(sek) { z.start -= sek * 1000; }, waescheUebernehmen, kaffeeKochen, hulaHoop, einkaufen, kiwiEssen, TU, torbenUnfall, torbenVerarzten, torbenVerbandAn, spanngurtEreignis, gurteHinwerfen, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, poempeln, siebRaus, tanzPause, musikUmschalten, handVoll: () => !!hand.item, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
+    test: { zielMarken, sek: () => sekundenSeitStart(), waescheFertigTest, fristenVorbei, torbenLiegtTest, torbenFristVorbei, lauf, rausgehen, waldoFigur: waldo, pritsche, metall, grillen, gaesteFrei: () => gaeste().map((g) => g.id + ':' + g.frei()), dv, davidKommt, davidGeht, davidGassi, davidRohrzange, davidLoescher, davidTischgestell, davidRauchtMitJonny, get z() { return z; }, OFEN_SCHRITTE, ofenStand, schutzAn, armAnpassen, setzeWut(w) { z.wut = w; aktualisieren(); }, zeitVor(sek) { z.start -= sek * 1000; }, waescheUebernehmen, kaffeeKochen, hulaHoop, einkaufen, kiwiEssen, TU, torbenUnfall, torbenVerarzten, torbenVerbandAn, spanngurtEreignis, gurteHinwerfen, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, poempeln, siebRaus, tanzPause, musikUmschalten, handVoll: () => !!hand.item, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
     stationWaehlen,
     intro,
     aktualisieren,
@@ -4716,6 +4780,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       pritsche.update(dt);
       metall.update(dt);
       grillen.update(dt);
+      zielMarken.update(dt);
       wutUndVorzeichen(dt);
       waescheUpdate(dt);
       jonnyUpdate();

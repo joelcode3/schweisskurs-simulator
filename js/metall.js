@@ -426,6 +426,7 @@ export function baueMetall(c) {
   // ---------- jedes Bild ----------
   let zeit = 0;
   function update(dt) {
+    markMat.opacity = 0.22 + 0.16 * (0.5 + 0.5 * Math.sin(performance.now() / 200)); // Paket 4: pulsiert wie die Ablage-Markierungen
     zeit += dt;
     markMat.opacity = 0.25 + Math.sin(zeit * 3) * 0.12;
     if (mz.stangen === 'haengt' && fz2.aktiv !== lader) { if (dt > 0) pendelSchritt(Math.min(dt, 0.05), 0, 0, 0); haengen(0); }
