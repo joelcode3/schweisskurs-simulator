@@ -33,7 +33,7 @@ export const KATEGORIEN = {
   ende_gut:         'Ende: Note 1 oder 2',
   ende_mittel:      'Ende: Note 3 oder 4',
   ende_schlecht:    'Ende: Note 5 oder 6',
-  rausgeflogen:     'Rausgeflogen (Wut voll)',
+  rausgeflogen:     'Rausgeflogen (Puls 180)',
   zwischendurch:    'Ohne Ton: guckt, trinkt Kaffee (für später)',
 };
 
