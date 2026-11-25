@@ -88,8 +88,9 @@
 - KI-Stimmklon ist in dieser Umgebung nicht möglich (huggingface.co gesperrt). Stimmproben nie ins Repo (öffentlich).
 
 ## Stand der Pull Requests (25.11.2026)
-- Alles bis #82 gemergt (N6 #79, N5 #80, N4 #81, N7 #82). Offen nur #83 (dieser Stand-Eintrag).
-- Versionsnummer zuletzt `v=20261114-17`. Testmenü bis T127, nächste freie T128.
+- Alles bis #83 gemergt. Offen: #84 P1 Puls/Tasse, #85 P2 Wurf/Müll, #86 P3 Wohnwagen/Carport, #87 P4 Pumpe/Spüle/Markierungen,
+  #88 P5 Druckluftpistole, #89 P6 Bedienung, #90 P7 Aufräumen/Trödeln, #91 P8 Optik (erst #87), #92 P9 Spülen (Bug 13).
+- Versionsnummer je PR `v=20261125-1` … `-9` (beim Mergen jeweils hochzählen). Testmenü bis T133, nächste freie T134.
 - Nächste freie Satz-Nummern (aus stimme/zuordnung.csv): dennis548, jonny63, waldo48, torben37, kumpel13, david24, joel16, jonas11.
 - Projektchat-Session: `session_0136ircrJASSBiWT1k1mcErc` (seit 25.11., Projektchat Nr. 5, Sonnet).
 - Offene Fäden und Ungetestetes: `docs/details.md`, Abschnitt „Offene Fäden und Ungetestetes“ (zuerst lesen, wenn ein neuer Chat startet).
