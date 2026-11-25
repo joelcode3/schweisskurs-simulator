@@ -1054,6 +1054,14 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   herumstehenden gleich mit. Jonny beschäftigt = Hinweis „Gleich nochmal fragen“.
 - Testmenü: T127 Box an, Dennis tanzt kurz und macht Pause.
 
+## Paket N7 (Fahrzeuge, 18.11.)
+- Jeep-Motor (audio.js umw.eOsc): vorher Dreieck 170–1400 Hz plus Oberton (x2), wirkte schrill. Jetzt Grundton 70–260 Hz
+  (70 + 14 je m/s), dazu Brummen eine Oktave tiefer (x0,5), Tiefpass 420 Hz, etwas leiser (selbst 0,06, andere 0,12) und
+  weicher nachgeführt. Hupe unverändert.
+- Ladung (Eier, Mettenden) fällt nur noch bei einem Aufprall runter (rums oder schnell gegen Grill/Tonnen), nicht mehr beim
+  Gasgeben, in Kurven oder beim Bremsen. Hinweis „Rums! Beim Aufprall ist die Ladung runtergefallen!“.
+- Testmenü: keine neuen Knöpfe (T36 Ladung fällt, T37 Eier holen gibt es schon).
+
 ## Offene Fäden und Ungetestetes (Übergabe 1.11.2026)
 - Ausraster-Videos: #54 (frisches Video-Element, bis zu 6 Versuche, canplay) ist nur eine Absicherung. Die Ursache ist unklar, im Test lief
   alles (WebM statt H.264, Chromium kann hier kein H.264). Der Betreiber prüft im echten Browser (Browser und Anzeige erfragen: schwarz,

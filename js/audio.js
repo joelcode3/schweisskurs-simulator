@@ -739,13 +739,16 @@ function umweltBauen() {
   dN.connect(dNf).connect(dNg).connect(dAm);
   dAm.connect(u.dGain).connect(u.dPan).connect(master);
   // E-Motor vom Jeep: Heulton, der mit der Geschwindigkeit steigt
-  u.eOsc = ctx.createOscillator(); u.eOsc.type = 'triangle'; u.eOsc.frequency.value = 200;
-  u.eOsc2 = ctx.createOscillator(); u.eOsc2.type = 'sine'; u.eOsc2.frequency.value = 400;
-  const eG2 = ctx.createGain(); eG2.gain.value = 0.35;
+  // N7: tiefer und weicher (vorher hell heulend bis 1400 Hz): Grundton 70–260 Hz, dazu ein Brummen eine Oktave tiefer,
+  // alles durch einen Tiefpass (kein schrilles Pfeifen mehr)
+  u.eOsc = ctx.createOscillator(); u.eOsc.type = 'triangle'; u.eOsc.frequency.value = 70;
+  u.eOsc2 = ctx.createOscillator(); u.eOsc2.type = 'sine'; u.eOsc2.frequency.value = 35;
+  const eG2 = ctx.createGain(); eG2.gain.value = 0.6;
   u.eGain = ctx.createGain(); u.eGain.gain.value = 0;
+  u.eFilt = ctx.createBiquadFilter(); u.eFilt.type = 'lowpass'; u.eFilt.frequency.value = 420; u.eFilt.Q.value = 0.5;
   u.ePan = ctx.createStereoPanner();
   u.eOsc.connect(u.eGain); u.eOsc2.connect(eG2).connect(u.eGain);
-  u.eGain.connect(u.ePan).connect(master);
+  u.eGain.connect(u.eFilt).connect(u.ePan).connect(master);
   for (const o of [u.dOsc, u.dLfo, dN, u.eOsc, u.eOsc2]) o.start();
   return u;
 }
@@ -835,12 +838,12 @@ export function umweltUpdate(dt, s) {
   // E-Motor vom Jeep (nur in Bewegung)
   if (s.jeep) {
     const j = s.jeep, v = Math.abs(j.v || 0), fahrt = j.fahrer === 'spieler';
-    const g = v < 0.08 ? 0 : (fahrt ? 0.07 : 0.14 * nah(j, 40) * innen);
-    umw.eGain.gain.setTargetAtTime(g, t, 0.1);
+    const g = v < 0.08 ? 0 : (fahrt ? 0.06 : 0.12 * nah(j, 40) * innen);
+    umw.eGain.gain.setTargetAtTime(g, t, 0.15);
     umw.ePan.pan.setTargetAtTime(fahrt ? 0 : pan(j), t, 0.1);
-    const fr = Math.min(1400, 170 + v * 60);
-    umw.eOsc.frequency.setTargetAtTime(fr, t, 0.08);
-    umw.eOsc2.frequency.setTargetAtTime(fr * 2.01, t, 0.08);
+    const fr = Math.min(260, 70 + v * 14);
+    umw.eOsc.frequency.setTargetAtTime(fr, t, 0.15);
+    umw.eOsc2.frequency.setTargetAtTime(fr * 0.5, t, 0.15);
   }
   // Vögel: überall draußen (Bäume, Wiese), in der Werkstatt kaum
   umw.vogel -= dt;
