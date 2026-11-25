@@ -1063,6 +1063,14 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
 - Testmenü: keine neuen Knöpfe (T36 Ladung fällt, T37 Eier holen gibt es schon).
 
 ## Offene Fäden und Ungetestetes (Übergabe 1.11.2026)
+- Pakete 1–9 (25.11., #84–#92): NICHT getestet bzw. offen: Puls-Anzeige über längere Zeit im echten Browser; Wurf mit Q-Halten
+  in Echtzeit (Testbrowser zu langsam); Flackern am Wohnwagen-Radlauf nur im echten Browser prüfbar; Rohrzangen-Reparatur an der
+  neuen Wandleitung nicht durchgespielt (Laufwege Dennis/David dorthin ungeprüft); Druckluftpistole nach Beschreibung (Joels Foto
+  kam nicht an); Rausschmiss im Sitzen; Besucher setzen sich aufs Terrassensofa, während man dort sitzt; „Kühlschrank zumachen“ per
+  Klick nur als Funktion getestet; Feuerlöscher-Kulanz nur im Code geprüft; Comic-Schrift an Torbens Zettel nur im echten Browser.
+  Weggelassen: Foto zu 7.1 (Werkzeug liegt rum), Dennis-Kommentar beim Hinsetzen (kein Satz). Bug 6 (finaler Ausraster nur bei
+  aktivem Fehler) aufgeschoben: Joel will erst eine Liste aller Wut-Auslöser. Bug 13: harte Sperre nicht nachweisbar, Ursache
+  vermutlich Edding in der Hand nach dem Anzeichnen.
 - Ausraster-Videos: #54 (frisches Video-Element, bis zu 6 Versuche, canplay) ist nur eine Absicherung. Die Ursache ist unklar, im Test lief
   alles (WebM statt H.264, Chromium kann hier kein H.264). Der Betreiber prüft im echten Browser (Browser und Anzeige erfragen: schwarz,
   gezeichneter Dennis oder nichts). Das Problem besteht laut Betreiber schon länger. Brotdose und „Dennis abgeworfen“ sind stufe voll,
