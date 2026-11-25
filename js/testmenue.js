@@ -195,6 +195,10 @@ export function baueTestMenue({ spiel, welt, kamera, steuerung, fahrten, fz }) {
   knopf('T126', 'Schweißhelm in die Hand (E = aufsetzen, Klick auf den Haken = zurückhängen)', () => t.aufnehmen('helm', welt.objekte.helm), handVoll);
   // N4: Tanzpause (Box an, Dennis tanzt; T127 = er hört nach ein paar Sekunden selbst auf, Box ist dann gesperrt)
   knopf('T127', 'Box an, Dennis tanzt kurz und macht dann Pause („Nee du, ich brauch mal ne Pause.“)', () => { frei(); z.keinTanzBis = 0; z.boxGesperrtBis = 0; if (!z.musik) t.musikUmschalten(); z.tanzZeit = 0; z.tanzEnde = 6; }, { laeuft: () => !!z.tanzPauseLaeuft });
+  // Paket 7 (T128 Paket 1, T129/T130 Paket 6)
+  knopf('T131', 'Jonny hat den Kühlschrank offen gelassen (30 s zum Zumachen)', () => { frei(); t.kuehlschrankOffen(); });
+  knopf('T132', 'Rohrzange liegt auf dem Boden, Dennis meckert gleich', () => { frei(); const o = welt.objekte.rohrzange; if (o.parent !== window.__werkstatt.scene) return; o.position.set(1.5, 0.02, 0.5); o.rotation.set(Math.PI / 2, 0, 0); t.werkzeugLiegt.rohrzange = { seit: t.sek() - 60, gemeckert: false }; });
+  knopf('T133', 'Trödeln: 2 Minuten nichts getan', () => { frei(); t.z.letzteAktion = t.sek() - 120; });
   knopf('T43', 'Hüfte (Dennis liegt)', () => { frei(); return t.hueftePlatt(); }, {
     laeuft: () => z.huefte === 'geht' || z.huefte === 'liegt',
     sperre: () => (z.huefte === 'erledigt' ? 'Hüfte war schon' : null),

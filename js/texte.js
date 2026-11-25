@@ -269,6 +269,10 @@ export const DENNIS = {
   leiterKnall: ['Was knallt hier so?! Meine Wand! Mach das doch vernünftig!', 'Ey! Die Leiter wirft man nicht runter!'],
   leiterEndlich: ['Die Leiter ist WEG? Endlich! Danke dir!', 'Halleluja, die Leiter ist raus. Das feier ich.'],
   kuehlschrank: ['Finger weg, das ist kein Selbstbedienungsladen!', 'Da drin ist nix für dich. Erst arbeiten, dann Bier.'],
+  // Paket 7: Kühlschrank offen gelassen (Dennis macht selbst zu), Werkzeug liegt rum, Trödeln
+  kuehlschrankSelbst: ['Wer hat den Kühlschrank offen gelassen?! Das Bier wird warm!', 'Kühlschrank AUF?! Ich bin hier doch nicht der Hausmeister!'],
+  werkzeugLiegt: ['Das Werkzeug hat einen festen Platz! Und der ist nicht auf dem Boden!', 'Wer lässt denn hier das Werkzeug rumliegen? Zurück an seinen Platz!'],
+  troedeln: ['Stehst du hier nur rum, oder machst du auch noch was?', 'Na? Wird das heute noch was?', 'Ich bezahl dich nicht fürs Rumstehen!'],
   // Telefonate: Dennis ruft selbst an (seine Seite des Gesprächs, Zeile für Zeile)
   telefon: [
     ['Lydia? Ich bin\'s. Hast du kurz?', 'Heute Nacht um vier: Wind, Turnmatte weg, Gehwegplatte durch die Plane. Direkt in die Motorhaube vom Benz.', 'Ja, IN die Motorhaube. Die steckt da drin wie ein Messer in der Butter.', 'Und jetzt? Neue Haube kostet ein Vermögen, gebraucht findest du keine in Weiß ...', 'Nee, ausbeulen geht da nicht mehr. ... Ja. Ich meld mich. Tschüss.'],

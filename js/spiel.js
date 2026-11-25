@@ -1695,6 +1695,86 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       if (!z.vorbei) dennis.stimmung(stimmungAusWut() === 'wut' ? 'sauer' : 'ruhig');
     });
   }
+  // ---------- Paket 7.1: Werkzeug von der Wand liegen lassen ----------
+  // Werkzeug mit festem Platz (Zurückhängen gibt es schon): liegt es woanders herum (nicht in der Hand, nicht an seinem
+  // Platz) und wird gerade nicht gebraucht, meckert Dennis nach 25 s, wenn er es sieht (wie beim Dreck: leichter Fehler,
+  // etwas Wut). Danach erst wieder, wenn es zwischendurch aufgeräumt war.
+  const WERKZEUG_FRIST = 25;
+  const WANDWERKZEUG = [
+    ['rohrzange', 'Rohrzange', () => z.leck === 'spritzt'],
+    ['besen', 'Besen', () => !!welt.dreck || jz.leiter === 'wartet'],
+    ['poempel', 'Pömpel', () => z.verstopft === 'ja'],
+    ['feuerloescher', 'Feuerlöscher', () => z.feuer === 'brennt'],
+    ['ersteHilfe', 'Erste-Hilfe-Kasten', () => TU.zustand === 'liegt'],
+    ['helm', 'Schweißhelm', () => z.ort === 'schweiss' || z.ort === 'werkbank'],
+  ];
+  const werkzeugLiegt = {}; // id -> { seit, gemeckert }
+  function werkzeugFrist(t) {
+    for (const [id, name, gebraucht] of WANDWERKZEUG) {
+      const o = welt.objekte[id];
+      if (!o?.userData.wand) continue;
+      const amPlatz = o.parent && o.position.distanceTo(o.userData.wand.pos) < 0.08;
+      const inHand = hand.item?.obj === o;
+      const weg = !o.parent || !o.visible; // z. B. angezogen (Helm auf) oder bei David
+      if (amPlatz || inHand || weg || gebraucht()) { delete werkzeugLiegt[id]; continue; }
+      const w = (werkzeugLiegt[id] ||= { seit: t, gemeckert: false });
+      if (w.gemeckert || t - w.seit < WERKZEUG_FRIST) continue;
+      if (z.beschaeftigt || buehneBelegt() || !dennisSiehts() || !ruhig()) continue;
+      w.gemeckert = true;
+      wutPlus({ wut: 4, name: `${name} nicht zurückgehängt` });
+      dennisSagt(sag(DENNIS.werkzeugLiegt), true, { prio: 1 });
+    }
+  }
+
+  // ---------- Paket 7.3: Trödeln macht Dennis ungeduldig ----------
+  // Leerlauf = keine Aktion (Klick auf etwas, Hand-Aktion, Minispiel) und gerade keine offene Aufgabe mit Frist.
+  // Nach 60 s steigt die Wut alle 30 s um 2 (nie über 99, also nie Rausschmiss), jedes zweite Mal mahnt Dennis.
+  const TROEDEL_START = 60, TROEDEL_TAKT = 30;
+  let troedelNaechst = TROEDEL_START, troedelMal = 0;
+  function aktiv() { z.letzteAktion = sekundenSeitStart(); troedelNaechst = TROEDEL_START; }
+  function troedelUpdate(t, offeneAufgaben) {
+    if (z.letzteAktion == null) z.letzteAktion = t;
+    // läuft etwas (Ereignis, Dennis weg/schläft, Pause), zählt es nicht als Trödeln
+    const pause = offeneAufgaben > 0 || z.beschaeftigt || z.aufKlo || z.mittag === 'gerade' || dennis.modus === 'schlafen' || !dennis.wurzel.visible || fahrten.faehrt;
+    if (pause) { z.letzteAktion = t; troedelNaechst = TROEDEL_START; return; }
+    if (t - z.letzteAktion < troedelNaechst) return;
+    troedelNaechst = t - z.letzteAktion + TROEDEL_TAKT;
+    aerger(2);
+    troedelMal++;
+    // jedes zweite Mal mahnen; spricht Dennis gerade, wird die Mahnung beim nächsten Mal nachgeholt
+    if (troedelMal % 2 === 1 || z.troedelVerpasst) {
+      if (ruhig() && !buehneBelegt()) { z.troedelVerpasst = false; dennisSagt(sag(DENNIS.troedeln), true, { prio: 0 }); } else z.troedelVerpasst = true;
+    }
+  }
+
+  // ---------- Paket 7.2: Kühlschrank offen (Jonny) ----------
+  const KUEHL_FRIST = 30;
+  function kuehlschrankOffen() {
+    welt.kuehlschrank(true);
+    if (z.kuehlOffenSeit == null) z.kuehlOffenSeit = sekundenSeitStart();
+  }
+  function kuehlschrankZu() {
+    welt.kuehlschrank(false);
+    klonk(0.25);
+    z.kuehlOffenSeit = null;
+    ui.hinweis('Kühlschrank zu. Das Bier bleibt kalt.', 2200);
+  }
+  async function kuehlFrist() {
+    if (z.kuehlOffenSeit == null || z.dennisKuehl || z.vorbei) return;
+    if (sekundenSeitStart() - z.kuehlOffenSeit < KUEHL_FRIST) return;
+    if (z.beschaeftigt || buehneBelegt() || !normalOderTanzt() || !dennis.istDaheim()) return;
+    z.dennisKuehl = true;
+    await Promise.race([dennis.gehZu(KUEHLSCHRANK_VOR.x, KUEHLSCHRANK_VOR.z, 1.4), warte(9000)]);
+    if (z.kuehlOffenSeit != null) {
+      welt.kuehlschrank(false);
+      klonk(0.4);
+      z.kuehlOffenSeit = null;
+      zuSpaet('Kühlschrank zumachen', 5);
+      if (!(await wutPlus({ wut: 5, name: 'Kühlschrank offen gelassen' }))) dennisSagt(sag(DENNIS.kuehlschrankSelbst), true, { prio: 1 });
+    }
+    z.dennisKuehl = false;
+    dennis.heim();
+  }
   const KUEHLSCHRANK_VOR = { x: -4.05, z: 2.42 };
   const BOX_VOR = { x: -4.05, z: 1.0 }; // vor der Soundbox (Box steht bei -4,66 | 1,0)
   async function jonnyBier(ueberredet) {
@@ -1711,7 +1791,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     jonny.bier(true);
     bierAuf();
     await warte(500);
-    welt.kuehlschrank(false);
+    // Paket 7.2: Jonny lässt den Kühlschrank immer offen. Zumachen, sonst macht es Dennis (Ärger)
+    kuehlschrankOffen();
     jz.biere++;
     if (dennisSiehts() && normalOderTanzt()) {
       aerger(3);
@@ -2515,6 +2596,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     grill: 'Die Feuerschale liegt draußen links vor der Werkstatt um. Wieder aufstellen.',
     huefte: 'Dennis liegt mit der Hüfte am Boden. Hingehen und aufhelfen.',
     waesche: 'Wäsche ist fertig: Bad hinter der WC-Tür, Waschmaschine mit Trockner rechts.',
+    kuehlschrank: 'Jonny hat den Kühlschrank offen gelassen (hinten links neben dem Sofa). Hingehen und zumachen.',
     leiter: 'Jonny wartet an der rechten Wand: die Leiter liegt dort oben. Anklicken (Räuberleiter) oder mit dem Besen runterholen.',
   };
   ui.beiAufgabeKlick((id) => { if (AUFGABE_WO[id]) ui.hinweis(AUFGABE_WO[id], 4200); });
@@ -2544,6 +2626,10 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     if (z.huefte === 'liegt') dazu('huefte', 'Dennis aufhelfen', z.huefteSeit, HUEFTE_FRIST, true);
     if ((z.waesche === 'gewaschen' || z.waesche === 'trocken') && z.waescheFertigSeit != null) dazu('waesche', 'Wäsche', z.waescheFertigSeit, WAESCHE_FRIST);
     if (jz.leiter === 'wartet' && jz.leiterSeit != null) dazu('leiter', 'Leiter', jz.leiterSeit, 45);
+    if (z.kuehlOffenSeit != null && !z.dennisKuehl) dazu('kuehlschrank', 'Kühlschrank zu', z.kuehlOffenSeit, KUEHL_FRIST);
+    kuehlFrist();
+    werkzeugFrist(t);
+    troedelUpdate(t, l.length);
     hueftenFrist(t); waescheFrist(t);
     ui.aufgabenIcons(z.vorbei ? [] : l);
     aufgabenListeAuffrischen();
@@ -3357,8 +3443,11 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     // Dennis lässt es eine Weile brennen, bevor er selbst löscht (ist trotzdem nicht begeistert)
     setTimeout(() => { if (z.feuer === 'brennt') dennisLoescht(); }, 16000);
   }
+  // Paket 7.4: solange es brennt und noch 5 s nach dem Löschen ist Sprühen kein „sinnlos leergesprüht“
+  function loeschKulanz() { return z.feuer === 'brennt' || sekundenSeitStart() - (z.feuerAusSeit ?? -999) < 5; }
   function feuerAus() {
     z.feuer = 'aus';
+    z.feuerAusSeit = sekundenSeitStart(); // 7.4: danach noch 5 s sprühen ohne Fehler
     ui.warnung('feuer', false);
     welt.feuer(false);
     if (feuerTon) { feuerTon.stopp(); feuerTon = null; }
@@ -3488,6 +3577,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   }
 
   function handAktion(k) {
+    aktiv();
     // N5: läuft ein Ereignis, bei dem der Spieler frei ist (z.spielerFrei), gehen Hand-Tasten trotzdem (Helm aufsetzen usw.)
     if (z.vorbei || (z.beschaeftigt && !z.spielerFrei) || !hand.item) return;
     if (k === 'anziehen') anziehen();
@@ -3646,7 +3736,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       return;
     }
     if (blickAufDennis(3.5)) { loeschStopp(); fehler('gespruehrt'); return; }
-    if (l.dauer > 1.0 && !l.gemeckert && z.feuer !== 'brennt' && dennisSiehts()) { l.gemeckert = true; fehler('loescherSpielen'); }
+    if (l.dauer > 1.0 && !l.gemeckert && !loeschKulanz() && dennisSiehts()) { l.gemeckert = true; fehler('loescherSpielen'); }
   }
 
   // ziel: 'feuer', 'dennis' oder leer (dann zählt, wohin man guckt)
@@ -3806,7 +3896,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       return;
     }
     welt.pulver(von, von.clone().add(vorne.multiplyScalar(2.5)));
-    if (dennisSiehts()) await fehler('loescherSpielen');
+    if (!loeschKulanz() && dennisSiehts()) await fehler('loescherSpielen');
   }
 
   function werfen() {
@@ -4229,6 +4319,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       case 'spuelzettel':
         return ['Zettel: Spüldienst', `Spüldienst diese Woche: ${SPUELDIENST[sd.id]}. Ist der Kühlschrank voll mit Tassen, ${SPUELDIENST[sd.id]} ansprechen, wenn er da ist.`, []];
       case 'kuehlschrank':
+        if (z.kuehlOffenSeit != null) return ['Kühlschrank', 'Steht sperrangelweit offen. Jonny natürlich.', [A('Zumachen', 'hand', kuehlschrankZu)]];
         return ['Kühlschrank', 'Bier, Bier, Senf, Bier. Gehört Dennis. Jonny bedient sich trotzdem.', [A('Reinschauen', 'auge', () => { welt.kuehlschrank(true); setTimeout(() => welt.kuehlschrank(false), 1800); if (dennisSiehts()) dennisSagt(sag(DENNIS.kuehlschrank), false, { prio: 2 }); })]];
       case 'bitsatz':
         if (z.bitsatz === 'sortiert') return ['Bitsatz', 'Ordentlich sortiert. Jedes Bit in seinem Fach.', []];
@@ -4442,6 +4533,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       if (info.id === 'dennis') ui.hinweis('Dennis ist gerade auf dem Klo.');
       return;
     }
+    if (info || hand.item) aktiv();
     if (hand.item && (await klickMitHand(treffer))) return;
     if (!info) return;
     steuerung.sperre(true);
@@ -4701,7 +4793,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   return {
     zustand: z,
     klick,
-    test: { sek: () => sekundenSeitStart(), waescheFertigTest, fristenVorbei, torbenLiegtTest, torbenFristVorbei, lauf, rausgehen, waldoFigur: waldo, pritsche, metall, grillen, gaesteFrei: () => gaeste().map((g) => g.id + ':' + g.frei()), dv, davidKommt, davidGeht, davidGassi, davidRohrzange, davidLoescher, davidTischgestell, davidRauchtMitJonny, get z() { return z; }, OFEN_SCHRITTE, ofenStand, schutzAn, armAnpassen, setzeWut(w) { z.wut = w; aktualisieren(); }, zeitVor(sek) { z.start -= sek * 1000; }, waescheUebernehmen, kaffeeKochen, hulaHoop, einkaufen, kiwiEssen, TU, torbenUnfall, torbenVerarzten, torbenVerbandAn, spanngurtEreignis, gurteHinwerfen, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, poempeln, siebRaus, tanzPause, musikUmschalten, handVoll: () => !!hand.item, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
+    test: { kuehlschrankOffen, werkzeugLiegt, sek: () => sekundenSeitStart(), waescheFertigTest, fristenVorbei, torbenLiegtTest, torbenFristVorbei, lauf, rausgehen, waldoFigur: waldo, pritsche, metall, grillen, gaesteFrei: () => gaeste().map((g) => g.id + ':' + g.frei()), dv, davidKommt, davidGeht, davidGassi, davidRohrzange, davidLoescher, davidTischgestell, davidRauchtMitJonny, get z() { return z; }, OFEN_SCHRITTE, ofenStand, schutzAn, armAnpassen, setzeWut(w) { z.wut = w; aktualisieren(); }, zeitVor(sek) { z.start -= sek * 1000; }, waescheUebernehmen, kaffeeKochen, hulaHoop, einkaufen, kiwiEssen, TU, torbenUnfall, torbenVerarzten, torbenVerbandAn, spanngurtEreignis, gurteHinwerfen, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, poempeln, siebRaus, tanzPause, musikUmschalten, handVoll: () => !!hand.item, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
     stationWaehlen,
     intro,
     aktualisieren,
