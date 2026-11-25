@@ -11,6 +11,7 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
   let fahrt = null;
   let gesperrt = false;
   let tempoFaktor = 1;
+  let sitz = null; // Paket 6: { beimAufstehen }
   let geht = false;
   // Fahrmodus: ein Fahrzeug übernimmt WASD, die Kamera sitzt im Fahrerhaus und dreht sich mit
   let fahrer = null;
@@ -43,8 +44,9 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
   }
 
   function fahreZu(pos, blick, dauer = 0.9) {
-    // im Fahrzeug bleibt man sitzen (sonst wartet die Kamerafahrt bis zum Aussteigen und zieht einen dann zurück)
-    if (fahrer) return Promise.resolve();
+    // im Fahrzeug bleibt man sitzen (sonst wartet die Kamerafahrt bis zum Aussteigen und zieht einen dann zurück);
+    // auf dem Sofa genauso (Paket 6: man steht nur selbst auf)
+    if (fahrer || sitz) return Promise.resolve();
     const start = { pos: kamera.position.clone(), gier, nick };
     const w = winkelZu(new THREE.Vector3(...pos), new THREE.Vector3(...blick));
     const ziel = { pos: new THREE.Vector3(...pos), gier: kurz(gier, w.gier), nick: w.nick };
@@ -56,7 +58,7 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
   function dreheZu(punkt, dauer = 0.45) {
     const w = winkelZu(kamera.position, punkt);
     // im Fahrzeug: nur den Blick drehen, sofort fertig (E3: Ausraster, während man im Weidemann sitzt)
-    if (fahrer) { gier = kurz(gier, w.gier); nick = THREE.MathUtils.clamp(w.nick, -0.6, 0.4); return Promise.resolve(); }
+    if (fahrer || sitz) { gier = kurz(gier, w.gier); nick = THREE.MathUtils.clamp(w.nick, -0.6, 0.4); return Promise.resolve(); }
     const start = { pos: kamera.position.clone(), gier, nick };
     const ziel = { pos: kamera.position.clone(), gier: kurz(gier, w.gier), nick: THREE.MathUtils.clamp(w.nick, -0.6, 0.4) };
     return new Promise((res) => { fahrt = { start, ziel, t: 0, d: dauer, res }; });
@@ -289,6 +291,14 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
       if (!ctrl) kamera.position.y = AUGENHOEHE;
     },
     get faehrt() { return !!fahrer; },
+    // Paket 6: hinsetzen (pos = Augenpunkt im Sitzen, blick = wohin man schaut); beimAufstehen wird bei WASD gerufen
+    async hinsetzen(pos, blick, beimAufstehen) {
+      await fahreZu(pos, blick, 0.8);
+      kamera.position.set(...pos);
+      sitz = { beimAufstehen };
+    },
+    aufstehen() { if (!sitz) return; sitz = null; kamera.position.y = AUGENHOEHE; },
+    get sitzt() { return !!sitz; },
     get gefangen() { return gefangen; },
     fangen,
     get geht() { return geht || !!fahrt; },
@@ -314,6 +324,12 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
         gier += r.dpsi;
         kamera.position.copy(r.auge);
         geht = false;
+      } else if (sitz) {
+        // Paket 6: sitzen. Kamera bleibt auf Sitzhöhe; WASD oder Leertaste = aufstehen
+        geht = false;
+        if (!gesperrt && ['w', 'a', 's', 'd', ' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].some((k) => neu.has(k) || tasten.has(k))) {
+          const f = sitz.beimAufstehen; sitz = null; kamera.position.y = AUGENHOEHE; f?.();
+        }
       } else if (!gesperrt) {
         let vor = 0;
         let seit = 0;
@@ -323,7 +339,9 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
         if (tasten.has('d') || tasten.has('arrowright')) seit += 1;
         geht = !!(vor || seit);
         if (vor || seit) {
-          const v = 2.4 * tempoFaktor * dt / Math.hypot(vor, seit);
+          // Paket 6: Umschalt gedrückt halten = sprinten (1,6-fach), nicht mit schweren Sachen in der Hand
+          const sprint = tasten.has('shift') && tempoFaktor >= 1 ? 1.6 : 1;
+          const v = 2.4 * tempoFaktor * sprint * dt / Math.hypot(vor, seit);
           const fx = -Math.sin(gier);
           const fz = -Math.cos(gier);
           const dx = (fx * vor - fz * seit) * v;

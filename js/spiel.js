@@ -2250,6 +2250,33 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     dennis.heim();
   }
   // ---------- Kaffeetassen: stehen überall rum, gehören auf den Kühlschrank ----------
+  // Paket 6: Hinsetzen auf das Werkstattsofa oder das Sofa vor dem Wohnwagen. Kamera auf Sitzhöhe, Laufen = aufstehen.
+  // Zeit und Ereignisse laufen weiter. Man steht NIE von selbst auf (Joel); bei Ereignissen kommt nur ein Hinweis.
+  let sitzOrt = null, sitzHinweis = null;
+  async function hinsetzen(werkstatt) {
+    if (hand.item) { ui.hinweis('Erst die Hände frei machen.', 2200); return; }
+    sitzOrt = werkstatt ? 'werkstatt' : 'terrasse';
+    sitzHinweis = null;
+    const pos = werkstatt ? [-2.75, 1.08, 3.48] : [-14.18, 1.25, 8.95];
+    const blick = werkstatt ? [-2.75, 0.95, 0] : [-14.18, 1.0, 14];
+    steuerung.sperre(true);
+    await steuerung.hinsetzen(pos, blick, () => { sitzOrt = null; ui.hinweis('Aufgestanden.', 1200); });
+    steuerung.sperre(false);
+    ui.hinweis('Du sitzt. Laufen (WASD) oder Leertaste = aufstehen.', 2600);
+  }
+  function sitzUpdate() {
+    if (!steuerung.sitzt) { sitzOrt = null; sitzHinweis = null; return; }
+    let grund = null;
+    if (z.feuer === 'brennt') grund = 'Es brennt! Steh auf!';
+    else if (z.leck === 'spritzt') grund = 'Wasserrohrbruch! Steh auf!';
+    else if (z.verstopft === 'ja') grund = 'Das Klo ist verstopft. Steh auf!';
+    else if (TU.zustand === 'liegt') grund = 'Torben liegt am Boden! Steh auf!';
+    else if (z.huefte === 'liegt') grund = 'Dennis liegt am Boden! Steh auf!';
+    else if (sitzOrt === 'werkstatt' && z.mittag === 'gerade') grund = 'Dennis will auf sein Sofa. Steh lieber auf.';
+    // jeden Grund nur einmal melden (WASD oder Leertaste = aufstehen)
+    if (grund && grund !== sitzHinweis) ui.hinweis(`${grund} (WASD oder Leertaste)`, 3500);
+    sitzHinweis = grund;
+  }
   // Bug 12: steht eine Tasse auf dem Erste-Hilfe-Kasten (rechte Wand) und man nimmt den Kasten, fällt sie runter
   hand.beimNehmen = (id) => {
     if (id !== 'verbandskasten') return;
@@ -3955,7 +3982,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       ui.hinweis(`${it.cfg.name} hängt wieder an der Wand.`);
       return true;
     }
-    if (info) {
+    if (info && info.id !== 'sofa' && info.id !== 'terrassensofa') {
       const ziel = info.id;
       if (it.id === 'feuerloescher' && (ziel === 'muelleimer' || ziel === 'dennis')) {
         steuerung.sperre(true);
@@ -4058,6 +4085,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     if (k === 'e') handAktion(hand.item && ANZIEHBAR.includes(hand.item.id) ? 'anziehen' : 'benutzen');
     else if (k === 'q') wurfLaden();
     else if (k === 'g') handAktion('fallen');
+    else if (k === 'f' && document.getElementById('minispiel').classList.contains('versteckt')) ui.vollbildUmschalten();
   });
   window.addEventListener('keyup', (e) => {
     const k = e.key.toLowerCase();
@@ -4433,6 +4461,13 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       case 'benz':
         if (dennisSiehts() && ruhig() && sekundenSeitStart() - (z.benzZuletzt ?? -99) > 40) { z.benzZuletzt = sekundenSeitStart(); aerger(1); setTimeout(() => dennisSagt(sag(DENNIS.benz), true, { prio: 0 }), 600); }
         return ['Mercedes 123', 'Dennis\' ein und alles: weißer W123. In der Motorhaube steckt eine Gehwegplatte, die Plane darüber hat ein Loch. Passiert heute Nacht um 4.', []];
+      case 'sofa':
+      case 'terrassensofa': {
+        const werkstatt = id === 'sofa';
+        if (werkstatt && (dennis.modus === 'sitzen' || dennis.modus === 'schlafen' || z.mittag === 'gerade')) return ['Sofa', 'Dennis’ Sofa. Gerade liegt er selbst drauf.', []];
+        return [werkstatt ? 'Sofa' : 'Sofa auf der Terrasse', werkstatt ? 'Dennis’ altes Sofa. Durchgesessen, aber gemütlich.' : 'Altes Zweisitzer-Sofa vor dem Wohnwagen. Blick auf die Wiese.',
+          [A('Hinsetzen', 'sitzen', () => hinsetzen(werkstatt))]];
+      }
       case 'wohnwagen':
         return ['Wohnwagen', 'Alter Wohnwagen unterm Carport, mit kleiner Holzterrasse und Lichterkette. Die Tür ist zu.', []];
       case 'carport':
@@ -4494,6 +4529,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       if (info.id === 'dennis') ui.hinweis('Dennis ist gerade auf dem Klo.');
       return;
     }
+    if (steuerung.sitzt && info && treffer.abstand > 2.2) { ui.hinweis('Zu weit weg. Erst aufstehen (WASD oder Leertaste).', 2200); return; }
     if (hand.item && (await klickMitHand(treffer))) return;
     if (!info) return;
     steuerung.sperre(true);
@@ -4765,7 +4801,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   return {
     zustand: z,
     klick,
-    test: { zielMarken, sek: () => sekundenSeitStart(), waescheFertigTest, fristenVorbei, torbenLiegtTest, torbenFristVorbei, lauf, rausgehen, waldoFigur: waldo, pritsche, metall, grillen, gaesteFrei: () => gaeste().map((g) => g.id + ':' + g.frei()), dv, davidKommt, davidGeht, davidGassi, davidRohrzange, davidLoescher, davidTischgestell, davidRauchtMitJonny, get z() { return z; }, OFEN_SCHRITTE, ofenStand, schutzAn, armAnpassen, setzeWut(w) { z.wut = w; aktualisieren(); }, zeitVor(sek) { z.start -= sek * 1000; }, waescheUebernehmen, kaffeeKochen, hulaHoop, einkaufen, kiwiEssen, TU, torbenUnfall, torbenVerarzten, torbenVerbandAn, spanngurtEreignis, gurteHinwerfen, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, poempeln, siebRaus, tanzPause, musikUmschalten, handVoll: () => !!hand.item, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
+    test: { hinsetzen, zielMarken, sek: () => sekundenSeitStart(), waescheFertigTest, fristenVorbei, torbenLiegtTest, torbenFristVorbei, lauf, rausgehen, waldoFigur: waldo, pritsche, metall, grillen, gaesteFrei: () => gaeste().map((g) => g.id + ':' + g.frei()), dv, davidKommt, davidGeht, davidGassi, davidRohrzange, davidLoescher, davidTischgestell, davidRauchtMitJonny, get z() { return z; }, OFEN_SCHRITTE, ofenStand, schutzAn, armAnpassen, setzeWut(w) { z.wut = w; aktualisieren(); }, zeitVor(sek) { z.start -= sek * 1000; }, waescheUebernehmen, kaffeeKochen, hulaHoop, einkaufen, kiwiEssen, TU, torbenUnfall, torbenVerarzten, torbenVerbandAn, spanngurtEreignis, gurteHinwerfen, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, poempeln, siebRaus, tanzPause, musikUmschalten, handVoll: () => !!hand.item, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
     stationWaehlen,
     intro,
     aktualisieren,
@@ -4780,6 +4816,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       pritsche.update(dt);
       metall.update(dt);
       grillen.update(dt);
+      sitzUpdate();
       zielMarken.update(dt);
       wutUndVorzeichen(dt);
       waescheUpdate(dt);

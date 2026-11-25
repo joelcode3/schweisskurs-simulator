@@ -133,5 +133,9 @@ export const SYMBOL = {
   haken: '<svg viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7"/></svg>',
   laut: '<svg viewBox="0 0 24 24" class="ico"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>',
   stumm: '<svg viewBox="0 0 24 24" class="ico"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9l5 6M21 9l-5 6"/></svg>',
+  vollbild: '<svg viewBox="0 0 24 24" class="ico"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>',
+  vollbildAus: '<svg viewBox="0 0 24 24" class="ico"><path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/></svg>',
+  sitzen: '<svg viewBox="0 0 24 24" class="ico"><path d="M5 11V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v5"/><path d="M3 11h18v5H3zM5 16v4M19 16v4"/></svg>',
+  neustart: '<svg viewBox="0 0 24 24" class="ico"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/></svg>',
   play: '<svg viewBox="0 0 24 24" class="ico"><path d="M7 5l12 7-12 7z"/></svg>',
 };

@@ -208,6 +208,7 @@ requestAnimationFrame(schleife);
 // ---------- Start ----------
 const clipsGeladen = ladeClips();
 ui.lautstaerkeLeiste((v) => { setzeLautstaerke(v); setzeVideoLautstaerke(v); });
+ui.bedienKnoepfe();
 
 let gestartet = false;
 async function spielStarten() {

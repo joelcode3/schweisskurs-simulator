@@ -370,6 +370,32 @@ export function lautstaerkeLeiste(beiAenderung) {
   zeigen();
 }
 
+// Paket 6: Vollbild an/aus (Knopf unten links, Taste F) und Neustart mit Sicherheitsabfrage
+export function vollbildUmschalten() {
+  try {
+    if (document.fullscreenElement) document.exitFullscreen?.();
+    else document.documentElement.requestFullscreen?.({ navigationUI: 'hide' })?.catch?.(() => {});
+  } catch { /* Browser kann kein Vollbild */ }
+}
+export function bedienKnoepfe() {
+  const vb = $('vollbild-knopf'), ns = $('neustart-knopf');
+  const zeigen = () => {
+    const an = !!document.fullscreenElement;
+    vb.innerHTML = an ? SYMBOL.vollbildAus : SYMBOL.vollbild;
+    vb.title = an ? 'Vollbild aus (F)' : 'Vollbild an (F)';
+  };
+  if (!document.documentElement.requestFullscreen) vb.style.display = 'none';
+  vb.addEventListener('click', vollbildUmschalten);
+  document.addEventListener('fullscreenchange', zeigen);
+  zeigen();
+  ns.innerHTML = SYMBOL.neustart;
+  ns.addEventListener('click', async () => {
+    document.exitPointerLock?.();
+    const i = await infoDialog('Neustart?', '<p>Das Spiel fängt von vorn an. Der jetzige Stand geht verloren.</p>', [{ text: 'Ja, neu starten', klasse: 'rot' }, { text: 'Nein, weiterspielen' }]);
+    if (i === 0) location.reload();
+  });
+}
+
 // Band oben: Arbeitspause, solange Dennis auf dem Klo ist
 export function pauseZeigen(an, text = '') {
   const el = $('pause');
