@@ -151,26 +151,31 @@ button { font: inherit; color: inherit; }
   position: absolute;
   top: var(--rand-oben);
   right: var(--rand-rechts);
-  width: min(240px, 40vw);
+  width: min(270px, 40vw);
   padding: 8px 10px 10px;
 }
 .wut-kopf { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .dennis-mini { width: 38px; height: 38px; flex: none; }
 .wut-titel { font-family: var(--comic); font-size: 19px; letter-spacing: 0.5px; line-height: 1; }
 .wut-stufe { font-size: 12px; color: var(--text-leise); }
-.wut-balken {
-  height: 14px;
-  border-radius: 7px;
+/* Dennis-Puls (früher Wutbalken): Herzfrequenzmonitor wie im Krankenhaus, 60 = tiefenentspannt, 180 = Ausraster */
+.puls-text { flex: 1; min-width: 0; }
+.puls-text .wut-titel { white-space: nowrap; }
+.puls-wert { display: flex; align-items: baseline; gap: 3px; color: var(--puls-farbe, #5cff6a); font-family: var(--comic); }
+.puls-wert b { font-size: 26px; line-height: 1; letter-spacing: 0.5px; font-weight: normal; min-width: 1.7em; text-align: right; }
+.puls-wert span { font-size: 11px; font-family: inherit; opacity: 0.85; }
+.puls-herz { width: 15px; height: 15px; align-self: center; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linejoin: round;
+  animation: puls-schlag var(--puls-dauer, 0.8s) infinite; }
+@keyframes puls-schlag { 0%, 40%, 100% { transform: scale(1); } 12% { transform: scale(1.3); } }
+.puls-monitor {
+  height: 34px;
+  border-radius: 6px;
   border: 2px solid #000;
-  background: repeating-linear-gradient(90deg, #2a2c30 0 18px, #23252a 18px 20px);
+  background: #07140c;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
   overflow: hidden;
 }
-#wut-fuellung {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, #5cbf4a, #ffc81e 50%, #e23b2e) no-repeat;
-  transition: width 0.6s cubic-bezier(.3,1.6,.5,1);
-}
+#puls-kurve { display: block; width: 100%; height: 100%; }
 #wut.wackelt { animation: wackeln 0.5s; }
 @keyframes wackeln {
   0%,100% { transform: translateX(0); }
@@ -182,7 +187,7 @@ button { font: inherit; color: inherit; }
 
 #ausruestung {
   position: absolute;
-  top: calc(var(--rand-oben) + 78px);
+  top: calc(var(--rand-oben) + 98px);
   right: var(--rand-rechts);
   display: flex;
   gap: 6px;
@@ -809,7 +814,7 @@ button { font: inherit; color: inherit; }
   #wut { width: min(190px, 40vw); padding: 6px 8px 8px; }
   .wut-titel { font-size: 16px; }
   .dennis-mini { width: 30px; height: 30px; }
-  #ausruestung { top: calc(var(--rand-oben) + 66px); }
+  #ausruestung { top: calc(var(--rand-oben) + 84px); }
   .ausr { width: 32px; height: 32px; }
   .ausr svg { width: 22px; height: 22px; }
   .station-knopf { padding: 6px 8px; font-size: 12px; }
