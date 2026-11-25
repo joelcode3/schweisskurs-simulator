@@ -1728,17 +1728,22 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
 
   // ---------- Paket 7.3: Trödeln macht Dennis ungeduldig ----------
   // Leerlauf = keine Aktion (Klick auf etwas, Hand-Aktion, Minispiel) und gerade keine offene Aufgabe mit Frist.
-  // Nach 60 s steigt die Wut alle 30 s um 2 (nie über 99, also nie Rausschmiss), jedes zweite Mal mahnt Dennis.
+  // Gezählt wird nur, solange Dennis einen sieht (dennisSiehts); außer Sichtweite pausiert der Zähler (geht nicht zurück).
+  // Nach 60 s gezählter Leerlauf steigt die Wut alle 30 s um 2 (nie über 99, also nie Rausschmiss), jedes zweite Mal mahnt er.
   const TROEDEL_START = 60, TROEDEL_TAKT = 30;
-  let troedelNaechst = TROEDEL_START, troedelMal = 0;
-  function aktiv() { z.letzteAktion = sekundenSeitStart(); troedelNaechst = TROEDEL_START; }
+  let troedelNaechst = TROEDEL_START, troedelMal = 0, troedelZuletzt = null;
+  function aktiv() { z.troedelZeit = 0; troedelNaechst = TROEDEL_START; }
   function troedelUpdate(t, offeneAufgaben) {
-    if (z.letzteAktion == null) z.letzteAktion = t;
+    const dt = troedelZuletzt == null ? 0 : Math.min(1, t - troedelZuletzt);
+    troedelZuletzt = t;
+    z.troedelZeit ??= 0;
     // läuft etwas (Ereignis, Dennis weg/schläft, Pause), zählt es nicht als Trödeln
     const pause = offeneAufgaben > 0 || z.beschaeftigt || z.aufKlo || z.mittag === 'gerade' || dennis.modus === 'schlafen' || !dennis.wurzel.visible || fahrten.faehrt;
-    if (pause) { z.letzteAktion = t; troedelNaechst = TROEDEL_START; return; }
-    if (t - z.letzteAktion < troedelNaechst) return;
-    troedelNaechst = t - z.letzteAktion + TROEDEL_TAKT;
+    if (pause) { aktiv(); return; }
+    if (!dennisSiehts()) return; // außer Sichtweite: Zähler pausiert
+    z.troedelZeit += dt;
+    if (z.troedelZeit < troedelNaechst) return;
+    troedelNaechst = z.troedelZeit + TROEDEL_TAKT;
     aerger(2);
     troedelMal++;
     // jedes zweite Mal mahnen; spricht Dennis gerade, wird die Mahnung beim nächsten Mal nachgeholt
