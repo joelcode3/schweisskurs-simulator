@@ -3880,6 +3880,14 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
 
   // Gasflasche hochheben und woanders hinstellen
   function flascheHochheben() {
+    // Paket 9: Kleinkram in der Hand (z. B. der Edding nach dem Anzeichnen) wird automatisch auf der Werkbank abgelegt,
+    // sonst kam man nach dem Anzeichnen nicht mehr mit der Flasche zum Spülen zurück
+    if (hand.item && !hand.item.cfg.schwer && !hand.item.cfg.nichtAblegen && z.ort === 'werkbank') {
+      const name = hand.item.cfg.name;
+      hand.lege(new THREE.Vector3(0.75, 0.905, -2.72), 0.3);
+      handleisteZeigen();
+      ui.hinweis(`${name} auf die Werkbank gelegt.`, 1800);
+    }
     if (hand.item) { ui.hinweis('Für die Flasche brauchst du beide Hände. Erst ablegen.'); return; }
     hand.nimm('flasche', welt.objekte.flasche.gruppe);
     z.ortVorher = z.ort;
@@ -3887,6 +3895,13 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     klonk(0.3);
     aktualisieren();
     ui.hinweis('Schwer! Jetzt auf die Werkbank, den Schweißtisch, den Waschplatz oder irgendwo auf den Boden klicken (Restgas nur draußen).', 3600);
+  }
+  // Paket 9: Flasche von der Werkbank zum Waschplatz tragen und gleich spülen
+  async function zumSpuelen() {
+    flascheHochheben();
+    if (hand.item?.id !== 'flasche') return;
+    await flascheAbstellen(new THREE.Vector3(4.05, 0.9, 1.95));
+    if (z.ort === 'wasch') await spuelen();
   }
   async function flascheAbstellen(punkt) {
     const beine = z.naehte.beine !== null;
@@ -4105,6 +4120,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
           if (!z.gespuelt) a.push(A('Mit Wasser spülen', 'wasser', spuelen));
           a.push(A('Hochheben und tragen', 'tragen', flascheHochheben));
         } else if (z.ort === 'werkbank') {
+          // Paket 9: nicht gespült? Dann direkt zurück zum Waschplatz (egal ob schon angezeichnet)
+          if (z.ventilAuf && !z.gespuelt) a.push(A('Zum Spülen zurück zum Waschplatz bringen', 'wasser', zumSpuelen));
           if (!z.angezeichnet) a.push(A('Tür anzeichnen (Edding)', 'stift', anzeichnen));
           if (!z.geschnitten) a.push(A('Tür ausschneiden (Flex)', 'funke', schneiden));
           a.push(A('Hochheben und tragen', 'tragen', flascheHochheben));
@@ -4701,7 +4718,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   return {
     zustand: z,
     klick,
-    test: { sek: () => sekundenSeitStart(), waescheFertigTest, fristenVorbei, torbenLiegtTest, torbenFristVorbei, lauf, rausgehen, waldoFigur: waldo, pritsche, metall, grillen, gaesteFrei: () => gaeste().map((g) => g.id + ':' + g.frei()), dv, davidKommt, davidGeht, davidGassi, davidRohrzange, davidLoescher, davidTischgestell, davidRauchtMitJonny, get z() { return z; }, OFEN_SCHRITTE, ofenStand, schutzAn, armAnpassen, setzeWut(w) { z.wut = w; aktualisieren(); }, zeitVor(sek) { z.start -= sek * 1000; }, waescheUebernehmen, kaffeeKochen, hulaHoop, einkaufen, kiwiEssen, TU, torbenUnfall, torbenVerarzten, torbenVerbandAn, spanngurtEreignis, gurteHinwerfen, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, poempeln, siebRaus, tanzPause, musikUmschalten, handVoll: () => !!hand.item, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
+    test: { schneiden, zumSpuelen, sek: () => sekundenSeitStart(), waescheFertigTest, fristenVorbei, torbenLiegtTest, torbenFristVorbei, lauf, rausgehen, waldoFigur: waldo, pritsche, metall, grillen, gaesteFrei: () => gaeste().map((g) => g.id + ':' + g.frei()), dv, davidKommt, davidGeht, davidGassi, davidRohrzange, davidLoescher, davidTischgestell, davidRauchtMitJonny, get z() { return z; }, OFEN_SCHRITTE, ofenStand, schutzAn, armAnpassen, setzeWut(w) { z.wut = w; aktualisieren(); }, zeitVor(sek) { z.start -= sek * 1000; }, waescheUebernehmen, kaffeeKochen, hulaHoop, einkaufen, kiwiEssen, TU, torbenUnfall, torbenVerarzten, torbenVerbandAn, spanngurtEreignis, gurteHinwerfen, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, poempeln, siebRaus, tanzPause, musikUmschalten, handVoll: () => !!hand.item, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
     stationWaehlen,
     intro,
     aktualisieren,
