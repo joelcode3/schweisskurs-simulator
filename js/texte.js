@@ -42,6 +42,8 @@ export const DENNIS = {
     besen: ['Den Besen nimmt man zum Fegen, nicht als Speer!', 'Besen werfen? Das ist hier kein Hexentreffen!'],
     bierflasche: ['Ey! Wirf nicht mit Glas! Da latsch ich nachher in die Scherben!', 'Flaschen werden nicht geworfen! Das ist kein Wurfgeschoss, das ist Pfand!'],
     loescher: ['Den Feuerlöscher wirft man nicht! Und wenn’s dann brennt, was dann?!', 'Der Löscher fliegt nicht! Der rettet hier Leben!'],
+    // N5: alles, was kein Werkzeug ist (Gerte, Pömpel, Creme, Kackepumpe, Sieb, Verbandskasten ...)
+    sonst: ['Ey, nichts werfen hier!', 'Was fliegt denn hier durch die Gegend?! Hier wird nichts geworfen!'],
   },
   musikPause: [
     'Ey! Ich mach Pause! Mach die Mucke aus!',
@@ -49,6 +51,8 @@ export const DENNIS = {
     'Techno in meiner Mittagspause? Du hast sie doch nicht mehr alle!',
   ],
   // er macht die Musik nach dem Wecken selbst aus
+  // N4: Dennis hört selbst auf zu tanzen (nach einer Weile oder wenn er gestört wurde), Box ist dann eine Zeit gesperrt
+  tanzPause: ['Nee du, ich brauch mal ne Pause.'],
   musikMachIchAus: ['So. Ich mach das jetzt aus. Und dann ist erstmal Ruhe!', 'Gib her, ich mach das selber aus.'],
   // Musik wieder an, obwohl er gerade keine Lust hat
   musikWiederAn: ['Ich hab gesagt AUS! Bist du taub?!', 'Schon wieder?! Jetzt reicht’s aber!'],

@@ -427,6 +427,13 @@ export function technoBeat() {
   return Math.max(0, (ctx.currentTime - techno.start) / techno.spb);
 }
 
+// Klospülung überall als Aufnahme vom Betreiber (assets/klospuelung.mp3, 7,5 s mit Ausblenden). Nur wenn die Datei
+// nicht lädt, kommt die live erzeugte Spülung (klospuelung) als Notlösung (N6: die klang schlecht).
+export async function spuelTon(lautst = 0.8) {
+  const sp = await stimmeAbspielen('assets/klospuelung.mp3', lautst, { gruppe: 'effekt' });
+  if (!sp) klospuelung(lautst);
+  return sp;
+}
 // Klospülung: Hebel, rauschendes Wasser mit Gluckern, danach leises Nachlaufen
 export function klospuelung(lautst = 1) {
   if (!ctx) return;

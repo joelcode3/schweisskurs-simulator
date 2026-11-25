@@ -982,6 +982,78 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   mit Symbol, Aufgaben mit Ring zuerst; Tassen, Flaschen, Spanngurte in einer Zeile „Aufräumen: …“. Macht Dennis (oder
   Jonny) etwas selbst, steht 10 s eine rote Zeile „Zu spät: …“ (zuSpaet(), z.zuSpaet; auch aus fahrten.js für Grill/Tonnen).
 
+## Paket N6 (Klo, Pumpe, Bad, 18.11.)
+- B31 Freeze nach dem Klo-Minispiel: Ursache war, dass das Pömpel-Spiel (wie die meisten älteren Minispiele) die 3D-Welt
+  dahinter weiterzeichnete (nur die neuen Spiele ab Pritsche setzten data-vollbild). Im Test lief das Klo-Spiel dadurch mit
+  1,3 statt 60 Bildern pro Sekunde; die Pump-Erkennung (Mausbewegung) und das „Es gurgelt“ (Zeitschritt pro Bild begrenzt)
+  zogen sich ewig, das wirkt wie eingefroren. Jetzt setzt spielRahmen selbst data-vollbild (alle Minispiele) und nimmt es
+  beim Schließen wieder weg. Einen echten Hänger (Sperre bleibt, Spiel reagiert nicht mehr) konnte ich nicht nachstellen:
+  nach Weiter waren Steuerung frei, z.beschaeftigt aus, Klo erledigt.
+- Klospülung überall die Aufnahme vom Betreiber (assets/klospuelung.mp3, 7,5 s mit Ausblenden) über spuelTon() in audio.js;
+  die live erzeugte Spülung (klospuelung) kommt nur noch, wenn die Datei nicht lädt. Vorher spülte Dennis nach seinem eigenen
+  Pömpeln (dennisPoempelt) mit dem erzeugten Rauschen.
+- Pömpel-Spiel: nach dem Durchbruch muss man spülen. Abbrechen verschwindet, Pömpel wird weggestellt, der Spülkasten oben
+  links blinkt gelb mit „SPÜLEN“ (Drücker vorne am Kasten). Klick = Klonk + Aufnahme, Kasten läuft leer und wieder voll,
+  Wasser in der Schüssel wird von braun zu hellblau, dann Weiter. poempeln() spielt die Spülung nicht mehr selbst.
+- Kackepumpe abwaschen leichter: 18 statt 26 Kleckse, Krusten 0,6 s statt 1,6 s, frische 0,25 s statt 0,5 s, Strahl 56 statt
+  38 px, Luft reicht 9 statt 6 s; die letzten 3 Kleckse leuchten gelb gestrichelt.
+- Waldo sucht die Kackepumpe (kackePumpe): Spieler bleibt frei (z.spielerFrei), Waldo und Dennis lösen es selbst. Klickt man
+  während der Suche auf die Pumpe hinterm Kompressor: „Waldo zeigen“ (wz.suchtPumpe, pumpeZeigen), die Suche bricht ab,
+  Waldo holt sie gleich, Wut -3.
+- Flusensieb werfbar (Q): z.sieb = 'boden', z.siebWarSauber merkt den Zustand; gelandet bekommt es eine eigene
+  Klick-Info (id sieb), Klick = wieder in die Hand (siebAufheben). Beim Einsetzen in den Trockner und beim Ausbauen wird die
+  Klick-Info wieder entfernt (sonst würde sie den Trockner-Klick abfangen).
+- Flusensieb ausblasen: die letzten zwei Fusseln fliegen am Ende mit weg, das Sieb ist danach ganz sauber.
+- Testmenü: T122 Flusensieb in die Hand, T123 Klo verstopft und gleich pömpeln (mit Spülen).
+
+## Paket N5 (Bedienung und Hand, 18.11.)
+- Leiste oben im Umschau-Modus: das ist der eingebaute Hinweis vom Browser (Pointer Lock, „Esc drücken, um den Mauszeiger
+  anzuzeigen“), den kann die Seite nicht ändern. Darum wirkt Esc jetzt wie Rechtsklick: Maus bleibt frei (cursorModus),
+  Klicks benutzen Dinge, zurück zum Umschauen mit Rechtsklick (steuerung.js pointerlockchange). Eigener Tipp und Hilfe im
+  Startbild sagen „Rechtsklick (oder Esc)“.
+- Testmenü links unten über der Lautstärke (rechts verdeckte es die Sprechblasen), Inhalt höchstens 52 % Bildhöhe.
+- Gerte schwingt beim Klatschen (hand.schwing: ausholen, nach vorn schnalzen, zurück), über gerteSchlag() in spiel.js.
+- Werfen: nur Flex, Schlackehammer, Rohrzange zählen als Werkzeug („Mit Werkzeug geworfen“). Alles ohne eigenen Wurf-Text
+  (Gerte, Pömpel, Creme, Kackepumpe, Erste-Hilfe-Kasten ...) = Fehler sachenWerfen („Mit Sachen geworfen“, Wut 4) mit
+  DENNIS.wurf.sonst: dennis545 „Ey, nichts werfen hier!“, dennis546 „Was fliegt denn hier durch die Gegend?! Hier wird
+  nichts geworfen!“. Nicht-werfbare Dinge sagen „<Name>: lieber nicht werfen.“ statt immer „Den Kaffee …“.
+- Schweißhelm: hatte keinen gespeicherten Wandplatz (userData.wand), darum ging Zurückhängen nicht; jetzt Klick auf den
+  Haken. Aufsetzen ging im Test; vermutete Ursache: E/Abnehmen waren gesperrt, solange ein Ereignis lief, bei dem der
+  Spieler eigentlich frei ist (z.spielerFrei, z. B. Torben-Unfall). handAktion und abnehmen beachten jetzt spielerFrei.
+  Handleiste sagt bei Dingen mit Wandplatz „auf seinen Platz = zurückhängen“.
+- Erste-Hilfe-Kasten: jederzeit in die Hand (Menü), werfbar, E ohne Verletzten = Hinweis, zurück an seinen Platz per Klick.
+- Kiwis liegen in einer flachen Keramikschale (cremeweiß, blauer Rand) auf dem Kaffeetisch.
+- Platz hinten: die zwei Tassen am Carport sind normale Tassen (id tasse, gehören auf den Kühlschrank; zählen erst ab dem
+  Wegstellen in welt.tassen, damit Dennis nicht rausläuft, um sie zu holen). Die umgekippte Flasche dort und die offene
+  Flasche auf dem Bierkasten am Wohnwagen sind leere Bierflaschen (id leereflasche, Bierkasten), beide jetzt mit
+  bierflasche() aus toon.js gebaut (passende Größe in der Hand).
+- Testmenü: T124 Gerte in die Hand, T125 Erste-Hilfe-Kasten in die Hand, T126 Schweißhelm in die Hand.
+
+## Paket N4 (Dennis und Logik, 18.11.)
+- Fertiger (lackierter) Ofen: überall auf den Boden stellbar, drinnen und draußen (flascheAbstellen, klickMitHand, z.ort
+  boden/draussen mit Beinen +0,56 m in setzeFlasche); Menü dann nur „Hochheben und zu Dennis bringen“. Kein Hindernis.
+- Minispiele: alle Dauertöne (Gas, Wasser, Druckluft, Spraydose ...) merkt minispiele.js (offeneToene) und stoppt sie beim
+  Schließen, auch bei Abbrechen (vorher zischte das Gas nach Abbrechen beim Restgas weiter).
+- Anzeichnen nach Gas ablassen blockiert Spülen: nicht nachstellbar (Gas ab, Werkbank, angezeichnet, zurück zum Waschplatz:
+  Menü bietet „Mit Wasser spülen“ an). Nichts geändert.
+- Grill selbst aufstellen (fahrten.js): erst „Muss ich den Grill jetzt auch noch selbst aufstellen?!“, „So. Grill steht
+  wieder.“ erst nach dem Aufstellen (vorher zufällig schon beim Losgehen). Andere „selbst“-Sätze geprüft, passen.
+- Fegen: solange man fegt, wartet Dennis (z.dreckSeit); sind nur noch höchstens 20 % (mind. 2) Flecken übrig, ist der Boden
+  sauber (welt.dreckStart); Dennis bricht ab, wenn beim Besen kein Dreck mehr da ist.
+- Weit weg (spielerNah() falsch): Dennis' Stimme wird ab 8 m leiser und ist ab 20 m still (vorher Rest 0,3), Sätze mit prio
+  0/1 fallen ganz weg (keine Blase, kein Gebrabbel). Feuer, Rohrbruch und Hüfte starten nur, wenn der Spieler in der Nähe ist.
+- Tanzpause (tanzPause): nach 60–100 s Tanzen oder wenn er beim Tanzen gestört wurde (z.tanzGestoert: Fehler, wichtiger
+  Satz) sagt Dennis dennis547 „Nee du, ich brauch mal ne Pause.“ (DENNIS.tanzPause), macht die Box aus, Box und Tanzen sind
+  2,5–3,5 min gesperrt (z.boxGesperrtBis; Klick auf die Box = Hinweis).
+- Stahlträger: Kommentar beim Hingehen und Anfassen als normale Blase (nicht rot/sauer), Wut gab es dafür nie.
+- Figuren blockieren nur kurz: wer über 1 s nur von Dennis oder einer Figur aufgehalten wird, schlüpft vorbei, bis er frei
+  ist (steuerung.js figurGeblockt) – gegen das Einklemmen in der Kaffeeecke.
+- Spanngurt: Tempo-Anzeige war auch beim ersten Gurt da, Zeiger aber kaum sichtbar (stand links am Rand); jetzt Dreieck +
+  Strich und Text „Tempo: schneller / gut / zu schnell!“.
+- Spüldienst: Option immer, wenn der Dran-Seiende da ist und Tassen auf dem Kühlschrank ODER herumstehen; er nimmt die
+  herumstehenden gleich mit. Jonny beschäftigt = Hinweis „Gleich nochmal fragen“.
+- Testmenü: T127 Box an, Dennis tanzt kurz und macht Pause.
+
 ## Paket N7 (Fahrzeuge, 18.11.)
 - Jeep-Motor (audio.js umw.eOsc): vorher Dreieck 170–1400 Hz plus Oberton (x2), wirkte schrill. Jetzt Grundton 70–260 Hz
   (70 + 14 je m/s), dazu Brummen eine Oktave tiefer (x0,5), Tiefpass 420 Hz, etwas leiser (selbst 0,06, andere 0,12) und

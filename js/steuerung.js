@@ -104,7 +104,7 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
   const tipp = document.createElement('div');
   tipp.id = 'maus-tipp';
   tipp.className = 'versteckt';
-  tipp.textContent = 'Ins Bild klicken: Umschauen mit der Maus. Rechtsklick: zwischen Umschauen und Cursor wechseln.';
+  tipp.textContent = 'Ins Bild klicken: Umschauen mit der Maus. Rechtsklick (oder Esc): Maus frei als Cursor. Nochmal Rechtsklick: wieder umschauen.';
   document.body.appendChild(tipp);
   function fensterOffen() {
     for (const id of ['aktionen', 'dialog', 'minispiel', 'start-einfach', 'start']) {
@@ -128,6 +128,9 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
     if (gefangen && !jetzt) {
       // losgelassen: wegen eines Fensters (dann gleich wieder fangen) oder per Esc (dann erst beim nächsten Klick ins Bild)
       wiederFangen = fensterOffen() && !cursorModus;
+      // N5: Esc (der Browser schreibt oben „Esc drücken, um den Mauszeiger anzuzeigen“) wirkt jetzt wie Rechtsklick:
+      // Maus bleibt frei (Cursor), Klicks benutzen Dinge. Zurück zum Umschauen: Rechtsklick.
+      if (!wiederFangen) cursorModus = true;
       beiHover(null, 0, 0);
     }
     gefangen = jetzt;
@@ -237,16 +240,25 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
       if (h.niedrig) continue;
       if (drin(h, x, z) && !drin(h, p.x, p.z)) return true;
     }
+    // N4: Figuren (Dennis, Jonny ...) blockieren nur kurz: wer über 1 s nur von einer Figur aufgehalten wird (z. B. in der
+    // Kaffeeecke eingeklemmt), schlüpft an ihr vorbei
+    if (figurGeblockt > 1.0) return false;
     const dp = welt.dennisPosition();
     if (dp) {
       const neu = Math.hypot(x - dp.x, z - dp.z);
-      if (neu < 0.55 && neu < Math.hypot(p.x - dp.x, p.z - dp.z)) return true;
+      if (neu < 0.55 && neu < Math.hypot(p.x - dp.x, p.z - dp.z)) { figurStoppt = true; return true; }
     }
     for (const fp of welt.figuren ? welt.figuren() : []) {
       const neu = Math.hypot(x - fp.x, z - fp.z);
-      if (neu < 0.45 && neu < Math.hypot(p.x - fp.x, p.z - fp.z)) return true;
+      if (neu < 0.45 && neu < Math.hypot(p.x - fp.x, p.z - fp.z)) { figurStoppt = true; return true; }
     }
     return false;
+  }
+  let figurGeblockt = 0, figurStoppt = false;
+  function figurNah(x, z) {
+    const dp = welt.dennisPosition();
+    if (dp && Math.hypot(x - dp.x, z - dp.z) < 0.8) return true;
+    return (welt.figuren ? welt.figuren() : []).some((fp) => Math.hypot(x - fp.x, z - fp.z) < 0.7);
   }
 
   return {
@@ -317,10 +329,15 @@ export function baueSteuerung(kamera, canvas, welt, beiKlick, beiHover) {
           const dx = (fx * vor - fz * seit) * v;
           const dz = (fz * vor + fx * seit) * v;
           const p = kamera.position;
+          const vorher = { x: p.x, z: p.z };
+          figurStoppt = false;
           const xOk = !kollidiert(p.x + dx, p.z);
           if (xOk) p.x += dx;
           const zOk = !kollidiert(p.x, p.z + dz);
           if (zOk) p.z += dz;
+          const kaumBewegt = Math.hypot(p.x - vorher.x, p.z - vorher.z) < Math.hypot(dx, dz) * 0.3;
+          if (figurGeblockt > 1.0) { if (!figurNah(p.x, p.z)) figurGeblockt = 0; } // durchschlüpfen, bis man frei ist
+          else figurGeblockt = figurStoppt && kaumBewegt ? figurGeblockt + dt : 0;
           // auf Paletten steigen: Augenhöhe folgt dem Untergrund
           if (welt.bodenHoehe) {
             const soll = AUGENHOEHE + welt.bodenHoehe(p.x, p.z);
