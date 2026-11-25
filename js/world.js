@@ -1411,10 +1411,12 @@ export function baueWelt(scene) {
     const rohrMat = toon(FARBE.stahlHell);
     const leitung = new THREE.Group();
     // waagerecht hinter der Spüle (vom Anschluss unter der Platte zur Seite)
-    leitung.add(setze(teil(new THREE.CylinderGeometry(0.018, 0.018, 1.6 - ROHR_Z, 10), 0, { material: rohrMat, umriss: 0.002 }), ROHR_X, ROHR_Y0, (1.6 + ROHR_Z) / 2, Math.PI / 2, 0, 0));
-    // Bogen nach oben
-    const bogen = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.018, 8, 12, Math.PI / 2), rohrMat);
-    bogen.position.set(ROHR_X, ROHR_Y0 + 0.06, ROHR_Z + 0.06); bogen.rotation.set(0, Math.PI / 2, Math.PI);
+    leitung.add(setze(teil(new THREE.CylinderGeometry(0.018, 0.018, 1.6 - ROHR_Z - 0.06, 10), 0, { material: rohrMat, umriss: 0.002 }), ROHR_X, ROHR_Y0, (1.6 + ROHR_Z + 0.06) / 2, Math.PI / 2, 0, 0));
+    // 90-Grad-Bogen nach oben: schließt genau an das waagerechte (Ende bei z + 0,06) und das senkrechte Rohr (Start bei y + 0,06) an
+    const bogenGeo = new THREE.TorusGeometry(0.06, 0.018, 8, 12, Math.PI / 2);
+    bogenGeo.rotateZ(Math.PI);
+    const bogen = teil(bogenGeo, 0, { material: rohrMat, umriss: 0.002 });
+    bogen.position.set(ROHR_X, ROHR_Y0 + 0.06, ROHR_Z + 0.06); bogen.rotation.set(0, -Math.PI / 2, 0);
     leitung.add(bogen);
     // senkrecht bis zur Decke (ein Stück unterhalb und oberhalb der Verschraubung)
     const senk = (y0, y1) => leitung.add(setze(teil(new THREE.CylinderGeometry(0.018, 0.018, y1 - y0, 10), 0, { material: rohrMat, umriss: 0.002 }), ROHR_X, (y0 + y1) / 2, ROHR_Z));
