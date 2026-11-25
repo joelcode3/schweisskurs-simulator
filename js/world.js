@@ -1998,6 +1998,8 @@ export function baueWelt(scene) {
   scene.add(setze(quader(0.06, 0.06, 0.01, 0x7a7a7a), 3.45, 1.57, -3.995));
   merke(helm, 'helm', 'Schweißhelm', 'schweiss');
   objekte.helm = helm;
+  // N5: Platz am Haken merken, sonst kann man ihn nicht zurückhängen
+  helm.userData.wand = { pos: helm.position.clone(), rot: helm.rotation.clone() };
 
   // Schlackenhammer und Drahtbürste
   const hammer = new THREE.Group();
@@ -2077,6 +2079,18 @@ export function baueWelt(scene) {
   halbe.position.set(-0.08, 0.03, 0.1);
   kiwiSchale.add(halbe);
   kiwis.push(halbe);
+  // N5: die Kiwis liegen in einer flachen Keramikschale (cremeweiß, blauer Rand)
+  {
+    const prof = [[0, 0], [0.085, 0], [0.12, 0.018], [0.15, 0.05], [0.158, 0.062], [0.152, 0.064], [0.142, 0.052], [0.112, 0.024], [0.08, 0.008], [0, 0.008]].map(([x, y]) => new THREE.Vector2(x, y));
+    const schale = teil(new THREE.LatheGeometry(prof, 28), 0, { material: toon(0xece3cf, { side: THREE.DoubleSide }), umriss: false });
+    schale.position.y = -0.02;
+    kiwiSchale.add(schale);
+    const rand = teil(new THREE.TorusGeometry(0.155, 0.006, 6, 32), 0x3d6fa8, { umriss: false });
+    rand.rotation.x = Math.PI / 2;
+    rand.position.y = 0.043;
+    kiwiSchale.add(rand);
+    for (const k of kiwis) k.position.y += 0.006;
+  }
   setze(kiwiSchale, -4.3, 0.805, 3.4);
   scene.add(kiwiSchale);
   merke(kiwiSchale, 'kiwi', 'Dennis’ Kiwis', null);
@@ -3296,6 +3310,7 @@ export function baueWelt(scene) {
   const KUEHL_PLAETZE = 12;
   const tassenOben = () => tassen.filter((x) => x.userData.aufgeraeumt);
   function tasseAufKuehlschrank(t) {
+    if (!tassen.includes(t)) tassen.push(t); // N5: Tasse von draußen (Carport hinterm Haus) zählt ab jetzt mit
     const belegt = new Set(tassenOben().map((x) => x.userData.kuehlPlatz));
     let i = 0;
     while (belegt.has(i) && i < KUEHL_PLAETZE) i++;

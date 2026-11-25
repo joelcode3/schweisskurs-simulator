@@ -7,7 +7,7 @@ import { eierKartonModell, mettendenModell, kaeseModell } from './landschaft.js'
 import { setze } from './toon.js';
 import { auftritt, hatClip, buehneBelegt } from './clips.js';
 import { pfadSpiel, schlackeSpiel, hulaSpiel, DENNIS_HULA_REKORD, ventilSpiel, spuelSpiel, anzeichnenSpiel, lackierSpiel, bitsatzSpiel, akkuschrauberSpiel, siebSpiel, kaffeeSpiel, rohrSpiel, leiterSpiel, spanngurtSpiel, pumpeSpiel, poempelSpiel, fingerSpiel } from './minispiele.js';
-import { bierAuf, blip, kratzen, jingle, klonk as klonkRoh, brummeln, dauer as dauerTon, technoAn, technoAus, technoBeat, klospuelung, mampfen, klick as schalterKlick, stimmeAbspielen, stimmenVorladen, husten, gertenKlatsch } from './audio.js';
+import { bierAuf, blip, kratzen, jingle, klonk as klonkRoh, brummeln, dauer as dauerTon, technoAn, technoAus, technoBeat, spuelTon, mampfen, klick as schalterKlick, stimmeAbspielen, stimmenVorladen, husten, gertenKlatsch } from './audio.js';
 import * as ui from './ui.js';
 import { DENNIS, JONNY, WALDO, TORBEN, KUMPEL, satzId, DAVID } from './texte.js';
 import { SYMBOL } from './gesicht.js';
@@ -141,6 +141,10 @@ const FEHLER = {
   werfen: {
     stufe: 'leicht', wut: 6, nebensache: true, clip: 'ermahnung', name: 'Mit Werkzeug geworfen',
     texte: [DENNIS.hand.werfen],
+  },
+  sachenWerfen: {
+    stufe: 'leicht', wut: 4, nebensache: true, clip: 'ermahnung', name: 'Mit Sachen geworfen',
+    texte: [DENNIS.wurf.sonst],
   },
   tasseWerfen: {
     stufe: 'leicht', wut: 6, nebensache: true, clip: 'ermahnung', name: 'Tasse geworfen',
@@ -320,7 +324,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     n('pumpe', 'Kackepumpe hinter den Kompressor stellen', wz.pumpe === 'sauber');
     n('leiter', 'Jonny die Leiter geben', jz.leiter === 'wartet', true);
     if (!['nie', 'erledigt', 'dennis'].includes(z.waesche)) {
-      const schritt = { holt: 'Wäsche: Tasche von Dennis holen', tasche: 'Wäsche bei 40 Grad waschen', laeuft: 'Wäsche: Waschmaschine läuft', gewaschen: 'Wäsche aus der Maschine holen', nass: z.sieb === 'eingesetzt' ? 'Wäsche in den Trockner' : 'Flusensieb ausblasen, Wäsche in den Trockner', trocknet: 'Wäsche: Trockner läuft', trocken: 'Wäsche aus dem Trockner holen', zuDennis: 'Wäsche zu Dennis bringen' }[z.waesche];
+      const schritt = { holt: 'Wäsche: Tasche von Dennis holen', tasche: 'Wäsche bei 40 Grad waschen', laeuft: 'Wäsche: Waschmaschine läuft', gewaschen: 'Wäsche aus der Maschine holen', nass: z.sieb === 'eingesetzt' ? 'Wäsche in den Trockner' : z.sieb === 'boden' ? 'Flusensieb vom Boden aufheben, Wäsche in den Trockner' : 'Flusensieb ausblasen, Wäsche in den Trockner', trocknet: 'Wäsche: Trockner läuft', trocken: 'Wäsche aus dem Trockner holen', zuDennis: 'Wäsche zu Dennis bringen' }[z.waesche];
       n('waesche', schritt || 'Wäsche für Dennis', true, z.waesche === 'gewaschen' || z.waesche === 'trocken');
     }
     n('tonnen', 'Mülltonnen wieder aufstellen', fz2?.tonnen === 'um', true);
@@ -911,14 +915,26 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   }
   function siebRaus() {
     if (hand.item) { ui.hinweis('Erst die Hände frei machen.'); return; }
+    tr().sieb.userData.interaktiv = undefined;
     hand.nimm('sieb', tr().sieb);
     z.sieb = 'hand';
     blip(480, 0.05);
     aktualisieren();
     ui.hinweis('Voller Fusseln! Am Kompressor (Ecke rechts neben dem Regal) mit Druckluft ausblasen.', 3200);
   }
+  // geworfenes Sieb vom Boden aufheben (N6)
+  function siebAufheben(obj) {
+    if (hand.item) { ui.hinweis('Erst die Hände frei machen.'); return; }
+    obj.userData.interaktiv = undefined;
+    hand.nimm('sieb', obj);
+    z.sieb = z.siebWarSauber ? 'sauber' : 'hand';
+    blip(480, 0.05);
+    aktualisieren();
+    ui.hinweis(z.sieb === 'sauber' ? 'Noch sauber. Zurück in den Trockner damit.' : 'Immer noch voller Fusseln. Am Kompressor ausblasen.', 2800);
+  }
   function siebRein(dreckig = false) {
     const sieb = hand.weg();
+    sieb.userData.interaktiv = undefined;
     tr().g.add(sieb);
     sieb.position.set(-0.29, 0.13, 0);
     sieb.rotation.set(0, 0, 0);
@@ -1026,13 +1042,18 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   // ---------- Gerte aus dem Benz-Kofferraum (Schlüssel intern weiter „peitsche“): Dennis damit durch die Gegend jagen ----------
   // Die ersten zwei Male freut sich Dennis (Klatsch, Gekicher, Wut sinkt). Beim dritten Mal ist Schluss: er schimpft einmal,
   // danach will er nichts mehr davon wissen.
+  // N5: Klatsch mit sichtbarem Schwung der Gerte in der Hand
+  function gerteSchlag(laut) {
+    if (hand.item?.id === 'peitsche') hand.schwing(0.45);
+    gertenKlatsch(laut);
+  }
   async function dennisJagen() {
     if (z.jagd || dennis.modus !== 'normal' || z.aufKlo || !dennis.wurzel.visible || z.beschaeftigt || z.dennisRaeumt) { ui.hinweis('Gerade nicht.'); return; }
     if ((z.jagdZahl || 0) >= 2) {
       if (z.jagdSchluss) { ui.hinweis('Dennis will davon nichts mehr wissen. Schluss mit der Gerte.'); return; }
       z.jagdSchluss = true;
       z.jagd = true;
-      gertenKlatsch(0.5);
+      gerteSchlag(0.5);
       dennis.stimmung('sauer');
       aerger(4);
       await dennisSagt(sag(DENNIS.peitsche.zuViel), true, { prio: 2 });
@@ -1043,7 +1064,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     }
     z.jagdZahl = (z.jagdZahl || 0) + 1;
     z.jagd = true;
-    gertenKlatsch();
+    gerteSchlag();
     dennis.stimmung('ruhig');
     dennisSagt(sag(DENNIS.peitsche.flucht), false, { prio: 2 });
     // Dennis schlägt Haken weg vom Spieler, man knallt hinterher
@@ -1060,7 +1081,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       }
       if (ziel) await Promise.race([dennis.gehZu(ziel.x, ziel.z, 3.2), warte(2500)]);
       else await warte(700);
-      gertenKlatsch(0.6);
+      gerteSchlag(0.6);
       if (i === 1) dennisSagt(sag(DENNIS.peitsche.quieken), false, { prio: 0 });
     }
     z.wut = Math.max(0, z.wut - 6); aktualisieren(); await dennisSagt(sag(DENNIS.peitsche.lacht), false, { prio: 1 });
@@ -1398,9 +1419,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     steuerung.sperre(false);
     z.beschaeftigt = false;
     if (!e || e.abgebrochen || z.verstopft !== 'ja') return;
-    verstopfungWeg();
-    const sp = await stimmeAbspielen('assets/klospuelung.mp3', 0.8, { gruppe: 'effekt' });
-    if (!sp) klospuelung(0.8);
+    verstopfungWeg(); // gespült wird im Minispiel selbst (Spülkasten oben links, Aufnahme vom Betreiber)
     z.wut = Math.max(0, z.wut - 10);
     aktualisieren();
     jingle(true);
@@ -1419,7 +1438,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     dennis.sichtbar(false);
     await warte(4000);
     verstopfungWeg();
-    klospuelung(0.6);
+    spuelTon(0.6);
     dennis.springZu(welt.KLO_DRIN.x, welt.KLO_DRIN.z);
     dennis.sichtbar(true);
     await wutPlus({ wut: 8, name: 'Verstopftes Klo Dennis überlassen' });
@@ -1433,8 +1452,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     ui.hinweis('Hände gewaschen. Dennis wäre stolz.');
   }
   async function kloSpuelen() {
-    const sp = await stimmeAbspielen('assets/klospuelung.mp3', 0.8, { gruppe: 'effekt' });
-    if (!sp) klospuelung(0.8);
+    await spuelTon(0.8);
   }
 
 
@@ -2011,7 +2029,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     wz.pumpeAb = Infinity;
     waldo.haltung('rennen');
     await waldoKommt(3.2, true);
-    z.beschaeftigt = true;
+    // N6: Dennis und Waldo regeln das unter sich; der Spieler bleibt frei und KANN helfen (Pumpe anklicken: Waldo zeigen)
+    z.beschaeftigt = true; z.spielerFrei = true;
     const d = dennis.position;
     await Promise.race([waldo.gehZu(d.x + 0.7, d.z + 0.5, 3.2), warte(8000)]);
     waldo.dreheZu(dennis.position);
@@ -2020,12 +2039,20 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     await warte(2500);
     dennis.stimmung('sauer');
     await dennisSagt(sag(DENNIS.pumpeWo), true, { prio: 2, minMs: 3000 });
-    // beide suchen hektisch: Dennis am Regal, Waldo an der Werkbank
+    // beide suchen hektisch: Dennis am Regal, Waldo an der Werkbank. Zeigt der Spieler ihnen die Pumpe, geht es schneller.
     waldo.haltung('suchen');
-    await Promise.all([Promise.race([dennis.gehZu(-3.9, -0.6, 2.6), warte(7000)]), Promise.race([waldo.gehZu(0.8, -2.2, 2.6), warte(7000)])]);
-    ui.waldoSagt(sag(WALDO.pumpeNicht), 2500);
-    await warte(1800);
-    await dennisSagt(sag(DENNIS.pumpeGefunden), true, { prio: 2 });
+    wz.suchtPumpe = true; wz.pumpeGezeigt = false;
+    const gezeigt = new Promise((r) => { wz.pumpeZeigen = r; });
+    await Promise.race([(async () => {
+      await Promise.all([Promise.race([dennis.gehZu(-3.9, -0.6, 2.6), warte(7000)]), Promise.race([waldo.gehZu(0.8, -2.2, 2.6), warte(7000)])]);
+      if (wz.pumpeGezeigt) return;
+      ui.waldoSagt(sag(WALDO.pumpeNicht), 2500);
+      await warte(1800);
+      if (wz.pumpeGezeigt) return;
+      await dennisSagt(sag(DENNIS.pumpeGefunden), true, { prio: 2 });
+    })(), gezeigt]);
+    wz.suchtPumpe = false; wz.pumpeZeigen = null;
+    if (wz.pumpeGezeigt) { z.wut = Math.max(0, z.wut - 3); aktualisieren(); }
     await Promise.all([Promise.race([dennis.gehZu(-3.6, -1.85, 2.6), warte(7000)]), Promise.race([waldo.gehZu(-3.7, -2.95, 2.6), warte(9000)])]);
     waldo.dreheZu(welt.objekte.kackPumpe.position);
     await warte(700);
@@ -2039,12 +2066,20 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     waldo.haltung('rennen');
     await waldoWeg(3.4);
     waldo.pumpe(false);
-    z.beschaeftigt = false;
+    z.beschaeftigt = false; z.spielerFrei = false;
     dennis.stimmung('ruhig');
     dennisSagt(sag(DENNIS.pumpeWeg), false, { prio: 1 });
     dennis.heim();
     wz.naechsterBesuch = sekundenSeitStart() + 120 + Math.random() * 60;
     wz.beschaeftigt = false;
+  }
+  // Spieler zeigt Waldo die Pumpe (während die beiden suchen): Waldo rennt gleich hin
+  function pumpeZeigen() {
+    if (!wz.suchtPumpe || !wz.pumpeZeigen) return;
+    wz.pumpeGezeigt = true;
+    ui.hinweis('Du zeigst auf die Pumpe hinterm Kompressor. Waldo rennt hin.', 3000);
+    blip(700, 0.06);
+    wz.pumpeZeigen();
   }
   // Waldo bringt die Pumpe dreckig zurück und stellt sie mitten in den Weg
   async function waldoPumpeZurueck() {
@@ -3170,8 +3205,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     await warte(3500 + Math.random() * 4000);
     if (!dennis.wurzel.visible) {
       // Spülung als Aufnahme (assets/klospuelung.mp3), sonst live erzeugt
-      const sp = await stimmeAbspielen('assets/klospuelung.mp3', Math.max(0.35, lautstaerkeNachAbstand()), { gruppe: 'effekt' });
-      if (!sp) klospuelung(Math.max(0.35, lautstaerkeNachAbstand()));
+      await spuelTon(Math.max(0.35, lautstaerkeNachAbstand()));
       await warte(2500);
     }
     welt.kloTuer(true);
@@ -3436,7 +3470,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     if (it.id === 'flasche') knoepfe.push(['', 'Klick auf Werkbank, Schweißtisch oder Waschplatz = abstellen', '']);
     else if (it.id === 'ofen') knoepfe.push(['', z.lackiert ? 'Klick auf Dennis = abgeben, Klick auf den Boden = abstellen' : 'Klick auf Dennis = abgeben, Klick auf Schweißplatz = abstellen', '']);
     else if (it.id === 'waeschetasche') knoepfe.push(['', z.waesche === 'tasche' ? 'Klick auf Waschmaschine' : z.waesche === 'nass' ? 'Klick auf Trockner' : 'Klick auf Dennis = abgeben', '']);
-    else if (!cfg.nichtAblegen) knoepfe.push(['', 'Klick auf Fläche = ablegen', '']);
+    else if (!cfg.nichtAblegen) knoepfe.push(['', it.obj?.userData.wand ? 'Klick auf Fläche = ablegen, auf seinen Platz = zurückhängen' : 'Klick auf Fläche = ablegen', '']);
     if (!cfg.nichtWerfen) knoepfe.push(['werfen', 'Werfen', 'Q']);
     if (!cfg.nichtAblegen && it.id !== 'flasche' && it.id !== 'ofen') knoepfe.push(['fallen', 'Fallen lassen', 'G']);
     if (it.id === 'schlauch') knoepfe.push(['fallen', 'Zurückhängen', 'G']);
@@ -3454,7 +3488,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   }
 
   function handAktion(k) {
-    if (z.vorbei || z.beschaeftigt || !hand.item) return;
+    // N5: läuft ein Ereignis, bei dem der Spieler frei ist (z.spielerFrei), gehen Hand-Tasten trotzdem (Helm aufsetzen usw.)
+    if (z.vorbei || (z.beschaeftigt && !z.spielerFrei) || !hand.item) return;
     if (k === 'anziehen') anziehen();
     else if (k === 'benutzen') benutzen();
     else if (k === 'werfen') werfen();
@@ -3502,7 +3537,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
 
   // Ausrüstung wieder abnehmen: kommt in die Hand
   function abnehmen(id) {
-    if (z.vorbei || z.beschaeftigt || !z.ppe[id]) return;
+    if (z.vorbei || (z.beschaeftigt && !z.spielerFrei) || !z.ppe[id]) return;
     if (hand.item) { ui.hinweis('Hände voll. Erst ablegen, dann abnehmen.'); return; }
     z.ppe[id] = false;
     hand.nimm(id, welt.objekte[id]);
@@ -3531,8 +3566,9 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     if (id === 'hulahup') { ui.hinweis('Klick auf Dennis, dann gibst du ihm den Reifen.'); return; }
     if (id === 'schlauch') return spritzen();
     if (id === 'klemmbrett') return waescheUebernehmen();
+    if (id === 'verbandskasten') { ui.hinweis(TU.zustand === 'liegt' ? 'Klick auf Torben, dann verarztest du ihn.' : 'Gerade ist keiner verletzt. Zurück an seinen Platz neben dem Feuerlöscher.', 2800); return; }
     if (id === 'creme') { ui.hinweis('Die ist für Dennis. Klick auf Dennis, dann gibst du sie ihm.'); return; }
-    if (id === 'peitsche') { gertenKlatsch(); return; }
+    if (id === 'peitsche') { gerteSchlag(); return; }
     if (id === 'tasse') {
       const k = welt.objekte.kuehlschrank.position;
       if (Math.hypot(kamera.position.x - k.x, kamera.position.z - k.z) < 2.3) return tasseWegraeumen();
@@ -3777,7 +3813,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     const it = hand.item;
     if (it.cfg.nichtWerfen) {
       if (it.id === 'flasche' || it.id === 'ofen') dennisSagt(sag(DENNIS.hand.flascheWerfen), true);
-      else ui.hinweis('Den Kaffee wirfst du besser nicht.');
+      else ui.hinweis(it.id === 'kaffee' ? 'Den Kaffee wirfst du besser nicht.' : `${it.cfg.name}: lieber nicht werfen.`);
       return;
     }
     const id = it.id;
@@ -3785,9 +3821,12 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     // E4: Mettenden auf den Grill werfen (landet auf dem Rost oder daneben, kein Ärger fürs Werfen)
     if (grillen.istWurst(id)) return grillen.wurf(id, steuerung.blickRichtung());
     if (id === 'kaffee') kaffeeWeg();
+    // N6: Flusensieb darf fliegen; es liegt danach auf dem Boden und kann wieder aufgehoben werden
+    if (id === 'sieb') { z.siebWarSauber = z.sieb === 'sauber'; z.sieb = 'boden'; }
     let getroffen = false;
     hand.wirf(steuerung.blickRichtung(), (gid, obj) => {
       klonkRoh(gid === 'figur' || gid === 'feuerloescher' ? 0.8 : 0.4);
+      if (gid === 'sieb') obj.userData.interaktiv = { id: 'sieb', name: 'Flusensieb' };
     }, () => {
       getroffen = true;
       fehler('getroffen');
@@ -3797,7 +3836,9 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       if (getroffen || !dennisSiehts() || z.vorbei) return;
       if (id === 'figur') fehler('figurWerfen');
       else if (id === 'handy') dennisSagt(sag(DENNIS.hand.handyWerfen));
-      else fehler(id === 'tasse' ? 'tasseWerfen' : 'werfen', sag(DENNIS.wurf[WURF_ART[id]] || DENNIS.wurf.werkzeug));
+      // N5: nur echtes Werkzeug (Flex, Schlackehammer, Rohrzange) zählt als „Mit Werkzeug geworfen“, der Rest ist „Sachen“
+      else if (!WURF_ART[id]) fehler('sachenWerfen', sag(DENNIS.wurf.sonst));
+      else fehler(id === 'tasse' ? 'tasseWerfen' : 'werfen', sag(DENNIS.wurf[WURF_ART[id]]));
     }, 700);
   }
 
@@ -4134,7 +4175,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
         if (z.sieb === 'drin' && !hand.item) a.push(A('Flusensieb ausbauen', 'hand', siebRaus));
         if (z.waesche === 'nass' && hand.item?.id === 'waeschetasche') a.push(A('Wäsche rein, Trockner starten', 'funke', trocknerStarten));
         if (z.waesche === 'trocken') a.push(A('Trockene Wäsche rausnehmen', 'hand', trockenRaus));
-        const info = z.waesche === 'trocknet' ? 'Läuft noch.' : z.sieb === 'drin' ? 'Das Flusensieb unten in der Tür ist voller Fusseln.' : z.sieb === 'eingesetzt' ? 'Flusensieb ist sauber.' : 'Das Flusensieb fehlt.';
+        const info = z.waesche === 'trocknet' ? 'Läuft noch.' : z.sieb === 'drin' ? 'Das Flusensieb unten in der Tür ist voller Fusseln.' : z.sieb === 'eingesetzt' ? 'Flusensieb ist sauber.' : z.sieb === 'boden' ? 'Das Flusensieb fehlt. Liegt irgendwo auf dem Boden.' : 'Das Flusensieb fehlt.';
         return ['Trockner', info, a];
       }
       case 'kompressor':
@@ -4226,8 +4267,11 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
           if (w) welt.anstossen(w);
           klonk(0.3);
         })]];
+      case 'sieb':
+        return ['Flusensieb', z.siebWarSauber ? 'Liegt auf dem Boden. Sauber war es mal.' : 'Liegt auf dem Boden, voller Fusseln.', [A('In die Hand nehmen', 'hand', () => siebAufheben(obj))]];
       case 'kackpumpe':
-        if (wz.pumpe === 'daheim' || wz.pumpe === 'zurueck') return ['Kackepumpe', 'Waldos Tauchpumpe für den Tank im Garten. Steht hier hinterm Kompressor.', []];
+        if (wz.suchtPumpe) return ['Kackepumpe', 'Da ist sie! Hinterm Kompressor. Dennis und Waldo suchen sie gerade wie verrückt.', [A('Waldo zeigen', 'hand', () => pumpeZeigen())]];
+        if (wz.pumpe === 'daheim' || wz.pumpe === 'zurueck') return ['Kackepumpe', 'Waldos Tauchpumpe für den Tank im Garten. Steht hier hinterm Kompressor. Holt Waldo sie, finden er und Dennis sie selbst.', []];
         return ['Kackepumpe', welt.pumpeIstDreckig ? 'Voller Gülle. Stinkt fürchterlich, Fliegen schwirren rum.' : 'Sauber abgewaschen. Gehört hinter den Kompressor.', [A('In die Hand nehmen', 'hand', () => aufnehmen('kackpumpe', welt.objekte.kackPumpe))]];
       case 'eier':
       case 'mettenden':
@@ -4249,7 +4293,8 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
         return ['Pömpel', 'Saugglocke mit Holzstiel. Für alles, was nicht abläuft.', [A('In die Hand nehmen', 'hand', () => aufnehmen('poempel', welt.objekte.poempel))]];
       case 'ersteHilfe':
         if (TU.zustand === 'liegt' && !hand.item) return ['Erste-Hilfe-Kasten', 'Schnell!', [A('Kasten nehmen', 'hand', () => { hand.nimm('verbandskasten', welt.objekte.ersteHilfe); blip(520, 0.05); handleisteZeigen(); ui.hinweis('Jetzt auf Torben klicken.', 2500); })]];
-        return ['Erste-Hilfe-Kasten', 'Pflaster, Verband, Brandgel. Hoffentlich brauchst du den nicht.', []];
+        // N5: jederzeit in die Hand (und werfbar); Zurückhängen = Klick auf seinen Platz an der Wand
+        return ['Erste-Hilfe-Kasten', 'Pflaster, Verband, Brandgel. Hoffentlich brauchst du den nicht.', hand.item ? [] : [A('In die Hand nehmen', 'hand', () => { hand.nimm('verbandskasten', welt.objekte.ersteHilfe); blip(520, 0.05); handleisteZeigen(); })]];
       case 'handy':
         return ['Dein Handy', '3 neue Nachrichten.', [A('In die Hand nehmen', 'hand', () => aufnehmen('handy', welt.objekte.handy))]];
       case 'muelleimer':
@@ -4656,7 +4701,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   return {
     zustand: z,
     klick,
-    test: { sek: () => sekundenSeitStart(), waescheFertigTest, fristenVorbei, torbenLiegtTest, torbenFristVorbei, lauf, rausgehen, waldoFigur: waldo, pritsche, metall, grillen, gaesteFrei: () => gaeste().map((g) => g.id + ':' + g.frei()), dv, davidKommt, davidGeht, davidGassi, davidRohrzange, davidLoescher, davidTischgestell, davidRauchtMitJonny, get z() { return z; }, OFEN_SCHRITTE, ofenStand, schutzAn, armAnpassen, setzeWut(w) { z.wut = w; aktualisieren(); }, zeitVor(sek) { z.start -= sek * 1000; }, waescheUebernehmen, kaffeeKochen, hulaHoop, einkaufen, kiwiEssen, TU, torbenUnfall, torbenVerarzten, torbenVerbandAn, spanngurtEreignis, gurteHinwerfen, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, tanzPause, musikUmschalten, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
+    test: { sek: () => sekundenSeitStart(), waescheFertigTest, fristenVorbei, torbenLiegtTest, torbenFristVorbei, lauf, rausgehen, waldoFigur: waldo, pritsche, metall, grillen, gaesteFrei: () => gaeste().map((g) => g.id + ':' + g.frei()), dv, davidKommt, davidGeht, davidGassi, davidRohrzange, davidLoescher, davidTischgestell, davidRauchtMitJonny, get z() { return z; }, OFEN_SCHRITTE, ofenStand, schutzAn, armAnpassen, setzeWut(w) { z.wut = w; aktualisieren(); }, zeitVor(sek) { z.start -= sek * 1000; }, waescheUebernehmen, kaffeeKochen, hulaHoop, einkaufen, kiwiEssen, TU, torbenUnfall, torbenVerarzten, torbenVerbandAn, spanngurtEreignis, gurteHinwerfen, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, poempeln, siebRaus, tanzPause, musikUmschalten, handVoll: () => !!hand.item, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
     stationWaehlen,
     intro,
     aktualisieren,

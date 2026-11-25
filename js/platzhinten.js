@@ -2,7 +2,7 @@
 // Schrottplatz direkt hinterm Haus mit schmalem Gang von der Hintertür (grüne Tür an der Rückwand) bis vorne ans Carport,
 // dahinter das Carport mit drei beschrifteten Buchten (Paletten, Pritsche, Weidemann). Blauer Container an der Rückwand.
 import * as THREE from 'three';
-import { toon, teil, quader, zylinder, kugel, setze, leinwandTextur, zufall, umriss as umrissLinie } from './toon.js';
+import { toon, teil, quader, zylinder, kugel, setze, leinwandTextur, zufall, umriss as umrissLinie, bierflasche } from './toon.js';
 
 // Hintertür in der Rückwand (z = -4): Öffnung x -3,45 … -2,35, 2,15 m hoch (dort hing früher der Hula-Hoop-Reifen)
 export const HINTERTUER = { x0: -3.45, x1: -2.35, hoehe: 2.15, mitte: -2.9 };
@@ -277,6 +277,12 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     g.add(setze(zylinder(0.045, 0.04, 0.095, farbe, { umriss: 0.002 }, 14), 0, 0.048, 0));
     g.add(setze(zylinder(0.038, 0.038, 0.004, 0x3a2418, { umriss: false }, 12), 0, 0.09, 0)); // Kaffeerest
     g.add(setze(teil(new THREE.TorusGeometry(0.026, 0.008, 6, 12, Math.PI), farbe, { umriss: false }), 0.045, 0.05, 0, 0, 0, -Math.PI / 2));
+    // N5: aufhebbar wie die Tassen in der Werkstatt (gehört auf den Kühlschrank), mit etwas größerer Klickfläche
+    const huelle = new THREE.Mesh(new THREE.SphereGeometry(0.095, 10, 8), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
+    huelle.position.y = 0.05; huelle.castShadow = false;
+    g.add(huelle);
+    g.userData.aufgeraeumt = false;
+    merke(g, 'tasse', 'Kaffeetasse', null);
     return g;
   };
   // Tasse oben auf dem Palettenstapel, eine zweite am vorderen Pfosten der Weidemann-Bucht
@@ -288,17 +294,14 @@ export function bauePlatzHinten(scene, { merke, hindernis }) {
     t.position.y = 3 * 0.144 + 0.005;
   }
   kram(tasse(0x2f5fa8), -L / 2 + 2 * BB + 0.25, D / 2 - 0.3, 1.2);
-  // leere Bierflasche, umgekippt, in der Paletten-Bucht
+  // leere Bierflasche, umgekippt, in der Paletten-Bucht (N5: dieselbe Flasche wie Jonnys in der Werkstatt, aufhebbar,
+  // gehört in den Bierkasten; die äußere Gruppe ist gekippt, damit sie in der Hand aufrecht ist)
   {
     const g = new THREE.Group();
-    const f = new THREE.Group();
-    f.add(setze(zylinder(0.032, 0.032, 0.17, 0x5a3612, { umriss: 0.002 }, 12), 0, 0.085, 0));
-    f.add(setze(zylinder(0.014, 0.03, 0.05, 0x5a3612, { umriss: 0.002 }, 12), 0, 0.195, 0));
-    f.add(setze(zylinder(0.013, 0.013, 0.05, 0x5a3612, { umriss: 0.002 }, 10), 0, 0.245, 0));
-    f.add(setze(quader(0.065, 0.07, 0.002, 0xe8d8a8, { umriss: false }), 0, 0.09, 0.032));
-    f.rotation.z = Math.PI / 2; f.position.y = 0.032;
-    g.add(f);
+    g.add(bierflasche({ korken: false }));
     kram(g, -L / 2 + 0.6, D / 2 - 0.9, 0.7);
+    g.rotation.order = 'YXZ'; g.rotation.set(Math.PI / 2, 0.7, 0); g.position.y = 0.03;
+    merke(g, 'leereflasche', 'Leere Bierflasche', null);
   }
   // Farbdosen (eine umgekippt, mit Lack-Pfütze) hinten in der Weidemann-Bucht: Blechdose mit Falzrändern, Etikett mit
   // Farbfeld und Schrift, Deckel mit Farbrand, Läufer an der Seite, Drahthenkel mit Griff; ein Pinsel liegt auf einer Dose
