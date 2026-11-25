@@ -1863,11 +1863,11 @@ export function siebSpiel() {
 }
 
 // Paket 5, Bug 5: Druckluftpistole wie auf Joels Foto. Düsenspitze im Ursprung (zeigt nach links), Pistole rechts davon:
-// dunkelblaues Kunststoffgehäuse mit Pistolengriff (hinten diagonale Rillen), langer gebogener Abzugshebel mit
+// dunkelblaues Kunststoffgehäuse mit Pistolengriff (ohne Rillen, Betreiber 25.11.), langer gebogener Abzugshebel mit
 // Fingermulden vorn unterm Gehäuse, langes dünnes silbernes Rohr schräg nach vorn mit Knick kurz vor der Spitze,
 // Messing-Steckanschluss unten am Griff, oben Aufhängebügel, Einstellrädchen und aufgedrucktes Feld.
 function druckluftPistole(ctx, gedrueckt) {
-  const S = '#111', BLAU = '#1f3a78', BLAU_H = '#2f56a8', BLAU_D = '#152a58';
+  const S = '#111', BLAU = '#1f3a78', BLAU_H = '#2f56a8';
   ctx.lineJoin = 'round'; ctx.lineCap = 'round';
   // Düsenrohr: von der Spitze (0,0) mit Knick bei (16,6) schräg hoch zum Gehäuse (112,46)
   const rohr = (breite, farbe) => { ctx.strokeStyle = farbe; ctx.lineWidth = breite; ctx.beginPath(); ctx.moveTo(1, 0); ctx.lineTo(18, 5); ctx.lineTo(114, 44); ctx.stroke(); };
@@ -1883,9 +1883,6 @@ function druckluftPistole(ctx, gedrueckt) {
   ctx.beginPath();
   ctx.moveTo(150, 58); ctx.lineTo(186, 56); ctx.quadraticCurveTo(196, 92, 206, 128); ctx.quadraticCurveTo(206, 138, 196, 140);
   ctx.lineTo(174, 142); ctx.quadraticCurveTo(164, 140, 164, 130); ctx.quadraticCurveTo(158, 96, 150, 58); ctx.closePath(); ctx.fill(); ctx.stroke();
-  // Rillen hinten am Griff (diagonal)
-  ctx.strokeStyle = BLAU_D; ctx.lineWidth = 2;
-  for (let i = 0; i < 6; i++) { const y = 74 + i * 10; const x = 190 + (y - 60) * 0.28; ctx.beginPath(); ctx.moveTo(x - 9, y + 5); ctx.lineTo(x + 2, y - 3); ctx.stroke(); }
   // Lichtkante vorn am Griff
   ctx.strokeStyle = 'rgba(140,175,235,0.6)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(158, 66); ctx.quadraticCurveTo(165, 98, 171, 132); ctx.stroke();
   // Messing-Steckanschluss unten am Griff
