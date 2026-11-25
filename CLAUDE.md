@@ -89,7 +89,7 @@
 
 ## Stand der Pull Requests (9.11.2026)
 - Alles bis #77 gemergt. Offen: #78 A1 Icons und Aufgabenliste (Zweig a1-icons-aufgaben).
-- Versionsnummer zuletzt `v=20261114-11` (N5). Testmenü bis T126 (T122/T123 in N6), nächste freie T127.
+- Versionsnummer zuletzt `v=20261114-14` (N5 nach Merge von N6). Testmenü bis T126, nächste freie T127.
 - Nächste freie Satz-Nummern (aus stimme/zuordnung.csv): dennis547, jonny63, waldo48, torben37, kumpel13, david24, joel16, jonas11.
 - Projektchat-Session: `session_0136irctrTCA3M7n4aU75GVP` (seit 9.11., Projektchat Nr. 4).
 - Offene Fäden und Ungetestetes: `docs/details.md`, Abschnitt „Offene Fäden und Ungetestetes“ (zuerst lesen, wenn ein neuer Chat startet).
