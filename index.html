@@ -67,12 +67,14 @@
     <section id="wut" class="panel">
       <div class="wut-kopf">
         <svg viewBox="0 0 40 40" class="dennis-mini" id="wut-gesicht"></svg>
-        <div>
-          <div class="wut-titel">Dennis-Wut</div>
+        <div class="puls-text">
+          <div class="wut-titel">Dennis-Puls</div>
           <div class="wut-stufe" id="wut-stufe">entspannt</div>
         </div>
+        <div class="puls-wert" id="puls-wert"><svg viewBox="0 0 24 24" class="puls-herz"><path d="M12 20.5s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.7c0 5.6-7.5 10.2-7.5 10.2z"/></svg><b id="puls-zahl">78</b><span>bpm</span></div>
       </div>
-      <div class="wut-balken"><div id="wut-fuellung"></div></div>
+      <div class="puls-monitor"><canvas id="puls-kurve"></canvas></div>
+      <div class="puls-skala"><span>60</span><div class="puls-skala-balken"><div id="puls-marke"></div></div><span class="puls-grenze">180 = raus</span></div>
     </section>
 
     <div id="ausruestung" class="panel"></div>
@@ -80,6 +82,7 @@
     <div id="warnungen"></div>
     <div id="pause" class="versteckt"><svg viewBox="0 0 24 24" class="ico"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg><span></span></div>
     <div id="fadenkreuz"></div>
+    <svg id="wurfring" class="versteckt" viewBox="0 0 64 64" aria-hidden="true"><circle class="wr-grund" cx="32" cy="32" r="26"/><circle class="wr-fuell" id="wurfring-fuell" cx="32" cy="32" r="26" stroke="#ffd23a" stroke-dashoffset="163.4"/></svg>
     <div id="hover-name"></div>
     <div id="hinweis"></div>
     <div id="fahrhilfe" class="versteckt"></div>
