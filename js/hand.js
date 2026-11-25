@@ -219,9 +219,10 @@ export function baueHand(scene, kamera) {
       if (obj.userData.liegend) inDenWaendenHalten(obj);
       return obj;
     },
-    // Werfen: fliegt in Blickrichtung, prallt ab, bleibt auf dem Boden liegen
+    // Werfen: fliegt in Blickrichtung, prallt ab, bleibt auf dem Boden liegen (Weite nach kraft)
     // fang(p, v): optional, wird jeden Flugschritt gefragt; true = gefangen (z. B. liegt auf dem Grillrost), Flug endet dort
-    wirf(richtung, beiLanden, beiTreffer, fang) {
+    // kraft 0..1 (Q gedrückt halten, nach 3 s voll): 0 = kurzer Schubs, 0.5 = wie früher, 1 = richtig weit
+    wirf(richtung, beiLanden, beiTreffer, fang, kraft = 0.5) {
       if (!item) return;
       const id = item.id;
       const schwer = !!item.cfg.schwer;
@@ -232,8 +233,9 @@ export function baueHand(scene, kamera) {
       const start = kamera.position.clone().addScaledVector(richtung, 0.45);
       start.y -= 0.25;
       obj.position.copy(start);
-      const v = richtung.clone().multiplyScalar(schwer ? 4 : 7);
-      v.y += 2.4;
+      const k = Math.max(0, Math.min(1, kraft));
+      const v = richtung.clone().multiplyScalar((schwer ? 4 : 7) * (0.3 + 1.4 * k));
+      v.y += 1.2 + 2.4 * k;
       fliegend.push({ id, obj, v, boden: bodenAbstand(obj), dreh: new THREE.Vector3(Math.random() * 8, Math.random() * 8, 0), getroffen: false, ruhig: 0, beiLanden, beiTreffer, fang });
     },
     // Ding, das in der Werkstatt liegt, verliert seine Unterlage (z. B. Tasse auf dem Erste-Hilfe-Kasten, wenn man den
