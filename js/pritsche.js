@@ -409,6 +409,7 @@ export function bauePritsche(c) {
   // ---------- jedes Bild ----------
   const markeZeit = { t: 0 };
   function update(dt) {
+    markMat.opacity = 0.22 + 0.16 * (0.5 + 0.5 * Math.sin(performance.now() / 200)); // Paket 4: pulsiert wie die Ablage-Markierungen
     markeZeit.t += dt;
     if (joel.wurzel.parent === tritt) joelBlick.copy(lader.g.localToWorld(new THREE.Vector3(1.0, 1.6, 8)));
     joelSchwingt(dt);

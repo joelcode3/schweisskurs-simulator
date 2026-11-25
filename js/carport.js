@@ -26,12 +26,33 @@ export function baueCarport(scene, { merke, hindernis }) {
   }
   for (const x of [-GX, GX]) platz.add(setze(quader(0.14, 0.2, GZ1 - GZ0 + 0.4, HOLZ_D, { umriss: 0.004 }), x, GH - 0.1, 0));
   for (let k = 0; k <= 6; k++) platz.add(setze(quader(2 * GX + 0.4, 0.12, 0.08, HOLZ, { umriss: 0.003 }), 0, GH + 0.04, GZ0 - 0.1 + k * (GZ1 - GZ0 + 0.2) / 6));
-  // Kopfbänder (schräge Streben)
-  for (const x of [-GX, GX]) for (const z of [GZ0, GZ1]) {
-    const s = quader(0.08, 0.6, 0.08, HOLZ, { umriss: 0.002 });
-    s.position.set(x, GH - 0.3, z + (z < 0 ? 0.2 : -0.2));
-    s.rotation.x = z < 0 ? -0.75 : 0.75;
-    platz.add(s);
+  // Kopfbänder (Bug 11): echte 45°-Streben zwischen Pfosten und Pfette, an jedem Pfosten zu beiden Seiten (an den Eckpfosten
+  // nur nach innen), Enden senkrecht bzw. waagerecht abgeschnitten (liegen satt an Pfosten und Pfette an), je Ende eine
+  // Schraube mit Unterlegscheibe
+  {
+    const KB = 0.6, KD = 0.08, KT = KD * Math.SQRT2; // Abstand vom Pfosten, Holzstärke, Schnittlänge am Ende
+    const PF = 0.06; // halbe Pfostenstärke
+    const yU = GH - 0.2; // Unterkante Pfette
+    const form = new THREE.Shape();
+    form.moveTo(0, -KB - KT); form.lineTo(0, -KB); form.lineTo(KB, 0); form.lineTo(KB + KT, 0); form.lineTo(0, -KB - KT);
+    const kbGeo = new THREE.ExtrudeGeometry(form, { depth: KD, bevelEnabled: false });
+    kbGeo.translate(0, 0, -KD / 2);
+    kbGeo.rotateY(-Math.PI / 2); // Form-x zeigt jetzt längs der Pfette (z)
+    const schraube = (x, y, z) => {
+      for (const sx of [-1, 1]) {
+        platz.add(setze(zylinder(0.022, 0.022, 0.006, 0x8a8f96, { umriss: false }, 10), x + sx * (KD / 2 + 0.003), y, z, 0, 0, Math.PI / 2));
+        platz.add(setze(zylinder(0.012, 0.012, 0.012, 0x5a5d62, { umriss: false }, 6), x + sx * (KD / 2 + 0.008), y, z, 0, 0, Math.PI / 2));
+      }
+    };
+    for (const x of [-GX, GX]) for (const z of [GZ0, 0, GZ1]) for (const seite of [-1, 1]) {
+      if ((z === GZ0 && seite < 0) || (z === GZ1 && seite > 0)) continue;
+      const k = teil(kbGeo, HOLZ, { umriss: 0.002 });
+      k.position.set(x, yU, z + seite * PF);
+      k.scale.z = seite;
+      platz.add(k);
+      schraube(x, yU - KB - KT * 0.35, z + seite * (PF + KT * 0.35));
+      schraube(x, yU - KT * 0.35, z + seite * (PF + KB + KT * 0.35));
+    }
   }
   const wellTex = leinwandTextur(64, 16, (g, b, h) => {
     const v = g.createLinearGradient(0, 0, b, 0);
@@ -146,9 +167,18 @@ export function baueCarport(scene, { merke, hindernis }) {
   // Fahrgestell: Achse mit Rädern und Radkasten, Deichsel mit Gaskasten, Stützrad, Kurbelstützen
   ww.add(setze(quader(1.8, 0.12, WL - 0.2, 0x2a2c30, { umriss: 0.003 }), 0, WY - 0.06, 0));
   for (const sx of [-1, 1]) {
-    ww.add(setze(zylinder(0.3, 0.3, 0.18, 0x1d1d1f, { umriss: 0.003 }, 18), sx * (WB / 2 - 0.05), 0.3, -0.1, 0, 0, Math.PI / 2));
-    ww.add(setze(zylinder(0.15, 0.15, 0.19, 0xc9cdd2, { umriss: false }, 12), sx * (WB / 2 - 0.05), 0.3, -0.1, 0, 0, Math.PI / 2));
-    ww.add(setze(quader(0.04, 0.12, 0.8, 0xe4dfd2, { umriss: 0.002 }), sx * (WB / 2 + 0.02), WY + 0.08, -0.1));
+    // Rad etwas weiter innen, Felge steht nicht mehr bündig mit dem Radkasten (Bug 10: das flackerte)
+    ww.add(setze(zylinder(0.3, 0.3, 0.18, 0x1d1d1f, { umriss: 0.003 }, 18), sx * (WB / 2 - 0.08), 0.3, -0.1, 0, 0, Math.PI / 2));
+    ww.add(setze(zylinder(0.15, 0.15, 0.19, 0xc9cdd2, { umriss: false }, 12), sx * (WB / 2 - 0.08), 0.3, -0.1, 0, 0, Math.PI / 2));
+    // Radlauf als runder Kotflügel-Bogen über dem Rad, steht etwas aus der Wand
+    {
+      const bogen = new THREE.Shape();
+      bogen.absarc(0, 0, 0.4, 0.12, Math.PI - 0.12, false);
+      bogen.absarc(0, 0, 0.345, Math.PI - 0.12, 0.12, true);
+      const bgGeo = new THREE.ExtrudeGeometry(bogen, { depth: 0.09, bevelEnabled: true, bevelThickness: 0.01, bevelSize: 0.01, bevelSegments: 2, curveSegments: 20 });
+      bgGeo.rotateY(sx * Math.PI / 2); // Bogen steht längs (z), Tiefe zeigt nach außen
+      ww.add(setze(teil(bgGeo, 0xe4dfd2, { umriss: 0.002 }), sx * (WB / 2 - 0.02), 0.3, -0.1));
+    }
     for (const z of [-WL / 2 + 0.3, WL / 2 - 0.3]) ww.add(setze(zylinder(0.03, 0.04, WY, 0x5a5d62, { umriss: 0.002 }, 8), sx * 0.75, WY / 2, z));
   }
   // Deichsel: V-Rahmen aus verzinktem Profil, Deichselhaube, Auflaufbremse mit Faltenbalg, Kugelkopfkupplung mit Griff,
@@ -227,8 +257,9 @@ export function baueCarport(scene, { merke, hindernis }) {
 
   // ---------- kleine Holzterrasse vor der Tür mit Stufe, Klappstühlen und Lichterkette ----------
   const terr = new THREE.Group();
-  terr.add(setze(teil(new THREE.BoxGeometry(1.8, 0.18, 2.6), 0, { material: holzMat, umriss: 0.004 }), 0, 0.09, 0));
-  terr.add(setze(teil(new THREE.BoxGeometry(0.4, 0.09, 1.0), 0, { material: holzMat, umriss: 0.003 }), 1.1, 0.045, 0.8)); // Stufe vor der Tür
+  // Bug 9: breiter (2,4 x 4,4 m statt 1,8 x 2,6 m), läuft fast die ganze Wohnwagenseite entlang; Sofa und Kasten bleiben stehen
+  terr.add(setze(teil(new THREE.BoxGeometry(2.4, 0.18, 4.4), 0, { material: holzMat, umriss: 0.004 }), 0.3, 0.09, 0));
+  terr.add(setze(teil(new THREE.BoxGeometry(0.4, 0.09, 1.0), 0, { material: holzMat, umriss: 0.003 }), 1.7, 0.045, 0.8)); // Stufe vor der Tür
   // kleines altes Zweisitzer-Sofa am Terrassenende, davor ein Getränkekasten als Tisch
   const sofa = new THREE.Group();
   const SOFA = 0x7a5a3a, SOFA_D = 0x5e4430;

@@ -1850,11 +1850,8 @@ export function siebSpiel() {
       // Ausblaspistole am Zeiger
       if (zeiger) {
         ctx.save(); ctx.translate(zeiger.x, zeiger.y);
-        ctx.fillStyle = '#2f5fa8'; ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.roundRect(14, 4, 70, 26, 8); ctx.fill(); ctx.stroke();
-        ctx.fillStyle = '#9aa1a8'; ctx.fillRect(-4, 10, 20, 10); ctx.strokeRect(-4, 10, 20, 10);
-        ctx.fillStyle = '#2f5fa8'; ctx.beginPath(); ctx.roundRect(54, 26, 22, 44, 6); ctx.fill(); ctx.stroke();
-        if (druck) for (let k = 0; k < 6; k++) { ctx.strokeStyle = 'rgba(220,235,255,0.7)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-6, 15); ctx.lineTo(-40 - Math.random() * 30, 15 + (Math.random() - 0.5) * 40); ctx.stroke(); }
+        if (druck) for (let k = 0; k < 7; k++) { ctx.strokeStyle = 'rgba(220,235,255,0.7)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-4, 0); ctx.lineTo(-40 - Math.random() * 34, (Math.random() - 0.5) * 44); ctx.stroke(); }
+        druckluftPistole(ctx, druck);
         ctx.restore();
       }
       const rest = fusseln.filter((p) => !p.weg).length;
@@ -1863,6 +1860,64 @@ export function siebSpiel() {
     },
   });
   return versprechen;
+}
+
+// Paket 5, Bug 5: Druckluftpistole wie auf Joels Foto. Düsenspitze im Ursprung (zeigt nach links), Pistole rechts davon:
+// dunkelblaues Kunststoffgehäuse mit Pistolengriff (ohne Rillen, Betreiber 25.11.), langer gebogener Abzugshebel mit
+// Fingermulden vorn unterm Gehäuse, langes dünnes silbernes Rohr schräg nach vorn mit Knick kurz vor der Spitze,
+// Messing-Steckanschluss unten am Griff, oben Aufhängebügel, Einstellrädchen und aufgedrucktes Feld.
+function druckluftPistole(ctx, gedrueckt) {
+  const S = '#111', BLAU = '#1f3a78', BLAU_H = '#2f56a8';
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  // Düsenrohr: von der Spitze (0,0) mit Knick bei (16,6) schräg hoch zum Gehäuse (112,46)
+  const rohr = (breite, farbe) => { ctx.strokeStyle = farbe; ctx.lineWidth = breite; ctx.beginPath(); ctx.moveTo(1, 0); ctx.lineTo(18, 5); ctx.lineTo(114, 44); ctx.stroke(); };
+  rohr(9, S); rohr(5.5, '#c3c9cf'); rohr(1.6, '#f4f6f8');
+  // Mündung
+  ctx.fillStyle = '#8c939a'; ctx.strokeStyle = S; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(1, 0, 3, 4.5, -0.3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  // Überwurfmutter am Gehäuse
+  ctx.save(); ctx.translate(114, 44); ctx.rotate(0.39);
+  ctx.fillStyle = '#b8bec4'; ctx.strokeStyle = S; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(-8, -7, 14, 14, 2); ctx.fill(); ctx.stroke();
+  ctx.restore();
+  // Griff: schräg nach hinten unten, unten etwas breiter
+  ctx.fillStyle = BLAU; ctx.strokeStyle = S; ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(150, 58); ctx.lineTo(186, 56); ctx.quadraticCurveTo(196, 92, 206, 128); ctx.quadraticCurveTo(206, 138, 196, 140);
+  ctx.lineTo(174, 142); ctx.quadraticCurveTo(164, 140, 164, 130); ctx.quadraticCurveTo(158, 96, 150, 58); ctx.closePath(); ctx.fill(); ctx.stroke();
+  // Lichtkante vorn am Griff
+  ctx.strokeStyle = 'rgba(140,175,235,0.6)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(158, 66); ctx.quadraticCurveTo(165, 98, 171, 132); ctx.stroke();
+  // Messing-Steckanschluss unten am Griff
+  ctx.fillStyle = '#c9a13b'; ctx.strokeStyle = S; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.roundRect(176, 140, 18, 9, 2); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.roundRect(179, 148, 12, 12, 2); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = '#8a6a22'; ctx.lineWidth = 1.5; for (const x of [182, 185, 188]) { ctx.beginPath(); ctx.moveTo(x, 149); ctx.lineTo(x, 159); ctx.stroke(); }
+  // Gehäuse (Kopf) mit Aufhängebügel und Einstellrädchen
+  ctx.strokeStyle = S; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(176, 30); ctx.quadraticCurveTo(178, 12, 192, 12); ctx.quadraticCurveTo(204, 14, 200, 30); ctx.stroke(); // Bügel
+  ctx.strokeStyle = '#2a3a5a'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(176, 30); ctx.quadraticCurveTo(178, 12, 192, 12); ctx.stroke();
+  ctx.fillStyle = BLAU; ctx.strokeStyle = S; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(110, 36); ctx.quadraticCurveTo(112, 26, 124, 26); ctx.lineTo(194, 28); ctx.quadraticCurveTo(206, 30, 204, 44);
+  ctx.lineTo(198, 60); ctx.lineTo(150, 62); ctx.lineTo(120, 58); ctx.quadraticCurveTo(108, 54, 110, 36); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = BLAU_H; ctx.beginPath(); ctx.roundRect(126, 30, 58, 5, 2); ctx.fill();
+  // Einstellrädchen oben hinten (geriffelt)
+  ctx.fillStyle = '#2a2c30'; ctx.strokeStyle = S; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.roundRect(160, 20, 16, 8, 2); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = '#6a6e74'; ctx.lineWidth = 1; for (let x = 163; x < 175; x += 3) { ctx.beginPath(); ctx.moveTo(x, 21); ctx.lineTo(x, 27); ctx.stroke(); }
+  // aufgedrucktes Feld
+  ctx.fillStyle = '#e8ecf0'; ctx.strokeStyle = S; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(130, 39, 36, 14, 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#c8352a'; ctx.fillRect(132, 41, 6, 10);
+  ctx.fillStyle = '#1f3a78'; ctx.font = 'bold 8px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText('AIR', 141, 46.5);
+  // Abzugshebel: lang, gebogen, vorn unterm Gehäuse, mit Fingermulden; gedrückt = näher am Griff
+  ctx.save(); ctx.translate(124, 60); ctx.rotate(gedrueckt ? -0.22 : 0);
+  ctx.fillStyle = '#2b2d33'; ctx.strokeStyle = S; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(12, -2);
+  ctx.quadraticCurveTo(22, 30, 32, 66); // Rückseite
+  ctx.quadraticCurveTo(30, 74, 22, 72);
+  // Vorderseite mit drei Fingermulden
+  ctx.quadraticCurveTo(20, 64, 14, 62); ctx.quadraticCurveTo(14, 54, 10, 48);
+  ctx.quadraticCurveTo(10, 40, 6, 34); ctx.quadraticCurveTo(6, 26, 2, 20);
+  ctx.quadraticCurveTo(-2, 10, 0, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#5a5e66'; ctx.beginPath(); ctx.arc(5, 3, 2.5, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
 }
 
 // Spanngurte (P6): zwei Gurte liegen verheddert auf dem Boden. Erst die Knoten lösen: Knoten anklicken und in Pfeilrichtung
@@ -2102,7 +2157,7 @@ export function pumpeSpiel() {
   const kleckse = [];
   const tropfen = [];
   const r = (() => { let q = 47; return () => { q = (q * 1664525 + 1013904223) >>> 0; return q / 4294967296; }; })();
-  const { api, versprechen } = spielRahmen('Kackepumpe abwaschen', 'Maus gedrückt halten = Wasserstrahl. Alle Gülle-Kleckse wegspritzen, dunkle Krusten brauchen länger. Luft anhalten! Wird die Luft knapp: Maus loslassen und durchatmen.', {
+  const { api, versprechen } = spielRahmen('Kackepumpe abwaschen', 'Maus gedrückt halten = mit dem Schwamm schrubben. Alle Gülle-Kleckse wegschrubben, dunkle Krusten brauchen länger. Luft anhalten! Wird die Luft knapp: Maus loslassen und durchatmen.', {
     beiGroesse(m) {
       f = flaeche(m);
       // Pumpe mittig, Schlauch rechts daneben aufgerollt
@@ -2183,15 +2238,9 @@ export function pumpeSpiel() {
         ctx.setLineDash([]);
       }
       for (const q of tropfen) { ctx.globalAlpha = Math.max(0, 1 - q.t); ctx.fillStyle = q.farbe; ctx.beginPath(); ctx.arc(q.x, q.y, 4, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
-      // Brause am Zeiger mit Wasserstrahl
-      if (zeiger) {
-        ctx.save(); ctx.translate(zeiger.x, zeiger.y);
-        if (druck && wuergt <= 0 && !api.istFertig) for (let k = 0; k < 10; k++) { ctx.strokeStyle = 'rgba(190,225,255,0.75)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(30, -30); ctx.lineTo((Math.random() - 0.5) * 36, (Math.random() - 0.5) * 36); ctx.stroke(); }
-        ctx.fillStyle = '#c9ced3'; ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.ellipse(36, -36, 16, 11, -0.8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(46, -46); ctx.lineTo(90, -90); ctx.lineWidth = 10; ctx.strokeStyle = '#9aa1a8'; ctx.stroke();
-        ctx.restore();
-      }
+      // Bug 3: Schwamm am Zeiger (statt Brause). Er wird mit dem Fortschritt immer brauner; beim Schrubben wackelt er
+      // und es schäumt
+      if (zeiger) schwammZeichnen(ctx, zeiger.x, zeiger.y, 1 - kleckse.filter((k) => k.hp > 0).length / kleckse.length, druck && wuergt <= 0 && !api.istFertig);
       // Gestank-Schwaden und Würgen
       if (wuergt > 0) { ctx.fillStyle = `rgba(110,140,40,${0.25 * Math.min(1, wuergt)})`; ctx.fillRect(0, 0, m.b, m.h); textMitte(ctx, 'Würg! Erst mal durchatmen ...', m.b / 2, f.y + f.h / 2, 30, '#e8f5a0'); }
       const rest = kleckse.filter((k) => k.hp > 0).length;
@@ -2199,9 +2248,47 @@ export function pumpeSpiel() {
       balken(ctx, f.x + f.b * 0.68, f.y + f.h + 26, f.b * 0.32, 12, luft, luft < 0.3 ? '#e04a3a' : '#7fc8f0');
       textMitte(ctx, 'Sauber', f.x + f.b * 0.31, f.y + f.h + 56, 15, '#ffe9a8');
       textMitte(ctx, 'Luft', f.x + f.b * 0.84, f.y + f.h + 56, 15, '#bfe6ff');
-      textMitte(ctx, api.istFertig ? (gewuergt > 2 ? 'Sauber. Aber du bist grün im Gesicht.' : 'Blitzsauber!') : 'Wasser: Maus gedrückt halten und über die Kleckse fahren', m.b / 2, f.y - 18, 18, '#ffe9a8');
+      textMitte(ctx, api.istFertig ? (gewuergt > 2 ? 'Sauber. Aber du bist grün im Gesicht.' : 'Blitzsauber!') : 'Schwamm: Maus gedrückt halten und über die Kleckse schrubben', m.b / 2, f.y - 18, 18, '#ffe9a8');
     },
   });
+  // Schwamm: gelber Schaumstoff mit grünem Scheuervlies oben, Poren; Farbe von frisch (gelb) nach total versifft (braun)
+  function schwammZeichnen(ctx, x, y, dreck, schrubbt) {
+    const mix = (a, b, t) => { const h = (c) => [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16)); const A = h(a), B = h(b); return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(',')})`; };
+    const d = Math.max(0, Math.min(1, dreck));
+    const t = performance.now() / 1000;
+    const wx = schrubbt ? Math.sin(t * 28) * 6 : 0, wy = schrubbt ? Math.cos(t * 23) * 3 : 0;
+    ctx.save(); ctx.translate(x + wx, y + wy); ctx.rotate(-0.25 + (schrubbt ? Math.sin(t * 28) * 0.06 : 0));
+    const B = 104, H = 64, V = 18;
+    // Schatten
+    ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.beginPath(); ctx.roundRect(-B / 2 + 5, -H / 2 + 7, B, H + V, 12); ctx.fill();
+    // Schaumstoff
+    ctx.fillStyle = mix('#f4d23c', '#6b4a22', d); ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.roundRect(-B / 2, -H / 2 + V, B, H, 12); ctx.fill(); ctx.stroke();
+    // Scheuervlies oben
+    ctx.fillStyle = mix('#3f9a3a', '#3c3a1c', d);
+    ctx.beginPath(); ctx.roundRect(-B / 2, -H / 2, B, V + 6, [10, 10, 4, 4]); ctx.fill(); ctx.stroke();
+    // Poren
+    ctx.fillStyle = mix('#c9a524', '#3e2a12', d);
+    const poren = [[-34, 10], [-16, 22], [5, 8], [24, 18], [38, 4], [-40, 28], [13, 32], [-3, 20], [32, 32], [-24, 36], [-8, 38], [42, 26]];
+    for (const [px, py] of poren) { ctx.beginPath(); ctx.ellipse(px, py, 3.2, 2.2, 0.3, 0, Math.PI * 2); ctx.fill(); }
+    // Dreckflecken auf dem Schwamm, werden mit dem Fortschritt mehr
+    ctx.fillStyle = `rgba(74,52,24,${0.25 + d * 0.6})`;
+    const flecken = Math.floor(d * 7);
+    for (let i = 0; i < flecken; i++) { ctx.beginPath(); ctx.ellipse(-38 + ((i * 23) % 76), 8 + ((i * 13) % 30), 8 + (i % 3) * 3, 5, i, 0, Math.PI * 2); ctx.fill(); }
+    // Glanzkante
+    ctx.strokeStyle = 'rgba(255,255,255,0.45)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(-B / 2 + 8, -H / 2 + V + 8); ctx.lineTo(-B / 2 + 8, H / 2 + V - 10); ctx.stroke();
+    ctx.restore();
+    // Schaum und Wassertropfen beim Schrubben
+    if (schrubbt) {
+      for (let i = 0; i < 7; i++) {
+        const a = t * 3 + i * 0.9, rr = 38 + Math.sin(t * 5 + i) * 8;
+        ctx.fillStyle = i % 3 ? 'rgba(255,255,255,0.85)' : 'rgba(210,235,255,0.8)';
+        ctx.strokeStyle = 'rgba(120,150,170,0.6)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(x + Math.cos(a) * rr, y + 18 + Math.sin(a) * rr * 0.5, 4 + (i % 3) * 2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      }
+    }
+  }
   function lage(k) {
     if (k.aufSchlauch) return { x: p.sx + k.u * p.sr, y: p.sy + k.v * p.sr * 0.8 };
     return { x: p.x + k.u * p.b, y: p.y + p.h * 0.12 + k.v * p.h * 0.78 };
