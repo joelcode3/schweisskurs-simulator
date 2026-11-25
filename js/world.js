@@ -1369,39 +1369,90 @@ export function baueWelt(scene) {
   for (let k = -1; k <= 1; k++) becken.add(setze(quader(0.07, 0.004, 0.008, 0x8a8f95, { umriss: false }), 0, OBEN - TIEF - 0.033, k * 0.02));
   // Überlauf: Schlitz oben an der Rückwand der Wanne
   becken.add(setze(quader(0.1, 0.012, 0.006, 0x1d1d1f, { umriss: false }), 0, OBEN - 0.075, -wZ / 2 + 0.004));
-  // Armatur: Säule hinten (an der Wand), Auslauf im Bogen über die Wannenmitte, Hebel
-  becken.add(setze(zylinder(0.022, 0.026, 0.34, 0xc9cdd2, { umriss: 0.003 }, 12), 0.225, OBEN + 0.15, 0));
-  becken.add(setze(zylinder(0.016, 0.016, 0.25, 0xc9cdd2, { umriss: 0.003 }, 10), 0.1, OBEN + 0.32, 0, 0, 0, Math.PI / 2));
-  becken.add(setze(zylinder(0.016, 0.014, 0.08, 0xc9cdd2, { umriss: 0.003 }, 10), -0.025, OBEN + 0.285, 0));
-  becken.add(setze(zylinder(0.011, 0.011, 0.14, 0x2f5fa8, { umriss: 0.002 }, 8), 0.225, OBEN + 0.2, 0.09, Math.PI / 2, 0, 0)); // kalt
-  becken.add(setze(zylinder(0.011, 0.011, 0.14, FARBE.rot, { umriss: 0.002 }, 8), 0.225, OBEN + 0.2, -0.09, Math.PI / 2, 0, 0)); // warm
-  becken.add(setze(zylinder(0.03, 0.03, 0.03, 0x3a3d42, { umriss: 0.002 }, 10), 0.225, OBEN + 0.32, 0));
+  // Armatur (Bug 2): verchromte Einhebel-Mischbatterie mit hohem Schwenkauslauf (Bogen über die Wannenmitte), Rosette,
+  // Hebel nach vorn, Strahlregler vorn am Auslauf, ein Tropfen hängt dran. Die rot-blauen Stäbe sind weg.
+  {
+    const chrom = toon(0xdfe4e9), chromD = toon(0x9aa3ab);
+    const arm = new THREE.Group();
+    // Rosette und Fuß
+    arm.add(setze(teil(new THREE.CylinderGeometry(0.042, 0.046, 0.012, 20), 0, { material: chrom, umriss: 0.002 }), 0, 0.006, 0));
+    arm.add(setze(teil(new THREE.CylinderGeometry(0.03, 0.034, 0.03, 18), 0, { material: chromD, umriss: false }), 0, 0.027, 0));
+    // Körper (leicht konisch) mit Zierring
+    arm.add(setze(teil(new THREE.CylinderGeometry(0.027, 0.031, 0.15, 18), 0, { material: chrom, umriss: 0.003 }), 0, 0.117, 0));
+    arm.add(setze(teil(new THREE.TorusGeometry(0.028, 0.004, 6, 20), 0, { material: chromD, umriss: false }), 0, 0.19, 0, Math.PI / 2, 0, 0));
+    // Kartuschenkopf oben, Hebel nach vorn (zum Spieler, -x), leicht angehoben, Griffende abgerundet
+    arm.add(setze(teil(new THREE.SphereGeometry(0.03, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), 0, { material: chrom, umriss: 0.003 }), 0, 0.195, 0));
+    const hebel = new THREE.Group();
+    hebel.add(setze(teil(new THREE.BoxGeometry(0.11, 0.014, 0.024), 0, { material: chrom, umriss: 0.002 }), -0.055, 0, 0));
+    hebel.add(setze(teil(new THREE.CylinderGeometry(0.012, 0.012, 0.024, 12), 0, { material: chrom, umriss: 0.002 }), -0.11, 0, 0, Math.PI / 2, 0, 0));
+    hebel.position.set(0, 0.222, 0); hebel.rotation.z = -0.22;
+    arm.add(hebel);
+    // Schwenkauslauf: Rohr in einem hohen Bogen nach vorn über die Wanne, am Ende senkrecht nach unten
+    const bogen = new THREE.CatmullRomCurve3([[0, 0.17, 0], [0, 0.26, 0], [-0.02, 0.33, 0], [-0.09, 0.37, 0], [-0.17, 0.35, 0], [-0.215, 0.3, 0], [-0.225, 0.25, 0]].map((q) => new THREE.Vector3(...q)));
+    arm.add(teil(new THREE.TubeGeometry(bogen, 40, 0.014, 12, false), 0, { material: chrom, umriss: 0.003 }));
+    // Strahlregler (Perlator) und Tropfen
+    arm.add(setze(teil(new THREE.CylinderGeometry(0.017, 0.017, 0.022, 14), 0, { material: chromD, umriss: 0.002 }), -0.225, 0.24, 0));
+    arm.add(setze(zylinder(0.012, 0.012, 0.003, 0x3a3d42, { umriss: false }, 12), -0.225, 0.228, 0));
+    const tropfen = kugel(0.006, 0x8fc8ee, { umriss: false, mat: { transparent: true, opacity: 0.85 } }, 8);
+    tropfen.scale.y = 1.4; tropfen.position.set(-0.225, 0.219, 0);
+    arm.add(tropfen);
+    arm.position.set(0.225, OBEN, 0);
+    becken.add(arm);
+  }
   setze(becken, 4.67, 0, 1.6);
   scene.add(becken);
   merke(becken, 'spuele', 'Spüle (Waschplatz)', null);
   objekte.spuele = becken;
-  // Rohr unter dem Hahn (hier platzt es bei Frost)
+  // Wasserleitung an der Wand (Betreiber-Wunsch 25.11.): kommt seitlich hinter der Spüle hervor (Anschluss unter der
+  // Arbeitsplatte), läuft an der Wand entlang zur linken Seite der Spüle und von dort senkrecht bis unter die Decke.
+  // Das Rohr hinter dem Hahn ist weg; der Rohrbruch passiert an der Messing-Verschraubung dieser Wandleitung.
+  const ROHR_X = RAUM.xMax - 0.04, ROHR_Z = 1.02, ROHR_Y0 = 0.6, BRUCH_Y = 1.25;
+  {
+    const rohrMat = toon(FARBE.stahlHell);
+    const leitung = new THREE.Group();
+    // waagerecht hinter der Spüle (vom Anschluss unter der Platte zur Seite)
+    leitung.add(setze(teil(new THREE.CylinderGeometry(0.018, 0.018, 1.6 - ROHR_Z, 10), 0, { material: rohrMat, umriss: 0.002 }), ROHR_X, ROHR_Y0, (1.6 + ROHR_Z) / 2, Math.PI / 2, 0, 0));
+    // Bogen nach oben
+    const bogen = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.018, 8, 12, Math.PI / 2), rohrMat);
+    bogen.position.set(ROHR_X, ROHR_Y0 + 0.06, ROHR_Z + 0.06); bogen.rotation.set(0, Math.PI / 2, Math.PI);
+    leitung.add(bogen);
+    // senkrecht bis zur Decke (ein Stück unterhalb und oberhalb der Verschraubung)
+    const senk = (y0, y1) => leitung.add(setze(teil(new THREE.CylinderGeometry(0.018, 0.018, y1 - y0, 10), 0, { material: rohrMat, umriss: 0.002 }), ROHR_X, (y0 + y1) / 2, ROHR_Z));
+    senk(ROHR_Y0 + 0.06, BRUCH_Y - 0.05);
+    senk(BRUCH_Y + 0.05, RAUM.hoehe);
+    // Rohrschellen mit Schrauben an der Wand, Deckenrosette oben
+    for (const y of [0.95, 1.8, 2.6, 3.4]) {
+      leitung.add(setze(quader(0.03, 0.035, 0.05, 0x8a8f95, { umriss: 0.001 }), ROHR_X, y, ROHR_Z));
+      leitung.add(setze(zylinder(0.006, 0.006, 0.02, 0x5a5d62, { umriss: false }, 6), ROHR_X + 0.01, y, ROHR_Z + 0.032, 0, 0, Math.PI / 2));
+    }
+    leitung.add(setze(quader(0.03, 0.035, 0.05, 0x8a8f95, { umriss: 0.001 }), ROHR_X, ROHR_Y0, 1.3));
+    leitung.add(setze(zylinder(0.035, 0.035, 0.01, 0xd8d2c4, { umriss: 0.001 }, 14), ROHR_X, RAUM.hoehe - 0.005, ROHR_Z));
+    // Absperrventil (blaues Griffrad) knapp über dem Bogen
+    leitung.add(setze(quader(0.04, 0.06, 0.04, FARBE.messing, { umriss: 0.002 }), ROHR_X, 0.82, ROHR_Z));
+    leitung.add(setze(teil(new THREE.TorusGeometry(0.03, 0.007, 6, 14), 0x2f5fa8, { umriss: 0.001 }), ROHR_X - 0.045, 0.82, ROHR_Z, 0, Math.PI / 2, 0));
+    leitung.add(setze(zylinder(0.006, 0.006, 0.045, FARBE.messing, { umriss: false }, 6), ROHR_X - 0.025, 0.82, ROHR_Z, 0, 0, Math.PI / 2));
+    scene.add(leitung);
+  }
+  // Bruchstelle: dicke Messing-Verschraubung an der Wandleitung (hier platzt es bei Frost und hier wird repariert)
   const hahnRohr = new THREE.Group();
-  hahnRohr.add(zylinder(0.025, 0.025, 0.5, FARBE.stahlHell, {}, 10));
-  // dicke Messing-Verschraubung: hier platzt es und hier wird repariert
-  hahnRohr.add(setze(zylinder(0.055, 0.055, 0.1, FARBE.messing, {}, 6), 0, -0.05, 0));
-  hahnRohr.add(setze(zylinder(0.045, 0.045, 0.03, 0x8a6a22, {}, 6), 0, 0.02, 0));
+  hahnRohr.add(setze(zylinder(0.032, 0.032, 0.1, FARBE.messing, {}, 6), 0, 0, 0));
+  hahnRohr.add(setze(zylinder(0.026, 0.026, 0.13, 0x8a6a22, {}, 6), 0, 0, 0));
   const leckRing = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.015, 8, 32), new THREE.MeshBasicMaterial({ color: 0xffc81e }));
   leckRing.rotation.y = Math.PI / 2;
-  leckRing.position.set(-0.04, -0.05, 0);
+  leckRing.position.set(-0.04, 0, 0);
   leckRing.visible = false;
   hahnRohr.add(leckRing);
-  const rohrKlick = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.6, 0.45), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
-  rohrKlick.position.set(-0.1, -0.02, 0);
+  const rohrKlick = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.5, 0.3), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
+  rohrKlick.position.set(-0.1, 0, 0);
   hahnRohr.add(rohrKlick);
-  hahnRohr.position.set(4.93, 0.95, 1.6);
+  hahnRohr.position.set(ROHR_X, BRUCH_Y, ROHR_Z);
   scene.add(hahnRohr);
-  merke(hahnRohr, 'wasserhahn', 'Wasserrohr am Hahn', null);
+  merke(hahnRohr, 'wasserhahn', 'Wasserrohr an der Wand', null);
   objekte.wasserhahn = hahnRohr;
   // Pfütze (wächst, solange es spritzt)
   const pfuetze = new THREE.Mesh(new THREE.CircleGeometry(1, 32), new THREE.MeshBasicMaterial({ color: 0x5aa6e6, transparent: true, opacity: 0.55, depthWrite: false }));
   pfuetze.rotation.x = -Math.PI / 2;
-  pfuetze.position.set(4.3, 0.006, 1.6);
+  pfuetze.position.set(4.3, 0.006, ROHR_Z);
   pfuetze.scale.setScalar(0.01);
   pfuetze.visible = false;
   scene.add(pfuetze);
@@ -3069,7 +3120,7 @@ export function baueWelt(scene) {
       leckTakt += dt;
       while (leckTakt > 0.03) {
         leckTakt -= 0.03;
-        wasser(new THREE.Vector3(4.9, 0.9, 1.6), new THREE.Vector3(4.2 + (Math.random() - 0.5) * 0.4, 1.0, 1.6 + (Math.random() - 0.5) * 0.9), 2, 0.6);
+        wasser(new THREE.Vector3(4.92, 1.25, 1.02), new THREE.Vector3(4.2 + (Math.random() - 0.5) * 0.4, 1.1, 1.02 + (Math.random() - 0.5) * 0.9), 2, 0.6);
       }
       pfuetze.visible = true;
       pfuetze.scale.setScalar(Math.min(1.5, pfuetze.scale.x + dt * 0.05));
@@ -3524,7 +3575,7 @@ export function baueWelt(scene) {
     wasser,
     leck(an) { leckAn = an; },
     get leckt() { return leckAn; },
-    LECK: { x: 4.93, z: 1.6, vorX: 4.05, vorZ: 1.6 },
+    LECK: { x: 4.93, z: 1.02, vorX: 4.05, vorZ: 1.02 },
     ROHRZANGE: { x: 1.32, z: -3.3 },
     loescherSichtbar(an) { loescher.visible = an; },
     pumpeDreckig(an) { pumpeDreck.visible = an; },
