@@ -2727,6 +2727,7 @@ export function baueWelt(scene) {
   sofa.rotation.y = Math.PI;
   scene.add(sofa);
   hindernis(-4.05, -2.35, 3.15, 4.0);
+  merke(sofa, 'sofa', 'Sofa', null); // Paket 6: Hinsetzen
 
   // Bierkasten für Jonnys leere Flaschen: links neben dem Sofa, grüner Kunststoff mit 4 x 5 Fächern. Leere Flaschen kommen aufrecht hinein.
   const bierKastenWelt = { x: -1.95, z: 3.62 };

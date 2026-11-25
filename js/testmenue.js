@@ -195,6 +195,9 @@ export function baueTestMenue({ spiel, welt, kamera, steuerung, fahrten, fz }) {
   knopf('T126', 'Schweißhelm in die Hand (E = aufsetzen, Klick auf den Haken = zurückhängen)', () => t.aufnehmen('helm', welt.objekte.helm), handVoll);
   // N4: Tanzpause (Box an, Dennis tanzt; T127 = er hört nach ein paar Sekunden selbst auf, Box ist dann gesperrt)
   knopf('T127', 'Box an, Dennis tanzt kurz und macht dann Pause („Nee du, ich brauch mal ne Pause.“)', () => { frei(); z.keinTanzBis = 0; z.boxGesperrtBis = 0; if (!z.musik) t.musikUmschalten(); z.tanzZeit = 0; z.tanzEnde = 6; }, { laeuft: () => !!z.tanzPauseLaeuft });
+  // Paket 6: Hinsetzen (T128 ist in Paket 1 vergeben)
+  knopf('T129', 'Aufs Werkstattsofa setzen (WASD = aufstehen)', () => { frei(); return t.hinsetzen(true); });
+  knopf('T130', 'Aufs Sofa vor dem Wohnwagen setzen (WASD = aufstehen)', () => { frei(); return t.hinsetzen(false); });
   knopf('T43', 'Hüfte (Dennis liegt)', () => { frei(); return t.hueftePlatt(); }, {
     laeuft: () => z.huefte === 'geht' || z.huefte === 'liegt',
     sperre: () => (z.huefte === 'erledigt' ? 'Hüfte war schon' : null),

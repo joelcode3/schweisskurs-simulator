@@ -792,6 +792,7 @@ export function baueCarport(scene, { merke, hindernis }) {
   platz.rotation.y = -Math.PI / 2;
   scene.add(platz);
   // Klickbare Teile
+  merke(sofa, 'terrassensofa', 'Sofa auf der Terrasse', null); // Paket 6: Hinsetzen
   merke(benz, 'benz', 'Mercedes 123', null);
   merke(kofferDeckel, 'kofferraum', 'Kofferraum', null);
   merke(kettenhemd, 'kettenhemd', 'Kettenhemd', null);
