@@ -3,7 +3,7 @@
 // alles: ein weißer Mercedes 123. Auf dem großen Carport liegen alte Turnmatten, beschwert mit Gehwegplatten (gegen die lauten
 // Eicheln). Heute Nacht um 4 hat der Wind eine Matte runtergeweht, und die Gehwegplatte ist durch die Plane in die Motorhaube.
 import * as THREE from 'three';
-import { toon, teil, quader, rundQuader, zylinder, kugel, setze, leinwandTextur, zufall } from './toon.js';
+import { toon, teil, quader, rundQuader, zylinder, kugel, setze, leinwandTextur, zufall, bierflasche } from './toon.js';
 
 export function baueCarport(scene, { merke, hindernis }) {
   const r = zufall(808);
@@ -299,7 +299,12 @@ export function baueCarport(scene, { merke, hindernis }) {
   for (const sx of [-1, 1]) kasten.add(setze(teil(new THREE.BoxGeometry(0.025, 0.02, 0.3), 0, { material: holzMat, umriss: 0.001 }), sx * (KL / 2 + 0.018), BY - 0.008, 0, 0, 0.04, 0));
   kasten.add(setze(zylinder(0.045, 0.035, 0.035, 0xd8d2c4, { umriss: 0.001 }, 14), 0.1, BY + 0.04, 0.06));
   for (let k = 0; k < 3; k++) kasten.add(setze(zylinder(0.004, 0.004, 0.03, k ? 0xf2f2ee : 0xd89a4a, { umriss: false }, 5), 0.1 + (k - 1) * 0.012, BY + 0.057, 0.06 + (k % 2) * 0.01, 1.2, k, 0));
-  kasten.add(flasche(-0.1, BY + 0.022, -0.05, true));
+  // N5: die offene (leere) Flasche auf dem Brett kann man nehmen; gehört in den Bierkasten in der Werkstatt
+  const offeneFlasche = new THREE.Group();
+  offeneFlasche.add(bierflasche({ korken: false })); // wie Jonnys Flaschen (Mitte im Ursprung, passt in die Hand)
+  offeneFlasche.position.set(-0.1, BY + 0.022 + 0.075, -0.05);
+  kasten.add(offeneFlasche);
+  merke(offeneFlasche, 'leereflasche', 'Leere Bierflasche', null);
   // Kronkorken und ein Feuerzeug auf dem Brett, Kondenswasser-Ring
   kasten.add(setze(zylinder(0.015, 0.015, 0.004, 0xc9a52a, { umriss: false }, 10), 0.02, BY + 0.024, -0.1, 0.2, 0, 0.1));
   kasten.add(setze(rundQuader(0.025, 0.012, 0.07, 0xc8352a, { umriss: 0.001 }, 0.005), -0.02, BY + 0.028, 0.11, 0, 0.6, 0));

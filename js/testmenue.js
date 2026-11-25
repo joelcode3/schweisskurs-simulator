@@ -1,4 +1,4 @@
-// Test-Zugang für den Betreiber: Adresse mit "?test" (z. B. https://joelcode3.github.io/schweisskurs-simulator/?test) zeigt rechts
+// Test-Zugang für den Betreiber: Adresse mit "?test" (z. B. https://joelcode3.github.io/schweisskurs-simulator/?test) zeigt links unten
 // ein kleines Menü, mit dem man Minispiele, Nebenaufgaben und Ereignisse sofort auslösen kann, ohne zu warten.
 // Für normale Spieler unsichtbar. Neue Minispiele und Ereignisse bekommen hier IMMER einen eigenen Knopf.
 import * as M from './minispiele.js';
@@ -187,6 +187,12 @@ export function baueTestMenue({ spiel, welt, kamera, steuerung, fahrten, fz }) {
   // N6: Flusensieb in die Hand (zum Werfen und wieder Aufheben), Klo verstopft und gleich pömpeln (mit Spülen am Spülkasten)
   knopf('T122', 'Flusensieb in die Hand (werfen mit Q, dann wieder aufheben)', () => { if (z.sieb !== 'drin') { z.sieb = 'drin'; } t.siebRaus(); }, { sperre: () => (t.handVoll() ? 'Erst die Hand frei machen' : null) });
   knopf('T123', 'Klo verstopft und gleich pömpeln (mit Spülen)', async () => { frei(); if (z.verstopft !== 'ja') { z.verstopft = null; await t.kloVerstopft(); } return t.poempeln(); }, { laeuft: titelEnthaelt('Klo pömpeln') });
+  // N5: Dinge direkt in die Hand (Gerte schwingt beim Klatschen, Erste-Hilfe-Kasten und Helm: werfen, zurückhängen)
+  const handVoll = { sperre: () => (t.handVoll() ? 'Erst die Hand frei machen' : null) };
+  const findeKlick = (id) => { let o = null; window.__werkstatt?.scene.traverse((q) => { if (!o && q.userData.interaktiv?.id === id) o = q; }); return o; };
+  knopf('T124', 'Gerte in die Hand (E = klatschen, Q = werfen)', () => { const o = findeKlick('peitsche'); if (o) { o.visible = true; t.aufnehmen('peitsche', o); } }, handVoll);
+  knopf('T125', 'Erste-Hilfe-Kasten in die Hand (Q = werfen)', () => t.aufnehmen('verbandskasten', welt.objekte.ersteHilfe), handVoll);
+  knopf('T126', 'Schweißhelm in die Hand (E = aufsetzen, Klick auf den Haken = zurückhängen)', () => t.aufnehmen('helm', welt.objekte.helm), handVoll);
   knopf('T43', 'Hüfte (Dennis liegt)', () => { frei(); return t.hueftePlatt(); }, {
     laeuft: () => z.huefte === 'geht' || z.huefte === 'liegt',
     sperre: () => (z.huefte === 'erledigt' ? 'Hüfte war schon' : null),

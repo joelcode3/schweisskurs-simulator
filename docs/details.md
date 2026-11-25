@@ -1006,6 +1006,29 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
 - Flusensieb ausblasen: die letzten zwei Fusseln fliegen am Ende mit weg, das Sieb ist danach ganz sauber.
 - Testmenü: T122 Flusensieb in die Hand, T123 Klo verstopft und gleich pömpeln (mit Spülen).
 
+## Paket N5 (Bedienung und Hand, 18.11.)
+- Leiste oben im Umschau-Modus: das ist der eingebaute Hinweis vom Browser (Pointer Lock, „Esc drücken, um den Mauszeiger
+  anzuzeigen“), den kann die Seite nicht ändern. Darum wirkt Esc jetzt wie Rechtsklick: Maus bleibt frei (cursorModus),
+  Klicks benutzen Dinge, zurück zum Umschauen mit Rechtsklick (steuerung.js pointerlockchange). Eigener Tipp und Hilfe im
+  Startbild sagen „Rechtsklick (oder Esc)“.
+- Testmenü links unten über der Lautstärke (rechts verdeckte es die Sprechblasen), Inhalt höchstens 52 % Bildhöhe.
+- Gerte schwingt beim Klatschen (hand.schwing: ausholen, nach vorn schnalzen, zurück), über gerteSchlag() in spiel.js.
+- Werfen: nur Flex, Schlackehammer, Rohrzange zählen als Werkzeug („Mit Werkzeug geworfen“). Alles ohne eigenen Wurf-Text
+  (Gerte, Pömpel, Creme, Kackepumpe, Erste-Hilfe-Kasten ...) = Fehler sachenWerfen („Mit Sachen geworfen“, Wut 4) mit
+  DENNIS.wurf.sonst: dennis545 „Ey, nichts werfen hier!“, dennis546 „Was fliegt denn hier durch die Gegend?! Hier wird
+  nichts geworfen!“. Nicht-werfbare Dinge sagen „<Name>: lieber nicht werfen.“ statt immer „Den Kaffee …“.
+- Schweißhelm: hatte keinen gespeicherten Wandplatz (userData.wand), darum ging Zurückhängen nicht; jetzt Klick auf den
+  Haken. Aufsetzen ging im Test; vermutete Ursache: E/Abnehmen waren gesperrt, solange ein Ereignis lief, bei dem der
+  Spieler eigentlich frei ist (z.spielerFrei, z. B. Torben-Unfall). handAktion und abnehmen beachten jetzt spielerFrei.
+  Handleiste sagt bei Dingen mit Wandplatz „auf seinen Platz = zurückhängen“.
+- Erste-Hilfe-Kasten: jederzeit in die Hand (Menü), werfbar, E ohne Verletzten = Hinweis, zurück an seinen Platz per Klick.
+- Kiwis liegen in einer flachen Keramikschale (cremeweiß, blauer Rand) auf dem Kaffeetisch.
+- Platz hinten: die zwei Tassen am Carport sind normale Tassen (id tasse, gehören auf den Kühlschrank; zählen erst ab dem
+  Wegstellen in welt.tassen, damit Dennis nicht rausläuft, um sie zu holen). Die umgekippte Flasche dort und die offene
+  Flasche auf dem Bierkasten am Wohnwagen sind leere Bierflaschen (id leereflasche, Bierkasten), beide jetzt mit
+  bierflasche() aus toon.js gebaut (passende Größe in der Hand).
+- Testmenü: T124 Gerte in die Hand, T125 Erste-Hilfe-Kasten in die Hand, T126 Schweißhelm in die Hand.
+
 ## Offene Fäden und Ungetestetes (Übergabe 1.11.2026)
 - Ausraster-Videos: #54 (frisches Video-Element, bis zu 6 Versuche, canplay) ist nur eine Absicherung. Die Ursache ist unklar, im Test lief
   alles (WebM statt H.264, Chromium kann hier kein H.264). Der Betreiber prüft im echten Browser (Browser und Anzeige erfragen: schwarz,
