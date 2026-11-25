@@ -2250,12 +2250,12 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   }
   // ---------- Kaffeetassen: stehen überall rum, gehören auf den Kühlschrank ----------
   // Paket 6: Hinsetzen auf das Werkstattsofa oder das Sofa vor dem Wohnwagen. Kamera auf Sitzhöhe, Laufen = aufstehen.
-  // Zeit und Ereignisse laufen weiter; wird es ernst (Feuer, Rohrbruch, Klo, Verletzte, Dennis will aufs Sofa ...), steht
-  // man von selbst auf und bekommt einen Hinweis.
-  let sitzOrt = null;
+  // Zeit und Ereignisse laufen weiter. Man steht NIE von selbst auf (Joel); bei Ereignissen kommt nur ein Hinweis.
+  let sitzOrt = null, sitzHinweis = null;
   async function hinsetzen(werkstatt) {
     if (hand.item) { ui.hinweis('Erst die Hände frei machen.', 2200); return; }
     sitzOrt = werkstatt ? 'werkstatt' : 'terrasse';
+    sitzHinweis = null;
     const pos = werkstatt ? [-2.75, 1.08, 3.48] : [-14.18, 1.25, 8.95];
     const blick = werkstatt ? [-2.75, 0.95, 0] : [-14.18, 1.0, 14];
     steuerung.sperre(true);
@@ -2264,19 +2264,17 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     ui.hinweis('Du sitzt. Laufen (WASD) oder Leertaste = aufstehen.', 2600);
   }
   function sitzUpdate() {
-    if (!steuerung.sitzt) { sitzOrt = null; return; }
+    if (!steuerung.sitzt) { sitzOrt = null; sitzHinweis = null; return; }
     let grund = null;
-    if (z.feuer === 'brennt') grund = 'Es brennt!';
-    else if (z.leck === 'spritzt') grund = 'Wasserrohrbruch!';
-    else if (z.verstopft === 'ja') grund = 'Das Klo ist verstopft.';
-    else if (TU.zustand === 'liegt') grund = 'Torben liegt am Boden!';
-    else if (z.huefte === 'liegt') grund = 'Dennis liegt am Boden!';
-    else if (sitzOrt === 'werkstatt' && (z.mittag === 'gerade' || dennis.modus === 'sitzen' || dennis.modus === 'schlafen')) grund = 'Dennis will auf sein Sofa.';
-    else if (z.beschaeftigt && !z.spielerFrei) grund = '';
-    if (grund === null) return;
-    steuerung.aufstehen();
-    sitzOrt = null;
-    if (grund) ui.hinweis(`Du stehst auf. ${grund}`, 2600);
+    if (z.feuer === 'brennt') grund = 'Es brennt! Steh auf!';
+    else if (z.leck === 'spritzt') grund = 'Wasserrohrbruch! Steh auf!';
+    else if (z.verstopft === 'ja') grund = 'Das Klo ist verstopft. Steh auf!';
+    else if (TU.zustand === 'liegt') grund = 'Torben liegt am Boden! Steh auf!';
+    else if (z.huefte === 'liegt') grund = 'Dennis liegt am Boden! Steh auf!';
+    else if (sitzOrt === 'werkstatt' && z.mittag === 'gerade') grund = 'Dennis will auf sein Sofa. Steh lieber auf.';
+    // jeden Grund nur einmal melden (WASD oder Leertaste = aufstehen)
+    if (grund && grund !== sitzHinweis) ui.hinweis(`${grund} (WASD oder Leertaste)`, 3500);
+    sitzHinweis = grund;
   }
   function offeneTassen() { return welt.tassen.filter((t) => !t.userData.aufgeraeumt && t.parent && t.visible && hand.item?.obj !== t); }
   function tasseWegraeumen() {
@@ -4479,6 +4477,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       if (info.id === 'dennis') ui.hinweis('Dennis ist gerade auf dem Klo.');
       return;
     }
+    if (steuerung.sitzt && info && treffer.abstand > 2.2) { ui.hinweis('Zu weit weg. Erst aufstehen (WASD oder Leertaste).', 2200); return; }
     if (hand.item && (await klickMitHand(treffer))) return;
     if (!info) return;
     steuerung.sperre(true);
