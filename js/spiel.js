@@ -15,6 +15,7 @@ import { baueFahrten } from './fahrten.js';
 import { bauePritsche } from './pritsche.js';
 import { baueMetall } from './metall.js';
 import { baueGrillen } from './grillen.js';
+import { baueZielMarken } from './zielmarke.js';
 
 const zufallAus = (liste) => liste[Math.floor(Math.random() * liste.length)];
 // Text aus einer Liste zufällig wählen (oder den einzelnen Text nehmen): mehr Abwechslung bei Dennis
@@ -4716,6 +4717,18 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     dennisFrei: () => dennis.modus === 'normal' && dennis.wurzel.visible && !z.aufKlo && !z.hula && !z.beschaeftigt && !buehneBelegt()
       && z.mittag !== 'gerade' && !z.dennisFegt && !z.dennisLoescht && !z.dennisRaeumt,
   });  // ---------- E2b: Joels Pritsche abschleppen (js/pritsche.js) ----------
+  // Paket 4, Bug 4: grüne Ablage-Markierung, nur solange das passende Ding in der Hand ist
+  const zielMarken = baueZielMarken(dennis.wurzel.parent);
+  const _zm = new THREE.Vector3();
+  // Kackepumpe (sauber) -> ihr Platz am Kompressor
+  zielMarken.regel('pumpeKompressor', () => (hand.item?.id === 'kackpumpe' && !welt.pumpeIstDreckig
+    ? _zm.set(welt.objekte.kackPumpe.userData.wand.pos.x + 0.1, 0, welt.objekte.kackPumpe.userData.wand.pos.z) : null), 1.6);
+  // Spanngurte (aufgerollt) -> unten ins Regal links (Markierung am Boden vor dem Regal)
+  zielMarken.regel('gurteRegal', () => (hand.item?.id === 'gurte' ? _zm.set(REGAL.x + 0.35, 0, REGAL.z) : null), 1.6);
+  // Kackepumpe (dreckig) -> Spüle am Waschplatz zum Abwaschen (geht auch im Bad, markiert ist der nächste Platz)
+  zielMarken.regel('pumpeSpuele', () => (hand.item?.id === 'kackpumpe' && welt.pumpeIstDreckig
+    ? _zm.set(welt.objekte.spuele.position.x - 0.55, 0, welt.objekte.spuele.position.z) : null), 1.4);
+  // Pritsche (Carport-Bucht) und Metall (vor dem Container) haben schon ihre eigene grüne Fläche (pritsche.js, metall.js)
   const pritsche = bauePritsche({ welt, scene: dennis.wurzel.parent, fz, fahrten, kumpels, hand, kamera, steuerung, ui, z, sag, dennisSagt, aerger, lob,
     sekunden: sekundenSeitStart, warte, reinkommen, rausgehen, ruhigeLage, handleisteZeigen, klonk, blip, sd, andererAuftrag: () => metall.aktiv });
   // ---------- E3: Metall-Lieferung (js/metall.js) ----------
@@ -4752,7 +4765,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   return {
     zustand: z,
     klick,
-    test: { sek: () => sekundenSeitStart(), waescheFertigTest, fristenVorbei, torbenLiegtTest, torbenFristVorbei, lauf, rausgehen, waldoFigur: waldo, pritsche, metall, grillen, gaesteFrei: () => gaeste().map((g) => g.id + ':' + g.frei()), dv, davidKommt, davidGeht, davidGassi, davidRohrzange, davidLoescher, davidTischgestell, davidRauchtMitJonny, get z() { return z; }, OFEN_SCHRITTE, ofenStand, schutzAn, armAnpassen, setzeWut(w) { z.wut = w; aktualisieren(); }, zeitVor(sek) { z.start -= sek * 1000; }, waescheUebernehmen, kaffeeKochen, hulaHoop, einkaufen, kiwiEssen, TU, torbenUnfall, torbenVerarzten, torbenVerbandAn, spanngurtEreignis, gurteHinwerfen, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, poempeln, siebRaus, tanzPause, musikUmschalten, handVoll: () => !!hand.item, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
+    test: { zielMarken, sek: () => sekundenSeitStart(), waescheFertigTest, fristenVorbei, torbenLiegtTest, torbenFristVorbei, lauf, rausgehen, waldoFigur: waldo, pritsche, metall, grillen, gaesteFrei: () => gaeste().map((g) => g.id + ':' + g.frei()), dv, davidKommt, davidGeht, davidGassi, davidRohrzange, davidLoescher, davidTischgestell, davidRauchtMitJonny, get z() { return z; }, OFEN_SCHRITTE, ofenStand, schutzAn, armAnpassen, setzeWut(w) { z.wut = w; aktualisieren(); }, zeitVor(sek) { z.start -= sek * 1000; }, waescheUebernehmen, kaffeeKochen, hulaHoop, einkaufen, kiwiEssen, TU, torbenUnfall, torbenVerarzten, torbenVerbandAn, spanngurtEreignis, gurteHinwerfen, gurteAufrollen, dennisRolltGurte, feuerStart, leckStart, kloVerstopft, poempeln, siebRaus, tanzPause, musikUmschalten, handVoll: () => !!hand.item, dennisSiehts, werkstattLaut, dennisJagen, fahrten, nettSein, wutUndVorzeichen, ruhigeLage, bitsatzSortieren, waldoAkkuschrauber, akkuReparieren, tasseWegraeumen, dennisRaeumtTassen, sd, kumpelBesuch, jonnySpuelt, waldoSpuelt, kumpelSpuelt, dennisTelefoniert, flascheHochheben, flascheAbstellen, ventilAufdrehen, spuelen, anzeichnen, lackieren, hueftePlatt, mittagspause, kloPause, wz, waldoBesuch, kackePumpe, waldoPumpeZurueck, sofaStreit, jonnyRaus, jonnyRein, aufnehmen, pumpeWaschen, pumpeZurueckstellen, jz, jonnyBier, jonnyKitzelt, jonnyLeiterHolen, leiterRunterreichen, jonnyStoert, jonnySodbrennen }, // nur für Tests (Playwright)
     stationWaehlen,
     intro,
     aktualisieren,
@@ -4767,6 +4780,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
       pritsche.update(dt);
       metall.update(dt);
       grillen.update(dt);
+      zielMarken.update(dt);
       wutUndVorzeichen(dt);
       waescheUpdate(dt);
       jonnyUpdate();
