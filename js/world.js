@@ -497,6 +497,25 @@ export function baueWelt(scene) {
   merke(loescher, 'feuerloescher', 'Feuerlöscher', null);
   objekte.feuerloescher = loescher;
   loescher.userData.wand = { pos: loescher.position.clone(), rot: loescher.rotation.clone() };
+  // Feuerlöscher-Schild darüber an der Wand (Betreiber 25.11., statt Ablage-Markierung): rotes Quadrat, weißer Löscher und Flamme
+  {
+    const schildTex = leinwandTextur(128, 128, (g, b, h) => {
+      g.fillStyle = '#c8231a'; g.fillRect(0, 0, b, h);
+      g.strokeStyle = '#ffffff'; g.lineWidth = 5; g.strokeRect(6, 6, b - 12, h - 12);
+      g.fillStyle = '#ffffff';
+      // Löscher: Körper, Kopf, Griff, Schlauch
+      g.beginPath(); g.roundRect(30, 46, 30, 62, 10); g.fill();
+      g.fillRect(38, 34, 14, 14);
+      g.fillRect(30, 28, 30, 7);
+      g.lineWidth = 5; g.strokeStyle = '#ffffff'; g.beginPath(); g.moveTo(54, 36); g.quadraticCurveTo(76, 34, 72, 60); g.stroke();
+      // Flamme rechts
+      g.beginPath(); g.moveTo(96, 108); g.quadraticCurveTo(76, 100, 84, 78); g.quadraticCurveTo(88, 90, 92, 88); g.quadraticCurveTo(86, 70, 100, 56);
+      g.quadraticCurveTo(100, 74, 108, 80); g.quadraticCurveTo(116, 100, 96, 108); g.fill();
+    });
+    const schild = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.24), toon(0xffffff, { map: schildTex }));
+    schild.position.set(RAUM.xMax - 0.012, 1.82, -1.0); schild.rotation.y = -Math.PI / 2;
+    scene.add(schild);
+  }
 
   // Erste-Hilfe-Kasten neben dem Feuerlöscher
   const ersteHilfe = new THREE.Group();

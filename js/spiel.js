@@ -4672,6 +4672,12 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   // Kackepumpe (sauber) -> ihr Platz am Kompressor
   zielMarken.regel('pumpeKompressor', () => (hand.item?.id === 'kackpumpe' && !welt.pumpeIstDreckig
     ? _zm.set(welt.objekte.kackPumpe.userData.wand.pos.x + 0.1, 0, welt.objekte.kackPumpe.userData.wand.pos.z) : null), 1.6);
+  // Spanngurte (aufgerollt) -> unten ins Regal links (Markierung am Boden vor dem Regal)
+  zielMarken.regel('gurteRegal', () => (hand.item?.id === 'gurte' ? _zm.set(REGAL.x + 0.35, 0, REGAL.z) : null), 1.6);
+  // Kackepumpe (dreckig) -> Spüle am Waschplatz zum Abwaschen (geht auch im Bad, markiert ist der nächste Platz)
+  zielMarken.regel('pumpeSpuele', () => (hand.item?.id === 'kackpumpe' && welt.pumpeIstDreckig
+    ? _zm.set(welt.objekte.spuele.position.x - 0.55, 0, welt.objekte.spuele.position.z) : null), 1.4);
+  // Pritsche (Carport-Bucht) und Metall (vor dem Container) haben schon ihre eigene grüne Fläche (pritsche.js, metall.js)
   const pritsche = bauePritsche({ welt, scene: dennis.wurzel.parent, fz, fahrten, kumpels, hand, kamera, steuerung, ui, z, sag, dennisSagt, aerger, lob,
     sekunden: sekundenSeitStart, warte, reinkommen, rausgehen, ruhigeLage, handleisteZeigen, klonk, blip, sd, andererAuftrag: () => metall.aktiv });
   // ---------- E3: Metall-Lieferung (js/metall.js) ----------
