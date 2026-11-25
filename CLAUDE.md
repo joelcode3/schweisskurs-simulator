@@ -78,7 +78,7 @@
 - Alle Dennis-Sätze stehen in `js/texte.js` (IDs = Dateinamen der Aufnahmen), `spiel.js` nutzt nur diese.
 - `stimme/stimme.json` + `stimme/<id>.mp3`: Aufnahmen pro Satz, Mund bewegt sich nach Lautstärke.
   Pflege mit `node tools/stimme.mjs liste|eintragen`, siehe `stimme/LIESMICH.md`.
-- Die Jungs sprechen ALLE Sätze ein. Dateinamen kurz: dennis1 … dennis547 (547 Tanzpause, 545–546 nichts werfen, 543–544 Hüfte/Wäsche selbst, 541–542 Bremsenreiniger, 530–540 Mettenden grillen, 516–529 Metall-Lieferung, 505–515 Pritsche, 502–504 David, 498–501 Torben wirft, 491–497 Torben-Unfall, 489–490 Pömpel gespritzt, 487–488 Gurte geworfen, 485–486 Flaschen räumen, 483–484 Bierflasche werfen, 469–475 Spanngurt, 476–478 Paletten, 479–482 Hofladen), jonny1 … jonny62 (58–62 Mettende), waldo1 … waldo47 (43–47 Mettende), torben1 … torben36 (25–31 wütet/isst, 32–36 Mettende), kumpel1 … kumpel12 (KUMPEL, 8–12 Mettende), david1 … david23 (DAVID, 19–23 Mettende), joel1 … joel15 (JOEL), jonas1 … jonas10 (JONAS) (Endung
+- Die Jungs sprechen ALLE Sätze ein. Dateinamen kurz: dennis1 … dennis554 (548–554 Kühlschrank/Werkzeug/Trödeln, 547 Tanzpause, 545–546 nichts werfen, 543–544 Hüfte/Wäsche selbst, 541–542 Bremsenreiniger, 530–540 Mettenden grillen, 516–529 Metall-Lieferung, 505–515 Pritsche, 502–504 David, 498–501 Torben wirft, 491–497 Torben-Unfall, 489–490 Pömpel gespritzt, 487–488 Gurte geworfen, 485–486 Flaschen räumen, 483–484 Bierflasche werfen, 469–475 Spanngurt, 476–478 Paletten, 479–482 Hofladen), jonny1 … jonny62 (58–62 Mettende), waldo1 … waldo47 (43–47 Mettende), torben1 … torben36 (25–31 wütet/isst, 32–36 Mettende), kumpel1 … kumpel12 (KUMPEL, 8–12 Mettende), david1 … david23 (DAVID, 19–23 Mettende), joel1 … joel15 (JOEL), jonas1 … jonas10 (JONAS) (Endung
   .mp3/.m4a/.wav, Groß-/Kleinschreibung egal). Zuordnung Kurzname -> Satz-ID steht in stimme/zuordnung.csv (vom Projektchat).
   Nummern sind fest und verschieben sich NIE; neue Sätze bekommen die nächste freie Nummer (dennis367 …) und eine neue Zeile.
   Schlüssel in texte.js NIE umbenennen, neue Sätze nur ergänzen. IDs: Dennis wie alleSaetze(), telefon.G.Z = Gespräch G,
@@ -91,6 +91,6 @@
 - Alles bis #83 gemergt. Offen: #84 P1 Puls/Tasse, #85 P2 Wurf/Müll, #86 P3 Wohnwagen/Carport, #87 P4 Pumpe/Spüle/Markierungen,
   #88 P5 Druckluftpistole, #89 P6 Bedienung, #90 P7 Aufräumen/Trödeln, #91 P8 Optik (erst #87), #92 P9 Spülen (Bug 13).
 - Versionsnummer je PR `v=20261125-1` … `-9` (beim Mergen jeweils hochzählen). Testmenü bis T133, nächste freie T134.
-- Nächste freie Satz-Nummern (aus stimme/zuordnung.csv): dennis548, jonny63, waldo48, torben37, kumpel13, david24, joel16, jonas11.
+- Nächste freie Satz-Nummern (aus stimme/zuordnung.csv): dennis555, jonny63, waldo48, torben37, kumpel13, david24, joel16, jonas11.
 - Projektchat-Session: `session_0136ircrJASSBiWT1k1mcErc` (seit 25.11., Projektchat Nr. 5, Sonnet).
 - Offene Fäden und Ungetestetes: `docs/details.md`, Abschnitt „Offene Fäden und Ungetestetes“ (zuerst lesen, wenn ein neuer Chat startet).

@@ -205,6 +205,11 @@ export function baueTestMenue({ spiel, welt, kamera, steuerung, fahrten, fz }) {
   // Paket 6: Hinsetzen (T128 ist in Paket 1 vergeben)
   knopf('T129', 'Aufs Werkstattsofa setzen (WASD = aufstehen)', () => { frei(); return t.hinsetzen(true); });
   knopf('T130', 'Aufs Sofa vor dem Wohnwagen setzen (WASD = aufstehen)', () => { frei(); return t.hinsetzen(false); });
+  // Paket 7 (T128 Paket 1, T129/T130 Paket 6)
+  knopf('T131', 'Jonny hat den Kühlschrank offen gelassen (30 s zum Zumachen)', () => { frei(); t.kuehlschrankOffen(); });
+  knopf('T132', 'Rohrzange liegt auf dem Boden, Dennis meckert gleich', () => { frei(); const o = welt.objekte.rohrzange; if (o.parent !== window.__werkstatt.scene) return; o.position.set(1.5, 0.02, 0.5); o.rotation.set(Math.PI / 2, 0, 0); t.werkzeugLiegt.rohrzange = { seit: t.sek() - 60, gemeckert: false }; });
+  // T133: Spieler steht direkt bei Dennis (er sieht einen), 2 Minuten Leerlauf schon gezählt
+  knopf('T133', 'Trödeln vor Dennis: 2 Minuten nichts getan (Dennis sieht dich)', () => { frei(); const d = window.__werkstatt.dennis.position; window.__werkstatt.steuerung.setze([d.x + 1.2, 1.6, d.z + 0.8], [d.x, 1.4, d.z]); t.z.troedelZeit = 120; });
   knopf('T43', 'Hüfte (Dennis liegt)', () => { frei(); return t.hueftePlatt(); }, {
     laeuft: () => z.huefte === 'geht' || z.huefte === 'liegt',
     sperre: () => (z.huefte === 'erledigt' ? 'Hüfte war schon' : null),
