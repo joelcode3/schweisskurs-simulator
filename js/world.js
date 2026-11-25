@@ -3373,8 +3373,9 @@ export function baueWelt(scene) {
     akkuAufWerkbank() { scene.add(akku); akku.position.set(1.08, 0.905, -2.72); akku.rotation.set(0, -0.6, 0); akku.scale.setScalar(1); akku.visible = true; },
     akkuRepariert() { akkuDreck.visible = false; },
     tassen,
-    // Tassen in einem Bereich fallen auf die nächste Fläche darunter (z. B. wenn der obere Stahlträger weggetragen wird)
-    tassenNachrutschen(xMin, xMax, zMin, zMax) {
+    // Tassen in einem Bereich fallen auf die nächste Fläche darunter (z. B. wenn der obere Stahlträger weggetragen wird).
+    // fallen(t, y): optional, dann fällt die Tasse mit Physik (hand.fallen), wenn es tiefer als 5 cm runtergeht
+    tassenNachrutschen(xMin, xMax, zMin, zMax, fallen) {
       for (const t of tassen) {
         if (t.parent !== scene || !t.visible || t.userData.aufgeraeumt) continue;
         const p = t.position;
@@ -3382,10 +3383,12 @@ export function baueWelt(scene) {
         // höchste Fläche knapp um die Tasse (sie steht nicht auf einem Punkt, sondern auf ihrem Boden)
         let y = 0;
         for (const [dx, dz] of [[0, 0], [0.035, 0], [-0.035, 0], [0, 0.035], [0, -0.035]]) y = Math.max(y, oberflaecheBei(p.x + dx, p.z + dz, p.y - 0.01));
-        if (y < p.y - 0.01) p.y = y;
+        if (fallen && y < p.y - 0.05) fallen(t, y);
+        else if (y < p.y - 0.01) p.y = y;
       }
     },
     tassenVerteilen,
+    tasseHinstellen,
     tasseAufKuehlschrank,
     tassenAbholen,
     kuehlschrankVoll: () => tassenOben().length >= KUEHL_PLAETZE,

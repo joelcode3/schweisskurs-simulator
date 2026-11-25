@@ -276,7 +276,7 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
   const nebenErledigt = new Map(); // text -> Zeitpunkt erledigt
   // Aufgabe abgelaufen, Dennis (oder jemand) hat es selbst gemacht: 10 s als rote Zeile in der Liste
   function zuSpaet(was, wut) {
-    (z.zuSpaet ||= []).push({ text: `Zu spät: ${was}${wut ? ` (+${wut} Wut)` : ''}`, seit: sekundenSeitStart() });
+    (z.zuSpaet ||= []).push({ text: `Zu spät: ${was}${wut ? ` (Puls +${Math.round(wut * 1.2)})` : ''}`, seit: sekundenSeitStart() });
     aufgabenListeAuffrischen?.();
   }
   function aufgaben() {
@@ -2249,6 +2249,11 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
     dennis.heim();
   }
   // ---------- Kaffeetassen: stehen überall rum, gehören auf den Kühlschrank ----------
+  // Bug 12: steht eine Tasse auf dem Erste-Hilfe-Kasten (rechte Wand) und man nimmt den Kasten, fällt sie runter
+  hand.beimNehmen = (id) => {
+    if (id !== 'verbandskasten') return;
+    welt.tassenNachrutschen(4.6, 5.2, -1.85, -1.25, (t, y) => hand.fallen(t, y, () => klonk(0.2), 0));
+  };
   function offeneTassen() { return welt.tassen.filter((t) => !t.userData.aufgeraeumt && t.parent && t.visible && hand.item?.obj !== t); }
   function tasseWegraeumen() {
     if (hand.item?.id !== 'tasse') return;
@@ -4528,15 +4533,15 @@ export function baueSpiel({ welt, dennis, jonny, waldo, torben, kumpels, fz, seg
         <li><span>Schnitt</span><b>${z.schnittQ} %</b></li>${naehte}
         <li><span>Lack</span><b>${z.lackQ ?? 0} %</b></li>
         <li><span>Verarbeitung gesamt</span><b>${qualitaet} %</b></li>
-        <li><span>Dennis-Wut am Ende</span><b>${Math.round(z.wut)} %</b></li>
-        <li><span>Höchste Dennis-Wut</span><b>${Math.round(z.wutMax)} %</b></li>
+        <li><span>Dennis-Puls am Ende</span><b>${ui.pulsAusWut(z.wut)}</b></li>
+        <li><span>Höchster Dennis-Puls</span><b>${ui.pulsAusWut(z.wutMax)}</b></li>
         <li><span>Werkstatt</span><b>${welt.dreck ? 'dreckig' : z.dennisHatGefegt ? 'Dennis musste fegen' : 'gefegt'}</b></li>
         <li><span>Zeit</span><b>${minuten} Min.</b></li>
       </ul>
       <p><b>So kommt die Note zustande (${punkte} von 100 Punkten):</b></p>
       <ul class="wertung-liste">
         <li><span>Arbeit (${qualitaet} % Verarbeitung, max. 75)</span><b>${pkt(teile.arbeit)}</b></li>
-        <li><span>Dennis’ Laune (Wut im Schnitt ${wut} %, max. 25)</span><b>${pkt(teile.laune)}</b></li>
+        <li><span>Dennis’ Laune (Puls im Schnitt ${ui.pulsAusWut(wut)}, max. 25)</span><b>${pkt(teile.laune)}</b></li>
         <li><span>Fehler (je 1,5, höchstens 15)</span><b>${pkt(teile.fehler)}</b></li>
         <li><span>Werkstatt</span><b>${pkt(teile.werkstatt)}</b></li>
         <li><span>Paletten hinterm Haus (je 1, höchstens 6)</span><b>${pkt(teile.paletten)}</b></li>

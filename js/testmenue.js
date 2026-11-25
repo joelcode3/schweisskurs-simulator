@@ -193,6 +193,13 @@ export function baueTestMenue({ spiel, welt, kamera, steuerung, fahrten, fz }) {
   knopf('T124', 'Gerte in die Hand (E = klatschen, Q = werfen)', () => { const o = findeKlick('peitsche'); if (o) { o.visible = true; t.aufnehmen('peitsche', o); } }, handVoll);
   knopf('T125', 'Erste-Hilfe-Kasten in die Hand (Q = werfen)', () => t.aufnehmen('verbandskasten', welt.objekte.ersteHilfe), handVoll);
   knopf('T126', 'Schweißhelm in die Hand (E = aufsetzen, Klick auf den Haken = zurückhängen)', () => t.aufnehmen('helm', welt.objekte.helm), handVoll);
+  // Bug 12: Tasse auf den Erste-Hilfe-Kasten stellen, dann den Kasten nehmen (T125): die Tasse fällt runter
+  knopf('T128', 'Tasse auf den Erste-Hilfe-Kasten stellen (dann T125: sie fällt runter)', () => {
+    if (!welt.objekte.ersteHilfe.parent || welt.objekte.ersteHilfe.parent.type !== 'Scene') return;
+    welt.tassenVerteilen(6);
+    const tasse = welt.tassen.find((q) => q.parent && q.visible && !q.userData.aufgeraeumt);
+    if (tasse) welt.tasseHinstellen(tasse, 4.93, -1.55, 1.75);
+  });
   // N4: Tanzpause (Box an, Dennis tanzt; T127 = er hört nach ein paar Sekunden selbst auf, Box ist dann gesperrt)
   knopf('T127', 'Box an, Dennis tanzt kurz und macht dann Pause („Nee du, ich brauch mal ne Pause.“)', () => { frei(); z.keinTanzBis = 0; z.boxGesperrtBis = 0; if (!z.musik) t.musikUmschalten(); z.tanzZeit = 0; z.tanzEnde = 6; }, { laeuft: () => !!z.tanzPauseLaeuft });
   knopf('T43', 'Hüfte (Dennis liegt)', () => { frei(); return t.hueftePlatt(); }, {
@@ -296,11 +303,11 @@ export function baueTestMenue({ spiel, welt, kamera, steuerung, fahrten, fz }) {
   const nichtBeimFahren = () => (fahrten?.faehrt ? 'Erst aussteigen (E)' : null);
   knopf('T94', 'Platz hinten: vor die Hintertür', springen([-2.9, -5.3], [-3.0, -16.0]), { sperre: nichtBeimFahren });
 
-  ueberschrift('Wut und Zeit');
-  knopf('T56', 'Wut auf 0', () => t.setzeWut(0));
-  knopf('T57', 'Wut auf 30', () => t.setzeWut(30));
-  knopf('T58', 'Wut auf 60', () => t.setzeWut(60));
-  knopf('T59', 'Wut auf 90', () => t.setzeWut(90));
+  ueberschrift('Puls und Zeit');
+  knopf('T56', 'Puls auf 60 (tiefenentspannt)', () => t.setzeWut(0));
+  knopf('T57', 'Puls auf 96', () => t.setzeWut(30));
+  knopf('T58', 'Puls auf 132', () => t.setzeWut(60));
+  knopf('T59', 'Puls auf 168', () => t.setzeWut(90));
   knopf('T60', 'Zeit + 5 Minuten', () => t.zeitVor(300));
   knopf('T61', 'Zeit + 15 Minuten', () => t.zeitVor(900));
 
