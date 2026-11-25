@@ -41,8 +41,13 @@ export function wutZeigen(wert, stimmung) {
   PULS.wut = Math.max(0, Math.min(100, wert));
   PULS.ziel = pulsAusWut(wert);
   $('wut-gesicht').innerHTML = dennisMini(stimmung);
-  const stufe = wert >= 85 ? 'kurz vorm Platzen' : wert >= 60 ? 'stinksauer' : wert >= 35 ? 'genervt' : wert >= 12 ? 'skeptisch' : 'tiefenentspannt';
+  const stufe = wert >= 92 ? 'fliegst gleich raus!' : wert >= 85 ? 'kurz vorm Platzen' : wert >= 60 ? 'stinksauer' : wert >= 35 ? 'genervt' : wert >= 12 ? 'skeptisch' : 'tiefenentspannt';
   $('wut-stufe').textContent = stufe;
+  // Skala: Marke von 60 (links) bis 180 (rechts); ab 150 Gefahr, ab 165 kritisch (bei 180 fliegt man raus)
+  $('puls-marke').style.left = `${PULS.wut}%`;
+  const p = PULS.ziel;
+  $('wut').classList.toggle('gefahr', p >= 150 && p < 165);
+  $('wut').classList.toggle('kritisch', p >= 165);
 }
 // EKG-Kurve: eine Spalte pro Pixel, ein Schreibstrahl läuft von links nach rechts und überschreibt die alte Kurve
 // (mit kleiner Lücke davor) wie am Monitor im Krankenhaus. Je höher der Puls, desto schneller, höher und unruhiger.

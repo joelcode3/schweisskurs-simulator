@@ -176,6 +176,45 @@ button { font: inherit; color: inherit; }
   overflow: hidden;
 }
 #puls-kurve { display: block; width: 100%; height: 100%; }
+/* Skala unter dem Monitor: wo der Puls gerade steht und dass bei 180 Schluss ist */
+.puls-skala { display: flex; align-items: center; gap: 6px; margin-top: 5px; font-size: 10px; color: var(--text-leise); }
+.puls-skala-balken {
+  position: relative;
+  flex: 1;
+  height: 7px;
+  border-radius: 4px;
+  border: 1.5px solid #000;
+  background: linear-gradient(90deg, #3f9a3a 0%, #c9b22a 40%, #d9711f 70%, #c8231a 75%, #ff2a1a 100%);
+}
+/* ab 150 (75 %) beginnt die rote Gefahrenzone, schraffiert */
+.puls-skala-balken::after {
+  content: '';
+  position: absolute;
+  left: 75%; right: 0; top: 0; bottom: 0;
+  border-radius: 0 3px 3px 0;
+  background: repeating-linear-gradient(135deg, rgba(0, 0, 0, 0.35) 0 3px, transparent 3px 6px);
+}
+#puls-marke {
+  position: absolute;
+  top: -4px;
+  left: 15%;
+  width: 3px;
+  height: 13px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  background: #fff;
+  box-shadow: 0 0 0 1.5px #000;
+  transition: left 0.6s cubic-bezier(.3,1.6,.5,1);
+  z-index: 1;
+}
+.puls-grenze { color: #ff5a4a; font-weight: bold; white-space: nowrap; }
+/* Gefahr (ab Puls 150) und kurz vorm Platzen (ab 165): Rahmen glüht rot, Monitor blinkt */
+#wut.gefahr { animation: puls-gefahr 1.1s infinite; }
+#wut.kritisch { animation: puls-gefahr 0.5s infinite; }
+#wut.gefahr .puls-monitor { animation: monitor-gefahr 1.1s infinite; }
+#wut.kritisch .puls-monitor { animation: monitor-gefahr 0.5s infinite; }
+@keyframes puls-gefahr { 0%, 100% { box-shadow: 0 0 0 2px #000, 0 0 0 4px rgba(255, 50, 30, 0.35); } 50% { box-shadow: 0 0 0 2px #000, 0 0 16px 6px rgba(255, 50, 30, 0.85); } }
+@keyframes monitor-gefahr { 0%, 100% { background: #07140c; } 50% { background: #3a0a08; } }
 #wut.wackelt { animation: wackeln 0.5s; }
 @keyframes wackeln {
   0%,100% { transform: translateX(0); }
@@ -187,7 +226,7 @@ button { font: inherit; color: inherit; }
 
 #ausruestung {
   position: absolute;
-  top: calc(var(--rand-oben) + 98px);
+  top: calc(var(--rand-oben) + 140px);
   right: var(--rand-rechts);
   display: flex;
   gap: 6px;
@@ -814,7 +853,7 @@ button { font: inherit; color: inherit; }
   #wut { width: min(190px, 40vw); padding: 6px 8px 8px; }
   .wut-titel { font-size: 16px; }
   .dennis-mini { width: 30px; height: 30px; }
-  #ausruestung { top: calc(var(--rand-oben) + 84px); }
+  #ausruestung { top: calc(var(--rand-oben) + 124px); }
   .ausr { width: 32px; height: 32px; }
   .ausr svg { width: 22px; height: 22px; }
   .station-knopf { padding: 6px 8px; font-size: 12px; }
