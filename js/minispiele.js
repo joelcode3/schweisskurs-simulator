@@ -1850,11 +1850,8 @@ export function siebSpiel() {
       // Ausblaspistole am Zeiger
       if (zeiger) {
         ctx.save(); ctx.translate(zeiger.x, zeiger.y);
-        ctx.fillStyle = '#2f5fa8'; ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.roundRect(14, 4, 70, 26, 8); ctx.fill(); ctx.stroke();
-        ctx.fillStyle = '#9aa1a8'; ctx.fillRect(-4, 10, 20, 10); ctx.strokeRect(-4, 10, 20, 10);
-        ctx.fillStyle = '#2f5fa8'; ctx.beginPath(); ctx.roundRect(54, 26, 22, 44, 6); ctx.fill(); ctx.stroke();
-        if (druck) for (let k = 0; k < 6; k++) { ctx.strokeStyle = 'rgba(220,235,255,0.7)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-6, 15); ctx.lineTo(-40 - Math.random() * 30, 15 + (Math.random() - 0.5) * 40); ctx.stroke(); }
+        if (druck) for (let k = 0; k < 7; k++) { ctx.strokeStyle = 'rgba(220,235,255,0.7)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-4, 0); ctx.lineTo(-40 - Math.random() * 34, (Math.random() - 0.5) * 44); ctx.stroke(); }
+        druckluftPistole(ctx, druck);
         ctx.restore();
       }
       const rest = fusseln.filter((p) => !p.weg).length;
@@ -1863,6 +1860,67 @@ export function siebSpiel() {
     },
   });
   return versprechen;
+}
+
+// Paket 5, Bug 5: Druckluftpistole wie auf Joels Foto. Düsenspitze im Ursprung (zeigt nach links), Pistole rechts davon:
+// dunkelblaues Kunststoffgehäuse mit Pistolengriff (hinten diagonale Rillen), langer gebogener Abzugshebel mit
+// Fingermulden vorn unterm Gehäuse, langes dünnes silbernes Rohr schräg nach vorn mit Knick kurz vor der Spitze,
+// Messing-Steckanschluss unten am Griff, oben Aufhängebügel, Einstellrädchen und aufgedrucktes Feld.
+function druckluftPistole(ctx, gedrueckt) {
+  const S = '#111', BLAU = '#1f3a78', BLAU_H = '#2f56a8', BLAU_D = '#152a58';
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  // Düsenrohr: von der Spitze (0,0) mit Knick bei (16,6) schräg hoch zum Gehäuse (112,46)
+  const rohr = (breite, farbe) => { ctx.strokeStyle = farbe; ctx.lineWidth = breite; ctx.beginPath(); ctx.moveTo(1, 0); ctx.lineTo(18, 5); ctx.lineTo(114, 44); ctx.stroke(); };
+  rohr(9, S); rohr(5.5, '#c3c9cf'); rohr(1.6, '#f4f6f8');
+  // Mündung
+  ctx.fillStyle = '#8c939a'; ctx.strokeStyle = S; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(1, 0, 3, 4.5, -0.3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  // Überwurfmutter am Gehäuse
+  ctx.save(); ctx.translate(114, 44); ctx.rotate(0.39);
+  ctx.fillStyle = '#b8bec4'; ctx.strokeStyle = S; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(-8, -7, 14, 14, 2); ctx.fill(); ctx.stroke();
+  ctx.restore();
+  // Griff: schräg nach hinten unten, unten etwas breiter
+  ctx.fillStyle = BLAU; ctx.strokeStyle = S; ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(150, 58); ctx.lineTo(186, 56); ctx.quadraticCurveTo(196, 92, 206, 128); ctx.quadraticCurveTo(206, 138, 196, 140);
+  ctx.lineTo(174, 142); ctx.quadraticCurveTo(164, 140, 164, 130); ctx.quadraticCurveTo(158, 96, 150, 58); ctx.closePath(); ctx.fill(); ctx.stroke();
+  // Rillen hinten am Griff (diagonal)
+  ctx.strokeStyle = BLAU_D; ctx.lineWidth = 2;
+  for (let i = 0; i < 6; i++) { const y = 74 + i * 10; const x = 190 + (y - 60) * 0.28; ctx.beginPath(); ctx.moveTo(x - 9, y + 5); ctx.lineTo(x + 2, y - 3); ctx.stroke(); }
+  // Lichtkante vorn am Griff
+  ctx.strokeStyle = 'rgba(140,175,235,0.6)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(158, 66); ctx.quadraticCurveTo(165, 98, 171, 132); ctx.stroke();
+  // Messing-Steckanschluss unten am Griff
+  ctx.fillStyle = '#c9a13b'; ctx.strokeStyle = S; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.roundRect(176, 140, 18, 9, 2); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.roundRect(179, 148, 12, 12, 2); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = '#8a6a22'; ctx.lineWidth = 1.5; for (const x of [182, 185, 188]) { ctx.beginPath(); ctx.moveTo(x, 149); ctx.lineTo(x, 159); ctx.stroke(); }
+  // Gehäuse (Kopf) mit Aufhängebügel und Einstellrädchen
+  ctx.strokeStyle = S; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(176, 30); ctx.quadraticCurveTo(178, 12, 192, 12); ctx.quadraticCurveTo(204, 14, 200, 30); ctx.stroke(); // Bügel
+  ctx.strokeStyle = '#2a3a5a'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(176, 30); ctx.quadraticCurveTo(178, 12, 192, 12); ctx.stroke();
+  ctx.fillStyle = BLAU; ctx.strokeStyle = S; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(110, 36); ctx.quadraticCurveTo(112, 26, 124, 26); ctx.lineTo(194, 28); ctx.quadraticCurveTo(206, 30, 204, 44);
+  ctx.lineTo(198, 60); ctx.lineTo(150, 62); ctx.lineTo(120, 58); ctx.quadraticCurveTo(108, 54, 110, 36); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = BLAU_H; ctx.beginPath(); ctx.roundRect(126, 30, 58, 5, 2); ctx.fill();
+  // Einstellrädchen oben hinten (geriffelt)
+  ctx.fillStyle = '#2a2c30'; ctx.strokeStyle = S; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.roundRect(160, 20, 16, 8, 2); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = '#6a6e74'; ctx.lineWidth = 1; for (let x = 163; x < 175; x += 3) { ctx.beginPath(); ctx.moveTo(x, 21); ctx.lineTo(x, 27); ctx.stroke(); }
+  // aufgedrucktes Feld
+  ctx.fillStyle = '#e8ecf0'; ctx.strokeStyle = S; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(130, 39, 36, 14, 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#c8352a'; ctx.fillRect(132, 41, 6, 10);
+  ctx.fillStyle = '#1f3a78'; ctx.font = 'bold 8px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText('AIR', 141, 46.5);
+  // Abzugshebel: lang, gebogen, vorn unterm Gehäuse, mit Fingermulden; gedrückt = näher am Griff
+  ctx.save(); ctx.translate(124, 60); ctx.rotate(gedrueckt ? -0.22 : 0);
+  ctx.fillStyle = '#2b2d33'; ctx.strokeStyle = S; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(12, -2);
+  ctx.quadraticCurveTo(22, 30, 32, 66); // Rückseite
+  ctx.quadraticCurveTo(30, 74, 22, 72);
+  // Vorderseite mit drei Fingermulden
+  ctx.quadraticCurveTo(20, 64, 14, 62); ctx.quadraticCurveTo(14, 54, 10, 48);
+  ctx.quadraticCurveTo(10, 40, 6, 34); ctx.quadraticCurveTo(6, 26, 2, 20);
+  ctx.quadraticCurveTo(-2, 10, 0, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#5a5e66'; ctx.beginPath(); ctx.arc(5, 3, 2.5, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
 }
 
 // Spanngurte (P6): zwei Gurte liegen verheddert auf dem Boden. Erst die Knoten lösen: Knoten anklicken und in Pfeilrichtung
