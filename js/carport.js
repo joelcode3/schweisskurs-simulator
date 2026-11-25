@@ -327,6 +327,47 @@ export function baueCarport(scene, { merke, hindernis }) {
     platz.add(b);
   }
 
+  // ---------- Paket 8.2: vollgekotzte Fußmatte auf einer Wäscheleine zwischen Carport-Pfosten und Wohnwagen ----------
+  {
+    const A = new THREE.Vector3(GX - 0.06, 1.95, GZ0), B = new THREE.Vector3(WB / 2 + 0.02, 1.75, -1.55);
+    const mitteL = A.clone().lerp(B, 0.5); mitteL.y -= 0.12;
+    const leine = new THREE.QuadraticBezierCurve3(A, mitteL, B);
+    platz.add(teil(new THREE.TubeGeometry(leine, 24, 0.005, 4, false), 0xe8e4d8, { umriss: false }));
+    // Haken am Pfosten und Öse am Wohnwagen
+    platz.add(setze(zylinder(0.01, 0.01, 0.06, 0x8a8f96, { umriss: 0.001 }, 6), A.x - 0.02, A.y, A.z, 0, 0, Math.PI / 2));
+    platz.add(setze(teil(new THREE.TorusGeometry(0.018, 0.005, 6, 10), 0x8a8f96, { umriss: false }), B.x, B.y, B.z, 0, Math.PI / 2, 0));
+    const matteTex = leinwandTextur(256, 192, (g, b, h) => {
+      // Kokosmatte: braun, Faserstruktur, Rand, „WELCOME“
+      g.fillStyle = '#9a6a35'; g.fillRect(0, 0, b, h);
+      for (let i = 0; i < 900; i++) { g.fillStyle = `rgba(${60 + r() * 60},${35 + r() * 30},10,${0.25 + r() * 0.3})`; g.fillRect(r() * b, r() * h, 1 + r() * 2, 3 + r() * 5); }
+      g.strokeStyle = '#5a3a18'; g.lineWidth = 10; g.strokeRect(5, 5, b - 10, h - 10);
+      g.fillStyle = '#4a2e12'; g.font = 'bold 34px Impact, sans-serif'; g.textAlign = 'center'; g.fillText('WELCOME', b / 2, 104);
+      // Kotze: gelbgrüne Lache mit Brocken, Spritzer, ein dunkler Rand
+      const lache = (x, y, rx, ry, w) => { g.beginPath(); for (let i = 0; i <= 20; i++) { const a = (i / 20) * Math.PI * 2; const q = 1 + 0.25 * Math.sin(a * 3 + w) + 0.15 * Math.sin(a * 5 + w * 2); const px = x + Math.cos(a) * rx * q, py = y + Math.sin(a) * ry * q; if (i) g.lineTo(px, py); else g.moveTo(px, py); } g.closePath(); g.fill(); };
+      g.fillStyle = 'rgba(110,120,30,0.55)'; lache(120, 120, 70, 42, 1); lache(196, 60, 26, 18, 2);
+      g.fillStyle = '#c8c24a'; lache(118, 116, 60, 34, 1.4); lache(194, 58, 20, 13, 2.3); lache(50, 150, 14, 9, 3);
+      g.fillStyle = '#e0d870'; lache(108, 108, 28, 14, 2);
+      for (let i = 0; i < 18; i++) { g.fillStyle = ['#d98a3a', '#e8e0b0', '#8aa43a', '#f2d890'][i % 4]; const x = 80 + r() * 90, y = 96 + r() * 44; g.beginPath(); g.ellipse(x, y, 2 + r() * 4, 2 + r() * 3, r() * 3, 0, Math.PI * 2); g.fill(); }
+      g.fillStyle = 'rgba(200,194,74,0.8)'; for (let i = 0; i < 10; i++) { g.beginPath(); g.arc(30 + r() * 200, 30 + r() * 140, 2 + r() * 3, 0, Math.PI * 2); g.fill(); }
+    });
+    const matteMat2 = toon(0xffffff, { map: matteTex, side: THREE.DoubleSide });
+    const m2 = new THREE.Group();
+    // über die Leine gehängt: vorne länger, hinten kürzer, leicht schräg
+    const vorn = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.4, 0.015), matteMat2); vorn.position.set(0, -0.2, 0.012); vorn.rotation.x = 0.06; m2.add(vorn);
+    const hinten = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.22, 0.015), toon(0x7a5228)); hinten.position.set(0, -0.11, -0.012); hinten.rotation.x = -0.08; m2.add(hinten);
+    m2.add(setze(quader(0.62, 0.02, 0.03, 0x7a5228, { umriss: 0.001 }), 0, 0, 0));
+    for (const sx of [-0.22, 0.22]) m2.add(setze(quader(0.018, 0.06, 0.03, sx < 0 ? 0xc8352a : 0x2f6fc2, { umriss: 0.001 }), sx, 0.005, 0));
+    // Tropfen unten dran
+    for (const [x, l] of [[-0.05, 0.05], [0.08, 0.035]]) m2.add(setze(zylinder(0.006, 0.01, l, 0xc8c24a, { umriss: false }, 6), x, -0.4 - l / 2, 0.02));
+    m2.traverse((o) => { if (o.isMesh) { o.castShadow = true; } });
+    const p = leine.getPoint(0.5);
+    m2.position.set(p.x, p.y, p.z);
+    const d = B.clone().sub(A); m2.rotation.y = Math.atan2(d.x, d.z) + Math.PI / 2; // bekleckerte Seite zur Wiese
+    platz.add(m2);
+    // Fliegen um die Matte
+    for (let i = 0; i < 3; i++) platz.add(setze(kugel(0.008, 0x1d1d1f, { umriss: false }, 5), p.x + (r() - 0.5) * 0.4, p.y - 0.1 + r() * 0.25, p.z + (r() - 0.5) * 0.4));
+  }
+
   // ---------- Dennis' wackliges Anbau-Carport seitlich am großen (gegenüber der Terrasse): Latten, schiefe Pfosten, blaue Plane ----------
   const anbau = new THREE.Group();
   const AZ0 = 2.5, AZ1 = AZ0 - 5.0, AX = 1.25, AH = 2.15;
