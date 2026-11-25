@@ -193,6 +193,8 @@ export function baueTestMenue({ spiel, welt, kamera, steuerung, fahrten, fz }) {
   knopf('T124', 'Gerte in die Hand (E = klatschen, Q = werfen)', () => { const o = findeKlick('peitsche'); if (o) { o.visible = true; t.aufnehmen('peitsche', o); } }, handVoll);
   knopf('T125', 'Erste-Hilfe-Kasten in die Hand (Q = werfen)', () => t.aufnehmen('verbandskasten', welt.objekte.ersteHilfe), handVoll);
   knopf('T126', 'Schweißhelm in die Hand (E = aufsetzen, Klick auf den Haken = zurückhängen)', () => t.aufnehmen('helm', welt.objekte.helm), handVoll);
+  // N4: Tanzpause (Box an, Dennis tanzt; T127 = er hört nach ein paar Sekunden selbst auf, Box ist dann gesperrt)
+  knopf('T127', 'Box an, Dennis tanzt kurz und macht dann Pause („Nee du, ich brauch mal ne Pause.“)', () => { frei(); z.keinTanzBis = 0; z.boxGesperrtBis = 0; if (!z.musik) t.musikUmschalten(); z.tanzZeit = 0; z.tanzEnde = 6; }, { laeuft: () => !!z.tanzPauseLaeuft });
   knopf('T43', 'Hüfte (Dennis liegt)', () => { frei(); return t.hueftePlatt(); }, {
     laeuft: () => z.huefte === 'geht' || z.huefte === 'liegt',
     sperre: () => (z.huefte === 'erledigt' ? 'Hüfte war schon' : null),

@@ -51,6 +51,8 @@ export const DENNIS = {
     'Techno in meiner Mittagspause? Du hast sie doch nicht mehr alle!',
   ],
   // er macht die Musik nach dem Wecken selbst aus
+  // N4: Dennis hört selbst auf zu tanzen (nach einer Weile oder wenn er gestört wurde), Box ist dann eine Zeit gesperrt
+  tanzPause: ['Nee du, ich brauch mal ne Pause.'],
   musikMachIchAus: ['So. Ich mach das jetzt aus. Und dann ist erstmal Ruhe!', 'Gib her, ich mach das selber aus.'],
   // Musik wieder an, obwohl er gerade keine Lust hat
   musikWiederAn: ['Ich hab gesagt AUS! Bist du taub?!', 'Schon wieder?! Jetzt reicht’s aber!'],

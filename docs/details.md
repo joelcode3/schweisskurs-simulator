@@ -1029,6 +1029,31 @@ Verschoben aus CLAUDE.md (unverändert, nach Themen sortiert). Nur den passenden
   bierflasche() aus toon.js gebaut (passende Größe in der Hand).
 - Testmenü: T124 Gerte in die Hand, T125 Erste-Hilfe-Kasten in die Hand, T126 Schweißhelm in die Hand.
 
+## Paket N4 (Dennis und Logik, 18.11.)
+- Fertiger (lackierter) Ofen: überall auf den Boden stellbar, drinnen und draußen (flascheAbstellen, klickMitHand, z.ort
+  boden/draussen mit Beinen +0,56 m in setzeFlasche); Menü dann nur „Hochheben und zu Dennis bringen“. Kein Hindernis.
+- Minispiele: alle Dauertöne (Gas, Wasser, Druckluft, Spraydose ...) merkt minispiele.js (offeneToene) und stoppt sie beim
+  Schließen, auch bei Abbrechen (vorher zischte das Gas nach Abbrechen beim Restgas weiter).
+- Anzeichnen nach Gas ablassen blockiert Spülen: nicht nachstellbar (Gas ab, Werkbank, angezeichnet, zurück zum Waschplatz:
+  Menü bietet „Mit Wasser spülen“ an). Nichts geändert.
+- Grill selbst aufstellen (fahrten.js): erst „Muss ich den Grill jetzt auch noch selbst aufstellen?!“, „So. Grill steht
+  wieder.“ erst nach dem Aufstellen (vorher zufällig schon beim Losgehen). Andere „selbst“-Sätze geprüft, passen.
+- Fegen: solange man fegt, wartet Dennis (z.dreckSeit); sind nur noch höchstens 20 % (mind. 2) Flecken übrig, ist der Boden
+  sauber (welt.dreckStart); Dennis bricht ab, wenn beim Besen kein Dreck mehr da ist.
+- Weit weg (spielerNah() falsch): Dennis' Stimme wird ab 8 m leiser und ist ab 20 m still (vorher Rest 0,3), Sätze mit prio
+  0/1 fallen ganz weg (keine Blase, kein Gebrabbel). Feuer, Rohrbruch und Hüfte starten nur, wenn der Spieler in der Nähe ist.
+- Tanzpause (tanzPause): nach 60–100 s Tanzen oder wenn er beim Tanzen gestört wurde (z.tanzGestoert: Fehler, wichtiger
+  Satz) sagt Dennis dennis547 „Nee du, ich brauch mal ne Pause.“ (DENNIS.tanzPause), macht die Box aus, Box und Tanzen sind
+  2,5–3,5 min gesperrt (z.boxGesperrtBis; Klick auf die Box = Hinweis).
+- Stahlträger: Kommentar beim Hingehen und Anfassen als normale Blase (nicht rot/sauer), Wut gab es dafür nie.
+- Figuren blockieren nur kurz: wer über 1 s nur von Dennis oder einer Figur aufgehalten wird, schlüpft vorbei, bis er frei
+  ist (steuerung.js figurGeblockt) – gegen das Einklemmen in der Kaffeeecke.
+- Spanngurt: Tempo-Anzeige war auch beim ersten Gurt da, Zeiger aber kaum sichtbar (stand links am Rand); jetzt Dreieck +
+  Strich und Text „Tempo: schneller / gut / zu schnell!“.
+- Spüldienst: Option immer, wenn der Dran-Seiende da ist und Tassen auf dem Kühlschrank ODER herumstehen; er nimmt die
+  herumstehenden gleich mit. Jonny beschäftigt = Hinweis „Gleich nochmal fragen“.
+- Testmenü: T127 Box an, Dennis tanzt kurz und macht Pause.
+
 ## Offene Fäden und Ungetestetes (Übergabe 1.11.2026)
 - Ausraster-Videos: #54 (frisches Video-Element, bis zu 6 Versuche, canplay) ist nur eine Absicherung. Die Ursache ist unklar, im Test lief
   alles (WebM statt H.264, Chromium kann hier kein H.264). Der Betreiber prüft im echten Browser (Browser und Anzeige erfragen: schwarz,

@@ -2692,8 +2692,10 @@ export function baueWelt(scene) {
   const dreckMat = new THREE.MeshBasicMaterial({ map: dreckTex, transparent: true, depthWrite: false });
   const dreck = [];
   let dreckMitte = null;
+  let dreckStart = 0; // N4: wie viele Flecken insgesamt liegen (für „fast alles weg = sauber“)
   function dreckHin(cx, cz, anzahl) {
     dreckMitte = { x: cx, z: cz };
+    dreckStart = dreck.length + anzahl;
     for (let i = 0; i < anzahl; i++) {
       const d = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.6), dreckMat);
       d.rotation.set(-Math.PI / 2, 0, Math.random() * Math.PI);
@@ -3205,6 +3207,8 @@ export function baueWelt(scene) {
     g.rotation.set(...o.rot);
     // Mit Beinen ist der Ofen zu hoch für den Tisch: dann steht er davor auf dem Boden
     const aufBoden = ort === 'schweiss' && beine;
+    // N4: fertiger Ofen auf dem Boden (drinnen oder draußen): steht auf seinen Beinen
+    if (beine && (ort === 'boden' || ort === 'draussen')) g.position.y += 0.56;
     if (aufBoden) {
       g.position.set(3.15, 0.335 + 0.56, -2.0);
       g.rotation.set(0, -Math.PI / 2, 0);
@@ -3435,6 +3439,7 @@ export function baueWelt(scene) {
     besenSichtbar(an) { besen.visible = an; },
     BESEN: { x: -4.35, z: 2.05 },
     get dreck() { return dreck.length; },
+    get dreckStart() { return dreckStart; },
     KLO: { x: 1.4, z: 3.55 },
     KLO_DRIN: { x: 1.4, z: 4.75 },
     BAD,

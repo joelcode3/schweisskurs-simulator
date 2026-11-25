@@ -250,9 +250,10 @@ export function baueFahrten(c) {
     z.dennisRaeumt = true;
     (z.zuSpaet ||= []).push({ text: 'Zu spät: Dennis stellt den Grill selbst auf', seit: sekunden() });
     dennis.stimmung('sauer');
-    dennisSagt(sag(DENNIS.grillSelbst), true, { prio: 1 });
+    // N4: erst meckern, „Grill steht wieder“ erst NACH dem Aufstellen (vorher kam der Satz zufällig schon beim Losgehen)
+    dennisSagt(DENNIS.grillSelbst[0], true, { prio: 1 });
     for (const p of [TUER_INNEN, TUER_AUSSEN, { x: -4.3, z: 6.6 }]) await Promise.race([dennis.gehZu(p.x, p.z, 1.6), warte(9000)]);
-    if (fz2.grill === 'um') { klonk(0.5); grillAuf(); aerger(8); }
+    if (fz2.grill === 'um') { klonk(0.5); grillAuf(); aerger(8); dennisSagt(DENNIS.grillSelbst[1], false, { prio: 1 }); }
     for (const p of [TUER_AUSSEN, TUER_INNEN]) await Promise.race([dennis.gehZu(p.x, p.z, 1.6), warte(9000)]);
     z.dennisRaeumt = false;
     dennis.stimmung('ruhig');
